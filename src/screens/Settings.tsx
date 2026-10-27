@@ -1,8 +1,9 @@
 import { Icon } from '../components/Icon';
 import { appVersion, channel } from '../config';
+import { isInstalled } from '../install';
 
 export function Settings({ onBack }: { onBack: () => void }) {
-  const installed = window.matchMedia?.('(display-mode: standalone)').matches ?? false;
+  const installed = isInstalled();
   return (
     <main className="screen" aria-labelledby="settings-title">
       <header className="header">
