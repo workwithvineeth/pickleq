@@ -21,3 +21,12 @@ if (!URL.createObjectURL) {
   URL.createObjectURL = () => 'blob:test';
   URL.revokeObjectURL = () => {};
 }
+
+// jsdom has no ResizeObserver; charts only need it to exist in tests.
+if (!('ResizeObserver' in globalThis)) {
+  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

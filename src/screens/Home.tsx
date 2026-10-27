@@ -3,6 +3,7 @@ import { backupDue, daysSince, lastBackupAt } from '../backup/status';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { MatchRow } from '../components/MatchRow';
+import { RatingCards } from '../components/RatingCards';
 import { channel } from '../config';
 import { activeMatches } from '../db/matches';
 import { recordSummary, winPct, type WinLoss } from '../domain/record';
@@ -71,6 +72,24 @@ export function Home({ go }: { go: Go }) {
           <Split label="Doubles" r={summary.doubles} />
         </div>
       </section>
+
+      <RatingCards go={go} />
+
+      {matches && matches.length > 0 && (
+        <section className="card" aria-label="Recent form">
+          <div className="header" style={{ marginBottom: 8 }}>
+            <span className="small muted">Form · last {Math.min(10, matches.length)}</span>
+            <span className="small" style={{ fontWeight: 600 }}>
+              {matches.slice(0, 10).filter((m) => m.won).length}–{matches.slice(0, 10).filter((m) => !m.won).length}
+            </span>
+          </div>
+          <div className="formrow" role="list" aria-label="Most recent first">
+            {matches.slice(0, 10).map((m) => (
+              <span key={m.id} role="listitem" className="formchip" style={{ background: m.won ? 'var(--win-bg)' : 'var(--loss-bg)', color: m.won ? 'var(--win-fg)' : 'var(--loss-fg)' }}>{m.won ? 'W' : 'L'}</span>
+            ))}
+          </div>
+        </section>
+      )}
 
       {matches && matches.length === 0 && (
         <EmptyState icon="ball" title="Log your first match"

@@ -101,3 +101,17 @@ export const DEFAULT_FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideo
 export function emptyGame(): Game {
   return { you: null, them: null, momentum: 'neither' };
 }
+
+export type RatingKind = 'singles' | 'doubles';
+export type RatingSource = 'dupr-manual';
+
+/** One DUPR rating reading. DUPR is the source of truth; PICKLEQ never calculates ratings. */
+export interface RatingEntry {
+  id: string;
+  kind: RatingKind;
+  value: number;
+  /** yyyy-mm-dd the rating was read from DUPR */
+  date: string;
+  source: RatingSource;
+  createdAt: number;
+}
