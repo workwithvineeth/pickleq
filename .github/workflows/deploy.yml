@@ -2,10 +2,14 @@ name: Test and deploy
 
 # main  -> Preview (https://<user>.github.io/pickleq/preview/)
 # live  -> Live    (https://<user>.github.io/pickleq/)
+# Every run builds both sites: Preview from main, Live from the live branch.
+# GitHub Pages only accepts deploys started from main, so a Live release is:
+#   1. move the live branch to the approved commit, then
+#   2. run this workflow on main (workflow_dispatch).
 # Any failing test stops the deploy, so a broken build never reaches a phone.
 on:
   push:
-    branches: [main, live]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
