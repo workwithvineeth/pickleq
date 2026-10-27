@@ -1,6 +1,7 @@
 import { InsightCard } from '../components/InsightCard';
 import { EmptyState } from '../components/EmptyState';
 import { useInsights } from '../hooks/useInsights';
+import { clipShotForInsight, shotSlug } from '../domain/clips';
 import type { Go } from '../navigation';
 
 export function Coach({ go }: { go: Go }) {
@@ -21,7 +22,12 @@ export function Coach({ go }: { go: Go }) {
       {list && list.length > 0 && (
         <>
           <h2 style={{ fontSize: 18 }}>Insights · last 90 days</h2>
-          {list.map((i) => <InsightCard key={i.id} insight={i} />)}
+          {list.map((i) => {
+            const shot = clipShotForInsight(i.id);
+            return <InsightCard key={i.id} insight={i} action={shot && i.kind === 'watch' ? (
+              <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('clips', shotSlug(shot))}>Watch pro clips: {shot.toLowerCase()}</button>
+            ) : undefined} />;
+          })}
         </>
       )}
 

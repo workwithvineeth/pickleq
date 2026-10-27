@@ -7,6 +7,7 @@ import { purgeOldTrash } from './db/matches';
 import { purgeOldSessions } from './db/training';
 import { TABS, useRoute, type Tab } from './navigation';
 import { Backup } from './screens/Backup';
+import { Clips } from './screens/Clips';
 import { Coach } from './screens/Coach';
 import { Goals } from './screens/Goals';
 import { Home } from './screens/Home';
@@ -49,6 +50,7 @@ export default function App() {
       {route.name === 'settings' && <Settings onBack={back} go={go} />}
       {route.name === 'backup' && <Backup onBack={back} />}
       {route.name === 'ratings' && <Ratings onBack={back} />}
+      {route.name === 'clips' && <Clips key={route.id ?? 'index'} slug={route.id} go={go} onBack={back} />}
       {route.name === 'goals' && <Goals onBack={back} />}
       {route.name === 'session-new' && <LogSession key="new-session" go={go} onClose={back} />}
       {route.name === 'session' && route.id && <LogSession key={route.id} sessionId={route.id} go={go} onClose={back} />}

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export type Tab = 'home' | 'matches' | 'train' | 'stats' | 'coach';
-export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'goals' | 'session-new' | 'session' | 'match' | 'edit' | 'details';
+export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'goals' | 'session-new' | 'session' | 'match' | 'edit' | 'details' | 'clips';
 export interface Route { name: RouteName; id?: string }
 
 const simple: RouteName[] = ['home', 'train', 'stats', 'coach', 'log', 'backfill', 'settings', 'trash', 'backup', 'ratings', 'goals', 'session-new'];
 const withId: RouteName[] = ['match', 'edit', 'details', 'session'];
-const optionalId: RouteName[] = ['matches'];
+const optionalId: RouteName[] = ['matches', 'clips'];
 export const TABS: Tab[] = ['home', 'matches', 'train', 'stats', 'coach'];
 
 export function parseRoute(hash: string): Route {

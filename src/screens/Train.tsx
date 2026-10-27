@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { EmptyState } from '../components/EmptyState';
+import { Icon } from '../components/Icon';
 import { shortDate } from '../components/MatchRow';
 import { ProgressRing } from '../components/ProgressRing';
 import { ratingHistory } from '../db/ratings';
@@ -72,6 +73,15 @@ export function Train({ go }: { go: Go }) {
           );
         })}
       </section>
+
+      <button type="button" className="match-row" onClick={() => go('clips')} aria-label="Pro clips: see how each shot is hit">
+        <span className="play-dot" style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent)', color: 'var(--on-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="play" size={18} strokeWidth={2.2} /></span>
+        <span style={{ flex: 1 }}>
+          <span style={{ fontWeight: 500, display: 'block' }}>Pro clips</span>
+          <span className="small muted">See how each shot is hit, in slow motion</span>
+        </span>
+        <Icon name="chevron" size={18} />
+      </button>
 
       <section className="chart-card" aria-label="Drill success, last 30 days">
         <div className="header"><h2>Drill success · 30 days</h2><span className="pill pill-ok">Measured</span></div>
