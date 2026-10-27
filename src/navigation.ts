@@ -1,26 +1,45 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export type Tab = 'home' | 'matches' | 'train' | 'stats' | 'coach';
-export type Route = Tab | 'log' | 'settings';
+export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'match' | 'edit' | 'details';
+export interface Route { name: RouteName; id?: string }
 
-const routes: Route[] = ['home', 'matches', 'train', 'stats', 'coach', 'log', 'settings'];
+const simple: RouteName[] = ['home', 'train', 'stats', 'coach', 'log', 'backfill', 'settings', 'trash'];
+const withId: RouteName[] = ['match', 'edit', 'details'];
+const optionalId: RouteName[] = ['matches'];
+export const TABS: Tab[] = ['home', 'matches', 'train', 'stats', 'coach'];
 
 export function parseRoute(hash: string): Route {
-  const name = hash.replace(/^#\/?/, '');
-  return (routes as string[]).includes(name) ? (name as Route) : 'home';
+  const [name, id] = hash.replace(/^#\/?/, '').split('/');
+  if ((optionalId as string[]).includes(name)) return id ? { name: name as RouteName, id: decodeURIComponent(id) } : { name: name as RouteName };
+  if ((simple as string[]).includes(name)) return { name: name as RouteName };
+  if ((withId as string[]).includes(name) && id) return { name: name as RouteName, id: decodeURIComponent(id) };
+  return { name: 'home' };
 }
 
+export function routeHash(r: Route): string {
+  return r.id ? `#/${r.name}/${encodeURIComponent(r.id)}` : `#/${r.name}`;
+}
+
+export type Go = (name: RouteName, id?: string, opts?: { replace?: boolean }) => void;
+
 /** Hash-based routes so the phone's back button and GitHub Pages both work. */
-export function useRoute(): [Route, (r: Route) => void, () => void] {
+export function useRoute(): [Route, Go, () => void] {
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
   useEffect(() => {
     const onHash = () => setRoute(parseRoute(window.location.hash));
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-  const go = useCallback((r: Route) => {
-    if (parseRoute(window.location.hash) !== r) window.location.hash = `/${r}`;
-    setRoute(r);
+  const go = useCallback<Go>((name, id, opts) => {
+    const next: Route = { name, id };
+    const hash = routeHash(next);
+    if (window.location.hash !== hash) {
+      if (opts?.replace) window.history.replaceState(null, '', hash);
+      else window.location.hash = hash;
+    }
+    setRoute(next);
+    window.scrollTo?.(0, 0);
   }, []);
   const back = useCallback(() => {
     if (window.history.length > 1) window.history.back();

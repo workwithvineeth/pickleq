@@ -1,9 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { db } from './db/db';
 import App from './App';
 
 describe('App shell', () => {
+  beforeEach(async () => {
+    await db.matches.clear();
+    window.location.hash = '';
+  });
   it('opens on Home with the brand, an empty record and all five tabs', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: 'PICKLEQ' })).toBeInTheDocument();
@@ -20,7 +25,7 @@ describe('App shell', () => {
     render(<App />);
     for (const [tab, heading] of [['Matches', 'Matches'], ['Train', 'Training'], ['Stats', 'Stats'], ['Coach', 'Coach']] as const) {
       await user.click(screen.getByRole('button', { name: tab }));
-      expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: tab })).toHaveAttribute('aria-current', 'page');
     }
   });

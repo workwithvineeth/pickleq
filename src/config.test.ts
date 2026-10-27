@@ -15,9 +15,12 @@ describe('Preview and Live separation', () => {
 
 describe('routes', () => {
   it('maps hashes to screens and falls back to Home', () => {
-    expect(parseRoute('#/stats')).toBe('stats');
-    expect(parseRoute('#/log')).toBe('log');
-    expect(parseRoute('#/nonsense')).toBe('home');
-    expect(parseRoute('')).toBe('home');
+    expect(parseRoute('#/stats')).toEqual({ name: 'stats' });
+    expect(parseRoute('#/log')).toEqual({ name: 'log' });
+    expect(parseRoute('#/match/abc-123')).toEqual({ name: 'match', id: 'abc-123' });
+    expect(parseRoute('#/matches/incomplete')).toEqual({ name: 'matches', id: 'incomplete' });
+    expect(parseRoute('#/match')).toEqual({ name: 'home' });
+    expect(parseRoute('#/nonsense')).toEqual({ name: 'home' });
+    expect(parseRoute('')).toEqual({ name: 'home' });
   });
 });
