@@ -57,8 +57,7 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
   const [partner, setPartner] = useState<PersonDraft>(blankPerson());
   const [opp1, setOpp1] = useState<PersonDraft>(blankPerson());
   const [opp2, setOpp2] = useState<PersonDraft>(blankPerson());
-  const [outcome, setOutcome] = useState<Outcome>('played');
-  const [wonChoice, setWonChoice] = useState<boolean | null>(null);
+  const outcome: Outcome = 'played';
   const [games, setGames] = useState<Game[]>([emptyGame(), emptyGame(), emptyGame()]);
   const [active, setActive] = useState(0);
   const [side, setSide] = useState<'you' | 'them'>('you');
@@ -75,8 +74,6 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
     const opps = existing.participants.filter((p) => p.role === 'opponent');
     setOpp1(toPerson(opps[0]));
     setOpp2(toPerson(opps[1]));
-    setOutcome(existing.outcome);
-    setWonChoice(existing.outcome === 'played' ? null : existing.won);
     const gs = [...existing.games.map((g) => ({ ...g }))];
     while (gs.length < 3) gs.push(emptyGame());
     setGames(gs);
@@ -84,9 +81,9 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
   }, [mode, existing, loaded]);
 
   const doubles = type !== 'singles';
-  const needed = outcome === 'walkover' ? 0 : outcome === 'retired' ? format.bestOf : gamesNeeded(format, games);
+  const needed = gamesNeeded(format, games);
   const visibleGames = games.slice(0, needed);
-  const check = checkMatch(format, outcome, visibleGames, wonChoice);
+  const check = checkMatch(format, outcome, visibleGames, null);
   const game = games[Math.min(active, Math.max(needed - 1, 0))];
   const gridMax = Math.max(format.pointsTo + 6, (game?.you ?? 0), (game?.them ?? 0));
 
@@ -131,9 +128,8 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
       }
       participants.push({ name: p.name.trim(), role, rating, strength: rating === undefined ? p.strength : undefined });
     }
-    const keptGames = outcome === 'walkover' ? [] : visibleGames
-      .filter((g) => outcome === 'played' || g.you !== null || g.them !== null)
-      .map((g) => (mode === 'backfill' || outcome !== 'played' ? { ...g, momentum: 'neither' as Momentum, fromYou: undefined, fromThem: undefined } : g));
+    const keptGames = visibleGames
+      .map((g) => (mode === 'backfill' ? { ...g, momentum: 'neither' as Momentum, fromYou: undefined, fromThem: undefined } : g));
     const scorePart: Partial<NewMatch> = { date, type, category, format, participants, outcome, games: keptGames, won: check.won as boolean };
     setSaving(true);
     try {
@@ -175,17 +171,6 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
       <Segmented label="Match type" value={type} options={typeOptions} onChange={setType} />
       <Chips label="Category" value={category} options={categoryOptions} onChange={setCategory} />
 
-      <Segmented label="How the match ended" value={outcome} onChange={(v) => { setOutcome(v); setError(null); setActive(0); }}
-        options={[{ value: 'played', label: 'Played' }, { value: 'walkover', label: 'Walkover' }, { value: 'retired', label: 'Retired' }]} />
-
-      {outcome !== 'played' && (
-        <Field label="Who won?">
-          <Chips label="Who won" value={wonChoice === null ? null : wonChoice ? 'you' : 'them'}
-            options={[{ value: 'you', label: 'I won' }, { value: 'them', label: 'They won' }]}
-            onChange={(v) => { setWonChoice(v === 'you'); setError(null); }} />
-        </Field>
-      )}
-
       {needed > 0 && (
         <>
           {needed > 1 && (
@@ -204,7 +189,7 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
           <div className="small muted">Tap a number for <b>{side === 'you' ? 'your score' : 'their score'}</b></div>
           <NumberGrid max={gridMax} selected={side === 'you' ? game.you : game.them} onPick={pick} label={side === 'you' ? 'Your score' : 'Their score'} />
 
-          {mode !== 'backfill' && outcome === 'played' && (
+          {mode !== 'backfill' && (
             <Field label="How did the game go?">
               <Chips label="Momentum" value={game.momentum} options={momentumOptions} onChange={pickMomentum} />
               {(game.momentum === 'came-back' || game.momentum === 'lost-lead') && (

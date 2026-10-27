@@ -67,16 +67,10 @@ describe('logging a match end to end', () => {
     expect(screen.getByLabelText('Overall record')).toHaveTextContent('0–1');
   });
 
-  it('records a walkover with the winner chosen', async () => {
+  it('offers no walkover or retired option: only played matches can be logged', async () => {
     const user = userEvent.setup();
     await openLog(user);
-    await user.click(screen.getByRole('button', { name: 'Walkover' }));
-    await user.click(screen.getByRole('button', { name: 'Save score' }));
-    expect(screen.getByRole('status')).toHaveTextContent('Choose who won');
-    await user.click(screen.getByRole('button', { name: 'I won' }));
-    await user.click(screen.getByRole('button', { name: 'Save score' }));
-    await screen.findByRole('heading', { name: 'Match details' });
-    const [m] = await db.matches.toArray();
-    expect(m).toMatchObject({ outcome: 'walkover', won: true, games: [] });
+    expect(screen.queryByRole('button', { name: 'Walkover' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retired' })).not.toBeInTheDocument();
   });
 });

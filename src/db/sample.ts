@@ -25,7 +25,6 @@ export function sampleMatches(): NewMatch[] {
     { ...base, date: daysAgo(9), type: 'singles', category: 'tournament', format: { pointsTo: 11, bestOf: 3, scoring: 'sideout' }, participants: [opp('Sameer', 4.1)], games: [g(7, 11), g(11, 9), g(8, 11)], won: false, status: 'complete', tags: tags({ 'Backhand drive': 'needs-work', 'Focus when leading': 'needs-work' }), energy: 2, venue: 'Pune Smash', setting: 'indoor', notes: 'Lefty kept attacking my backhand in game 3.' },
     { ...base, date: daysAgo(9), type: 'doubles', category: 'tournament', format: { pointsTo: 11, bestOf: 3, scoring: 'sideout' }, participants: [partner('Dev'), opp('Nikhil', 3.6), opp('Om', 3.5)], games: [g(11, 5), g(11, 7)], won: true, status: 'complete', tags: tags({ 'Third-shot drop': 'went-well' }), energy: 3, venue: 'Pune Smash', setting: 'indoor' },
     { ...base, date: daysAgo(12), type: 'doubles', category: 'practice', format: { pointsTo: 15, bestOf: 1, scoring: 'rally' }, participants: [partner('Meera'), opp('Kavya', undefined, 'weaker'), opp('Ravi', undefined, 'weaker')], games: [g(15, 9)], won: true, status: 'complete', tags: {}, energy: 4 },
-    { ...base, date: daysAgo(15), type: 'singles', category: 'casual', participants: [opp('Rohan', 3.9)], games: [], outcome: 'walkover', won: true, status: 'complete', tags: {} },
   ] as NewMatch[];
 }
 
