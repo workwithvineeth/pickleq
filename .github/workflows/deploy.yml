@@ -1,0 +1,80 @@
+name: Test and deploy
+
+# main  -> Preview (https://<user>.github.io/pickleq/preview/)
+# live  -> Live    (https://<user>.github.io/pickleq/)
+# Any failing test stops the deploy, so a broken build never reaches a phone.
+on:
+  push:
+    branches: [main, live]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Preview (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: preview-src
+
+      - name: Check out Live (live branch, or main if it does not exist yet)
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/${{ github.repository }}.git" live; then
+            echo "LIVE_REF=live" >> "$GITHUB_ENV"
+          else
+            echo "LIVE_REF=main" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.LIVE_REF }}
+          path: live-src
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test and build Preview
+        working-directory: preview-src
+        run: |
+          npm ci
+          npm test
+          npm run build:preview
+
+      - name: Test and build Live
+        working-directory: live-src
+        run: |
+          npm ci
+          npm test
+          npm run build:live
+
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -r live-src/dist/live/. site/
+          mkdir -p site/preview
+          cp -r preview-src/dist/preview/. site/preview/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
