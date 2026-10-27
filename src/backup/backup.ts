@@ -1,10 +1,10 @@
 import { appVersion, channel } from '../config';
 import { db, type PickleqDB } from '../db/db';
-import type { Match, Player, RatingEntry } from '../domain/types';
+import type { DrillCategory, Goal, Match, Player, RatingEntry, TrainingSession } from '../domain/types';
 import { BackupError, decryptText, encryptText, parseEnvelope } from './crypto';
 
-/** 1 = matches and players; 2 = adds DUPR rating history. */
-export const SCHEMA = 2;
+/** 1 = matches and players; 2 = adds DUPR rating history; 3 = adds training, drills and goals. */
+export const SCHEMA = 3;
 
 export interface BackupContents {
   schema: number;
@@ -15,6 +15,9 @@ export interface BackupContents {
   matches: Match[];
   players: Player[];
   ratings: RatingEntry[];
+  sessions: TrainingSession[];
+  drillCategories: DrillCategory[];
+  goals: Goal[];
 }
 
 export async function collect(d: PickleqDB = db, now = new Date()): Promise<BackupContents> {
@@ -23,6 +26,9 @@ export async function collect(d: PickleqDB = db, now = new Date()): Promise<Back
     matches: await d.matches.toArray(),
     players: await d.players.toArray(),
     ratings: await d.ratings.toArray(),
+    sessions: await d.sessions.toArray(),
+    drillCategories: await d.drillCategories.toArray(),
+    goals: await d.goals.toArray(),
   };
 }
 
@@ -42,18 +48,20 @@ export async function openBackup(fileText: string, password: string): Promise<Ba
   if ((c.schema ?? 0) > SCHEMA) {
     throw new BackupError('This backup is from a newer version of PICKLEQ. Update the app, then try again.');
   }
-  return { ...c, ratings: Array.isArray(c.ratings) ? c.ratings : [] } as BackupContents;
+  const list = <T,>(x: T[] | undefined): T[] => (Array.isArray(x) ? x : []);
+  return { ...c, ratings: list(c.ratings), sessions: list(c.sessions), drillCategories: list(c.drillCategories), goals: list(c.goals) } as BackupContents;
 }
 
 /** Replaces everything on this phone with the backup's contents, in one step that can't half-finish. */
 export async function restoreBackup(c: BackupContents, d: PickleqDB = db): Promise<void> {
-  await d.transaction('rw', [d.matches, d.players, d.ratings], async () => {
-    await d.matches.clear();
-    await d.players.clear();
-    await d.ratings.clear();
+  await d.transaction('rw', [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals], async () => {
+    for (const t of [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals]) await t.clear();
     await d.matches.bulkPut(c.matches);
     await d.players.bulkPut(c.players);
     await d.ratings.bulkPut(c.ratings);
+    await d.sessions.bulkPut(c.sessions);
+    await d.drillCategories.bulkPut(c.drillCategories);
+    await d.goals.bulkPut(c.goals);
   });
 }
 

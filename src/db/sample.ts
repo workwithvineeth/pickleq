@@ -1,5 +1,5 @@
 import { checkMatch } from '../domain/scoring';
-import { TAGS, type Category, type Format, type Game, type MatchType, type Participant, type RatingEntry, type TagMark } from '../domain/types';
+import { TAGS, type Category, type Format, type Game, type Goal, type MatchType, type Participant, type RatingEntry, type TagMark, type TrainingSession } from '../domain/types';
 import { db, newId, type PickleqDB } from './db';
 import { addMatch, type NewMatch } from './matches';
 
@@ -119,6 +119,12 @@ export function sampleMatches(today = new Date()): NewMatch[] {
       venue: recent || i < 2 ? undefined : p.category === 'tournament' ? 'Bengaluru Open' : pick(VENUES),
       setting: recent || i < 2 ? undefined : (rand() < 0.6 ? 'outdoor' : 'indoor'),
       notes: !won && i % 4 === 0 && !recent ? 'Opponents kept attacking my backhand in long rallies.' : undefined,
+      shotRatings: recent || i < 2 || i % 3 === 0 ? undefined : {
+        Serve: won ? 4 : 3 + Math.floor(rand() * 2),
+        'Third-shot drop': 2 + Math.floor(rand() * 2),
+        Dink: 3 + Math.floor(rand() * 2),
+        'Backhand drive': won ? 3 : 2,
+      },
     } as NewMatch;
   });
 }
@@ -133,17 +139,52 @@ export function sampleRatings(today = new Date()): RatingEntry[] {
   return out;
 }
 
+/** About 10 weeks of training: drills improving over time, rest days, and an unbroken streak this week. */
+export function sampleSessions(today = new Date()): TrainingSession[] {
+  const rand = rng(77);
+  const out: TrainingSession[] = [];
+  const add = (ago: number, s: Omit<TrainingSession, 'id' | 'date' | 'createdAt' | 'updatedAt'>) =>
+    out.push({ ...s, id: newId(), date: daysAgo(ago, today), createdAt: 1000 - ago, updatedAt: 1000 - ago });
+  const drill = (category: string, base: number, attempts: number, progress: number) =>
+    ({ category, attempts, made: Math.min(attempts, Math.round(attempts * (base + progress + (rand() - 0.5) * 0.06))) });
+  for (let ago = 68; ago >= 7; ago -= 4) {
+    const t = (68 - ago) / 61; // 0 → 1 over the period
+    const kind = ago % 12 === 0 ? 'coaching' : ago % 8 === 0 ? 'partner' : 'solo';
+    add(ago, { type: kind, minutes: kind === 'coaching' ? 60 : kind === 'partner' ? 90 : 45, intensity: 3 + Math.floor(rand() * 2), fatigue: 2 + Math.floor(rand() * 3),
+      drills: [drill('Third-shot drops', 0.6, 25, t * 0.12), drill(kind === 'solo' ? 'Serves' : 'Backhand drives', kind === 'solo' ? 0.84 : 0.48, kind === 'solo' ? 30 : 25, t * 0.06), drill('Dinks', 0.74, 50, t * 0.08)],
+      notes: kind === 'coaching' ? 'Coach: keep the paddle face open on drops.' : undefined });
+    if (ago % 3 === 0) add(ago - 1, { type: 'fitness', minutes: 40, intensity: 4, fatigue: 3, drills: [] });
+  }
+  // This week: 6-day streak including a rest day
+  add(5, { type: 'partner', minutes: 90, intensity: 4, fatigue: 4, drills: [drill('Backhand drives', 0.5, 25, 0.04), drill('Resets', 0.55, 20, 0)] });
+  add(4, { type: 'rest', minutes: 0, fatigue: 2, drills: [] });
+  add(3, { type: 'solo', minutes: 45, intensity: 3, fatigue: 2, drills: [drill('Serves', 0.9, 30, 0)] });
+  add(2, { type: 'coaching', minutes: 60, intensity: 4, fatigue: 3, drills: [drill('Third-shot drops', 0.72, 25, 0), drill('Resets', 0.55, 20, 0)] });
+  add(1, { type: 'fitness', minutes: 40, intensity: 3, fatigue: 2, drills: [] });
+  add(0, { type: 'solo', minutes: 45, intensity: 3, fatigue: 2, drills: [drill('Backhand drives', 0.52, 25, 0)] });
+  return out;
+}
+
+export function sampleGoals(): Goal[] {
+  return [
+    { id: newId(), kind: 'rating', ratingKind: 'doubles', target: 4.0, createdAt: 1 },
+    { id: newId(), kind: 'weekly-hours', target: 6, createdAt: 2 },
+    { id: newId(), kind: 'drill-rate', drillCategory: 'Third-shot drops', target: 80, createdAt: 3 },
+    { id: newId(), kind: 'tournament', target: 0, text: 'Medal at Bengaluru Open', createdAt: 4 },
+  ];
+}
+
 export async function loadSampleData(d: PickleqDB = db): Promise<number> {
   const items = sampleMatches();
   for (const m of items) await addMatch(m, d);
   await d.ratings.bulkPut(sampleRatings());
+  await d.sessions.bulkPut(sampleSessions());
+  await d.goals.bulkPut(sampleGoals());
   return items.length;
 }
 
 export async function clearAllData(d: PickleqDB = db): Promise<void> {
-  await d.transaction('rw', [d.matches, d.players, d.ratings], async () => {
-    await d.matches.clear();
-    await d.players.clear();
-    await d.ratings.clear();
+  await d.transaction('rw', [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals], async () => {
+    for (const t of [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals]) await t.clear();
   });
 }

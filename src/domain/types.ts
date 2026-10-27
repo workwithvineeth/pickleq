@@ -66,6 +66,8 @@ export interface Match {
   venue?: string;
   setting?: Setting;
   notes?: string;
+  /** Your own 1–5 estimates after the match. Never mixed with measured drill results. */
+  shotRatings?: Record<string, number>;
   createdAt: number;
   updatedAt: number;
   deletedAt?: number;
@@ -113,5 +115,53 @@ export interface RatingEntry {
   /** yyyy-mm-dd the rating was read from DUPR */
   date: string;
   source: RatingSource;
+  createdAt: number;
+}
+
+/** Shots you can rate 1–5 after a match (your estimate). */
+export const RATED_SHOTS = ['Serve', 'Return', 'Third-shot drop', 'Dink', 'Forehand drive', 'Backhand drive'] as const;
+
+export type SessionType = 'solo' | 'partner' | 'coaching' | 'clinic' | 'fitness' | 'rest';
+export const SESSION_TYPES: { value: SessionType; label: string }[] = [
+  { value: 'solo', label: 'Solo drills' }, { value: 'partner', label: 'Partner drills' }, { value: 'coaching', label: 'Coaching' },
+  { value: 'clinic', label: 'Group clinic' }, { value: 'fitness', label: 'Fitness' }, { value: 'rest', label: 'Rest day' },
+];
+
+export const STARTER_DRILLS = [
+  'Dinks', 'Third-shot drops', 'Forehand drives', 'Backhand drives', 'Serves', 'Returns',
+  'Volleys', 'Resets', 'Lobs and overheads', 'Footwork',
+] as const;
+
+/** A measured drill result, e.g. 18 made out of 25. */
+export interface DrillResult { category: string; made: number; attempts: number }
+
+export interface TrainingSession {
+  id: string;
+  date: string;
+  type: SessionType;
+  /** 0 for a rest day */
+  minutes: number;
+  intensity?: number;
+  fatigue?: number;
+  drills: DrillResult[];
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt?: number;
+}
+
+export interface DrillCategory { id: string; name: string; nameKey: string; createdAt: number }
+
+export type GoalKind = 'rating' | 'weekly-hours' | 'drill-rate' | 'streak' | 'tournament';
+export interface Goal {
+  id: string;
+  kind: GoalKind;
+  /** rating: DUPR value; weekly-hours: hours; drill-rate: percent; streak: days. Unused for tournament. */
+  target: number;
+  ratingKind?: RatingKind;
+  drillCategory?: string;
+  /** tournament goals: what you're aiming for, e.g. "Medal at Bengaluru Open" */
+  text?: string;
+  achieved?: boolean;
   createdAt: number;
 }

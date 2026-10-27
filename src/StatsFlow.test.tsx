@@ -25,8 +25,8 @@ describe('stats and ratings', () => {
     const s = summarize(all);
     window.location.hash = '#/stats';
     render(<App />);
-    expect(await screen.findByText(`${pct(s.record)}%`)).toBeInTheDocument();
-    expect(screen.getByText(`${s.record.wins}–${s.record.losses} · 24 matches`)).toBeInTheDocument();
+    const kpi = (await screen.findByText(`${s.record.wins}–${s.record.losses} · 24 matches`)).closest('.kpi') as HTMLElement;
+    expect(within(kpi).getByText(`${pct(s.record)}%`)).toBeInTheDocument();
     expect(screen.getByLabelText('Win rate by situation')).toBeInTheDocument();
     expect(screen.getAllByRole('table')).toHaveLength(2); // head-to-head and partners
   });

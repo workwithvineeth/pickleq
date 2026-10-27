@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { checkMatch, checkMomentum } from '../domain/scoring';
-import { sampleMatches, sampleRatings } from './sample';
+import { checkSession } from './training';
+import { sampleMatches, sampleRatings, sampleSessions } from './sample';
+import { streak } from '../domain/training';
 
 describe('Preview sample data', () => {
   const set = sampleMatches(new Date('2026-10-28T12:00:00'));
@@ -30,5 +32,12 @@ describe('Preview sample data', () => {
     const r = sampleRatings(new Date('2026-10-28T12:00:00'));
     expect(r.filter((x) => x.kind === 'singles')).toHaveLength(10);
     expect(r.filter((x) => x.kind === 'doubles').at(-1)?.value).toBe(3.82);
+  });
+  it('includes valid training sessions with an unbroken streak this week', () => {
+    const today = new Date('2026-10-28T12:00:00');
+    const list = sampleSessions(today);
+    expect(list.length).toBeGreaterThan(15);
+    for (const x of list) expect(checkSession(x)).toBeNull();
+    expect(streak(list, today)).toBeGreaterThanOrEqual(6);
   });
 });

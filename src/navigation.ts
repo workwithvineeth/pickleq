@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export type Tab = 'home' | 'matches' | 'train' | 'stats' | 'coach';
-export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'match' | 'edit' | 'details';
+export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'goals' | 'session-new' | 'session' | 'match' | 'edit' | 'details';
 export interface Route { name: RouteName; id?: string }
 
-const simple: RouteName[] = ['home', 'train', 'stats', 'coach', 'log', 'backfill', 'settings', 'trash', 'backup', 'ratings'];
-const withId: RouteName[] = ['match', 'edit', 'details'];
+const simple: RouteName[] = ['home', 'train', 'stats', 'coach', 'log', 'backfill', 'settings', 'trash', 'backup', 'ratings', 'goals', 'session-new'];
+const withId: RouteName[] = ['match', 'edit', 'details', 'session'];
 const optionalId: RouteName[] = ['matches'];
 export const TABS: Tab[] = ['home', 'matches', 'train', 'stats', 'coach'];
 

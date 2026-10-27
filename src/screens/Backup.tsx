@@ -106,6 +106,10 @@ export function Backup({ onBack }: { onBack: () => void }) {
         <h2 id="bk-h" style={{ fontSize: 18 }}>Back up</h2>
         <div className="small muted">{lastBackupText(last)}</div>
         {protectionText && <div className="small muted">Data on this phone: {protectionText}</div>}
+        <div className="notice notice-warn">
+          On iPhone: never delete the PICKLEQ icon without a backup, because removing it can erase its data.
+          Always open PICKLEQ from its icon, not from Safari: they keep separate data.
+        </div>
         <label className="label" htmlFor="bk-pw">Backup password</label>
         <input id="bk-pw" className="input" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
         <label className="label" htmlFor="bk-pw2">Type it again</label>

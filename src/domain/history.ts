@@ -4,7 +4,7 @@ import type { HistoryChange, Match } from './types';
 const label: Record<string, string> = {
   date: 'Date', type: 'Match type', category: 'Category', format: 'Format', people: 'Players',
   score: 'Score', momentum: 'Momentum', result: 'Result', tags: 'Tags', energy: 'Energy',
-  venue: 'Venue', setting: 'Indoor/outdoor', notes: 'Notes',
+  venue: 'Venue', setting: 'Indoor/outdoor', notes: 'Notes', shots: 'Shot ratings',
 };
 
 function people(m: Match): string {
@@ -31,6 +31,7 @@ function snapshot(m: Match): Record<string, string> {
     venue: m.venue ?? '',
     setting: m.setting ?? '',
     notes: m.notes ?? '',
+    shots: Object.entries(m.shotRatings ?? {}).map(([k, v]) => `${k} ${v}`).sort().join(', '),
   };
 }
 

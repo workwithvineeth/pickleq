@@ -2,7 +2,7 @@ import { formatLabel, momentumLabel, scoreLine } from '../domain/scoring';
 import type { Match } from '../domain/types';
 
 const HEADERS = ['Date', 'Result', 'Score', 'Type', 'Category', 'Format', 'Partner', 'Opponents', 'Opponent ratings',
-  'Momentum', 'Needs work', 'Went well', 'Energy', 'Venue', 'Indoor/outdoor', 'Notes', 'Details added', 'Backfilled'];
+  'Momentum', 'Needs work', 'Went well', 'Shot ratings (estimate)', 'Energy', 'Venue', 'Indoor/outdoor', 'Notes', 'Details added', 'Backfilled'];
 
 export function csvCell(v: string | number | undefined): string {
   const s = v === undefined ? '' : String(v);
@@ -27,6 +27,7 @@ export function matchesToCsv(matches: Match[]): string {
         m.games.map((g) => momentumLabel(g) ?? '').filter(Boolean).join('; '),
         tags.filter(([, v]) => v === 'needs-work').map(([t]) => t).join('; '),
         tags.filter(([, v]) => v === 'went-well').map(([t]) => t).join('; '),
+        Object.entries(m.shotRatings ?? {}).map(([k, v]) => `${k} ${v}`).join('; '),
         m.energy, m.venue, m.setting, m.notes,
         m.status === 'complete' ? 'Yes' : 'No', m.backfilled ? 'Yes' : 'No',
       ].map(csvCell).join(',');

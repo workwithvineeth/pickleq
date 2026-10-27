@@ -4,6 +4,11 @@ import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { MatchRow } from '../components/MatchRow';
 import { RatingCards } from '../components/RatingCards';
+import { InsightCard } from '../components/InsightCard';
+import { db } from '../db/db';
+import { activeSessions } from '../db/training';
+import { streak, weekTraining } from '../domain/training';
+import { useInsights } from '../hooks/useInsights';
 import { channel } from '../config';
 import { activeMatches } from '../db/matches';
 import { recordSummary, winPct, type WinLoss } from '../domain/record';
@@ -29,6 +34,11 @@ export function Home({ go }: { go: Go }) {
   const matches = useLiveQuery(() => activeMatches(), []);
   const summary = recordSummary(matches ?? []);
   const pct = winPct(summary.overall);
+  const sessions = useLiveQuery(() => activeSessions(), []) ?? [];
+  const hoursGoal = useLiveQuery(async () => (await db.goals.toArray()).find((g) => g.kind === 'weekly-hours')?.target, []);
+  const weekHours = Math.round((weekTraining(sessions).reduce((n, d) => n + d.minutes, 0) / 60) * 10) / 10;
+  const run = streak(sessions);
+  const top = useInsights()?.[0];
   const total = summary.overall.wins + summary.overall.losses;
   const last = lastBackupAt();
   const showBackup = backupDue(matches?.length ?? 0, last);
@@ -75,6 +85,18 @@ export function Home({ go }: { go: Go }) {
 
       <RatingCards go={go} />
 
+      <button type="button" className="rating-card" onClick={() => go('train')} aria-label={`Training this week: ${weekHours} hours. ${run}-day streak. Open training`}>
+        <span className="header" style={{ width: '100%' }}>
+          <span className="small muted">Training this week</span>
+          <span className="small" style={{ color: 'var(--win-fg)', fontWeight: 600 }}>{run}-day streak</span>
+        </span>
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 600 }}>{weekHours} h</span>
+          {hoursGoal ? <span className="small muted">of your {hoursGoal} h goal</span> : <span className="small muted">trained</span>}
+        </span>
+        {hoursGoal ? <span style={{ height: 6, background: 'var(--chart-grid)', borderRadius: 3, width: '100%', display: 'block' }}><span style={{ display: 'block', height: 6, borderRadius: 3, background: 'var(--chart-1)', width: `${Math.min(100, (weekHours / hoursGoal) * 100)}%` }} /></span> : null}
+      </button>
+
       {matches && matches.length > 0 && (
         <section className="card" aria-label="Recent form">
           <div className="header" style={{ marginBottom: 8 }}>
@@ -90,6 +112,8 @@ export function Home({ go }: { go: Go }) {
           </div>
         </section>
       )}
+
+      {top && <InsightCard insight={top} action={<button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('coach')}>See all insights</button>} />}
 
       {matches && matches.length === 0 && (
         <EmptyState icon="ball" title="Log your first match"

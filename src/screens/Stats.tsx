@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
+import type { Match } from '../domain/types';
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Chips, Segmented } from '../components/Controls';
 import { EmptyState } from '../components/EmptyState';
@@ -12,6 +13,7 @@ import {
   type PersonRecord, type Range, type TypeFilter,
 } from '../domain/stats';
 import type { RatingEntry } from '../domain/types';
+import { shotAverages, tagStats, taggedMatches } from '../domain/insights';
 import type { Go } from '../navigation';
 
 const ranges: { value: Range; label: string }[] = [
@@ -211,10 +213,70 @@ export function Stats({ go }: { go: Go }) {
             )}
           </section>
 
+          <TagsSection matches={matches} />
+          <ShotsSection matches={matches} />
+
           <PeopleTable title="Head-to-head" rows={headToHead(matches)} empty="Name your opponents when logging to see this." />
           {type !== 'singles' && <PeopleTable title="Best partners" rows={partners(matches)} empty="Name your doubles partners to see this." />}
         </>
       )}
     </main>
+  );
+}
+
+function TagsSection({ matches }: { matches: Match[] }) {
+  const tagged = taggedMatches(matches);
+  const losses = tagged.filter((m) => !m.won).length;
+  const wins = tagged.length - losses;
+  const rows = tagStats(matches).filter((t) => t.needsWork + t.wentWell > 0).sort((a, b) => b.needsWork + b.wentWell - (a.needsWork + a.wentWell)).slice(0, 8);
+  const max = Math.max(1, ...rows.map((t) => Math.max(t.needsWork, t.wentWell)));
+  return (
+    <section className="chart-card" aria-label="Tags: needs work and went well">
+      <h2>Tags · needs work vs went well</h2>
+      {rows.length === 0 ? <p className="small muted" style={{ margin: 0 }}>Tag your matches after playing to see your patterns here.</p> : (
+        <>
+          <div className="legend" aria-hidden="true"><span><i style={{ background: 'var(--chart-1)' }} />Needs work</span><span><i style={{ background: 'var(--chart-2)' }} />Went well</span></div>
+          <div role="list" className="section" style={{ gap: 12 }}>
+            {rows.map((t) => (
+              <div key={t.tag} role="listitem" aria-label={`${t.tag}: needs work ${t.needsWork} times (${t.needsInLosses} in losses), went well ${t.wentWell} times`}>
+                <div className="small" style={{ fontWeight: 500 }}>{t.tag}</div>
+                <div className="small muted">Needs work in {t.needsInLosses} of {losses} losses and {t.needsInWins} of {wins} wins</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 24px', gap: 6, alignItems: 'center', marginTop: 4 }}>
+                  <span className="track" style={{ height: 8, background: 'var(--chart-grid)', borderRadius: 4, display: 'block' }}><span style={{ display: 'block', height: 8, borderRadius: '0 4px 4px 0', background: 'var(--chart-1)', width: `${(t.needsWork / max) * 100}%` }} /></span>
+                  <span className="small" style={{ textAlign: 'right' }}>{t.needsWork}</span>
+                  <span className="track" style={{ height: 8, background: 'var(--chart-grid)', borderRadius: 4, display: 'block' }}><span style={{ display: 'block', height: 8, borderRadius: '0 4px 4px 0', background: 'var(--chart-2)', width: `${(t.wentWell / max) * 100}%` }} /></span>
+                  <span className="small" style={{ textAlign: 'right' }}>{t.wentWell}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <span className="small muted">From {tagged.length} matches with details. Tags are your own observations.</span>
+        </>
+      )}
+    </section>
+  );
+}
+
+function ShotsSection({ matches }: { matches: Match[] }) {
+  const rows = shotAverages(matches).filter((s) => s.n > 0);
+  return (
+    <section className="chart-card" aria-label="Shot ratings, your estimates">
+      <div className="header"><h2>Shot ratings</h2><span className="pill pill-warn">Your estimates, 1–5</span></div>
+      {rows.length === 0 ? <p className="small muted" style={{ margin: 0 }}>Rate your shots after a match (optional) to see them here. Measured drill results are on the Train tab.</p> : (
+        <div role="list" className="section" style={{ gap: 8 }}>
+          {rows.map((s) => {
+            const trend = s.recent !== null && s.earlier !== null ? Math.round((s.recent - s.earlier) * 10) / 10 : null;
+            return (
+              <div key={s.shot} className="hbar" role="listitem" style={{ gridTemplateColumns: '112px minmax(0,1fr) 92px' }} aria-label={`${s.shot}: average ${s.average} out of 5 from ${s.n} matches`}>
+                <span>{s.shot}</span>
+                <span className="track" aria-hidden="true"><span className="fill" style={{ display: 'block', width: `${((s.average ?? 0) / 5) * 100}%`, background: 'var(--chart-2)' }} /></span>
+                <span className="val"><b style={{ fontWeight: 600 }}>{s.average}</b> <span className="muted">n={s.n}{trend ? ` ${trend > 0 ? '▲' : '▼'}` : ''}</span></span>
+              </div>
+            );
+          })}
+          <span className="small muted">▲/▼ compares your last 5 ratings with earlier ones. These are estimates, not measurements.</span>
+        </div>
+      )}
+    </section>
   );
 }

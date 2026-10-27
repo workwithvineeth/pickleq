@@ -5,7 +5,7 @@ import { Icon } from '../components/Icon';
 import { db } from '../db/db';
 import { activeMatches, updateMatch } from '../db/matches';
 import { scoreLine } from '../domain/scoring';
-import { TAGS, type Setting, type TagMark } from '../domain/types';
+import { RATED_SHOTS, TAGS, type Setting, type TagMark } from '../domain/types';
 import type { Go } from '../navigation';
 
 const next: Record<string, TagMark | undefined> = { none: 'needs-work', 'needs-work': 'went-well', 'went-well': undefined };
@@ -20,6 +20,8 @@ export function MatchDetails({ matchId, go, onClose }: { matchId: string; go: Go
   const [venue, setVenue] = useState('');
   const [setting, setSetting] = useState<Setting | undefined>();
   const [notes, setNotes] = useState('');
+  const [shots, setShots] = useState<Record<string, number>>({});
+  const [showShots, setShowShots] = useState(false);
 
   useEffect(() => {
     if (!match || loaded) return;
@@ -28,6 +30,8 @@ export function MatchDetails({ matchId, go, onClose }: { matchId: string; go: Go
     setVenue(match.venue ?? '');
     setSetting(match.setting);
     setNotes(match.notes ?? '');
+    setShots(match.shotRatings ?? {});
+    setShowShots(Object.keys(match.shotRatings ?? {}).length > 0);
     setLoaded(true);
   }, [match, loaded]);
 
@@ -41,6 +45,7 @@ export function MatchDetails({ matchId, go, onClose }: { matchId: string; go: Go
     const n = notes.trim();
     await updateMatch(matchId, {
       tags, energy, venue: t || undefined, setting, notes: n || undefined,
+      shotRatings: Object.keys(shots).length ? shots : undefined,
       status: complete ? 'complete' : match!.status,
     });
     if (complete && wasIncomplete) go('match', matchId, { replace: true });
@@ -86,6 +91,24 @@ export function MatchDetails({ matchId, go, onClose }: { matchId: string; go: Go
         <input className="input" aria-label="Venue" list="venues" placeholder="Club or court name" value={venue} onChange={(e) => setVenue(e.target.value)} />
         <Chips label="Indoor or outdoor" value={setting} options={[{ value: 'indoor' as Setting, label: 'Indoor' }, { value: 'outdoor' as Setting, label: 'Outdoor' }]} onChange={(v) => setSetting(setting === v ? undefined : v)} />
       </Field>
+
+      <section className="card section" aria-label="Shot ratings">
+        <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} aria-expanded={showShots} onClick={() => setShowShots((v) => !v)}>
+          {showShots ? 'Hide shot ratings' : 'Rate your shots (optional)'}
+        </button>
+        {showShots && (
+          <>
+            <div className="small muted">Your own estimate, 1 = poor, 5 = excellent. Shown separately from measured drill results.</div>
+            {RATED_SHOTS.map((shot) => (
+              <div key={shot} className="section" style={{ gap: 4 }}>
+                <div className="small">{shot}</div>
+                <Chips label={`${shot} rating`} value={shots[shot]} options={[1, 2, 3, 4, 5].map((v) => ({ value: v, label: String(v) }))}
+                  onChange={(v) => setShots((cur) => { const c = { ...cur }; if (c[shot] === v) delete c[shot]; else c[shot] = v; return c; })} />
+              </div>
+            ))}
+          </>
+        )}
+      </section>
 
       <Field label="Notes">
         <textarea className="input" aria-label="Notes" placeholder="Their lefty kept attacking my backhand…" value={notes} onChange={(e) => setNotes(e.target.value)} />

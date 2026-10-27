@@ -80,6 +80,12 @@ export function MatchView({ matchId, go, onBack }: { matchId: string; go: Go; on
               </div>
             ) : <div className="small muted">None</div>}
           </div>
+          {match.shotRatings && Object.keys(match.shotRatings).length > 0 && (
+            <div className="kv" style={{ display: 'block' }}>
+              <div>Shot ratings <span className="pill pill-warn">Your estimate</span></div>
+              <div className="small muted">{Object.entries(match.shotRatings).map(([k, v]) => `${k} ${v}/5`).join(' · ')}</div>
+            </div>
+          )}
           {match.notes && <div className="kv" style={{ display: 'block' }}><div>Notes</div><div className="small muted" style={{ whiteSpace: 'pre-wrap' }}>{match.notes}</div></div>}
         </section>
       )}

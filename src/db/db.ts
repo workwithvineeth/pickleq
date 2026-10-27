@@ -1,11 +1,14 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { channel, databaseName } from '../config';
-import type { Match, Player, RatingEntry } from '../domain/types';
+import type { DrillCategory, Goal, Match, Player, RatingEntry, TrainingSession } from '../domain/types';
 
 export class PickleqDB extends Dexie {
   matches!: EntityTable<Match, 'id'>;
   players!: EntityTable<Player, 'id'>;
   ratings!: EntityTable<RatingEntry, 'id'>;
+  sessions!: EntityTable<TrainingSession, 'id'>;
+  drillCategories!: EntityTable<DrillCategory, 'id'>;
+  goals!: EntityTable<Goal, 'id'>;
 
   constructor(name: string) {
     super(name);
@@ -15,6 +18,11 @@ export class PickleqDB extends Dexie {
     });
     this.version(2).stores({
       ratings: 'id, kind, date',
+    });
+    this.version(3).stores({
+      sessions: 'id, date, type',
+      drillCategories: 'id, &nameKey',
+      goals: 'id, kind',
     });
   }
 }

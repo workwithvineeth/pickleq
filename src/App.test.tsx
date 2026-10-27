@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './db/db';
@@ -25,7 +25,7 @@ describe('App shell', () => {
     render(<App />);
     for (const [tab, heading] of [['Matches', 'Matches'], ['Train', 'Training'], ['Stats', 'Stats'], ['Coach', 'Coach']] as const) {
       await user.click(screen.getByRole('button', { name: tab }));
-      expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument());
       expect(screen.getByRole('button', { name: tab })).toHaveAttribute('aria-current', 'page');
     }
   });

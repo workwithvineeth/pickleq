@@ -4,10 +4,13 @@ import { Icon } from './components/Icon';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { requestPersistentStorage } from './backup/status';
 import { purgeOldTrash } from './db/matches';
+import { purgeOldSessions } from './db/training';
 import { TABS, useRoute, type Tab } from './navigation';
 import { Backup } from './screens/Backup';
 import { Coach } from './screens/Coach';
+import { Goals } from './screens/Goals';
 import { Home } from './screens/Home';
+import { LogSession } from './screens/LogSession';
 import { LogMatch } from './screens/LogMatch';
 import { MatchDetails } from './screens/MatchDetails';
 import { Matches } from './screens/Matches';
@@ -26,6 +29,7 @@ export default function App() {
 
   useEffect(() => {
     purgeOldTrash().catch(() => {});
+    purgeOldSessions().catch(() => {});
     requestPersistentStorage().catch(() => {});
   }, []);
 
@@ -33,9 +37,9 @@ export default function App() {
     <div className="app">
       {route.name === 'home' && <Home go={go} />}
       {route.name === 'matches' && <Matches go={go} key={route.id ?? 'all'} initialFilter={route.id === 'incomplete' ? 'incomplete' : 'all'} />}
-      {route.name === 'train' && <Train />}
+      {route.name === 'train' && <Train go={go} />}
       {route.name === 'stats' && <Suspense fallback={<main className="screen"><h1 className="screen-title">Stats</h1></main>}><Stats go={go} /></Suspense>}
-      {route.name === 'coach' && <Coach />}
+      {route.name === 'coach' && <Coach go={go} />}
       {route.name === 'log' && <LogMatch key="log" mode="new" go={go} onClose={back} />}
       {route.name === 'backfill' && <LogMatch key="backfill" mode="backfill" go={go} onClose={back} />}
       {route.name === 'edit' && route.id && <LogMatch key={`edit-${route.id}`} mode="edit" matchId={route.id} go={go} onClose={back} />}
@@ -45,6 +49,9 @@ export default function App() {
       {route.name === 'settings' && <Settings onBack={back} go={go} />}
       {route.name === 'backup' && <Backup onBack={back} />}
       {route.name === 'ratings' && <Ratings onBack={back} />}
+      {route.name === 'goals' && <Goals onBack={back} />}
+      {route.name === 'session-new' && <LogSession key="new-session" go={go} onClose={back} />}
+      {route.name === 'session' && route.id && <LogSession key={route.id} sessionId={route.id} go={go} onClose={back} />}
 
       {isTab && (
         <>
