@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { backupDue, daysSince, lastBackupAt } from '../backup/status';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { MatchRow } from '../components/MatchRow';
@@ -28,6 +29,9 @@ export function Home({ go }: { go: Go }) {
   const summary = recordSummary(matches ?? []);
   const pct = winPct(summary.overall);
   const total = summary.overall.wins + summary.overall.losses;
+  const last = lastBackupAt();
+  const showBackup = backupDue(matches?.length ?? 0, last);
+  const ago = daysSince(last);
 
   return (
     <main className="screen" aria-labelledby="home-title">
@@ -47,6 +51,12 @@ export function Home({ go }: { go: Go }) {
       {summary.incomplete > 0 && (
         <button type="button" className="banner-btn" onClick={() => go('matches', 'incomplete')}>
           <span>{summary.incomplete} {summary.incomplete === 1 ? 'match needs' : 'matches need'} details</span><span>Finish ›</span>
+        </button>
+      )}
+
+      {showBackup && (
+        <button type="button" className="banner-btn" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }} onClick={() => go('backup')}>
+          <span>{ago === null ? 'Matches not backed up yet' : `Last backup ${ago} days ago`}</span><span>Back up ›</span>
         </button>
       )}
 

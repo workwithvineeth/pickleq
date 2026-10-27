@@ -15,3 +15,9 @@ if (!window.matchMedia) {
     addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
   });
 }
+
+// jsdom has no object URLs; the download fallback only needs them to exist.
+if (!URL.createObjectURL) {
+  URL.createObjectURL = () => 'blob:test';
+  URL.revokeObjectURL = () => {};
+}

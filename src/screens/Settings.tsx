@@ -3,8 +3,9 @@ import { Icon } from '../components/Icon';
 import { appVersion, channel } from '../config';
 import { clearAllData, loadSampleData } from '../db/sample';
 import { isInstalled } from '../install';
+import type { Go } from '../navigation';
 
-export function Settings({ onBack }: { onBack: () => void }) {
+export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
   const installed = isInstalled();
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -22,6 +23,9 @@ export function Settings({ onBack }: { onBack: () => void }) {
         <div className="row"><span>Installed on home screen</span><span className="muted">{installed ? 'Yes' : 'No'}</span></div>
         <div className="row"><span>Where your data lives</span><span className="muted">This phone only</span></div>
       </section>
+      <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('backup')}>
+        <span>Backup, restore and export</span><span>›</span>
+      </button>
       {channel === 'preview' && (
         <section className="card section" aria-label="Preview test data">
           <h2 style={{ fontSize: 18 }}>Preview test data</h2>

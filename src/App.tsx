@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import { BottomNav } from './components/BottomNav';
 import { Icon } from './components/Icon';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { requestPersistentStorage } from './backup/status';
 import { purgeOldTrash } from './db/matches';
 import { TABS, useRoute, type Tab } from './navigation';
+import { Backup } from './screens/Backup';
 import { Coach } from './screens/Coach';
 import { Home } from './screens/Home';
 import { LogMatch } from './screens/LogMatch';
@@ -21,6 +23,7 @@ export default function App() {
 
   useEffect(() => {
     purgeOldTrash().catch(() => {});
+    requestPersistentStorage().catch(() => {});
   }, []);
 
   return (
@@ -36,7 +39,8 @@ export default function App() {
       {route.name === 'details' && route.id && <MatchDetails key={route.id} matchId={route.id} go={go} onClose={back} />}
       {route.name === 'match' && route.id && <MatchView key={route.id} matchId={route.id} go={go} onBack={back} />}
       {route.name === 'trash' && <Trash onBack={back} />}
-      {route.name === 'settings' && <Settings onBack={back} />}
+      {route.name === 'settings' && <Settings onBack={back} go={go} />}
+      {route.name === 'backup' && <Backup onBack={back} />}
 
       {isTab && (
         <>
