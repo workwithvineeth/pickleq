@@ -125,6 +125,13 @@ describe('desk view', () => {
     expect(call).toBeDefined();
     const busy = new Set([...live.sideA, ...live.sideB]);
     expect([...(call as ClubMatch).sideA, ...(call as ClubMatch).sideB].some((p) => busy.has(p))).toBe(false);
+    // It only moves matches stuck behind a busy court.
+    expect((call as ClubMatch).court).toBe(live.court);
+  });
+
+  it('leaves a match on its own court when that court is free', () => {
+    const t = event(4, 1, 0);
+    expect(nextMatchToCall(t.matches)).toBeUndefined();
   });
 });
 

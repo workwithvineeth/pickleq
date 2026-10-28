@@ -240,11 +240,15 @@ export function playersOnCourt(matches: ClubMatch[]): Set<string> {
   return new Set(matches.filter((m) => m.status === 'live').flatMap((m) => [...m.sideA, ...m.sideB]));
 }
 
-/** The earliest match waiting to be played whose players aren't on another court, for calling it to a free court. */
+/**
+ * For a free court: the earliest waiting match that's stuck, because its own court is still busy (or it has none),
+ * and whose players aren't on another court. Matches whose own court is free stay there.
+ */
 export function nextMatchToCall(matches: ClubMatch[], exceptCourt?: number): ClubMatch | undefined {
   const busy = playersOnCourt(matches);
+  const courtsInUse = new Set(matches.filter((m) => m.status === 'live').map((m) => m.court));
   return matches
-    .filter((m) => m.status === 'scheduled' && m.court !== exceptCourt && ![...m.sideA, ...m.sideB].some((p) => busy.has(p)))
+    .filter((m) => m.status === 'scheduled' && m.court !== exceptCourt && (m.court === undefined || courtsInUse.has(m.court)) && ![...m.sideA, ...m.sideB].some((p) => busy.has(p)))
     .sort(bySlot)[0];
 }
 
