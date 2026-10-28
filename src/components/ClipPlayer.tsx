@@ -57,6 +57,9 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
     let prevNow = -1;
     const playSection = () => {
       const { start, end } = range.current;
+      // YouTube starts the section itself; only watch the end (and give the load a few seconds to settle).
+      loopState.reachedStart = true;
+      loopState.lastSeek = Date.now() + 1500;
       try { player.current?.loadVideoById({ videoId: clip.videoId, startSeconds: start, ...(end !== undefined ? { endSeconds: end } : {}) }); }
       catch { player.current?.seekTo(start, true); player.current?.playVideo(); }
     };
