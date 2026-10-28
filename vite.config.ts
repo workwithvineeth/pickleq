@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 /// <reference types="vitest/config" />
 import { readFileSync } from 'node:fs';
 import react from '@vitejs/plugin-react';
@@ -38,6 +39,11 @@ const cspPlugin = (csp: string) => ({
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
+/** The commit being built (the checked-out branch, not the workflow's), or 'local'. */
+function buildId(): string {
+  try { return execSync('git rev-parse --short=7 HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || 'local'; } catch { return 'local'; }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const channel = env.VITE_CHANNEL === 'live' ? 'live' : 'preview';
@@ -52,7 +58,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
       // Short build code shown in Settings, so you can tell whether a phone has the latest version.
-      __BUILD_ID__: JSON.stringify((process.env.GITHUB_SHA ?? 'local').slice(0, 7)),
+      __BUILD_ID__: JSON.stringify(buildId()),
     },
     plugins: [
       react(),
