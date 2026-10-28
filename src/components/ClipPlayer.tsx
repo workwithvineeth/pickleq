@@ -52,6 +52,7 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
     if (phase === 'offline') return;
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | undefined;
+    let enforceUntil = 0;
     loadYouTubeApi().then((YT) => {
       if (cancelled || !host.current) return;
       const el = document.createElement('div');
@@ -62,17 +63,22 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         width: '100%', height: '100%',
         playerVars: { start: clip.start, playsinline: 1, rel: 0, autoplay: 1, origin: window.location.origin },
         events: {
-          onReady: () => { if (!cancelled) { setPhase('ready'); player.current?.playVideo(); } },
+          // YouTube doesn't always honour the start parameter, so jump to the clip's start ourselves.
+          onReady: () => { if (!cancelled) { setPhase('ready'); enforceUntil = Date.now() + 5000; player.current?.seekTo(range.current.start, true); player.current?.playVideo(); } },
           onError: () => { if (!cancelled) setPhase('error'); },
         },
       });
       // Keep playback inside the clip: loop back to the start, or pause at the end.
       timer = setInterval(() => {
         const p = player.current; const { start, end } = range.current;
-        if (!p || end === undefined) return;
+        if (!p) return;
         let now = 0;
         try { now = p.getCurrentTime(); } catch { return; }
-        if (now >= end) { if (loopRef.current) p.seekTo(start, true); else p.pauseVideo(); }
+        // Right after starting or looping, make sure we really are at the start (you can still scrub earlier later on).
+        if (Date.now() < enforceUntil && now < start - 1) p.seekTo(start, true);
+        else if (end !== undefined && now >= end) {
+          if (loopRef.current) { p.seekTo(start, true); enforceUntil = Date.now() + 3000; } else p.pauseVideo();
+        }
       }, 250);
     }).catch(() => { if (!cancelled) setPhase('error'); });
     return () => { cancelled = true; if (timer) clearInterval(timer); try { player.current?.destroy(); } catch { /* already gone */ } player.current = null; };
