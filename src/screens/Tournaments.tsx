@@ -22,6 +22,8 @@ const structureOptions: { value: Structure; label: string }[] = [{ value: 'round
 const structureLabel = (s: Structure) => structureOptions.find((o) => o.value === s)!.label;
 const typeLabel = (t: MatchType) => typeOptions.find((o) => o.value === t)!.label;
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 function Back({ onBack }: { onBack: () => void }) {
   return <button type="button" className="icon-btn" aria-label="Back" onClick={onBack}><Icon name="back" size={20} /></button>;
 }
@@ -194,7 +196,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
 
       <Checklist t={t} collapsed={w.kind === 'past'} />
 
-      {t.events.map((ev) => <EventCard key={ev.id} t={t} ev={ev} matches={eventMatches(matches, t, ev.id)} go={go} />)}
+      {t.events.map((ev) => <EventCard key={ev.id} t={t} ev={ev} past={w.kind === 'past'} matches={eventMatches(matches, t, ev.id)} go={go} />)}
 
       {mine.length > 0 && (
         <section className="card section" aria-label="Tournament summary">
@@ -210,7 +212,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
             </div>
           ))}
           <div className="small muted">
-            {sum.events.reduce((n, e) => n + e.close, 0)} close games (3 points or fewer) · {sum.events.reduce((n, e) => n + e.cameBack, 0)} comebacks · {sum.events.reduce((n, e) => n + e.lostLead, 0)} lost leads
+            {plural(sum.events.reduce((n, e) => n + e.close, 0), 'close game')} (3 points or fewer) · {plural(sum.events.reduce((n, e) => n + e.cameBack, 0), 'comeback')} · {plural(sum.events.reduce((n, e) => n + e.lostLead, 0), 'lost lead')}
           </div>
           <Notes t={t} />
         </section>
@@ -274,7 +276,7 @@ function Checklist({ t, collapsed }: { t: Tournament; collapsed: boolean }) {
   );
 }
 
-function EventCard({ t, ev, matches, go }: { t: Tournament; ev: TournamentEvent; matches: Match[]; go: Go }) {
+function EventCard({ t, ev, matches, past, go }: { t: Tournament; ev: TournamentEvent; matches: Match[]; past: boolean; go: Go }) {
   const [logging, setLogging] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addingResult, setAddingResult] = useState(false);
@@ -311,7 +313,7 @@ function EventCard({ t, ev, matches, go }: { t: Tournament; ev: TournamentEvent;
 
       <div className="section" style={{ gap: 6 }}>
         <div className="header"><span className="label">Schedule</span><button type="button" className="link-btn" onClick={() => setAdding(!adding)}>{adding ? 'Close' : 'Add a time'}</button></div>
-        {slots.length === 0 && !adding && <span className="small muted">Add your match times so the next one shows on Home.</span>}
+        {slots.length === 0 && !adding && !past && <span className="small muted">Add your match times so the next one shows on Home.</span>}
         {slots.map((s) => {
           const m = bySlot.get(s.id);
           return (
