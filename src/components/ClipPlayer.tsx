@@ -62,7 +62,8 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         host: 'https://www.youtube-nocookie.com',
         videoId: clip.videoId,
         width: '100%', height: '100%',
-        playerVars: { start: clip.start, playsinline: 1, rel: 0, autoplay: 1, origin: window.location.origin },
+        // No 'start' here: YouTube often ignores it but still echoes it as the first position, which hides the real one.
+        playerVars: { playsinline: 1, rel: 0, autoplay: 1, origin: window.location.origin },
         events: {
           onReady: () => { if (!cancelled) { setPhase('ready'); player.current?.playVideo(); } },
           onError: () => { if (!cancelled) setPhase('error'); },
