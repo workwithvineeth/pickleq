@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon';
 import { MatchRow } from '../components/MatchRow';
 import { RatingCards } from '../components/RatingCards';
 import { InsightCard } from '../components/InsightCard';
+import { Logo } from '../components/Logo';
 import { db } from '../db/db';
 import { activeSessions } from '../db/training';
 import { streak, weekTraining } from '../domain/training';
@@ -48,9 +49,12 @@ export function Home({ go }: { go: Go }) {
   return (
     <main className="screen" aria-labelledby="home-title">
       <header className="header">
-        <div>
-          <h1 id="home-title" className="brand">PICKLEQ</h1>
-          <div className="small muted">{today()}</div>
+        <div className="brand-row">
+          <Logo size={44} />
+          <div>
+            <h1 id="home-title" className="brand">PICKLEQ</h1>
+            <div className="small muted">{today()}</div>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {channel === 'preview' && <span className="badge badge-preview">Preview</span>}

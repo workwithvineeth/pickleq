@@ -12,6 +12,7 @@ describe('App shell', () => {
   it('opens on Home with the brand, an empty record and all five tabs', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: 'PICKLEQ' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'PICKLEQ logo' })).toBeInTheDocument();
     expect(screen.getByLabelText('Overall record')).toHaveTextContent('0–0');
     const nav = screen.getByRole('navigation', { name: 'Main' });
     for (const label of ['Home', 'Matches', 'Train', 'Stats', 'Coach']) {
