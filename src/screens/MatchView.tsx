@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { Icon } from '../components/Icon';
+import { TournamentBadge } from './Tournaments';
 import { categoryLabel, shortDate, typeLabel } from '../components/MatchRow';
 import { db } from '../db/db';
 import { moveToTrash } from '../db/matches';
@@ -40,6 +41,8 @@ export function MatchView({ matchId, go, onBack }: { matchId: string; go: Go; on
         {ended && <span className="pill">{ended}</span>}
         {match.backfilled && <span className="pill">Backfilled</span>}
       </div>
+
+      <TournamentBadge match={match} go={go} />
 
       {match.status === 'incomplete' && (
         <button type="button" className="banner-btn" onClick={() => go('details', match.id)}>

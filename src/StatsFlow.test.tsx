@@ -18,14 +18,14 @@ beforeEach(async () => {
 });
 
 describe('stats and ratings', () => {
-  it('shows stats that match the calculation for 24 sample matches', async () => {
+  it('shows stats that match the calculation for 32 sample matches (24 plus 8 tournament matches)', async () => {
     await loadSampleData();
     const all = await activeMatches();
-    expect(all).toHaveLength(24);
+    expect(all).toHaveLength(32);
     const s = summarize(all);
     window.location.hash = '#/stats';
     render(<App />);
-    const kpi = (await screen.findByText(`${s.record.wins}–${s.record.losses} · 24 matches`)).closest('.kpi') as HTMLElement;
+    const kpi = (await screen.findByText(`${s.record.wins}–${s.record.losses} · 32 matches`)).closest('.kpi') as HTMLElement;
     expect(within(kpi).getByText(`${pct(s.record)}%`)).toBeInTheDocument();
     expect(screen.getByLabelText('Win rate by situation')).toBeInTheDocument();
     expect(screen.getAllByRole('table')).toHaveLength(2); // head-to-head and partners

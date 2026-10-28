@@ -2,6 +2,8 @@ import { checkMatch } from '../domain/scoring';
 import { TAGS, type Category, type Format, type Game, type Goal, type MatchType, type Participant, type RatingEntry, type TagMark, type TrainingSession } from '../domain/types';
 import { db, newId, type PickleqDB } from './db';
 import { addMatch, type NewMatch } from './matches';
+import { starterChecklist } from './tournaments';
+import type { Tournament } from '../domain/tournaments';
 
 /** Small seeded random generator so the sample set is the same every time. */
 function rng(seed: number) {
@@ -180,11 +182,54 @@ export async function loadSampleData(d: PickleqDB = db): Promise<number> {
   await d.ratings.bulkPut(sampleRatings());
   await d.sessions.bulkPut(sampleSessions());
   await d.goals.bulkPut(sampleGoals());
-  return items.length;
+  const extra = await addSampleTournaments(d);
+  return items.length + extra;
+}
+
+/** One finished tournament with its matches, and one coming up with a schedule. Preview only. */
+export async function addSampleTournaments(d: PickleqDB = db, today = new Date()): Promise<number> {
+  const g = (you: number, them: number, momentum: Game['momentum'] = 'neither', fromYou?: number, fromThem?: number): Game => ({ you, them, momentum, fromYou, fromThem });
+  const md = { id: newId(), name: 'Men’s doubles 3.5–4.0', type: 'doubles' as MatchType, format: { pointsTo: 11, bestOf: 1, scoring: 'sideout' } as Format, partnerName: 'Dev', structure: 'pools-knockout' as const,
+    teams: [{ id: newId(), name: 'Arjun / Rohan' }, { id: newId(), name: 'Sameer / Ali' }, { id: newId(), name: 'Om / Nikhil' }], otherResults: [] as Tournament['events'][number]['otherResults'], schedule: [], placement: '3' as const };
+  md.otherResults = [
+    { id: newId(), teamA: md.teams[0].id, teamB: md.teams[1].id, games: [{ a: 11, b: 8 }] },
+    { id: newId(), teamA: md.teams[0].id, teamB: md.teams[2].id, games: [{ a: 11, b: 4 }] },
+    { id: newId(), teamA: md.teams[1].id, teamB: md.teams[2].id, games: [{ a: 9, b: 11 }] },
+  ];
+  const mx = { id: newId(), name: 'Mixed doubles 3.5', type: 'mixed' as MatchType, format: { pointsTo: 11, bestOf: 1, scoring: 'sideout' } as Format, partnerName: 'Priya', structure: 'round-robin' as const,
+    teams: [{ id: newId(), name: 'Kavya / Ravi' }, { id: newId(), name: 'Isha / Neel' }], otherResults: [], schedule: [], poolPosition: 2 };
+  const past: Tournament = { id: newId(), name: 'Bengaluru Open', startDate: daysAgo(17, today), endDate: daysAgo(16, today), venue: 'Indiranagar Arena', events: [md, mx],
+    checklist: starterChecklist().map((c) => ({ ...c, done: true })), notes: 'Pool went well. Lost the semi from 8–5 up; work on closing out.', createdAt: 1, updatedAt: 1 };
+  const upcomingStart = daysAgo(-10, today);
+  const ev = { id: newId(), name: 'Men’s doubles 4.0', type: 'doubles' as MatchType, format: { pointsTo: 11, bestOf: 1, scoring: 'rally' } as Format, partnerName: 'Dev', structure: 'pools-knockout' as const,
+    teams: [{ id: newId(), name: 'Kiran / Sameer' }, { id: newId(), name: 'Arjun / Om' }], otherResults: [], schedule: [] as Tournament['events'][number]['schedule'] };
+  ev.schedule = [
+    { id: newId(), at: `${upcomingStart}T09:30`, stage: 'pool', teamId: ev.teams[0].id, court: '2' },
+    { id: newId(), at: `${upcomingStart}T11:00`, stage: 'pool', teamId: ev.teams[1].id, court: '4' },
+  ];
+  const upcoming: Tournament = { id: newId(), name: 'Chennai Pickleball Classic', startDate: upcomingStart, endDate: upcomingStart, venue: 'Anna Nagar Sports Club', events: [ev],
+    checklist: starterChecklist().map((c, i) => ({ ...c, done: i < 3 })), createdAt: 2, updatedAt: 2 };
+  await d.tournaments.bulkPut([past, upcoming]);
+
+  const who = (names: string[]): Participant[] => [{ name: 'Dev', role: 'partner' }, ...names.map((n) => ({ name: n, role: 'opponent' as const, strength: 'equal' as const }))];
+  const base = { type: 'doubles' as MatchType, category: 'tournament' as Category, format: md.format, outcome: 'played' as const, status: 'complete' as const, backfilled: false, tags: {}, venue: 'Indiranagar Arena' };
+  const link = (stage: 'pool' | 'knockout', extra: object) => ({ tournamentId: past.id, eventId: md.id, stage, ...extra });
+  const list: NewMatch[] = [
+    { ...base, date: past.startDate, participants: who(['Arjun', 'Rohan']), games: [g(11, 9)], won: true, tournament: link('pool', { teamId: md.teams[0].id }) },
+    { ...base, date: past.startDate, participants: who(['Sameer', 'Ali']), games: [g(11, 6, 'dominated')], won: true, tournament: link('pool', { teamId: md.teams[1].id }) },
+    { ...base, date: past.startDate, participants: who(['Om', 'Nikhil']), games: [g(12, 10, 'came-back', 5, 9)], won: true, tournament: link('pool', { teamId: md.teams[2].id }) },
+    { ...base, date: past.endDate, participants: who(['Neel', 'Isha']), games: [g(11, 7)], won: true, tournament: link('knockout', { round: 'Quarterfinal' }) },
+    { ...base, date: past.endDate, participants: who(['Kiran', 'Sameer']), games: [g(9, 11, 'lost-lead', 8, 5)], won: false, tournament: link('knockout', { round: 'Semifinal' }) },
+    { ...base, date: past.endDate, participants: who(['Arjun', 'Rohan']), games: [g(11, 8)], won: true, tournament: link('knockout', { round: 'Bronze match' }) },
+    { ...base, type: 'mixed', date: past.endDate, participants: [{ name: 'Priya', role: 'partner' }, { name: 'Kavya', role: 'opponent', strength: 'weaker' }, { name: 'Ravi', role: 'opponent', strength: 'weaker' }], games: [g(11, 4)], won: true, tournament: { tournamentId: past.id, eventId: mx.id, stage: 'pool', teamId: mx.teams[0].id } },
+    { ...base, type: 'mixed', date: past.endDate, participants: [{ name: 'Priya', role: 'partner' }, { name: 'Isha', role: 'opponent', rating: 3.8 }, { name: 'Neel', role: 'opponent', strength: 'stronger' }], games: [g(8, 11)], won: false, tournament: { tournamentId: past.id, eventId: mx.id, stage: 'pool', teamId: mx.teams[1].id } },
+  ];
+  for (const m of list) await addMatch(m, d);
+  return list.length;
 }
 
 export async function clearAllData(d: PickleqDB = db): Promise<void> {
-  await d.transaction('rw', [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals], async () => {
-    for (const t of [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals]) await t.clear();
+  await d.transaction('rw', [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals, d.tournaments], async () => {
+    for (const t of [d.matches, d.players, d.ratings, d.sessions, d.drillCategories, d.goals, d.tournaments]) await t.clear();
   });
 }

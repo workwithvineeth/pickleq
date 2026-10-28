@@ -32,7 +32,10 @@ export function Matches({ go, initialFilter = 'all' }: { go: Go; initialFilter?:
     <main className="screen">
       <div className="header">
         <h1 className="screen-title">Matches</h1>
-        <button type="button" className="link-btn" onClick={() => go('trash')}>Trash</button>
+        <span style={{ display: 'flex', gap: 14 }}>
+          <button type="button" className="link-btn" onClick={() => go('tournaments')}>Tournaments</button>
+          <button type="button" className="link-btn" onClick={() => go('trash')}>Trash</button>
+        </span>
       </div>
       {matches && matches.length === 0 ? (
         <EmptyState icon="matches" title="No matches yet"

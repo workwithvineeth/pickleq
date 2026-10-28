@@ -20,6 +20,9 @@ import { Ratings } from './screens/Ratings';
 import { Settings } from './screens/Settings';
 import { Train } from './screens/Train';
 import { Trash } from './screens/Trash';
+import { TournamentForm, TournamentList, TournamentView } from './screens/Tournaments';
+import { purgeOldTournaments } from './db/tournaments';
+import { decodeLink } from './domain/tournaments';
 
 // Charts are large; load the Stats screen only when it's opened.
 const Stats = lazy(() => import('./screens/Stats').then((m) => ({ default: m.Stats })));
@@ -31,6 +34,7 @@ export default function App() {
   useEffect(() => {
     purgeOldTrash().catch(() => {});
     purgeOldSessions().catch(() => {});
+    purgeOldTournaments().catch(() => {});
     requestPersistentStorage().catch(() => {});
   }, []);
 
@@ -41,7 +45,7 @@ export default function App() {
       {route.name === 'train' && <Train go={go} />}
       {route.name === 'stats' && <Suspense fallback={<main className="screen"><h1 className="screen-title">Stats</h1></main>}><Stats go={go} /></Suspense>}
       {route.name === 'coach' && <Coach go={go} />}
-      {route.name === 'log' && <LogMatch key="log" mode="new" go={go} onClose={back} />}
+      {route.name === 'log' && <LogMatch key={`log-${route.id ?? ''}`} mode="new" link={decodeLink(route.id)} go={go} onClose={back} />}
       {route.name === 'backfill' && <LogMatch key="backfill" mode="backfill" go={go} onClose={back} />}
       {route.name === 'edit' && route.id && <LogMatch key={`edit-${route.id}`} mode="edit" matchId={route.id} go={go} onClose={back} />}
       {route.name === 'details' && route.id && <MatchDetails key={route.id} matchId={route.id} go={go} onClose={back} />}
@@ -50,6 +54,10 @@ export default function App() {
       {route.name === 'settings' && <Settings onBack={back} go={go} />}
       {route.name === 'backup' && <Backup onBack={back} />}
       {route.name === 'ratings' && <Ratings onBack={back} />}
+      {route.name === 'tournaments' && <TournamentList go={go} onBack={back} />}
+      {route.name === 'tournament-new' && <TournamentForm key="new-t" go={go} onClose={back} />}
+      {route.name === 'tournament-edit' && route.id && <TournamentForm key={`edit-${route.id}`} id={route.id} go={go} onClose={back} />}
+      {route.name === 'tournament' && route.id && <TournamentView key={route.id} id={route.id} go={go} onBack={back} />}
       {route.name === 'clips' && <Clips key={route.id ?? 'index'} slug={route.id} go={go} onBack={back} />}
       {route.name === 'goals' && <Goals onBack={back} />}
       {route.name === 'session-new' && <LogSession key="new-session" go={go} onClose={back} />}

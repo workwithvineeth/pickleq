@@ -1,3 +1,4 @@
+import type { TournamentLink } from './tournaments';
 export type MatchType = 'singles' | 'doubles' | 'mixed';
 export type Category = 'casual' | 'practice' | 'tournament';
 export type Scoring = 'sideout' | 'rally';
@@ -68,6 +69,8 @@ export interface Match {
   notes?: string;
   /** Your own 1–5 estimates after the match. Never mixed with measured drill results. */
   shotRatings?: Record<string, number>;
+  /** Set when the match was played in a tournament you've entered in PICKLEQ. */
+  tournament?: TournamentLink;
   createdAt: number;
   updatedAt: number;
   deletedAt?: number;

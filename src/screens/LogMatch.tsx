@@ -7,6 +7,8 @@ import { addMatch, updateMatch, type NewMatch } from '../db/matches';
 import { checkMatch, formatLabel, gamesNeeded } from '../domain/scoring';
 import { emptyGame, type BestOf, type Category, type Format, type Game, type MatchType, type Momentum, type Outcome, type Participant, type PointsTo, type Strength } from '../domain/types';
 import type { Go } from '../navigation';
+import type { TournamentLink } from '../domain/tournaments';
+import { slotLabel } from '../domain/tournaments';
 import { loadPrefs, savePrefs } from '../prefs';
 
 type Mode = 'new' | 'edit' | 'backfill';
@@ -43,7 +45,8 @@ const momentumOptions: { value: Momentum; label: string }[] = [
   { value: 'dominated', label: 'Dominated' }, { value: 'neither', label: 'Neither' },
 ];
 
-export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?: string; go: Go; onClose: () => void }) {
+export function LogMatch({ mode, matchId, link, go, onClose }: { mode: Mode; matchId?: string; link?: TournamentLink; go: Go; onClose: () => void }) {
+  const linked = useLiveQuery(async () => (link ? (await db.tournaments.get(link.tournamentId)) ?? null : null), [link?.tournamentId]);
   const existing = useLiveQuery(async () => (matchId ? ((await db.matches.get(matchId)) ?? null) : null), [matchId]);
   const players = useLiveQuery(() => db.players.orderBy('lastUsedAt').reverse().toArray(), []) ?? [];
   const prefs = useMemo(loadPrefs, []);
@@ -79,6 +82,19 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
     setGames(gs);
     setLoaded(true);
   }, [mode, existing, loaded]);
+
+  const linkedEvent = link && linked ? linked.events.find((e) => e.id === link.eventId) : undefined;
+  const [prefilled, setPrefilled] = useState(false);
+  useEffect(() => {
+    if (!linkedEvent || prefilled) return;
+    setCategory('tournament');
+    setType(linkedEvent.type);
+    const slot = link?.slotId ? linkedEvent.schedule.find((s) => s.id === link.slotId) : undefined;
+    setFormat(linkedEvent.format);
+    if (linkedEvent.partnerName) setPartner((p) => (p.name ? p : { ...p, name: linkedEvent.partnerName! }));
+    if (slot && slot.at.slice(0, 10) <= today()) setDate(slot.at.slice(0, 10));
+    setPrefilled(true);
+  }, [linkedEvent, prefilled, link]);
 
   const doubles = type !== 'singles';
   const needed = gamesNeeded(format, games);
@@ -143,6 +159,7 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
           status: mode === 'backfill' ? 'complete' : 'incomplete',
           backfilled: mode === 'backfill',
           tags: {},
+          ...(link && linkedEvent ? { tournament: link } : {}),
         });
         if (mode === 'backfill') go('match', m.id, { replace: true });
         else go('details', m.id, { replace: true });
@@ -166,6 +183,11 @@ export function LogMatch({ mode, matchId, go, onClose }: { mode: Mode; matchId?:
           <Icon name="close" size={20} />
         </button>
       </header>
+      {link && linkedEvent && linked && (
+        <div className="notice notice-ok">
+          {linked.name} · {linkedEvent.name} · {slotLabel({ id: '', at: '', stage: link.stage, round: link.round, teamId: link.teamId }, linkedEvent)}
+        </div>
+      )}
       {mode === 'backfill' && <div className="notice notice-warn">For matches from your notebook: just the score. These count in your record but have no tags.</div>}
 
       <Segmented label="Match type" value={type} options={typeOptions} onChange={setType} />
