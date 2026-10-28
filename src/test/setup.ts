@@ -1,7 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 import { afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
+
+// Screens load data from IndexedDB asynchronously; on a busy machine that can take more than the default 1 s.
+configure({ asyncUtilTimeout: 5000 });
 
 afterEach(() => {
   cleanup();

@@ -9,6 +9,7 @@ import { TABS, useRoute, type Tab } from './navigation';
 import { Backup } from './screens/Backup';
 import { Clips } from './screens/Clips';
 import { Coach } from './screens/Coach';
+import { CoachSettings, CoachTask, ConversationView, Report } from './screens/CoachScreens';
 import { Goals } from './screens/Goals';
 import { Home } from './screens/Home';
 import { LogSession } from './screens/LogSession';
@@ -54,6 +55,10 @@ export default function App() {
       {route.name === 'settings' && <Settings onBack={back} go={go} />}
       {route.name === 'backup' && <Backup onBack={back} />}
       {route.name === 'ratings' && <Ratings onBack={back} />}
+      {route.name === 'coach-task' && route.id && <CoachTask key={route.id} task={route.id} go={go} onBack={back} />}
+      {route.name === 'conversation' && route.id && <ConversationView key={route.id} id={route.id} go={go} onBack={back} />}
+      {route.name === 'coach-settings' && <CoachSettings onBack={back} />}
+      {route.name === 'report' && <Report go={go} onBack={back} />}
       {route.name === 'tournaments' && <TournamentList go={go} onBack={back} />}
       {route.name === 'tournament-new' && <TournamentForm key="new-t" go={go} onClose={back} />}
       {route.name === 'tournament-edit' && route.id && <TournamentForm key={`edit-${route.id}`} id={route.id} go={go} onClose={back} />}

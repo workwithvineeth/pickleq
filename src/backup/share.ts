@@ -2,7 +2,7 @@
  * Hands a file to the phone's share sheet (Drive, WhatsApp, Files…). Where sharing files isn't
  * supported, it downloads the file instead. Returns how the file left the app.
  */
-export async function shareOrDownload(name: string, text: string, mime: string): Promise<'shared' | 'downloaded' | 'cancelled'> {
+export async function shareOrDownload(name: string, text: BlobPart, mime: string): Promise<'shared' | 'downloaded' | 'cancelled'> {
   const file = new File([text], name, { type: mime });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.share && nav.canShare?.({ files: [file] })) {

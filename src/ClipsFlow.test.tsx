@@ -105,6 +105,6 @@ describe('pro clips', () => {
     await other.open();
     await restoreBackup(await openBackup(file, 'court-green-11'), other);
     expect(await other.clips.get(id)).toMatchObject({ status: 'approved', start: 5 });
-    expect((await collect(other)).schema).toBe(5);
+    expect((await collect(other)).schema).toBe(6);
   });
 });

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export type Tab = 'home' | 'matches' | 'train' | 'stats' | 'coach';
-export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'goals' | 'session-new' | 'session' | 'match' | 'edit' | 'details' | 'clips' | 'tournaments' | 'tournament-new' | 'tournament' | 'tournament-edit';
+export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'goals' | 'session-new' | 'session' | 'match' | 'edit' | 'details' | 'clips' | 'tournaments' | 'tournament-new' | 'tournament' | 'tournament-edit' | 'coach-task' | 'conversation' | 'coach-settings' | 'report';
 export interface Route { name: RouteName; id?: string }
 
-const simple: RouteName[] = ['home', 'train', 'stats', 'coach', 'tournaments', 'tournament-new', 'backfill', 'settings', 'trash', 'backup', 'ratings', 'goals', 'session-new'];
-const withId: RouteName[] = ['match', 'edit', 'details', 'session', 'tournament', 'tournament-edit'];
+const simple: RouteName[] = ['home', 'train', 'stats', 'coach', 'tournaments', 'tournament-new', 'coach-settings', 'report', 'backfill', 'settings', 'trash', 'backup', 'ratings', 'goals', 'session-new'];
+const withId: RouteName[] = ['match', 'edit', 'details', 'session', 'tournament', 'tournament-edit', 'coach-task', 'conversation'];
 const optionalId: RouteName[] = ['matches', 'clips', 'log'];
 export const TABS: Tab[] = ['home', 'matches', 'train', 'stats', 'coach'];
 

@@ -88,8 +88,8 @@ describe('strengths, weaknesses and insights', () => {
     await loadSampleData();
     window.location.hash = '#/coach';
     render(<App />);
-    expect(await screen.findByText('Insights · last 90 days')).toBeInTheDocument();
-    expect(screen.getAllByText('From your data').length).toBeGreaterThan(0);
+    expect(await screen.findByText('Built-in insights · last 90 days')).toBeInTheDocument();
+    expect((await screen.findAllByText('From your data')).length).toBeGreaterThan(0);
     expect(screen.getByRole('region', { name: 'Questions for your coach' })).toBeInTheDocument();
     for (const el of screen.getAllByText(/./, { selector: '.card div' })) expect(el.textContent).not.toMatch(/\bbecause\b/i);
   });

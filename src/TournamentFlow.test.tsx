@@ -75,8 +75,8 @@ describe('tournaments', () => {
     // back on the tournament
     window.location.hash = `#/tournament/${t.id}`;
     const table = await screen.findByRole('table', { name: 'MD 4.0 pool table' });
-    expect(within(table).getAllByRole('row')[1]).toHaveTextContent('1You & Dev1–0+5');
-    expect(screen.getByText(/Partial table · 1 of 3 pool matches entered/)).toBeInTheDocument();
+    await waitFor(() => expect(within(table).getAllByRole('row')[1]).toHaveTextContent('1You & Dev1–0+5'));
+    expect(await screen.findByText(/Partial table · 1 of 3 pool matches entered/)).toBeInTheDocument();
     // add the other result → full table
     await user.click(screen.getByRole('button', { name: 'Add a result between other teams' }));
     await user.type(screen.getByLabelText('Game 1 first team score'), '11');
@@ -130,8 +130,8 @@ describe('tournaments', () => {
     await user.click(screen.getByRole('button', { name: 'Move to Trash' }));
     await waitFor(async () => expect((await db.tournaments.get(t.id))?.deletedAt).toBeDefined());
     window.location.hash = '#/trash';
-    await screen.findByText('Cup');
-    await user.click(screen.getAllByRole('button', { name: 'Restore' }).at(-1)!);
+    await screen.findByRole('heading', { name: 'Trash' });
+    await user.click((await screen.findAllByRole('button', { name: 'Restore' })).at(-1)!);
     await waitFor(async () => expect((await db.tournaments.get(t.id))?.deletedAt).toBeUndefined());
   });
 });

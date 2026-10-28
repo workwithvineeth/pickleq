@@ -54,6 +54,14 @@ jobs:
           npm test
           npm run build:preview
 
+      - name: Keep the Preview test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-preview
+          path: preview-src/test-results/
+          if-no-files-found: ignore
+
       - name: Test and build Live
         working-directory: live-src
         run: |

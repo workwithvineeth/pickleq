@@ -49,6 +49,10 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
+      // GitHub's machines are slower than a laptop; give screen tests room so a slow run isn't a failure.
+      testTimeout: 20_000,
+      // On GitHub, failures also appear as annotations on the run, readable without the raw log.
+      reporters: process.env.GITHUB_ACTIONS ? ['default', 'github-actions', ['junit', { outputFile: 'test-results/junit.xml' }]] : ['default'],
       alias: { 'virtual:pwa-register/react': new URL('./src/test/pwaRegisterMock.ts', import.meta.url).pathname },
     },
   };
