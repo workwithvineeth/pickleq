@@ -53,6 +53,7 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | undefined;
     const loopState: ClipLoopState = { reachedStart: false, lastSeek: 0 };
+    let prevNow = -1;
     loadYouTubeApi().then((YT) => {
       if (cancelled || !host.current) return;
       const el = document.createElement('div');
@@ -73,6 +74,9 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         if (!p) return;
         let now = 0, playing = false;
         try { now = p.getCurrentTime(); playing = p.getPlayerState() === 1; } catch { return; }
+        // In the embedded player the state can stay "unstarted" while the video plays, so moving time counts too.
+        if (now > prevNow + 0.05) playing = true;
+        prevNow = now;
         const action = clipTick(loopState, { now, playing, start, end, loop: loopRef.current, at: Date.now() });
         if (action === 'seek-start') p.seekTo(start, true);
         else if (action === 'pause') p.pauseVideo();
