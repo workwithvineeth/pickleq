@@ -95,6 +95,8 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
+      // The robot (e2e/) runs with Playwright against the deployed site, not here.
+      exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
       // GitHub's machines are slower than a laptop; give screen tests room so a slow run isn't a failure.
       testTimeout: 20_000,
       // On GitHub, failures also appear as annotations on the run, readable without the raw log.
