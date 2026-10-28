@@ -69,3 +69,33 @@ describe('suggested clips', () => {
     expect(clipShotForInsight('rating-singles')).toBeUndefined();
   });
 });
+
+import { clipTick, type ClipLoopState } from './clips';
+describe('keeping a clip between its start and end', () => {
+  const r = (now: number, at: number, extra: Partial<{ playing: boolean; loop: boolean; end: number }> = {}) => ({ now, at, playing: true, start: 15, end: 21, loop: true, ...extra });
+  it('jumps to the start when YouTube starts at 0:00, ignoring its stale report right after', () => {
+    const s: ClipLoopState = { reachedStart: false, lastSeek: 0 };
+    expect(clipTick(s, r(0, 0, { playing: false }))).toBe('none'); // not playing yet
+    expect(clipTick(s, r(0.4, 2000))).toBe('seek-start');
+    expect(clipTick(s, r(15, 2300))).toBe('none'); // stale target right after the seek
+    expect(clipTick(s, r(1.2, 2600))).toBe('none'); // still settling
+    expect(clipTick(s, r(1.4, 3600))).toBe('seek-start'); // the seek didn't stick: try again
+    expect(clipTick(s, r(15.6, 5200))).toBe('none');
+    expect(s.reachedStart).toBe(true);
+  });
+  it('loops at the end, or pauses with loop off', () => {
+    const s: ClipLoopState = { reachedStart: true, lastSeek: 0 };
+    expect(clipTick(s, r(20.5, 10_000))).toBe('none');
+    expect(clipTick(s, r(21.1, 10_250))).toBe('seek-start');
+    expect(s.reachedStart).toBe(false);
+    const t: ClipLoopState = { reachedStart: true, lastSeek: 0 };
+    expect(clipTick(t, r(21.1, 10_000, { loop: false }))).toBe('pause');
+  });
+  it('lets you scrub earlier once the clip has started, and leaves whole videos alone', () => {
+    const s: ClipLoopState = { reachedStart: true, lastSeek: 0 };
+    expect(clipTick(s, r(5, 10_000))).toBe('none');
+    const w: ClipLoopState = { reachedStart: false, lastSeek: 0 };
+    expect(clipTick(w, { now: 0.3, at: 5000, playing: true, start: 0, loop: true })).toBe('none');
+    expect(clipTick(w, { now: 300, at: 9000, playing: true, start: 0, loop: true })).toBe('none');
+  });
+});

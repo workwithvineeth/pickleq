@@ -146,3 +146,27 @@ export function clipShotForInsight(insightId: string): ClipShot | undefined {
   const m = insightId.match(/^(?:drill-gap|weak-drill|tag-losses|tag-strength)-(.+)$/);
   return m ? INSIGHT_SHOT[m[1].toLowerCase()] : undefined;
 }
+
+/**
+ * Keeps a playing clip between its start and end. Called a few times a second with the player's reading.
+ * YouTube reports the target of a seek straight away, before playback has really moved, so readings within
+ * 1.5 s of our own seek are ignored, and the start only counts as reached once a real reading confirms it.
+ */
+export interface ClipLoopState { reachedStart: boolean; lastSeek: number }
+export type ClipAction = 'none' | 'seek-start' | 'pause';
+export const SEEK_SETTLE_MS = 1500;
+
+export function clipTick(s: ClipLoopState, r: { now: number; playing: boolean; start: number; end?: number; loop: boolean; at: number }): ClipAction {
+  if (!r.playing || r.at - s.lastSeek < SEEK_SETTLE_MS) return 'none';
+  if (!s.reachedStart) {
+    if (r.now >= r.start - 1) { s.reachedStart = true; return 'none'; }
+    s.lastSeek = r.at;
+    return 'seek-start';
+  }
+  if (r.end !== undefined && r.now >= r.end) {
+    if (!r.loop) return 'pause';
+    s.reachedStart = false; s.lastSeek = r.at;
+    return 'seek-start';
+  }
+  return 'none';
+}
