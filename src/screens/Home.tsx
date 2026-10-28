@@ -18,7 +18,7 @@ import { NextTournamentCard } from './Tournaments';
 import { lazy, Suspense } from 'react';
 import { isClubEnabled } from '../club/config';
 
-const ClubHomeCard = lazy(() => import('../club/screens/HomeCard'));
+const ClubHomeCard = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('../club/screens/HomeCard')) : null;
 
 function today(): string {
   return new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -126,7 +126,7 @@ export function Home({ go }: { go: Go }) {
 
       <NextTournamentCard go={go} />
 
-      {isClubEnabled() && <Suspense fallback={null}><ClubHomeCard go={go} /></Suspense>}
+      {isClubEnabled() && ClubHomeCard && <Suspense fallback={null}><ClubHomeCard go={go} /></Suspense>}
 
       {matches && matches.length === 0 && (
         <EmptyState icon="ball" title="Log your first match"

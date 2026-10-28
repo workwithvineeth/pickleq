@@ -9,6 +9,7 @@
     "typecheck": "tsc -b",
     "build:live": "tsc -b && vite build --mode live --outDir dist/live",
     "build:preview": "tsc -b && vite build --mode preview --outDir dist/preview",
+    "build:club": "tsc -b && vite build --mode club --outDir dist/club",
     "lint": "oxlint"
   },
   "dependencies": {

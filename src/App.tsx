@@ -33,7 +33,8 @@ import { isClubEnabled } from './club/config';
 // Charts are large; load the Stats screen only when it's opened.
 const Stats = lazy(() => import('./screens/Stats').then((m) => ({ default: m.Stats })));
 // Club mode is its own bundle, loaded only when opened (and only in builds that switch it on).
-const ClubRoutes = lazy(() => import('./club/screens/ClubRoutes'));
+// The check is written out here (not via isClubEnabled) so Live and Preview builds leave the club files out entirely.
+const ClubRoutes = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('./club/screens/ClubRoutes')) : null;
 
 export default function App() {
   const [route, go, back] = useRoute();
@@ -63,7 +64,7 @@ export default function App() {
   return (
     <div className="app">
       {(route.name === 'home' || (isClubRoute(route.name) && !isClubEnabled())) && <Home go={go} />}
-      {isClubRoute(route.name) && isClubEnabled() && <Suspense fallback={<main className="screen"><p className="small muted">Loading…</p></main>}><ClubRoutes route={route} go={go} back={back} /></Suspense>}
+      {isClubRoute(route.name) && isClubEnabled() && ClubRoutes && <Suspense fallback={<main className="screen"><p className="small muted">Loading…</p></main>}><ClubRoutes route={route} go={go} back={back} /></Suspense>}
       {route.name === 'matches' && <Matches go={go} key={route.id ?? 'all'} initialFilter={route.id === 'incomplete' ? 'incomplete' : 'all'} />}
       {route.name === 'train' && <Train go={go} />}
       {route.name === 'stats' && <Suspense fallback={<main className="screen"><h1 className="screen-title">Stats</h1></main>}><Stats go={go} /></Suspense>}
