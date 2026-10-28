@@ -1,3 +1,5 @@
+-- Applied on the server as club_mode_1_tables, _2_access_rules, _3_functions, _5_permissions.
+-- The three functions that delete rows are in 0002 (Supabase asks for a separate confirmation for those).
 -- PICKLEQ Club mode: clubs, members, roster, tournaments and club matches.
 -- Personal PICKLEQ data never comes here. Only club data, and summaries a player chooses to share.
 -- Every table has row-level security: the database itself decides who may read or change a row.
@@ -263,28 +265,6 @@ create policy "staff or self see summaries" on public.shared_summaries for selec
 
 -- ---------- Server functions (the only way to do sensitive changes) ----------
 
--- Grant any pending roles for the signed-in email (and link roster entries). Safe to call on every sign-in.
-create function public.claim_pending() returns int
-language plpgsql security definer set search_path = '' as $$
-declare
-  me uuid := (select auth.uid());
-  my_email text := lower(coalesce((select auth.jwt()) ->> 'email', ''));
-  c record;
-  n int := 0;
-begin
-  if me is null or my_email = '' then return 0; end if;
-  insert into public.profiles (id) values (me) on conflict (id) do nothing;
-  for c in select * from public.club_claims where lower(email) = my_email loop
-    insert into public.club_members (club_id, user_id, role) values (c.club_id, me, c.role)
-      on conflict (club_id, user_id) do update set role = excluded.role;
-    if c.player_id is not null then
-      update public.club_players set user_id = me where id = c.player_id and user_id is null;
-    end if;
-    delete from public.club_claims where club_id = c.club_id and email = c.email;
-    n := n + 1;
-  end loop;
-  return n;
-end $$;
 
 create function public.create_club(club_name text, club_city text, my_name text) returns uuid
 language plpgsql security definer set search_path = '' as $$
@@ -338,20 +318,6 @@ begin
   update public.club_members set role = new_role where club_id = cid and user_id = member;
 end $$;
 
--- A player decides what their club may see. Only the linked player can call this for their own roster entry.
-create function public.set_my_sharing(pid uuid, choice jsonb) returns void
-language plpgsql security definer set search_path = '' as $$
-begin
-  update public.club_players set share = jsonb_build_object(
-      'record', coalesce((choice ->> 'record')::boolean, false),
-      'tags', coalesce((choice ->> 'tags')::boolean, false),
-      'training', coalesce((choice ->> 'training')::boolean, false))
-    where id = pid and user_id = (select auth.uid());
-  if not found then raise exception 'You can only change your own sharing'; end if;
-  if not (coalesce((choice ->> 'record')::boolean, false) or coalesce((choice ->> 'tags')::boolean, false) or coalesce((choice ->> 'training')::boolean, false)) then
-    delete from public.shared_summaries where player_id = pid;
-  end if;
-end $$;
 
 create function public.share_my_summary(pid uuid, summary jsonb) returns void
 language plpgsql security definer set search_path = '' as $$
@@ -365,17 +331,6 @@ begin
     on conflict (player_id) do update set data = excluded.data, updated_at = now();
 end $$;
 
--- Leave a club: removes your membership, unlinks your roster entry and deletes anything you shared.
-create function public.leave_club(cid uuid) returns void
-language plpgsql security definer set search_path = '' as $$
-declare
-  me uuid := (select auth.uid());
-begin
-  if public.club_role(cid) = 'owner' then raise exception 'The owner can''t leave. Hand over the club or delete it.'; end if;
-  delete from public.shared_summaries s using public.club_players p where s.player_id = p.id and p.club_id = cid and p.user_id = me;
-  update public.club_players set user_id = null, share = '{}'::jsonb where club_id = cid and user_id = me;
-  delete from public.club_members where club_id = cid and user_id = me;
-end $$;
 
 -- ---------- Scorer links (no account) ----------
 
@@ -490,9 +445,9 @@ $$;
 
 -- Only signed-in people may call the account functions; anyone may read a published tournament.
 revoke execute on all functions in schema public from public, anon;
-grant execute on function public.claim_pending(), public.create_club(text, text, text), public.join_club(text, text, text),
-  public.set_member_role(uuid, uuid, text), public.set_my_sharing(uuid, jsonb), public.share_my_summary(uuid, jsonb),
-  public.leave_club(uuid), public.club_role(uuid), public.is_member(uuid), public.is_staff(uuid), public.is_admin(uuid),
+grant execute on function public.create_club(text, text, text), public.join_club(text, text, text),
+  public.set_member_role(uuid, uuid, text), public.share_my_summary(uuid, jsonb),
+  public.club_role(uuid), public.is_member(uuid), public.is_staff(uuid), public.is_admin(uuid),
   public.shares_club(uuid), public.public_tournament(text) to authenticated;
 grant execute on function public.public_tournament(text) to anon;
 grant execute on function public.scorer_open(text, text), public.scorer_save(text, text, uuid, jsonb, text, text, date) to anon, authenticated;
