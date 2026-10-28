@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { fmtTime, type Clip } from '../domain/clips';
+import { clipTick, fmtTime, type Clip, type ClipLoopState } from '../domain/clips';
 import { Segmented } from './Controls';
 
 /* Minimal shape of the YouTube IFrame Player API that we use. */
 interface YTPlayer {
   playVideo(): void; pauseVideo(): void; seekTo(s: number, allowSeekAhead: boolean): void;
   getCurrentTime(): number; getPlayerState(): number; setPlaybackRate(r: number): void; destroy(): void;
+  loadVideoById(o: { videoId: string; startSeconds?: number; endSeconds?: number }): void;
 }
 interface YTNamespace { Player: new (el: HTMLElement, opts: unknown) => YTPlayer }
 declare global { interface Window { YT?: YTNamespace; onYouTubeIframeAPIReady?: () => void } }
@@ -52,8 +53,16 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
     if (phase === 'offline') return;
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | undefined;
-    // YouTube ignores a seek sent before playback really starts, so keep nudging to the start until we've been there.
-    let reachedStart = false;
+    const loopState: ClipLoopState = { reachedStart: false, lastSeek: 0 };
+    let prevNow = -1;
+    const playSection = () => {
+      const { start, end } = range.current;
+      // YouTube starts the section itself; only watch the end (and give the load a few seconds to settle).
+      loopState.reachedStart = true;
+      loopState.lastSeek = Date.now() + 1500;
+      try { player.current?.loadVideoById({ videoId: clip.videoId, startSeconds: start, ...(end !== undefined ? { endSeconds: end } : {}) }); }
+      catch { player.current?.seekTo(start, true); player.current?.playVideo(); }
+    };
     loadYouTubeApi().then((YT) => {
       if (cancelled || !host.current) return;
       const el = document.createElement('div');
@@ -62,32 +71,26 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         host: 'https://www.youtube-nocookie.com',
         videoId: clip.videoId,
         width: '100%', height: '100%',
-        playerVars: { start: clip.start, playsinline: 1, rel: 0, autoplay: 1, origin: window.location.origin },
+        // No 'start' here: YouTube often ignores it but still echoes it as the first position, which hides the real one.
+        playerVars: { playsinline: 1, rel: 0, autoplay: 1, origin: window.location.origin },
         events: {
-          // YouTube doesn't always honour the start parameter, so jump to the clip's start ourselves.
-          onReady: () => { if (!cancelled) { setPhase('ready'); player.current?.seekTo(range.current.start, true); player.current?.playVideo(); } },
+          // Loading with startSeconds/endSeconds is YouTube's reliable way to play a section (the start parameter often isn't).
+          onReady: () => { if (!cancelled) { setPhase('ready'); playSection(); } },
           onError: () => { if (!cancelled) setPhase('error'); },
         },
       });
-      // Keep playback inside the clip: loop back to the start, or pause at the end.
+      // Keep playback inside the clip (see clipTick for why this is done by polling).
       timer = setInterval(() => {
         const p = player.current; const { start, end } = range.current;
         if (!p) return;
-        let now = 0;
-        try { now = p.getCurrentTime(); } catch { return; }
-        let playing = false;
-        try { playing = p.getPlayerState() === 1; } catch { /* not ready */ }
-        if (!reachedStart) {
-          // Only trust the position once the video is really playing: right after a seek YouTube reports the target.
-          if (!playing) return;
-          if (now >= start - 1) reachedStart = true;
-          else p.seekTo(start, true);
-          return;
-        }
-        // After that you can scrub anywhere; at the end we loop back or pause.
-        if (end !== undefined && now >= end) {
-          if (loopRef.current) { p.seekTo(start, true); reachedStart = false; } else p.pauseVideo();
-        }
+        let now = 0, playing = false;
+        try { now = p.getCurrentTime(); playing = p.getPlayerState() === 1; } catch { return; }
+        // In the embedded player the state can stay "unstarted" while the video plays, so moving time counts too.
+        if (now > prevNow + 0.05) playing = true;
+        prevNow = now;
+        const action = clipTick(loopState, { now, playing, start, end, loop: loopRef.current, at: Date.now() });
+        if (action === 'seek-start') playSection();
+        else if (action === 'pause') p.pauseVideo();
       }, 250);
     }).catch(() => { if (!cancelled) setPhase('error'); });
     return () => { cancelled = true; if (timer) clearInterval(timer); try { player.current?.destroy(); } catch { /* already gone */ } player.current = null; };
