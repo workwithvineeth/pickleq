@@ -78,8 +78,10 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         let playing = false;
         try { playing = p.getPlayerState() === 1; } catch { /* not ready */ }
         if (!reachedStart) {
+          // Only trust the position once the video is really playing: right after a seek YouTube reports the target.
+          if (!playing) return;
           if (now >= start - 1) reachedStart = true;
-          else if (playing) p.seekTo(start, true);
+          else p.seekTo(start, true);
           return;
         }
         // After that you can scrub anywhere; at the end we loop back or pause.
