@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Chips, Field } from '../components/Controls';
 import { checkNewPin, LOCK_AFTER, lockAfter, pinEnabled, removePin, setLockAfter, setPin, tryPin, type LockAfter } from '../lock/pin';
 import { Icon } from '../components/Icon';
-import { appVersion, channel } from '../config';
+import { appVersion, buildId, channel } from '../config';
 import { clearAllData, loadSampleData } from '../db/sample';
 import { isInstalled } from '../install';
 import type { Go } from '../navigation';
@@ -21,7 +21,7 @@ export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
         <h1 id="settings-title" className="screen-title" style={{ flex: 1 }}>Settings</h1>
       </header>
       <section className="card" aria-label="About this app">
-        <div className="row"><span>Version</span><span className="muted">{appVersion}</span></div>
+        <div className="row"><span>Version</span><span className="muted">{appVersion} · build {buildId}</span></div>
         <div className="row"><span>Version type</span><span className="muted">{channel === 'preview' ? 'Preview (sample data)' : 'Live (your data)'}</span></div>
         <div className="row"><span>Installed on home screen</span><span className="muted">{installed ? 'Yes' : 'No'}</span></div>
         <div className="row"><span>Where your data lives</span><span className="muted">This phone only</span></div>

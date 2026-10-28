@@ -11,9 +11,11 @@ export default function ClubHomeCard({ go }: { go: Go }) {
     return (await pendingClubMatches(b)).length;
   }, []);
   const n = pending.data ?? 0;
+  // The Club button at the top of Home is the way in; this card only appears when there's something to add.
+  if (n === 0) return null;
   return (
     <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('club')}>
-      <span>{n > 0 ? `Club · ${n} ${n === 1 ? 'match' : 'matches'} to add to your history` : 'Club'}</span><span>›</span>
+      <span>{`Club · ${n} ${n === 1 ? 'match' : 'matches'} to add to your history`}</span><span>›</span>
     </button>
   );
 }

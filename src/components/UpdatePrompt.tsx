@@ -6,7 +6,16 @@ export function UpdatePrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker,
-  } = useRegisterSW();
+  } = useRegisterSW({
+    // Installed apps (especially on iPhone) only look for updates on a cold start unless asked.
+    // Check whenever the app comes back to the screen, and every 30 minutes while it's open.
+    onRegisteredSW(_url, reg) {
+      if (!reg) return;
+      const check = () => { if (navigator.onLine !== false) void reg.update().catch(() => {}); };
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+      window.setInterval(check, 30 * 60 * 1000);
+    },
+  });
 
   if (needRefresh) {
     return (

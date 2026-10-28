@@ -44,6 +44,15 @@ describe('Club mode', () => {
     expect(screen.queryByRole('button', { name: /^Club/ })).not.toBeInTheDocument();
   });
 
+  it('has a Club button at the top of Home that opens Club mode', async () => {
+    const user = userEvent.setup();
+    window.location.hash = '#/home';
+    render(<App />);
+    const header = (await screen.findByRole('heading', { name: 'PICKLEQ' })).closest('header') as HTMLElement;
+    await user.click(await within(header).findByRole('button', { name: 'Club' }));
+    expect(await screen.findByRole('button', { name: 'Open Pickleball Central' })).toBeInTheDocument();
+  });
+
   it('opens the Pickleball Central demo with its roster, tournament and coach view', async () => {
     const user = userEvent.setup();
     await openDemo(user);
@@ -123,7 +132,8 @@ describe('Club mode', () => {
     // Deleted ones don't come back.
     await db.matches.update(fromClub[0].id, { deletedAt: Date.now() });
     window.location.hash = '#/home';
-    await screen.findByRole('button', { name: /^Club\s*›$/ });
+    await screen.findByRole('button', { name: 'Club' });
+    expect(screen.queryByRole('button', { name: /to add to your history/ })).not.toBeInTheDocument();
   });
 
   it('lets you choose what your club sees, shows exactly what is shared, and coaches see it', async () => {

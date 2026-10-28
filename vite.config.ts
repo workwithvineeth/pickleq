@@ -49,7 +49,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
-    define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      // Short build code shown in Settings, so you can tell whether a phone has the latest version.
+      __BUILD_ID__: JSON.stringify((process.env.GITHUB_SHA ?? 'local').slice(0, 7)),
+    },
     plugins: [
       react(),
       cspPlugin(cspFor(env.VITE_SUPABASE_URL)),

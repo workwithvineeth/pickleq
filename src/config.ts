@@ -14,3 +14,4 @@ export function databaseName(ch: Channel, override: string | undefined = import.
 }
 
 export const appVersion: string = __APP_VERSION__;
+export const buildId: string = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : 'local';

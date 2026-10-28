@@ -19,6 +19,7 @@ import { lazy, Suspense } from 'react';
 import { isClubEnabled } from '../club/config';
 
 const ClubHomeCard = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('../club/screens/HomeCard')) : null;
+const ClubHeaderButton = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('../club/screens/HeaderButton')) : null;
 
 function today(): string {
   return new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -61,7 +62,8 @@ export function Home({ go }: { go: Go }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {channel === 'preview' && <span className="badge badge-preview">Preview</span>}
+          {channel === 'preview' && !isClubEnabled() && <span className="badge badge-preview">Preview</span>}
+          {isClubEnabled() && ClubHeaderButton && <Suspense fallback={null}><ClubHeaderButton go={go} /></Suspense>}
           <button type="button" className="icon-btn" aria-label="Settings" onClick={() => go('settings')}>
             <Icon name="settings" size={20} />
           </button>
