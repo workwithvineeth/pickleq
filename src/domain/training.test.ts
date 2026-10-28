@@ -54,8 +54,8 @@ describe('goal progress', () => {
   };
   const goal = (g: Partial<Goal>): Goal => ({ id: 'g', kind: 'rating', target: 4, createdAt: 0, ...g });
   it('rating: progress from the first reading to the target', () => {
-    expect(goalProgress(goal({ ratingKind: 'doubles', target: 4.0 }), ctx)).toMatchObject({ fraction: 0.5, current: '3.80', done: false });
-    expect(goalTitle(goal({ ratingKind: 'doubles', target: 4.0 }))).toBe('Reach 4.00 doubles DUPR');
+    expect(goalProgress(goal({ ratingKind: 'doubles', target: 4.0 }), ctx)).toMatchObject({ fraction: 0.5, current: '3.800', done: false });
+    expect(goalTitle(goal({ ratingKind: 'doubles', target: 4.0 }))).toBe('Reach 4.000 doubles DUPR');
   });
   it('weekly hours, drill rate, streak and tournament goals', () => {
     expect(goalProgress(goal({ kind: 'weekly-hours', target: 6 }), ctx)).toMatchObject({ fraction: 0.75, current: '4.5 h this week' });
@@ -65,5 +65,14 @@ describe('goal progress', () => {
   });
   it('handles a goal with no data yet', () => {
     expect(goalProgress(goal({ ratingKind: 'singles' }), ctx)).toMatchObject({ fraction: 0, current: 'No rating yet' });
+  });
+});
+
+import { fmtRating } from './record';
+describe('rating display', () => {
+  it('shows DUPR to three decimals, rounded correctly', () => {
+    expect(fmtRating(3.905)).toBe('3.905');
+    expect(fmtRating(3.8)).toBe('3.800');
+    expect(fmtRating(0.255)).toBe('0.255');
   });
 });

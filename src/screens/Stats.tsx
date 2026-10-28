@@ -1,3 +1,4 @@
+import { fmtRating } from '../domain/record';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import type { Match } from '../domain/types';
@@ -148,8 +149,8 @@ export function Stats({ go }: { go: Go }) {
             ) : (
               <>
                 <div className="legend" aria-hidden="true">
-                  {type !== 'doubles' && singlesR.length > 0 && <span><i style={{ background: 'var(--chart-2)' }} />Singles {singlesR.at(-1)!.value.toFixed(2)}</span>}
-                  {type !== 'singles' && doublesR.length > 0 && <span><i style={{ background: 'var(--chart-1)' }} />Doubles {doublesR.at(-1)!.value.toFixed(2)}</span>}
+                  {type !== 'doubles' && singlesR.length > 0 && <span><i style={{ background: 'var(--chart-2)' }} />Singles {fmtRating(singlesR.at(-1)!.value)}</span>}
+                  {type !== 'singles' && doublesR.length > 0 && <span><i style={{ background: 'var(--chart-1)' }} />Doubles {fmtRating(doublesR.at(-1)!.value)}</span>}
                 </div>
                 <div style={{ height: 180 }}>
                   <ResponsiveContainer width="100%" height="100%">

@@ -21,3 +21,8 @@ export function winPct(r: WinLoss): number | null {
   const n = r.wins + r.losses;
   return n === 0 ? null : Math.round((r.wins / n) * 100);
 }
+
+/** DUPR ratings are shown exactly as DUPR shows them: three decimals (3.905, not 3.90). */
+export function fmtRating(v: number): string {
+  return (Math.round(v * 1000) / 1000).toFixed(3);
+}

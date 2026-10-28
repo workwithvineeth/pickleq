@@ -1,3 +1,4 @@
+import { fmtRating } from './record';
 import type { Goal, RatingEntry, TrainingSession } from './types';
 
 const p2 = (n: number) => String(n).padStart(2, '0');
@@ -78,10 +79,10 @@ export function goalProgress(g: Goal, ctx: GoalContext): GoalProgress {
       const hist = g.ratingKind === 'singles' ? ctx.singles : ctx.doubles;
       const start = hist[0]?.value;
       const cur = hist.at(-1)?.value;
-      if (cur === undefined || start === undefined) return { fraction: 0, current: 'No rating yet', target: g.target.toFixed(2), done: false };
+      if (cur === undefined || start === undefined) return { fraction: 0, current: 'No rating yet', target: fmtRating(g.target), done: false };
       const done = cur >= g.target;
       const fraction = done ? 1 : g.target > start ? clamp((cur - start) / (g.target - start)) : 0;
-      return { fraction, current: cur.toFixed(2), target: g.target.toFixed(2), done };
+      return { fraction, current: fmtRating(cur), target: fmtRating(g.target), done };
     }
     case 'weekly-hours': {
       const hours = weekTraining(ctx.sessions, ctx.today).reduce((n, d) => n + d.minutes, 0) / 60;
@@ -104,7 +105,7 @@ export function goalProgress(g: Goal, ctx: GoalContext): GoalProgress {
 
 export function goalTitle(g: Goal): string {
   switch (g.kind) {
-    case 'rating': return `Reach ${g.target.toFixed(2)} ${g.ratingKind ?? 'doubles'} DUPR`;
+    case 'rating': return `Reach ${fmtRating(g.target)} ${g.ratingKind ?? 'doubles'} DUPR`;
     case 'weekly-hours': return `Train ${g.target} hours a week`;
     case 'drill-rate': return `${g.drillCategory} at ${g.target}%`;
     case 'streak': return `${g.target}-day training streak`;
