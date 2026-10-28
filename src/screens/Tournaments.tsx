@@ -128,7 +128,7 @@ export function TournamentForm({ id, go, onClose }: { id?: string; go: Go; onClo
         <button type="button" className="icon-btn" aria-label="Close" onClick={onClose}><Icon name="close" size={20} /></button>
       </header>
       <Field label="Name"><input className="input" aria-label="Tournament name" placeholder="Bengaluru Open" value={name} onChange={(e) => { setName(e.target.value); setError(null); }} /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 8 }}>
+      <div className="two-col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 8 }}>
         <Field label="Starts"><input className="input" type="date" aria-label="Start date" value={start} onChange={(e) => { setStart(e.target.value); if (!end || end < e.target.value) setEnd(e.target.value); setError(null); }} /></Field>
         <Field label="Ends"><input className="input" type="date" aria-label="End date" value={end} min={start || undefined} onChange={(e) => { setEnd(e.target.value); setError(null); }} /></Field>
       </div>

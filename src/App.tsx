@@ -1,4 +1,6 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { LockScreen } from './lock/LockScreen';
+import { lockAfter, pinEnabled } from './lock/pin';
 import { BottomNav } from './components/BottomNav';
 import { Icon } from './components/Icon';
 import { UpdatePrompt } from './components/UpdatePrompt';
@@ -9,6 +11,7 @@ import { TABS, useRoute, type Tab } from './navigation';
 import { Backup } from './screens/Backup';
 import { Clips } from './screens/Clips';
 import { Coach } from './screens/Coach';
+import { Help, Privacy } from './screens/Help';
 import { CoachSettings, CoachTask, ConversationView, Report } from './screens/CoachScreens';
 import { Goals } from './screens/Goals';
 import { Home } from './screens/Home';
@@ -31,6 +34,18 @@ const Stats = lazy(() => import('./screens/Stats').then((m) => ({ default: m.Sta
 export default function App() {
   const [route, go, back] = useRoute();
   const isTab = (TABS as string[]).includes(route.name);
+  const [locked, setLocked] = useState(() => pinEnabled());
+
+  // Lock again when you come back after the chosen time away (a few seconds' grace so the share sheet doesn't lock you out).
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') hiddenAt = Date.now();
+      else if (hiddenAt && pinEnabled() && Date.now() - hiddenAt >= Math.max(3000, lockAfter())) setLocked(true);
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
 
   useEffect(() => {
     purgeOldTrash().catch(() => {});
@@ -38,6 +53,8 @@ export default function App() {
     purgeOldTournaments().catch(() => {});
     requestPersistentStorage().catch(() => {});
   }, []);
+
+  if (locked) return <div className="app"><LockScreen onUnlock={() => setLocked(false)} /></div>;
 
   return (
     <div className="app">
@@ -59,6 +76,8 @@ export default function App() {
       {route.name === 'conversation' && route.id && <ConversationView key={route.id} id={route.id} go={go} onBack={back} />}
       {route.name === 'coach-settings' && <CoachSettings onBack={back} />}
       {route.name === 'report' && <Report go={go} onBack={back} />}
+      {route.name === 'help' && <Help go={go} onBack={back} />}
+      {route.name === 'privacy' && <Privacy onBack={back} />}
       {route.name === 'tournaments' && <TournamentList go={go} onBack={back} />}
       {route.name === 'tournament-new' && <TournamentForm key="new-t" go={go} onClose={back} />}
       {route.name === 'tournament-edit' && route.id && <TournamentForm key={`edit-${route.id}`} id={route.id} go={go} onClose={back} />}

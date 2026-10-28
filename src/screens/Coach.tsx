@@ -31,13 +31,13 @@ export function Coach({ go }: { go: Go }) {
       </div>
 
       <section className="card section" aria-label="Claude coach">
-        <div className="header">
+        <div>
           <h2 style={{ fontSize: 18 }}>Ask Claude</h2>
           <span className="small muted">{month.answers} {month.answers === 1 ? 'answer' : 'answers'} this month · {fmtInr(month.usd, rate)}</span>
         </div>
         {!hasKey ? (
           <>
-            <p className="small muted" style={{ margin: 0 }}>Claude writes detailed coaching from your own records. It uses your own Claude API key, costing about ₹0.2–0.5 per answer.</p>
+            <p className="small muted" style={{ margin: 0 }}>Claude writes detailed coaching from your own records. It uses your own Claude API key, costing about ₹0.15–0.5 per answer.</p>
             <button type="button" className="btn btn-primary" onClick={() => go('coach-settings')}>Add your Claude key</button>
           </>
         ) : (

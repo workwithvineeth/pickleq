@@ -40,7 +40,7 @@ export function Ratings({ onBack }: { onBack: () => void }) {
         options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} />
 
       <section className="card section" aria-label="Add a rating">
-        <div className="person" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)' }}>
+        <div className="person two-col" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)' }}>
           <div>
             <label className="label" htmlFor="rt-value">New {kind} rating</label>
             <input id="rt-value" className="input" inputMode="decimal" placeholder="3.825" value={value} onChange={(e) => { setValue(e.target.value); setMsg(null); }} />

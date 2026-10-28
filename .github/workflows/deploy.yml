@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Preview (main)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           path: preview-src
@@ -38,12 +38,12 @@ jobs:
           else
             echo "LIVE_REF=main" >> "$GITHUB_ENV"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.LIVE_REF }}
           path: live-src
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -56,7 +56,7 @@ jobs:
 
       - name: Keep the Preview test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-preview
           path: preview-src/test-results/
@@ -76,8 +76,8 @@ jobs:
           mkdir -p site/preview
           cp -r preview-src/dist/preview/. site/preview/
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
@@ -89,4 +89,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

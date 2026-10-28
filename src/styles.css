@@ -208,3 +208,34 @@ textarea.input { padding: 10px 12px; min-height: 84px; resize: vertical; }
 .task-btn { background: var(--card); border: none; border-radius: 16px; padding: 12px; text-align: left; color: var(--text); display: flex; flex-direction: column; gap: 4px; min-height: 84px; }
 .task-btn b { font-weight: 600; font-size: 15px; }
 a { color: var(--accent); text-underline-offset: 3px; }
+
+/* App lock */
+.lock { justify-content: flex-start; }
+.pin-dots { display: flex; gap: 12px; }
+.pin-dots span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--accent); }
+.pin-dots span.on { background: var(--accent); }
+.pin-pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 300px; width: 100%; margin: 8px auto 0; }
+.pin-key { min-height: 60px; border-radius: 16px; border: none; background: var(--card); color: var(--text); font-size: 24px; font-weight: 500; }
+.pin-key:disabled { opacity: 0.5; }
+
+/* Help */
+.help-topic { padding: 0; }
+.help-topic summary { padding: 14px 16px; font-weight: 600; font-size: 16px; cursor: pointer; list-style-position: inside; }
+.help-body { padding: 0 16px 14px; font-size: 15px; line-height: 1.5; display: flex; flex-direction: column; gap: 8px; }
+.help-body p, .help-body ol { margin: 0; }
+.help-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+/* Small phones (about 320–350 px wide): tighten headers so nothing runs off the screen. */
+.header > * { min-width: 0; }
+.screen-title { overflow-wrap: anywhere; }
+@media (max-width: 350px) {
+  .screen-title { font-size: 24px; }
+  .brand { font-size: 24px; }
+  .brand-row { gap: 8px; }
+  .brand-row .logo { width: 36px; height: 36px; }
+  .badge-preview { padding: 3px 7px; }
+  .header { gap: 8px; }
+}
+@media (max-width: 350px) {
+  .two-col { grid-template-columns: minmax(0, 1fr) !important; }
+}

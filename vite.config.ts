@@ -4,6 +4,33 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/**
+ * Content Security Policy for the built app: code may only load from the app itself, and the network
+ * is limited to Claude (when you ask) and YouTube (when you play a clip). Added only to builds, since
+ * the dev server needs inline scripts.
+ */
+export const CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://www.youtube.com https://s.ytimg.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://i.ytimg.com",
+  "font-src 'self' data:",
+  "connect-src 'self' https://api.anthropic.com",
+  "frame-src https://www.youtube-nocookie.com https://www.youtube.com",
+  "media-src 'self' blob:",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
+const cspPlugin = {
+  name: 'pickleq-csp',
+  apply: 'build' as const,
+  transformIndexHtml: (html: string) => html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`),
+};
+
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
 export default defineConfig(({ mode }) => {
@@ -17,6 +44,7 @@ export default defineConfig(({ mode }) => {
     define: { __APP_VERSION__: JSON.stringify(pkg.version) },
     plugins: [
       react(),
+      cspPlugin,
       VitePWA({
         registerType: 'prompt',
         includeAssets: [`icons/${channel}-apple-180.png`],
