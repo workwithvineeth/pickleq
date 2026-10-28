@@ -19,11 +19,11 @@ export function rng(seed: number): () => number {
  * happen (a side on a run is a little more likely to win the next one), so comebacks and lost leads appear naturally.
  */
 export function simulateGame(ratingA: number, ratingB: number, pointsTo: number, rand: () => number): ClubGame {
-  const base = 1 / (1 + Math.exp(-(ratingA - ratingB) * 2.4));
+  const base = 1 / (1 + Math.exp(-(ratingA - ratingB) * 0.9));
   let a = 0, b = 0, points = '', run = 0;
   while (!gameOver(a, b, pointsTo) && points.length < 200) {
     // run > 0: A on a run; run < 0: B on a run.
-    const p = Math.min(0.92, Math.max(0.08, base + Math.max(-3, Math.min(3, run)) * 0.045));
+    const p = Math.min(0.85, Math.max(0.15, base + Math.max(-3, Math.min(3, run)) * 0.03));
     if (rand() < p) { a++; points += 'A'; run = run > 0 ? run + 1 : 1; } else { b++; points += 'B'; run = run < 0 ? run - 1 : -1; }
   }
   return { points, a, b };
