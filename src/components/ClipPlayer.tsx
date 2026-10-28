@@ -5,7 +5,7 @@ import { Segmented } from './Controls';
 /* Minimal shape of the YouTube IFrame Player API that we use. */
 interface YTPlayer {
   playVideo(): void; pauseVideo(): void; seekTo(s: number, allowSeekAhead: boolean): void;
-  getCurrentTime(): number; setPlaybackRate(r: number): void; destroy(): void;
+  getCurrentTime(): number; getPlayerState(): number; setPlaybackRate(r: number): void; destroy(): void;
 }
 interface YTNamespace { Player: new (el: HTMLElement, opts: unknown) => YTPlayer }
 declare global { interface Window { YT?: YTNamespace; onYouTubeIframeAPIReady?: () => void } }
@@ -52,7 +52,8 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
     if (phase === 'offline') return;
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | undefined;
-    let enforceUntil = 0;
+    // YouTube ignores a seek sent before playback really starts, so keep nudging to the start until we've been there.
+    let reachedStart = false;
     loadYouTubeApi().then((YT) => {
       if (cancelled || !host.current) return;
       const el = document.createElement('div');
@@ -64,7 +65,7 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         playerVars: { start: clip.start, playsinline: 1, rel: 0, autoplay: 1, origin: window.location.origin },
         events: {
           // YouTube doesn't always honour the start parameter, so jump to the clip's start ourselves.
-          onReady: () => { if (!cancelled) { setPhase('ready'); enforceUntil = Date.now() + 5000; player.current?.seekTo(range.current.start, true); player.current?.playVideo(); } },
+          onReady: () => { if (!cancelled) { setPhase('ready'); player.current?.seekTo(range.current.start, true); player.current?.playVideo(); } },
           onError: () => { if (!cancelled) setPhase('error'); },
         },
       });
@@ -74,10 +75,16 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         if (!p) return;
         let now = 0;
         try { now = p.getCurrentTime(); } catch { return; }
-        // Right after starting or looping, make sure we really are at the start (you can still scrub earlier later on).
-        if (Date.now() < enforceUntil && now < start - 1) p.seekTo(start, true);
-        else if (end !== undefined && now >= end) {
-          if (loopRef.current) { p.seekTo(start, true); enforceUntil = Date.now() + 3000; } else p.pauseVideo();
+        let playing = false;
+        try { playing = p.getPlayerState() === 1; } catch { /* not ready */ }
+        if (!reachedStart) {
+          if (now >= start - 1) reachedStart = true;
+          else if (playing) p.seekTo(start, true);
+          return;
+        }
+        // After that you can scrub anywhere; at the end we loop back or pause.
+        if (end !== undefined && now >= end) {
+          if (loopRef.current) { p.seekTo(start, true); reachedStart = false; } else p.pauseVideo();
         }
       }, 250);
     }).catch(() => { if (!cancelled) setPhase('error'); });
