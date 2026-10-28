@@ -3,10 +3,9 @@ import { Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/db';
 import type { Go } from '../../navigation';
 import type { ClubBackend, TournamentBundle } from '../backend';
-import { clubMode } from '../config';
 import { matchResult, poolLetter, slotTime } from '../domain/engine';
 import { duprCheck, duprCsv } from '../dupr';
-import { backend, demoBackend, serverBackend } from '../index';
+import { backend, publicSources } from '../index';
 import { courtBoard, enteredPlayers, knockoutMatchesToAdd, nextMatchToCall, planLateEntry, planReplacePlayer, planWithdraw, upNext } from '../plan';
 import { isStaff, STAGE_LABEL, type ClubGame, type ClubMatch, type ClubPlayer, type Entry, type ScorerLink, type ScorerView } from '../types';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
@@ -108,10 +107,23 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
 // ---------- The court page a scorer opens (no account) ----------
 
 function pinKey(token: string) { return `pq-court-pin-${token}`; }
-function scorerSource(): ClubBackend { return clubMode() === 'demo' ? demoBackend() : serverBackend() ?? demoBackend(); }
+/** Opens a scorer link on the club server, or in the demo on this phone if the server doesn't know it. */
+async function openLink(token: string, pin: string): Promise<{ src: ClubBackend; view: ScorerView }> {
+  const sources = publicSources();
+  let first: unknown = null;
+  for (const src of sources) {
+    try { return { src, view: await src.scorerOpen(token, pin) }; }
+    catch (e) {
+      first ??= e;
+      // Only an unknown link moves on to the next place; a wrong PIN or lockout is the answer.
+      if (!/isn’t valid/.test(errorText(e))) throw e;
+    }
+  }
+  throw first;
+}
 
 export function CourtScorer({ token, onBack }: { token: string; onBack: () => void }) {
-  const src = useMemo(scorerSource, []);
+  const [src, setSrc] = useState<ClubBackend | null>(null);
   const [pin, setPinState] = useState<string>(() => { try { return sessionStorage.getItem(pinKey(token)) ?? ''; } catch { return ''; } });
   const [typed, setTyped] = useState('');
   const [view, setView] = useState<ScorerView | null>(null);
@@ -124,8 +136,8 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   useEffect(() => {
     if (!pin) return;
     let alive = true;
-    src.scorerOpen(token, pin).then(
-      (v) => { if (alive) { setView(v); setErr(null); } },
+    (src ? src.scorerOpen(token, pin).then((v) => ({ src, view: v })) : openLink(token, pin)).then(
+      (r) => { if (alive) { setSrc(r.src); setView(r.view); setErr(null); } },
       (e: unknown) => {
         if (!alive) return;
         const m = errorText(e);
@@ -148,12 +160,12 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   async function enter() {
     if (!/^\d{4,6}$/.test(typed)) return setErr('Enter the PIN the organiser gave you');
     setBusy(true); setErr(null);
-    try { const v = await src.scorerOpen(token, typed); setView(v); setPin(typed); setTyped(''); }
+    try { const r = await openLink(token, typed); setSrc(r.src); setView(r.view); setPin(typed); setTyped(''); }
     catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }
 
   const title = view ? (view.court ? `Court ${view.court}` : 'Scoring') : 'Scorer';
-  if (!pin || !view) {
+  if (!pin || !view || !src) {
     return (
       <main className="screen" aria-labelledby="court-title">
         <Header id="court-title" title={title} onBack={onBack} />

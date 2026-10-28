@@ -5,8 +5,7 @@ import type { BestOf, Format, PointsTo } from '../../domain/types';
 import type { Go } from '../../navigation';
 import type { PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, matchResult, poolLetter, slotTime, standings } from '../domain/engine';
-import { backend, demoBackend, serverBackend } from '../index';
-import { clubMode } from '../config';
+import { backend, publicSources } from '../index';
 import { checkDivision, knockoutMatchesToAdd, type NewDivisionInput } from '../plan';
 import { isStaff, STAGE_LABEL, type ClubMatch, type ClubPlayer, type DivisionKind, type Entry } from '../types';
 import { WalkIn } from './Organiser';
@@ -281,9 +280,15 @@ function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; 
 
 /** Public results: no login, names and scores only. Refreshes every 20 seconds while the tournament is live. */
 export function Results({ slug, onBack }: { slug: string; onBack: () => void }) {
-  const src = clubMode() === 'demo' ? demoBackend() : serverBackend() ?? demoBackend();
   const [tick, setTick] = useState(0);
-  const state = useLoad<PublicTournament | null>(() => src.publicTournament(slug), [slug, tick]);
+  const state = useLoad<PublicTournament | null>(async () => {
+    let lastError: unknown = null;
+    for (const src of publicSources()) {
+      try { const r = await src.publicTournament(slug); if (r) return r; } catch (e) { lastError = e; }
+    }
+    if (lastError) throw lastError;
+    return null;
+  }, [slug, tick]);
   const [div, setDiv] = useState<string | null>(null);
   const [view, setView] = useState<View>('pools');
   const d = state.data;

@@ -28,3 +28,12 @@ export function backend(): ClubBackend | null {
 
 /** For tests: start from a clean demo. */
 export function resetClubBackendsForTests() { demo = null; server = null; }
+
+/**
+ * Where to look up a public link (results or scorer link): the real club server first, then the demo on this phone.
+ * A link never depends on which mode this phone was last left in.
+ */
+export function publicSources(): ClubBackend[] {
+  const s = serverBackend();
+  return s ? [s, demoBackend()] : [demoBackend()];
+}
