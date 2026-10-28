@@ -90,6 +90,11 @@ describe('keeping a clip between its start and end', () => {
     expect(s.reachedStart).toBe(false);
     const t: ClipLoopState = { reachedStart: true, lastSeek: 0 };
     expect(clipTick(t, r(21.1, 10_000, { loop: false }))).toBe('pause');
+    // YouTube stopped by itself at the end (time no longer moving): loop restarts it, no-loop leaves it
+    const u: ClipLoopState = { reachedStart: true, lastSeek: 0 };
+    expect(clipTick(u, r(21, 10_000, { playing: false }))).toBe('seek-start');
+    const v: ClipLoopState = { reachedStart: true, lastSeek: 0 };
+    expect(clipTick(v, r(21, 10_000, { playing: false, loop: false }))).toBe('none');
   });
   it('lets you scrub earlier once the clip has started, and leaves whole videos alone', () => {
     const s: ClipLoopState = { reachedStart: true, lastSeek: 0 };

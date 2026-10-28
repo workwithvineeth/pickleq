@@ -157,15 +157,17 @@ export type ClipAction = 'none' | 'seek-start' | 'pause';
 export const SEEK_SETTLE_MS = 1500;
 
 export function clipTick(s: ClipLoopState, r: { now: number; playing: boolean; start: number; end?: number; loop: boolean; at: number }): ClipAction {
-  if (!r.playing || r.at - s.lastSeek < SEEK_SETTLE_MS) return 'none';
+  if (r.at - s.lastSeek < SEEK_SETTLE_MS) return 'none';
+  // At (or past) the end: loop back, or pause if it's still running. YouTube may also have stopped there by itself.
+  if (s.reachedStart && r.end !== undefined && r.now >= r.end - 0.3) {
+    if (!r.loop) return r.playing && r.now >= r.end ? 'pause' : 'none';
+    s.reachedStart = false; s.lastSeek = r.at;
+    return 'seek-start';
+  }
+  if (!r.playing) return 'none';
   if (!s.reachedStart) {
     if (r.now >= r.start - 1) { s.reachedStart = true; return 'none'; }
     s.lastSeek = r.at;
-    return 'seek-start';
-  }
-  if (r.end !== undefined && r.now >= r.end) {
-    if (!r.loop) return 'pause';
-    s.reachedStart = false; s.lastSeek = r.at;
     return 'seek-start';
   }
   return 'none';

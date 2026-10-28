@@ -6,6 +6,7 @@ import { Segmented } from './Controls';
 interface YTPlayer {
   playVideo(): void; pauseVideo(): void; seekTo(s: number, allowSeekAhead: boolean): void;
   getCurrentTime(): number; getPlayerState(): number; setPlaybackRate(r: number): void; destroy(): void;
+  loadVideoById(o: { videoId: string; startSeconds?: number; endSeconds?: number }): void;
 }
 interface YTNamespace { Player: new (el: HTMLElement, opts: unknown) => YTPlayer }
 declare global { interface Window { YT?: YTNamespace; onYouTubeIframeAPIReady?: () => void } }
@@ -54,6 +55,11 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
     let timer: ReturnType<typeof setInterval> | undefined;
     const loopState: ClipLoopState = { reachedStart: false, lastSeek: 0 };
     let prevNow = -1;
+    const playSection = () => {
+      const { start, end } = range.current;
+      try { player.current?.loadVideoById({ videoId: clip.videoId, startSeconds: start, ...(end !== undefined ? { endSeconds: end } : {}) }); }
+      catch { player.current?.seekTo(start, true); player.current?.playVideo(); }
+    };
     loadYouTubeApi().then((YT) => {
       if (cancelled || !host.current) return;
       const el = document.createElement('div');
@@ -65,7 +71,8 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         // No 'start' here: YouTube often ignores it but still echoes it as the first position, which hides the real one.
         playerVars: { playsinline: 1, rel: 0, autoplay: 1, origin: window.location.origin },
         events: {
-          onReady: () => { if (!cancelled) { setPhase('ready'); player.current?.playVideo(); } },
+          // Loading with startSeconds/endSeconds is YouTube's reliable way to play a section (the start parameter often isn't).
+          onReady: () => { if (!cancelled) { setPhase('ready'); playSection(); } },
           onError: () => { if (!cancelled) setPhase('error'); },
         },
       });
@@ -79,7 +86,7 @@ export function ClipPlayer({ clip, onMarkStart, onMarkEnd }: {
         if (now > prevNow + 0.05) playing = true;
         prevNow = now;
         const action = clipTick(loopState, { now, playing, start, end, loop: loopRef.current, at: Date.now() });
-        if (action === 'seek-start') p.seekTo(start, true);
+        if (action === 'seek-start') playSection();
         else if (action === 'pause') p.pauseVideo();
       }, 250);
     }).catch(() => { if (!cancelled) setPhase('error'); });
