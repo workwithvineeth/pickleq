@@ -1,6 +1,7 @@
 import type { Go, Route } from '../../navigation';
 import { ClubView, PlayerView, Sharing } from './ClubView';
 import { ClubHub, ClubJoin, ClubNew, ClubSignIn } from './Hub';
+import { CourtScorer, Desk, DuprExport, Entries, ScorerLinks } from './Organiser';
 import { ScoreMatch } from './Score';
 import { Results, TournamentNew, TournamentView } from './Tournament';
 
@@ -18,6 +19,11 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'club-tournament': return <TournamentView key={id} id={id} go={go} onBack={back} />;
     case 'club-tournament-new': return <TournamentNew key={id} clubId={id} go={go} onBack={back} />;
     case 'club-score': return <ScoreMatch key={id} matchId={id} go={go} onBack={back} />;
+    case 'club-desk': return <Desk key={id} id={id} go={go} onBack={back} />;
+    case 'club-scorers': return <ScorerLinks key={id} id={id} go={go} onBack={back} />;
+    case 'club-entries': return <Entries key={id} id={id} go={go} onBack={back} />;
+    case 'club-dupr': return <DuprExport key={id} id={id} go={go} onBack={back} />;
+    case 'court': return <CourtScorer key={id} token={id} onBack={() => go('home')} />;
     case 'results': return <Results key={id} slug={id} onBack={() => go('home')} />;
     default: return null;
   }

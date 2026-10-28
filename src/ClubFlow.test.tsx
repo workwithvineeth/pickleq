@@ -7,6 +7,7 @@ import { addMatch } from './db/matches';
 import { DEFAULT_FORMAT } from './domain/types';
 import { demoBackend, resetClubBackendsForTests } from './club';
 import { setClubMode } from './club/config';
+import type { ClubMatch } from './club/types';
 
 beforeEach(async () => {
   for (const t of [db.matches, db.players, db.sessions]) await t.clear();
@@ -17,6 +18,14 @@ beforeEach(async () => {
   vi.stubEnv('VITE_CLUB', 'on');
 });
 afterEach(() => { vi.unstubAllEnvs(); });
+
+function demoState() { return JSON.parse(localStorage.getItem('pq-club-demo-v1') ?? '{}'); }
+
+async function openEvent(user: ReturnType<typeof userEvent.setup>) {
+  await openDemo(user);
+  await user.click(screen.getByRole('button', { name: /Pickleball Central Open/ }));
+  await screen.findByRole('heading', { name: 'Pickleball Central Open' });
+}
 
 async function openDemo(user: ReturnType<typeof userEvent.setup>) {
   window.location.hash = '#/club';
@@ -193,5 +202,140 @@ describe('Club mode', () => {
     expect(await screen.findByRole('button', { name: 'Open Pickleball Central' })).toBeInTheDocument();
     expect(localStorage.getItem('pq-club-demo-v1')).toContain('"clubs":[]');
     setClubMode(null);
+  });
+
+  it('scorer links: a court scorer with no account scores with the PIN; wrong PINs are refused', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Scorer links' }));
+    await screen.findByRole('heading', { name: 'Scorer links' });
+    await user.click(screen.getByRole('button', { name: 'Make a link for each court (6)' }));
+    await screen.findByText('Made 6 court links');
+    await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
+    await screen.findByText('Made an any-court link');
+    const link = demoState().scorerLinks.find((l: { court?: number }) => !l.court);
+    expect(screen.getAllByText(`PIN ${link.pin}`).length).toBeGreaterThan(0);
+
+    window.location.hash = `#/court/${link.token}`;
+    const pin = await screen.findByLabelText('PIN');
+    await user.type(pin, link.pin === '0000' ? '1111' : '0000');
+    await user.click(screen.getByRole('button', { name: 'Start scoring' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong PIN');
+    await user.clear(pin);
+    await user.type(pin, link.pin);
+    await user.click(screen.getByRole('button', { name: 'Start scoring' }));
+    await screen.findByText('Up next');
+    expect(screen.queryByText(/DUPR|@/)).not.toBeInTheDocument();
+    await user.click(screen.getAllByRole('button', { name: /^Score: / })[0]);
+    for (let g = 0; g < 2; g++) {
+      for (let i = 0; i < 11; i++) await user.click(screen.getAllByRole('button', { name: /^Point to / })[0]);
+      if (g === 0) await user.click(screen.getByRole('button', { name: 'Start game 2' }));
+    }
+    await user.click(screen.getByRole('button', { name: 'Save result' }));
+    await screen.findByText('Finished');
+    const [{ club }] = await demoBackend().myClubs();
+    const done = (await demoBackend().clubBundle(club.id)).matches.filter((m) => m.stage === 'sf' && m.status === 'done');
+    expect(done.some((m) => m.games.map((x) => `${x.a}-${x.b}`).join() === '11-0,11-0')).toBe(true);
+  });
+
+  it('a court link only shows that court, and a turned-off link stops working', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Scorer links' }));
+    await user.click(await screen.findByRole('button', { name: 'Make a link for each court (6)' }));
+    await screen.findByText('Made 6 court links');
+    const c1 = demoState().scorerLinks.find((l: { court?: number }) => l.court === 1);
+    await user.click(within(screen.getByLabelText('Court 1 scorer link')).getByRole('button', { name: 'Turn off' }));
+    await screen.findByText('Court 1 link turned off');
+    window.location.hash = `#/court/${c1.token}`;
+    await user.type(await screen.findByLabelText('PIN'), c1.pin);
+    await user.click(screen.getByRole('button', { name: 'Start scoring' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/isn’t valid/);
+  });
+
+  it('desk view: every court on one screen, results typed in at the desk', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Desk view' }));
+    await screen.findByRole('heading', { name: 'Pickleball Central Open · Desk' });
+    for (let c = 1; c <= 6; c++) expect(screen.getByLabelText(`Court ${c}`)).toBeInTheDocument();
+    const card = screen.getAllByRole('button', { name: 'Enter result' })[0].closest('[aria-label^="Court"]') as HTMLElement;
+    await user.click(within(card).getByRole('button', { name: 'Enter result' }));
+    const boxes = within(card).getAllByRole('textbox');
+    await user.type(boxes[0], '11'); await user.type(boxes[1], '10');
+    await user.click(within(card).getByRole('button', { name: 'Save result' }));
+    expect(await within(card).findByRole('status')).toHaveTextContent(/won by 2/);
+    await user.clear(boxes[1]); await user.type(boxes[1], '9');
+    await user.type(boxes[2], '11'); await user.type(boxes[3], '7');
+    await user.click(within(card).getByRole('button', { name: 'Save result' }));
+    await screen.findByText('Result saved');
+  });
+
+  it('entries: withdrawing a semi-finalist gives the opponent a walkover; late entries are refused after the draw', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    const [{ club }] = await demoBackend().myClubs();
+    const before = await demoBackend().clubBundle(club.id);
+    const players = new Map(before.players.map((p) => [p.id, p.name]));
+    const semi = before.matches.find((m) => m.stage === 'sf' && m.status === 'scheduled') as ClubMatch;
+    const out = semi.sideA.map((id) => players.get(id)).join(' / ');
+    await user.click(screen.getByRole('button', { name: 'Entries' }));
+    await screen.findByRole('heading', { name: 'Entries' });
+    await user.click(within(screen.getByRole('group', { name: 'Event' })).getByRole('button', { name: 'Open Doubles' }));
+    const card = await screen.findByLabelText(out);
+    await user.click(within(card).getByRole('button', { name: 'Change' }));
+    await user.click(within(card).getByRole('button', { name: 'Withdraw…' }));
+    await user.click(within(card).getByRole('button', { name: 'Yes, withdraw' }));
+    await screen.findByText(/withdrawn\. 0 matches cancelled, 1 walkover/);
+    const after = await demoBackend().clubBundle(club.id);
+    expect(after.matches.find((m) => m.id === semi.id)).toMatchObject({ status: 'done', winner: 'B' });
+
+    const late = screen.getByLabelText('Late entry player') as HTMLSelectElement;
+    await user.selectOptions(late, late.options[1].value);
+    await user.selectOptions(screen.getByLabelText('Late entry partner'), (screen.getByLabelText('Late entry partner') as HTMLSelectElement).options[1].value);
+    await user.click(screen.getByRole('button', { name: 'Add to the event' }));
+    await screen.findByText('Knockouts have started, so new entries can’t join');
+
+    await user.type(screen.getByLabelText('Walk-in player name'), 'Wally Walkin');
+    await user.click(screen.getByRole('button', { name: 'Add player' }));
+    await screen.findByText('Wally Walkin added to the club. Now enter them above.');
+  });
+
+  it('DUPR export: collects missing DUPR IDs and only exports matches that are ready', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Send to DUPR' }));
+    await screen.findByRole('heading', { name: 'Send to DUPR' });
+    expect(screen.getByRole('button', { name: /Download the DUPR file \(0\)/ })).toBeDisabled();
+    const inputs = screen.getAllByLabelText(/^DUPR ID for /);
+    expect(inputs.length).toBeGreaterThan(10);
+    await user.type(inputs[0], 'bad id!');
+    await user.click(screen.getByRole('button', { name: 'Save DUPR IDs' }));
+    expect(await screen.findByRole('status')).toHaveTextContent(/3 to 20 letters or numbers/);
+    await user.clear(inputs[0]);
+    await user.type(inputs[0], 'ab12cd');
+    await user.click(screen.getByRole('button', { name: 'Save DUPR IDs' }));
+    await screen.findByText('Saved 1 DUPR ID');
+    const [{ club }] = await demoBackend().myClubs();
+    expect((await demoBackend().clubBundle(club.id)).players.some((p) => p.duprId === 'AB12CD')).toBe(true);
+  });
+
+  it('every event chooses golden point or win by 2, and the choice reaches scoring', async () => {
+    const user = userEvent.setup();
+    await openDemo(user);
+    await user.click(screen.getByRole('button', { name: 'New tournament' }));
+    await screen.findByRole('heading', { name: 'New tournament' });
+    expect(within(screen.getByRole('group', { name: 'Event 1 scoring' })).getByRole('button', { name: 'Golden point' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Golden point: at 10–10 the next point wins.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Tournament name'), 'Win by two night');
+    await user.click(within(screen.getByRole('group', { name: 'Event 1 format' })).getByRole('button', { name: 'Round robin' }));
+    await user.click(within(screen.getByRole('group', { name: 'Event 1 scoring' })).getByRole('button', { name: 'Win by 2' }));
+    expect(screen.getByText('Win by 2: play on past 11 until someone leads by 2.')).toBeInTheDocument();
+    for (const box of screen.getAllByRole('checkbox').slice(0, 4)) await user.click(box);
+    await user.click(screen.getByRole('button', { name: 'Create tournament' }));
+    await screen.findByRole('heading', { name: 'Win by two night' });
+    expect(screen.getAllByRole('button', { name: /^Score / })).toHaveLength(6);
+    await user.click(screen.getAllByRole('button', { name: /^Score / })[0]);
+    expect(await screen.findByText(/One game to 11 · win by 2/)).toBeInTheDocument();
   });
 });

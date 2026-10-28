@@ -69,7 +69,8 @@ export class ServerBackend implements ClubBackend {
   private sb: SupabaseClient;
 
   constructor(url: string, key: string) {
-    this.sb = createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'pq-club-auth' } });
+    // PKCE: the email's sign-in link comes back with ?code=… which is swapped for a session on this browser.
+    this.sb = createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce', storageKey: 'pq-club-auth' } });
   }
 
   async currentUser() {
@@ -79,7 +80,24 @@ export class ServerBackend implements ClubBackend {
   }
 
   async sendCode(email: string) {
-    check(await this.sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } }));
+    // The email carries a sign-in link back to this app (and a 6-digit code once the club's own email service is set up).
+    const back = `${window.location.origin}${window.location.pathname}`;
+    check(await this.sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: back } }));
+  }
+
+  async finishLinkSignIn(): Promise<boolean> {
+    const url = new URL(window.location.href);
+    const err = url.searchParams.get('error_description') ?? new URLSearchParams(url.hash.split('?')[1] ?? '').get('error_description');
+    const code = url.searchParams.get('code');
+    if (!code && !err) return false;
+    // Clean the address bar so a reload doesn't try the same link again.
+    window.history.replaceState(null, '', `${url.pathname}${url.hash.split('?')[0] || '#/club-signin'}`);
+    if (err) throw new ClubError(/expired|invalid/i.test(err) ? 'That sign-in link has expired or was already used. Send a new one.' : err);
+    // getSession waits for the client to finish swapping the link's code for a session.
+    const { data } = await this.sb.auth.getSession();
+    if (!data.session) throw new ClubError('That link didn’t sign you in. Open it on the same phone and browser you asked for it on, or send a new one.');
+    check(await this.sb.rpc('claim_pending'));
+    return true;
   }
 
   async verifyCode(email: string, code: string) {

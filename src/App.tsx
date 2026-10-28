@@ -36,6 +36,11 @@ const Stats = lazy(() => import('./screens/Stats').then((m) => ({ default: m.Sta
 // The check is written out here (not via isClubEnabled) so Live and Preview builds leave the club files out entirely.
 const ClubRoutes = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('./club/screens/ClubRoutes')) : null;
 
+// Opened from a Club sign-in email (…/?code=…): show the sign-in screen, which finishes it.
+if (import.meta.env.VITE_CLUB === 'on' && /[?&](code|error_description)=/.test(window.location.search) && !window.location.hash.startsWith('#/club-signin')) {
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/club-signin`);
+}
+
 export default function App() {
   const [route, go, back] = useRoute();
   const isTab = (TABS as string[]).includes(route.name);
@@ -107,5 +112,5 @@ export default function App() {
 }
 
 function isClubRoute(name: string): boolean {
-  return name.startsWith('club') || name === 'results';
+  return name.startsWith('club') || name === 'results' || name === 'court';
 }

@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 
 export type Tab = 'home' | 'matches' | 'train' | 'stats' | 'coach';
 export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'goals' | 'session-new' | 'session' | 'match' | 'edit' | 'details' | 'clips' | 'tournaments' | 'tournament-new' | 'tournament' | 'tournament-edit' | 'coach-task' | 'conversation' | 'coach-settings' | 'report' | 'help' | 'privacy'
-  | 'club' | 'club-signin' | 'club-new' | 'club-join' | 'club-view' | 'club-player' | 'club-tournament' | 'club-tournament-new' | 'club-score' | 'club-sharing' | 'results';
+  | 'club' | 'club-signin' | 'club-new' | 'club-join' | 'club-view' | 'club-player' | 'club-tournament' | 'club-tournament-new' | 'club-score' | 'club-sharing' | 'results'
+  | 'club-desk' | 'club-scorers' | 'club-entries' | 'club-dupr' | 'court';
 export interface Route { name: RouteName; id?: string }
 
 const simple: RouteName[] = ['club', 'club-signin', 'club-new', 'home', 'train', 'stats', 'coach', 'tournaments', 'tournament-new', 'coach-settings', 'report', 'help', 'privacy', 'backfill', 'settings', 'trash', 'backup', 'ratings', 'goals', 'session-new'];
-const withId: RouteName[] = ['club-join', 'club-view', 'club-player', 'club-tournament', 'club-tournament-new', 'club-score', 'club-sharing', 'results', 'match', 'edit', 'details', 'session', 'tournament', 'tournament-edit', 'coach-task', 'conversation'];
+const withId: RouteName[] = ['club-desk', 'club-scorers', 'club-entries', 'club-dupr', 'court', 'club-join', 'club-view', 'club-player', 'club-tournament', 'club-tournament-new', 'club-score', 'club-sharing', 'results', 'match', 'edit', 'details', 'session', 'tournament', 'tournament-edit', 'coach-task', 'conversation'];
 const optionalId: RouteName[] = ['matches', 'clips', 'log'];
 export const TABS: Tab[] = ['home', 'matches', 'train', 'stats', 'coach'];
 

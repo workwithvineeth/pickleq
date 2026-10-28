@@ -56,6 +56,8 @@ export interface ClubBackend {
   currentUser(): Promise<ClubUser | null>;
   sendCode(email: string): Promise<void>;
   verifyCode(email: string, code: string): Promise<void>;
+  /** Finishes signing in when the app is opened from the email's sign-in link. True if that just happened. */
+  finishLinkSignIn?(): Promise<boolean>;
   signOut(): Promise<void>;
   myClubs(): Promise<MyClub[]>;
   createClub(name: string, city: string, myName: string): Promise<string>;

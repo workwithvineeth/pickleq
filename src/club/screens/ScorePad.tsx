@@ -191,7 +191,7 @@ function momentumNote(an: ReturnType<typeof analyseGame>, nameA: string, nameB: 
   return '';
 }
 
-function ManualScores({ format, nameA, nameB, onSave, onCancel, busy }: { format: Format; nameA: string; nameB: string; onSave: (g: ClubGame[]) => void; onCancel: () => void; busy: boolean }) {
+export function ManualScores({ format, nameA, nameB, onSave, onCancel, busy }: { format: Format; nameA: string; nameB: string; onSave: (g: ClubGame[]) => void; onCancel: () => void; busy: boolean }) {
   const [rows, setRows] = useState<{ a: string; b: string }[]>(Array.from({ length: format.bestOf }, () => ({ a: '', b: '' })));
   const [msg, setMsg] = useState<string | null>(null);
   function save() {

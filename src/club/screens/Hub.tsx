@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Field } from '../../components/Controls';
 import type { NewMatch } from '../../db/matches';
 import type { Go } from '../../navigation';
@@ -108,6 +108,25 @@ export function ClubSignIn({ go, onBack }: { go: Go; onBack: () => void }) {
   const [msg, setMsg] = useState<string | null>(null);
   const b = serverBackend();
 
+  function signedIn() {
+    setClubMode('server');
+    const pending = sessionStorage.getItem(PENDING_JOIN);
+    if (pending) { sessionStorage.removeItem(PENDING_JOIN); go('club-join', pending, { replace: true }); } else go('club', undefined, { replace: true });
+  }
+
+  // Opened from the email's sign-in link: finish signing in.
+  useEffect(() => {
+    if (!b?.finishLinkSignIn) return;
+    let alive = true;
+    setBusy(true);
+    b.finishLinkSignIn().then(
+      (done) => { if (alive) { setBusy(false); if (done) signedIn(); } },
+      (e: unknown) => { if (alive) { setBusy(false); setMsg(errorText(e)); } },
+    );
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [b]);
+
   async function send() {
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setMsg('Enter your email address');
     setBusy(true); setMsg(null);
@@ -116,33 +135,32 @@ export function ClubSignIn({ go, onBack }: { go: Go; onBack: () => void }) {
   async function verify() {
     if (!/^\d{6}$/.test(code.trim())) return setMsg('Enter the 6-digit code from the email');
     setBusy(true); setMsg(null);
-    try {
-      await b?.verifyCode(email, code);
-      setClubMode('server');
-      const pending = sessionStorage.getItem(PENDING_JOIN);
-      if (pending) { sessionStorage.removeItem(PENDING_JOIN); go('club-join', pending, { replace: true }); } else go('club', undefined, { replace: true });
-    } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
+    try { await b?.verifyCode(email, code); signedIn(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
   }
 
   return (
     <main className="screen" aria-labelledby="signin-title">
       <Header id="signin-title" title="Sign in" onBack={onBack} />
       {!b && <div role="alert" className="msg msg-bad">The club server isn’t set up in this version.</div>}
-      <p className="small muted" style={{ margin: 0 }}>We email you a 6-digit code. There’s no password to remember.</p>
+      <p className="small muted" style={{ margin: 0 }}>We email you a sign-in link. There’s no password to remember.</p>
       <Field label="Email">
         <input className="input" type="email" inputMode="email" autoComplete="email" aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={sent} />
       </Field>
       {sent && (
-        <Field label="Code from the email">
-          <input className="input" inputMode="numeric" autoComplete="one-time-code" aria-label="Code from the email" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
-        </Field>
+        <>
+          <div role="status" className="msg msg-ok">Email sent. Open it on this phone and tap <b>Sign in</b>. Use the same browser you’re in now. Check spam if it isn’t there in a minute.</div>
+          <Field label="Or enter the 6-digit code, if your email has one">
+            <input className="input" inputMode="numeric" autoComplete="one-time-code" aria-label="Code from the email" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+          </Field>
+        </>
       )}
-      {msg && <div role="status" className="msg msg-bad">{msg}</div>}
+      {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
+      {busy && !sent && !email && <p className="small muted" role="status">Signing you in…</p>}
       {!sent
-        ? <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={send}>Email me a code</button>
+        ? <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={send}>Email me a sign-in link</button>
         : <>
-            <button type="button" className="btn btn-primary" disabled={busy} onClick={verify}>Sign in</button>
-            <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setSent(false); setCode(''); }}>Use a different email</button>
+            {code.length === 6 && <button type="button" className="btn btn-primary" disabled={busy} onClick={verify}>Sign in with the code</button>}
+            <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setSent(false); setCode(''); }}>Use a different email, or send again</button>
           </>}
     </main>
   );

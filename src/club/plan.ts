@@ -217,3 +217,38 @@ export function poolsComplete(divisionId: string, matches: ClubMatch[]): boolean
   const pool = matches.filter((m) => m.divisionId === divisionId && m.stage === 'pool');
   return pool.length > 0 && pool.every((m) => m.status === 'done' || m.status === 'void');
 }
+
+// ---------- Running the day (desk view) ----------
+
+export interface CourtSlot { court: number; now?: ClubMatch; next?: ClubMatch }
+
+const bySlot = (a: ClubMatch, b: ClubMatch) => (a.slot ?? 1e9) - (b.slot ?? 1e9) || (a.court ?? 0) - (b.court ?? 0);
+
+/** What each court is doing: the match being played on it now, and the next one booked for it. */
+export function courtBoard(matches: ClubMatch[], courts: number): CourtSlot[] {
+  return Array.from({ length: courts }, (_, i) => {
+    const court = i + 1;
+    const here = matches.filter((m) => m.court === court);
+    const now = here.filter((m) => m.status === 'live').sort(bySlot)[0];
+    const next = here.filter((m) => m.status === 'scheduled').sort(bySlot)[0];
+    return { court, now, next };
+  });
+}
+
+/** Players on court right now (in a live match). */
+export function playersOnCourt(matches: ClubMatch[]): Set<string> {
+  return new Set(matches.filter((m) => m.status === 'live').flatMap((m) => [...m.sideA, ...m.sideB]));
+}
+
+/** The earliest match waiting to be played whose players aren't on another court, for calling it to a free court. */
+export function nextMatchToCall(matches: ClubMatch[], exceptCourt?: number): ClubMatch | undefined {
+  const busy = playersOnCourt(matches);
+  return matches
+    .filter((m) => m.status === 'scheduled' && m.court !== exceptCourt && ![...m.sideA, ...m.sideB].some((p) => busy.has(p)))
+    .sort(bySlot)[0];
+}
+
+/** Matches waiting to be played, in order. */
+export function upNext(matches: ClubMatch[], limit = 8): ClubMatch[] {
+  return matches.filter((m) => m.status === 'scheduled').sort(bySlot).slice(0, limit);
+}

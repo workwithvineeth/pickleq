@@ -28,7 +28,8 @@ function uuidFrom(rand: () => number): string {
   return `${s(8)}-${s(4)}-4${s(3)}-${'89ab'[Math.floor(rand() * 4)]}${s(3)}-${s(12)}`;
 }
 
-const POOL_FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout' };
+// Pool games use golden point (how Hyderabad club round robins are usually played); knockouts are win by 2.
+const POOL_FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: true };
 const KO_FORMAT: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
 function isoDay(d: Date): string {
