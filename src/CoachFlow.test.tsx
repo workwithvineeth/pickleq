@@ -60,8 +60,9 @@ describe('Claude coach', () => {
     await screen.findByRole('heading', { name: 'Weekly summary' });
     expect(await screen.findByText(/Claude will see about [\d,]+ tokens/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Ask Claude' }));
-    expect(await screen.findByRole('heading', { name: 'Good week' })).toBeInTheDocument();
-    expect(screen.getByText(/15,000 in, 1,200 out/)).toBeInTheDocument();
+    // The streamed draft is replaced by the saved answer, so wait for the saved one (it shows the token counts).
+    expect(await screen.findByText(/15,000 in, 1,200 out/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Good week' })).toBeInTheDocument();
     const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
     expect(body.messages[0].content).toContain('TASK: Weekly summary');
     expect(body.messages[0].content).toContain('[Last 7 days');
@@ -71,7 +72,8 @@ describe('Claude coach', () => {
     fetchMock.mockImplementation(async () => ok('Yes — focus on resets.'));
     await user.type(screen.getByLabelText('Follow-up question'), 'Should I drill resets?');
     await user.click(screen.getByRole('button', { name: 'Send' }));
-    expect(await screen.findByText('Yes — focus on resets.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByText(/in, 1,200 out/)).toHaveLength(2));
+    expect(screen.getByText('Yes — focus on resets.')).toBeInTheDocument();
     const body2 = JSON.parse((fetchMock.mock.calls[1] as unknown as [string, RequestInit])[1].body as string);
     expect(body2.messages.map((m: { role: string }) => m.role)).toEqual(['user', 'assistant', 'user']);
     expect(body2.messages[2].content).toBe('Should I drill resets?');
@@ -97,7 +99,8 @@ describe('Claude coach', () => {
     expect(await db.usage.count()).toBe(0);
     fetchMock.mockImplementation(async () => ok('## Recurring: backhand'));
     await user.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByRole('heading', { name: 'Recurring: backhand' })).toBeInTheDocument();
+    await screen.findByText(/15,000 in, 1,200 out/);
+    expect(screen.getByRole('heading', { name: 'Recurring: backhand' })).toBeInTheDocument();
     const c = (await db.conversations.toArray())[0];
     expect(c.messages.map((m) => [m.role, !!m.error])).toEqual([['user', false], ['assistant', false]]);
   });
