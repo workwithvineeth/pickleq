@@ -11,13 +11,35 @@ export function dominatedMax(pointsTo: PointsTo): number {
   return pointsTo === 21 ? 9 : pointsTo === 15 ? 6 : 4;
 }
 
-export function gameOver(a: number, b: number, pointsTo: number): boolean {
+/** Whether a game is finished. With golden point, the first to the target wins (10–10 → next point wins); otherwise win by 2. */
+export function gameOver(a: number, b: number, pointsTo: number, golden = false): boolean {
+  if (golden) return Math.max(a, b) >= pointsTo;
   return Math.max(a, b) >= pointsTo && Math.abs(a - b) >= 2;
 }
 
-/** One point from winning: reaching pointsTo next point would win by 2. */
+/**
+ * Game point: one point from winning while ahead (e.g. 10–8). A level golden point (10–10) doesn't count for either side,
+ * so a golden-point win isn't mistaken for a comeback.
+ */
 function onGamePoint(mine: number, theirs: number, pointsTo: number): boolean {
   return mine >= pointsTo - 1 && mine > theirs;
+}
+
+/** True at the golden point (e.g. 10–10 in a game to 11 with golden point on). */
+export function isGoldenPoint(a: number, b: number, pointsTo: number, golden: boolean): boolean {
+  return golden && a === pointsTo - 1 && b === pointsTo - 1;
+}
+
+/** Checks a final score typed by hand. Returns a message for the person, or null if it's a valid finished game. */
+export function checkFinalScore(a: number, b: number, pointsTo: number, golden: boolean): string | null {
+  if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < 0) return 'Enter both scores';
+  if (a === b) return 'A game can’t end level';
+  const hi = Math.max(a, b), lo = Math.min(a, b);
+  if (hi < pointsTo) return `The winner needs ${pointsTo}`;
+  if (golden) return hi > pointsTo ? `With golden point, the winner finishes on exactly ${pointsTo}` : null;
+  if (hi - lo < 2) return 'Games are won by 2';
+  if (hi > pointsTo && hi - lo !== 2) return `Past ${pointsTo}, the margin must be exactly 2`;
+  return null;
 }
 
 /**
@@ -27,23 +49,23 @@ function onGamePoint(mine: number, theirs: number, pointsTo: number): boolean {
  * Dominated: won without ever trailing by 2+, and the loser scored at most dominatedMax.
  * The "from" score is the moment of the biggest lead (or the first game point if the lead never reached the threshold).
  */
-export function analyseGame(points: string, pointsTo: PointsTo, t: Thresholds = DEFAULT_THRESHOLDS): GameAnalysis {
+export function analyseGame(points: string, pointsTo: PointsTo, t: Thresholds = DEFAULT_THRESHOLDS, golden = false): GameAnalysis {
   const thr = leadThreshold(pointsTo, t);
   let a = 0, b = 0;
   let maxLeadA = 0, atMaxLeadA: [number, number] | null = null;
   let maxLeadB = 0, atMaxLeadB: [number, number] | null = null;
   let firstGpA: [number, number] | null = null, firstGpB: [number, number] | null = null;
   for (const p of points) {
-    if (gameOver(a, b, pointsTo)) break;
+    if (gameOver(a, b, pointsTo, golden)) break;
     if (p === 'A') a++; else if (p === 'B') b++; else continue;
     if (a - b > maxLeadA) { maxLeadA = a - b; atMaxLeadA = [a, b]; }
     if (b - a > maxLeadB) { maxLeadB = b - a; atMaxLeadB = [a, b]; }
-    if (!gameOver(a, b, pointsTo)) {
+    if (!gameOver(a, b, pointsTo, golden)) {
       if (!firstGpA && onGamePoint(a, b, pointsTo)) firstGpA = [a, b];
       if (!firstGpB && onGamePoint(b, a, pointsTo)) firstGpB = [a, b];
     }
   }
-  const complete = gameOver(a, b, pointsTo);
+  const complete = gameOver(a, b, pointsTo, golden);
   const base: GameAnalysis = { a, b, momentumA: 'neither', momentumB: 'neither', gamePointA: !!firstGpA, gamePointB: !!firstGpB, complete };
   if (!complete || points.length === 0) return base;
   const aWon = a > b;

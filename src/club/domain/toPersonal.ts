@@ -24,7 +24,7 @@ export function clubMatchToPersonal(m: ClubMatch, playerId: string, players: Map
   const games: Game[] = m.games.map((g) => {
     const you = side === 'A' ? g.a : g.b, them = side === 'A' ? g.b : g.a;
     if (!g.points) return { you, them, momentum: 'neither' };
-    const an = analyseGame(g.points, m.format.pointsTo, thresholds);
+    const an = analyseGame(g.points, m.format.pointsTo, thresholds, !!m.format.golden);
     const momentum = side === 'A' ? an.momentumA : an.momentumB;
     if (momentum === 'came-back' || momentum === 'lost-lead') {
       return { you, them, momentum, fromYou: side === 'A' ? an.fromA : an.fromB, fromThem: side === 'A' ? an.fromB : an.fromA };

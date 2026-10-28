@@ -1,9 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
-import { ClubError, type ClubBackend, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type PublicTournament, type ScorePatch, type TournamentBundle } from './backend';
+import { ClubError, type ClubBackend, type EntryPatch, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type PublicTournament, type ScorePatch, type TournamentBundle } from './backend';
 import { buildTournamentRows, checkDivision, type NewMatchRow, type NewTournamentInput } from './plan';
-import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, Entry, Member, Role, Share, SharedSummary, SummaryData } from './types';
+import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, Entry, Member, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
@@ -13,7 +13,7 @@ const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v)
 const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {} });
 const toPlayer = (r: Row): ClubPlayer => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), duprSingles: n(r.dupr_singles), duprDoubles: n(r.dupr_doubles),
-  userId: s(r.user_id), claimCode: s(r.claim_code), share: (r.share as Share) ?? {}, sample: !!r.sample,
+  duprId: s(r.dupr_id), userId: s(r.user_id), claimCode: s(r.claim_code), share: (r.share as Share) ?? {}, sample: !!r.sample,
 });
 const toTournament = (r: Row): ClubTournament => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time).slice(0, 5),
@@ -28,7 +28,20 @@ const toDivision = (r: Row): Division => {
   const f = formats(r.format);
   return { id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), name: String(r.name), kind: r.kind as Division['kind'], format: f.pool, koFormat: f.ko, pools: Number(r.pools), advance: Number(r.advance), sort: Number(r.sort ?? 0) };
 };
-const toEntry = (r: Row): Entry => ({ id: String(r.id), divisionId: String(r.division_id), clubId: String(r.club_id), playerIds: r.player_ids as string[], seed: n(r.seed), pool: n(r.pool) });
+const toEntry = (r: Row): Entry => ({ id: String(r.id), divisionId: String(r.division_id), clubId: String(r.club_id), playerIds: r.player_ids as string[], seed: n(r.seed), pool: n(r.pool), status: r.status === 'withdrawn' ? 'withdrawn' : 'active' });
+const toLink = (r: Row): ScorerLink => ({ id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), court: n(r.court), token: String(r.token), pin: String(r.pin), label: s(r.label), revoked: !!r.revoked, lastUsedAt: s(r.last_used_at) });
+const toScorerView = (r: Row): ScorerView => {
+  const t = r.tournament as Row;
+  return {
+    court: n(r.court), label: s(r.label), club: String(r.club),
+    tournament: { name: String(t.name), startDate: String(t.start_date), startTime: String(t.start_time ?? '08:00').slice(0, 5), slotMinutes: Number(t.slot_minutes ?? 20), courts: Number(t.courts ?? 1), status: t.status as ClubTournament['status'] },
+    matches: ((r.matches as Row[]) ?? []).map((m) => ({
+      id: String(m.id), stage: m.stage as ClubMatch['stage'], pool: n(m.pool), round: n(m.round), slot: n(m.slot), court: n(m.court), division: s(m.division),
+      format: m.format as Format, games: (m.games as ClubMatch['games']) ?? [], status: m.status as ClubMatch['status'], winner: (m.winner as ClubMatch['winner']) ?? undefined,
+      playedOn: s(m.played_on), namesA: (m.names_a as string[]) ?? [], namesB: (m.names_b as string[]) ?? [],
+    })),
+  };
+};
 const toMatch = (r: Row): ClubMatch => ({
   id: String(r.id), clubId: String(r.club_id), tournamentId: s(r.tournament_id), divisionId: s(r.division_id), stage: r.stage as ClubMatch['stage'],
   pool: n(r.pool), round: n(r.round), bracketPos: n(r.bracket_pos), slot: n(r.slot), court: n(r.court), entryA: s(r.entry_a), entryB: s(r.entry_b),
@@ -132,11 +145,16 @@ export class ServerBackend implements ClubBackend {
     return toPlayer(row);
   }
 
-  async updatePlayer(id: string, patch: { name?: string; duprSingles?: number | null; duprDoubles?: number | null }) {
+  async updatePlayer(id: string, patch: { name?: string; duprSingles?: number | null; duprDoubles?: number | null; duprId?: string | null }) {
     const row: Row = {};
     if (patch.name !== undefined) row.name = patch.name.trim();
     if (patch.duprSingles !== undefined) row.dupr_singles = patch.duprSingles;
     if (patch.duprDoubles !== undefined) row.dupr_doubles = patch.duprDoubles;
+    if (patch.duprId !== undefined) {
+      const v = patch.duprId?.trim() || null;
+      if (v && !/^[A-Za-z0-9-]{3,20}$/.test(v)) throw new ClubError('A DUPR ID is letters and numbers only');
+      row.dupr_id = v;
+    }
     check(await this.sb.from('club_players').update(row).eq('id', id));
   }
 
@@ -204,6 +222,65 @@ export class ServerBackend implements ClubBackend {
   async saveScore(matchId: string, patch: ScorePatch) {
     const uid = await this.uid();
     check(await this.sb.from('club_matches').update({ games: patch.games, status: patch.status, winner: patch.winner ?? null, played_on: patch.playedOn ?? null, updated_at: new Date().toISOString(), updated_by: uid }).eq('id', matchId));
+  }
+
+  async patchMatches(changes: { id: string; patch: MatchPatch }[]) {
+    const now = new Date().toISOString();
+    for (const { id, patch } of changes) {
+      const row: Row = { updated_at: now, updated_by: await this.uid() };
+      if (patch.status !== undefined) row.status = patch.status;
+      if (patch.winner !== undefined) row.winner = patch.winner;
+      if (patch.games !== undefined) row.games = patch.games;
+      if (patch.court !== undefined) row.court = patch.court;
+      if (patch.slot !== undefined) row.slot = patch.slot;
+      if (patch.sideA !== undefined) row.side_a = patch.sideA;
+      if (patch.sideB !== undefined) row.side_b = patch.sideB;
+      const res = check(await this.sb.from('club_matches').update(row).eq('id', id).select('id')) as Row[];
+      if (!res.length) throw new ClubError('You can’t change this match');
+    }
+  }
+
+  async addEntry(e: Entry) {
+    check(await this.sb.from('entries').insert({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null, status: e.status ?? 'active' }));
+  }
+
+  async updateEntry(id: string, patch: EntryPatch) {
+    const row: Row = {};
+    if (patch.playerIds) row.player_ids = patch.playerIds;
+    if (patch.status) row.status = patch.status;
+    if (patch.pool !== undefined) row.pool = patch.pool;
+    const res = check(await this.sb.from('entries').update(row).eq('id', id).select('id')) as Row[];
+    if (!res.length) throw new ClubError('You can’t change this entry');
+  }
+
+  async scorerLinks(tournamentId: string): Promise<ScorerLink[]> {
+    const rows = check(await this.sb.from('scorer_links').select('*').eq('tournament_id', tournamentId).order('court', { ascending: true, nullsFirst: false })) as Row[];
+    return rows.map(toLink);
+  }
+
+  async createScorerLinks(tournamentId: string, clubId: string, courts: (number | null)[]) {
+    const rows = check(await this.sb.from('scorer_links').insert(courts.map((c) => ({ tournament_id: tournamentId, club_id: clubId, court: c }))).select('*')) as Row[];
+    return rows.map(toLink);
+  }
+
+  async updateScorerLink(id: string, patch: { revoked?: boolean; pin?: string }) {
+    if (patch.pin !== undefined && !/^\d{4,6}$/.test(patch.pin)) throw new ClubError('A PIN is 4 to 6 digits');
+    const row: Row = { failed_attempts: 0, locked_until: null };
+    if (patch.revoked !== undefined) row.revoked = patch.revoked;
+    if (patch.pin !== undefined) row.pin = patch.pin;
+    check(await this.sb.from('scorer_links').update(row).eq('id', id));
+  }
+
+  async scorerOpen(token: string, pin: string): Promise<ScorerView> {
+    const r = check(await this.sb.rpc('scorer_open', { p_token: token, p_pin: pin })) as Row | null;
+    if (!r) throw new ClubError('This scorer link isn’t valid. Ask the organiser for a new one.');
+    if (r.error) throw new ClubError(String(r.error));
+    return toScorerView(r);
+  }
+
+  async scorerSave(token: string, pin: string, matchId: string, patch: ScorePatch) {
+    const r = check(await this.sb.rpc('scorer_save', { p_token: token, p_pin: pin, p_match: matchId, p_games: patch.games, p_status: patch.status, p_winner: patch.winner ?? null, p_played_on: patch.playedOn ?? null })) as Row | null;
+    if (r?.error) throw new ClubError(String(r.error));
   }
 
   async setMySharing(playerId: string, share: Share) { check(await this.sb.rpc('set_my_sharing', { pid: playerId, choice: share })); }

@@ -59,7 +59,7 @@ export function matchResult(m: Pick<ClubMatch, 'games' | 'format'>): MatchResult
   let gamesA = 0, gamesB = 0, pointsA = 0, pointsB = 0;
   for (const g of m.games) {
     pointsA += g.a; pointsB += g.b;
-    if (gameOver(g.a, g.b, m.format.pointsTo)) { if (g.a > g.b) gamesA++; else gamesB++; }
+    if (gameOver(g.a, g.b, m.format.pointsTo, !!m.format.golden)) { if (g.a > g.b) gamesA++; else gamesB++; }
   }
   const need = gamesNeededToWin(m.format);
   const winner = gamesA >= need ? 'A' : gamesB >= need ? 'B' : undefined;

@@ -36,6 +36,8 @@ create table public.club_players (
   name text not null check (char_length(name) between 1 and 60),
   dupr_singles numeric(3, 2) check (dupr_singles is null or dupr_singles between 1 and 8),
   dupr_doubles numeric(3, 2) check (dupr_doubles is null or dupr_doubles between 1 and 8),
+  -- The player's DUPR ID, needed to send results to DUPR.
+  dupr_id text check (dupr_id is null or dupr_id ~ '^[A-Za-z0-9-]{3,20}$'),
   user_id uuid references auth.users (id) on delete set null,
   -- A one-off code the club gives a player so their account links to this roster entry.
   claim_code text unique default substr(replace(gen_random_uuid()::text, '-', ''), 1, 12),
@@ -90,7 +92,9 @@ create table public.entries (
   club_id uuid not null references public.clubs (id) on delete cascade,
   player_ids uuid[] not null check (cardinality(player_ids) between 1 and 2),
   seed int,
-  pool int
+  pool int,
+  -- Withdrawn entries stay in the table so played results keep their names; their unplayed matches become void.
+  status text not null default 'active' check (status in ('active', 'withdrawn'))
 );
 create index entries_division_idx on public.entries (division_id);
 
@@ -113,7 +117,8 @@ create table public.club_matches (
   side_b uuid[] not null default '{}',
   format jsonb not null,
   games jsonb not null default '[]'::jsonb,
-  status text not null default 'scheduled' check (status in ('scheduled', 'live', 'done')),
+  -- void: not played and not counted (e.g. a team withdrew).
+  status text not null default 'scheduled' check (status in ('scheduled', 'live', 'done', 'void')),
   winner text check (winner is null or winner in ('A', 'B')),
   played_on date,
   updated_at timestamptz not null default now(),
@@ -124,6 +129,24 @@ create index club_matches_tournament_idx on public.club_matches (tournament_id);
 create index club_matches_division_idx on public.club_matches (division_id);
 create index club_matches_side_a_idx on public.club_matches using gin (side_a);
 create index club_matches_side_b_idx on public.club_matches using gin (side_b);
+
+-- Links that let someone score a court (or the whole event) without an account. The token is the secret part of
+-- the link; the PIN is told to the scorer separately. Only the server functions below ever check them.
+create table public.scorer_links (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references public.tournaments (id) on delete cascade,
+  club_id uuid not null references public.clubs (id) on delete cascade,
+  court int check (court is null or court between 1 and 64),
+  token text not null unique default (replace(gen_random_uuid()::text, '-', '') || substr(replace(gen_random_uuid()::text, '-', ''), 1, 8)),
+  pin text not null default lpad((floor(random() * 10000))::int::text, 4, '0') check (pin ~ '^[0-9]{4,6}$'),
+  label text check (label is null or char_length(label) <= 40),
+  revoked boolean not null default false,
+  failed_attempts int not null default 0,
+  locked_until timestamptz,
+  last_used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index scorer_links_tournament_idx on public.scorer_links (tournament_id);
 
 -- A summary a player chose to share from their personal app (numbers only, never raw matches).
 create table public.shared_summaries (
@@ -175,6 +198,7 @@ alter table public.divisions enable row level security;
 alter table public.entries enable row level security;
 alter table public.club_matches enable row level security;
 alter table public.shared_summaries enable row level security;
+alter table public.scorer_links enable row level security;
 
 create policy "own or clubmate profile" on public.profiles for select to authenticated
   using (id = (select auth.uid()) or public.shares_club(id));
@@ -225,6 +249,12 @@ create policy "members see club matches" on public.club_matches for select to au
 create policy "staff add club matches" on public.club_matches for insert to authenticated with check (public.is_staff(club_id));
 create policy "staff score club matches" on public.club_matches for update to authenticated using (public.is_staff(club_id)) with check (public.is_staff(club_id));
 create policy "staff delete club matches" on public.club_matches for delete to authenticated using (public.is_staff(club_id));
+
+-- Only coaches and admins see their event's scorer links and PINs.
+create policy "staff see scorer links" on public.scorer_links for select to authenticated using (public.is_staff(club_id));
+create policy "staff add scorer links" on public.scorer_links for insert to authenticated with check (public.is_staff(club_id));
+create policy "staff edit scorer links" on public.scorer_links for update to authenticated using (public.is_staff(club_id)) with check (public.is_staff(club_id));
+create policy "staff delete scorer links" on public.scorer_links for delete to authenticated using (public.is_staff(club_id));
 
 -- Coaches and admins see shared summaries; a player sees their own.
 create policy "staff or self see summaries" on public.shared_summaries for select to authenticated
@@ -347,20 +377,112 @@ begin
   delete from public.club_members where club_id = cid and user_id = me;
 end $$;
 
+-- ---------- Scorer links (no account) ----------
+
+-- Checks a scorer link and PIN. Returns the link, or an error message the scorer can read.
+-- Wrong PINs are counted (no exception, so the count is kept); 8 in a row lock the link for 15 minutes.
+create function public.scorer_check(p_token text, p_pin text)
+returns table (link_id uuid, link_tournament uuid, link_court int, link_label text, err text)
+language plpgsql security definer set search_path = '' as $$
+declare
+  l public.scorer_links;
+  t_status text;
+begin
+  select * into l from public.scorer_links where token = p_token;
+  if l.id is null or l.revoked then
+    return query select null::uuid, null::uuid, null::int, null::text, 'This scorer link isn''t valid. Ask the organiser for a new one.'::text; return;
+  end if;
+  select status into t_status from public.tournaments where id = l.tournament_id;
+  if t_status = 'done' then
+    return query select null::uuid, null::uuid, null::int, null::text, 'This event has finished, so the scorer link no longer works.'::text; return;
+  end if;
+  if l.locked_until is not null and l.locked_until > now() then
+    return query select null::uuid, null::uuid, null::int, null::text, 'Too many wrong PINs. Try again in 15 minutes, or ask the organiser.'::text; return;
+  end if;
+  if p_pin is distinct from l.pin then
+    update public.scorer_links set failed_attempts = failed_attempts + 1,
+      locked_until = case when failed_attempts + 1 >= 8 then now() + interval '15 minutes' else null end
+      where id = l.id;
+    return query select null::uuid, null::uuid, null::int, null::text, 'Wrong PIN'::text; return;
+  end if;
+  update public.scorer_links set failed_attempts = 0, locked_until = null, last_used_at = now() where id = l.id;
+  return query select l.id, l.tournament_id, l.court, l.label, null::text;
+end $$;
+
+-- What a scorer sees: the event, and the matches on their court (or all courts). Names and scores only.
+-- Returns {"error": "..."} when the link or PIN isn't accepted.
+create function public.scorer_open(p_token text, p_pin text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  r record;
+begin
+  select * into r from public.scorer_check(p_token, p_pin);
+  if r.err is not null then return jsonb_build_object('error', r.err); end if;
+  return (select jsonb_build_object(
+    'court', r.link_court, 'label', r.link_label,
+    'tournament', jsonb_build_object('name', t.name, 'start_date', t.start_date, 'start_time', t.start_time, 'slot_minutes', t.slot_minutes, 'courts', t.courts, 'status', t.status),
+    'club', c.name,
+    'matches', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', m.id, 'stage', m.stage, 'pool', m.pool, 'round', m.round, 'slot', m.slot, 'court', m.court,
+        'division', d.name, 'format', m.format, 'games', m.games, 'status', m.status, 'winner', m.winner, 'played_on', m.played_on,
+        'names_a', (select jsonb_agg(p.name order by array_position(m.side_a, p.id)) from public.club_players p where p.id = any (m.side_a)),
+        'names_b', (select jsonb_agg(p.name order by array_position(m.side_b, p.id)) from public.club_players p where p.id = any (m.side_b)))
+      order by m.slot nulls last, m.court)
+      from public.club_matches m left join public.divisions d on d.id = m.division_id
+      where m.tournament_id = r.link_tournament and m.status <> 'void' and (r.link_court is null or m.court = r.link_court)), '[]'::jsonb))
+    from public.tournaments t join public.clubs c on c.id = t.club_id where t.id = r.link_tournament);
+end $$;
+
+-- Saves a score from a scorer link. Only matches of that event (and court, for a court link).
+-- Returns {"ok": true} or {"error": "..."}.
+create function public.scorer_save(p_token text, p_pin text, p_match uuid, p_games jsonb, p_status text, p_winner text, p_played_on date)
+returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  r record;
+  m public.club_matches;
+  g jsonb;
+begin
+  select * into r from public.scorer_check(p_token, p_pin);
+  if r.err is not null then return jsonb_build_object('error', r.err); end if;
+  select * into m from public.club_matches where id = p_match;
+  if m.id is null or m.tournament_id <> r.link_tournament or (r.link_court is not null and m.court is distinct from r.link_court) then
+    return jsonb_build_object('error', 'This match isn''t on your court. Ask the organiser.');
+  end if;
+  if m.status = 'void' then return jsonb_build_object('error', 'The organiser cancelled this match.'); end if;
+  if m.status = 'done' and p_status = 'live' then return jsonb_build_object('error', 'This match is already finished.'); end if;
+  if p_status not in ('live', 'done') then return jsonb_build_object('error', 'Unknown match status'); end if;
+  if p_status = 'done' and (p_winner is null or p_winner not in ('A', 'B')) then return jsonb_build_object('error', 'A finished match needs a winner'); end if;
+  if jsonb_typeof(p_games) is distinct from 'array' or jsonb_array_length(p_games) > 5 then return jsonb_build_object('error', 'Scores aren''t in the right shape'); end if;
+  for g in select * from jsonb_array_elements(p_games) loop
+    if jsonb_typeof(g) is distinct from 'object' or jsonb_typeof(g -> 'a') is distinct from 'number' or jsonb_typeof(g -> 'b') is distinct from 'number' then
+      return jsonb_build_object('error', 'Scores aren''t in the right shape');
+    end if;
+    if (g ->> 'a')::numeric not between 0 and 99 or (g ->> 'b')::numeric not between 0 and 99
+      or char_length(coalesce(g ->> 'points', '')) > 250 or coalesce(g ->> 'points', '') !~ '^[AB]*$' then
+      return jsonb_build_object('error', 'Scores aren''t in the right shape');
+    end if;
+  end loop;
+  update public.club_matches set games = p_games, status = p_status, winner = case when p_status = 'done' then p_winner else null end,
+    played_on = coalesce(p_played_on, played_on), updated_at = now(), updated_by = null
+    where id = p_match;
+  return jsonb_build_object('ok', true);
+end $$;
+
 -- Public results for a published tournament: names and scores only. No ratings, accounts or emails.
 create function public.public_tournament(slug text) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select case when t.id is null then null else jsonb_build_object(
     'name', t.name, 'start_date', t.start_date, 'start_time', t.start_time, 'slot_minutes', t.slot_minutes, 'status', t.status, 'club', c.name,
     'divisions', coalesce((select jsonb_agg(jsonb_build_object('id', d.id, 'name', d.name, 'kind', d.kind, 'pools', d.pools, 'advance', d.advance, 'format', d.format) order by d.sort) from public.divisions d where d.tournament_id = t.id), '[]'::jsonb),
-    'entries', coalesce((select jsonb_agg(jsonb_build_object('id', e.id, 'division_id', e.division_id, 'seed', e.seed, 'pool', e.pool,
+    'entries', coalesce((select jsonb_agg(jsonb_build_object('id', e.id, 'division_id', e.division_id, 'seed', e.seed, 'pool', e.pool, 'status', e.status,
         'names', (select jsonb_agg(p.name order by array_position(e.player_ids, p.id)) from public.club_players p where p.id = any (e.player_ids))))
       from public.entries e join public.divisions d on d.id = e.division_id where d.tournament_id = t.id), '[]'::jsonb),
     'matches', coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'division_id', m.division_id, 'stage', m.stage, 'pool', m.pool, 'round', m.round,
         'bracket_pos', m.bracket_pos, 'slot', m.slot, 'court', m.court, 'entry_a', m.entry_a, 'entry_b', m.entry_b,
         'games', (select coalesce(jsonb_agg(jsonb_build_object('a', g -> 'a', 'b', g -> 'b')), '[]'::jsonb) from jsonb_array_elements(m.games) g),
         'status', m.status, 'winner', m.winner))
-      from public.club_matches m where m.tournament_id = t.id), '[]'::jsonb))
+      from public.club_matches m where m.tournament_id = t.id and m.status <> 'void'), '[]'::jsonb))
   end
   from public.tournaments t join public.clubs c on c.id = t.club_id
   where t.public_slug = slug and t.is_public
@@ -373,3 +495,6 @@ grant execute on function public.claim_pending(), public.create_club(text, text,
   public.leave_club(uuid), public.club_role(uuid), public.is_member(uuid), public.is_staff(uuid), public.is_admin(uuid),
   public.shares_club(uuid), public.public_tournament(text) to authenticated;
 grant execute on function public.public_tournament(text) to anon;
+grant execute on function public.scorer_open(text, text), public.scorer_save(text, text, uuid, jsonb, text, text, date) to anon, authenticated;
+-- scorer_check is only called inside the two functions above.
+revoke execute on function public.scorer_check(text, text) from authenticated;

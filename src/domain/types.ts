@@ -9,6 +9,8 @@ export interface Format {
   pointsTo: PointsTo;
   bestOf: BestOf;
   scoring: Scoring;
+  /** Golden point: at one point from the target each (e.g. 10–10), the next point wins. Otherwise games are won by 2. */
+  golden?: boolean;
 }
 
 export type Momentum = 'came-back' | 'lost-lead' | 'dominated' | 'neither';

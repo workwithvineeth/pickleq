@@ -1,8 +1,8 @@
 import { newId } from '../db/db';
-import { ClubError, type ClubBackend, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type PublicTournament, type ScorePatch, type TournamentBundle } from './backend';
+import { ClubError, type ClubBackend, type EntryPatch, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type PublicTournament, type ScorePatch, type TournamentBundle } from './backend';
 import { buildSampleClub } from './domain/sample';
 import { buildTournamentRows, checkDivision, type NewMatchRow, type NewTournamentInput } from './plan';
-import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type Member, type Role, type Share, type SharedSummary, type SummaryData } from './types';
+import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type Member, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
 interface DemoState {
   v: 1;
@@ -15,10 +15,14 @@ interface DemoState {
   entries: Entry[];
   matches: ClubMatch[];
   summaries: (SharedSummary & { clubId: string })[];
+  scorerLinks?: (ScorerLink & { failed: number; lockedUntil?: number })[];
 }
 
 const KEY = 'pq-club-demo-v1';
-const empty = (): DemoState => ({ v: 1, user: null, clubs: [], members: [], players: [], tournaments: [], divisions: [], entries: [], matches: [], summaries: [] });
+const empty = (): DemoState => ({ v: 1, user: null, clubs: [], members: [], players: [], tournaments: [], divisions: [], entries: [], matches: [], summaries: [], scorerLinks: [] });
+const randomToken = () => (newId() + newId()).replace(/-/g, '').slice(0, 40);
+const randomPin = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+const SCORE_SHAPE = /^[AB]*$/;
 
 /**
  * Club mode kept entirely on this phone, for trying it out. It follows the same rules as the club server
@@ -37,7 +41,7 @@ export class DemoBackend implements ClubBackend {
   private load(): DemoState {
     try {
       const raw = this.storage?.getItem(KEY);
-      if (raw) { const v = JSON.parse(raw) as DemoState; if (v.v === 1) return v; }
+      if (raw) { const v = JSON.parse(raw) as DemoState; if (v.v === 1) return { ...v, scorerLinks: v.scorerLinks ?? [] }; }
     } catch { /* start fresh */ }
     return empty();
   }
@@ -132,13 +136,18 @@ export class DemoBackend implements ClubBackend {
     return row;
   }
 
-  async updatePlayer(id: string, patch: { name?: string; duprSingles?: number | null; duprDoubles?: number | null }) {
+  async updatePlayer(id: string, patch: { name?: string; duprSingles?: number | null; duprDoubles?: number | null; duprId?: string | null }) {
     const p = this.s.players.find((x) => x.id === id);
     if (!p) throw new ClubError('Player not found');
     this.need(p.clubId, isStaff, 'Only coaches and admins can edit players');
     if (patch.name !== undefined) p.name = patch.name.trim() || p.name;
     if (patch.duprSingles !== undefined) p.duprSingles = patch.duprSingles ?? undefined;
     if (patch.duprDoubles !== undefined) p.duprDoubles = patch.duprDoubles ?? undefined;
+    if (patch.duprId !== undefined) {
+      const v = patch.duprId?.trim() || undefined;
+      if (v && !/^[A-Za-z0-9-]{3,20}$/.test(v)) throw new ClubError('A DUPR ID is letters and numbers only');
+      p.duprId = v;
+    }
     this.save();
   }
 
@@ -230,6 +239,111 @@ export class DemoBackend implements ClubBackend {
     if (!m) throw new ClubError('Match not found');
     this.need(m.clubId, isStaff, 'Only coaches and admins can score matches');
     Object.assign(m, patch, { winner: patch.winner, updatedAt: new Date().toISOString() });
+    this.save();
+  }
+
+  async patchMatches(changes: { id: string; patch: MatchPatch }[]) {
+    for (const { id } of changes) {
+      const m = this.s.matches.find((x) => x.id === id);
+      if (!m) throw new ClubError('Match not found');
+      this.need(m.clubId, isStaff, 'Only coaches and admins can change matches');
+    }
+    const now = new Date().toISOString();
+    for (const { id, patch } of changes) {
+      const m = this.s.matches.find((x) => x.id === id) as ClubMatch;
+      const { winner, ...rest } = patch;
+      Object.assign(m, rest, { updatedAt: now });
+      if (winner !== undefined) m.winner = winner ?? undefined;
+    }
+    this.save();
+  }
+
+  async addEntry(entry: Entry) {
+    this.need(entry.clubId, isStaff, 'Only coaches and admins can add entries');
+    this.s.entries.push({ ...entry });
+    this.save();
+  }
+
+  async updateEntry(id: string, patch: EntryPatch) {
+    const e = this.s.entries.find((x) => x.id === id);
+    if (!e) throw new ClubError('Entry not found');
+    this.need(e.clubId, isStaff, 'Only coaches and admins can change entries');
+    Object.assign(e, patch);
+    this.save();
+  }
+
+  async scorerLinks(tournamentId: string): Promise<ScorerLink[]> {
+    const t = this.s.tournaments.find((x) => x.id === tournamentId);
+    if (!t) throw new ClubError('Tournament not found');
+    this.need(t.clubId, isStaff, 'Only coaches and admins can see scorer links');
+    return (this.s.scorerLinks ?? []).filter((l) => l.tournamentId === tournamentId).map(({ failed: _f, lockedUntil: _l, ...l }) => l)
+      .sort((a, b) => (a.court ?? 999) - (b.court ?? 999));
+  }
+
+  async createScorerLinks(tournamentId: string, clubId: string, courts: (number | null)[]) {
+    this.need(clubId, isStaff, 'Only coaches and admins can make scorer links');
+    const made = courts.map((c) => ({ id: newId(), tournamentId, clubId, court: c ?? undefined, token: randomToken(), pin: randomPin(), revoked: false, failed: 0 }));
+    this.s.scorerLinks = [...(this.s.scorerLinks ?? []), ...made];
+    this.save();
+    return made.map(({ failed: _f, ...l }) => l);
+  }
+
+  async updateScorerLink(id: string, patch: { revoked?: boolean; pin?: string }) {
+    const l = (this.s.scorerLinks ?? []).find((x) => x.id === id);
+    if (!l) throw new ClubError('Link not found');
+    this.need(l.clubId, isStaff, 'Only coaches and admins can change scorer links');
+    if (patch.pin !== undefined && !/^\d{4,6}$/.test(patch.pin)) throw new ClubError('A PIN is 4 to 6 digits');
+    Object.assign(l, patch, { failed: 0, lockedUntil: undefined });
+    this.save();
+  }
+
+  /** Same rules as the server: unknown or cancelled link, finished event, lockout after 8 wrong PINs. */
+  private checkLink(token: string, pin: string) {
+    const l = (this.s.scorerLinks ?? []).find((x) => x.token === token);
+    if (!l || l.revoked) throw new ClubError('This scorer link isn’t valid. Ask the organiser for a new one.');
+    const t = this.s.tournaments.find((x) => x.id === l.tournamentId);
+    if (!t || t.status === 'done') throw new ClubError('This event has finished, so the scorer link no longer works.');
+    if (l.lockedUntil && l.lockedUntil > Date.now()) throw new ClubError('Too many wrong PINs. Try again in 15 minutes, or ask the organiser.');
+    if (pin !== l.pin) {
+      l.failed += 1;
+      if (l.failed >= 8) l.lockedUntil = Date.now() + 15 * 60 * 1000;
+      this.save();
+      throw new ClubError('Wrong PIN');
+    }
+    l.failed = 0; l.lockedUntil = undefined; l.lastUsedAt = new Date().toISOString();
+    this.save();
+    return { l, t };
+  }
+
+  async scorerOpen(token: string, pin: string): Promise<ScorerView> {
+    const { l, t } = this.checkLink(token, pin);
+    const name = new Map(this.s.players.map((p) => [p.id, p.name]));
+    const divs = new Map(this.s.divisions.map((d) => [d.id, d.name]));
+    return {
+      court: l.court, label: l.label, club: this.club(t.clubId).name,
+      tournament: { name: t.name, startDate: t.startDate, startTime: t.startTime, slotMinutes: t.slotMinutes, courts: t.courts, status: t.status },
+      matches: this.s.matches.filter((m) => m.tournamentId === t.id && m.status !== 'void' && (l.court === undefined || m.court === l.court))
+        .sort((a, b) => (a.slot ?? 1e9) - (b.slot ?? 1e9) || (a.court ?? 0) - (b.court ?? 0))
+        .map((m) => ({
+          id: m.id, stage: m.stage, pool: m.pool, round: m.round, slot: m.slot, court: m.court, division: m.divisionId ? divs.get(m.divisionId) : undefined,
+          format: m.format, games: m.games, status: m.status, winner: m.winner, playedOn: m.playedOn,
+          namesA: m.sideA.map((p) => name.get(p) ?? ''), namesB: m.sideB.map((p) => name.get(p) ?? ''),
+        })),
+    };
+  }
+
+  async scorerSave(token: string, pin: string, matchId: string, patch: ScorePatch) {
+    const { l, t } = this.checkLink(token, pin);
+    const m = this.s.matches.find((x) => x.id === matchId);
+    if (!m || m.tournamentId !== t.id || (l.court !== undefined && m.court !== l.court)) throw new ClubError('This match isn’t on your court. Ask the organiser.');
+    if (m.status === 'void') throw new ClubError('The organiser cancelled this match.');
+    if (m.status === 'done' && patch.status === 'live') throw new ClubError('This match is already finished.');
+    if (patch.status !== 'live' && patch.status !== 'done') throw new ClubError('Unknown match status');
+    if (patch.status === 'done' && patch.winner !== 'A' && patch.winner !== 'B') throw new ClubError('A finished match needs a winner');
+    if (patch.games.length > 5 || patch.games.some((g) => !Number.isInteger(g.a) || !Number.isInteger(g.b) || g.a < 0 || g.b < 0 || g.a > 99 || g.b > 99 || !SCORE_SHAPE.test(g.points ?? ''))) {
+      throw new ClubError('Scores aren’t in the right shape');
+    }
+    Object.assign(m, { games: patch.games, status: patch.status, winner: patch.status === 'done' ? patch.winner : undefined, playedOn: patch.playedOn ?? m.playedOn, updatedAt: new Date().toISOString() });
     this.save();
   }
 

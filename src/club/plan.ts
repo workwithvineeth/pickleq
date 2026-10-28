@@ -83,19 +83,19 @@ export function buildTournamentRows(input: NewTournamentInput, players: Map<stri
 export function knockoutMatchesToAdd(t: ClubTournament, divisions: Division[], entries: Entry[], matches: ClubMatch[], newId: () => string): NewMatchRow[] {
   const out: NewMatchRow[] = [];
   const emap = new Map(entries.map((e) => [e.id, e]));
-  const lastSlot = Math.max(-1, ...matches.map((m) => m.slot ?? -1));
+  const lastSlot = Math.max(-1, ...matches.filter((m) => m.status !== 'void').map((m) => m.slot ?? -1));
   for (const div of divisions) {
     if (div.advance === 0) continue;
     const dm = matches.filter((m) => m.divisionId === div.id);
     const pool = dm.filter((m) => m.stage === 'pool');
-    const ko = dm.filter((m) => m.stage !== 'pool');
+    const ko = dm.filter((m) => m.stage !== 'pool' && m.status !== 'void');
     const make = (stage: ClubMatch['stage'], bracketPos: number, round: number, a: string, b: string): NewMatchRow => ({
       id: newId(), clubId: div.clubId, tournamentId: t.id, divisionId: div.id, stage, bracketPos, round, entryA: a, entryB: b,
       sideA: (emap.get(a) as Entry).playerIds, sideB: (emap.get(b) as Entry).playerIds, format: div.koFormat, games: [], status: 'scheduled', playedOn: t.startDate,
     });
     if (!ko.length) {
-      if (!pool.length || pool.some((m) => m.status !== 'done')) continue;
-      const divEntries = entries.filter((e) => e.divisionId === div.id);
+      if (!poolsComplete(div.id, matches)) continue;
+      const divEntries = entries.filter((e) => e.divisionId === div.id && e.status !== 'withdrawn');
       const qualifiers: Qualifier[] = [];
       const key = new Map<string, number>();
       for (let p = 1; p <= div.pools; p++) {
@@ -130,4 +130,90 @@ export function knockoutMatchesToAdd(t: ClubTournament, divisions: Division[], e
     for (const m of out) { const s = plan.get(m.id); if (s) { m.slot = s.slot; m.court = s.court; } }
   }
   return out;
+}
+
+// ---------- Editing entries after the draw ----------
+
+const unplayed = (m: ClubMatch) => m.status === 'scheduled' || m.status === 'live';
+const involves = (m: ClubMatch, entryId: string) => m.entryA === entryId || m.entryB === entryId;
+
+export interface WithdrawPlan {
+  /** Pool matches not yet played: cancelled, not counted. */
+  voidIds: string[];
+  /** Knockout matches not yet played: the opponent goes through. */
+  walkovers: { id: string; winner: 'A' | 'B' }[];
+}
+
+/** What happens to the matches when an entry withdraws. Played results stay as they are. */
+export function planWithdraw(entryId: string, matches: ClubMatch[]): WithdrawPlan {
+  const plan: WithdrawPlan = { voidIds: [], walkovers: [] };
+  for (const m of matches) {
+    if (!unplayed(m) || !involves(m, entryId)) continue;
+    if (m.stage === 'pool' || m.stage === 'friendly') plan.voidIds.push(m.id);
+    else plan.walkovers.push({ id: m.id, winner: m.entryA === entryId ? 'B' : 'A' });
+  }
+  return plan;
+}
+
+export interface ReplacePlan { playerIds: string[]; matchSides: { id: string; sideA: string[]; sideB: string[] }[] }
+
+/**
+ * Swaps one player in an entry for another (a partner change or a substitute). Only matches not yet played change,
+ * so past results keep the names of the people who actually played.
+ */
+export function planReplacePlayer(entry: Entry, oldId: string, newId: string, matches: ClubMatch[]): ReplacePlan | string {
+  if (!entry.playerIds.includes(oldId)) return 'That player isn’t in this entry';
+  if (oldId === newId) return 'Choose a different player';
+  if (entry.playerIds.includes(newId)) return 'That player is already in this entry';
+  const playerIds = entry.playerIds.map((p) => (p === oldId ? newId : p));
+  const swap = (side: string[]) => side.map((p) => (p === oldId ? newId : p));
+  const matchSides = matches.filter((m) => unplayed(m) && involves(m, entry.id)).map((m) => ({
+    id: m.id, sideA: m.entryA === entry.id ? swap(m.sideA) : m.sideA, sideB: m.entryB === entry.id ? swap(m.sideB) : m.sideB,
+  }));
+  return { playerIds, matchSides };
+}
+
+/** Players already entered in a division (active entries), so the same person can't be entered twice. */
+export function enteredPlayers(entries: Entry[], divisionId: string): Set<string> {
+  return new Set(entries.filter((e) => e.divisionId === divisionId && e.status !== 'withdrawn').flatMap((e) => e.playerIds));
+}
+
+/**
+ * A late entry joins the pool with the fewest active entries and gets a match against each of them,
+ * scheduled after the last time slot already used. Not possible once knockouts have been drawn.
+ */
+export function planLateEntry(t: ClubTournament, div: Division, playerIds: string[], entries: Entry[], matches: ClubMatch[], newId: () => string): { entry: Entry; matches: NewMatchRow[] } | string {
+  const need = div.kind === 'doubles' ? 2 : 1;
+  if (playerIds.length !== need || new Set(playerIds).size !== need) return div.kind === 'doubles' ? 'Choose two different players' : 'Choose a player';
+  const taken = enteredPlayers(entries, div.id);
+  if (playerIds.some((p) => taken.has(p))) return 'A player is already entered in this event';
+  if (matches.some((m) => m.divisionId === div.id && m.stage !== 'pool')) return 'Knockouts have started, so new entries can’t join';
+  const active = entries.filter((e) => e.divisionId === div.id && e.status !== 'withdrawn');
+  const sizes = Array.from({ length: div.pools }, (_, i) => ({ pool: i + 1, n: active.filter((e) => (e.pool ?? 1) === i + 1).length }));
+  const pool = sizes.sort((a, b) => a.n - b.n || a.pool - b.pool)[0].pool;
+  const entry: Entry = { id: newId(), divisionId: div.id, clubId: div.clubId, playerIds, seed: Math.max(0, ...entries.filter((e) => e.divisionId === div.id).map((e) => e.seed ?? 0)) + 1, pool, status: 'active' };
+  const opponents = active.filter((e) => (e.pool ?? 1) === pool);
+  const lastRound = Math.max(0, ...matches.filter((m) => m.divisionId === div.id && m.pool === pool).map((m) => m.round ?? 0));
+  const rows: NewMatchRow[] = opponents.map((o, i) => ({
+    id: newId(), clubId: div.clubId, tournamentId: t.id, divisionId: div.id, stage: 'pool', pool, round: lastRound + 1 + i,
+    entryA: o.id, entryB: entry.id, sideA: o.playerIds, sideB: playerIds, format: div.format, games: [], status: 'scheduled', playedOn: t.startDate,
+  }));
+  const state = emptySlotState();
+  for (const m of matches) {
+    if (m.slot === undefined || m.status === 'void') continue;
+    const s = state.busy.get(m.slot) ?? new Set<string>();
+    [...m.sideA, ...m.sideB].forEach((p) => s.add(p));
+    state.busy.set(m.slot, s);
+    state.used.set(m.slot, Math.max(state.used.get(m.slot) ?? 0, m.court ?? 0));
+  }
+  const after = Math.max(-1, ...matches.filter((m) => m.status !== 'void').map((m) => m.slot ?? -1)) + 1;
+  const plan = scheduleSlots(rows.map((m) => ({ key: m.id, playerIds: [...m.sideA, ...m.sideB] })), t.courts, after, state);
+  for (const m of rows) { const s = plan.get(m.id); if (s) { m.slot = s.slot; m.court = s.court; } }
+  return { entry, matches: rows };
+}
+
+/** Whether every pool match in a division is finished (played or cancelled). */
+export function poolsComplete(divisionId: string, matches: ClubMatch[]): boolean {
+  const pool = matches.filter((m) => m.divisionId === divisionId && m.stage === 'pool');
+  return pool.length > 0 && pool.every((m) => m.status === 'done' || m.status === 'void');
 }

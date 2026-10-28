@@ -1,5 +1,5 @@
 import type { NewMatchRow, NewTournamentInput } from './plan';
-import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, Entry, Member, Role, Share, SharedSummary, SummaryData } from './types';
+import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, Entry, Member, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 export interface ClubUser { id: string; email: string }
 export interface MyClub { club: Club; role: Role; myPlayerId?: string }
@@ -46,6 +46,10 @@ export interface MatchBundle { club: Club; role: Role; match: ClubMatch; players
 
 export interface ScorePatch { games: ClubMatch['games']; status: ClubMatch['status']; winner?: 'A' | 'B'; playedOn?: string }
 
+/** Organiser changes to a match: cancel it, give a walkover, move it to another court or time, or change players. */
+export interface MatchPatch { status?: ClubMatch['status']; winner?: 'A' | 'B' | null; games?: ClubMatch['games']; court?: number; slot?: number; sideA?: string[]; sideB?: string[] }
+export interface EntryPatch { playerIds?: string[]; status?: Entry['status']; pool?: number }
+
 /** Where club data lives: the real club server, or a demo kept on this phone. Screens only talk to this. */
 export interface ClubBackend {
   readonly kind: 'demo' | 'server';
@@ -58,7 +62,7 @@ export interface ClubBackend {
   joinClub(code: string, claim: string | null, myName: string): Promise<string>;
   clubBundle(clubId: string): Promise<ClubBundle>;
   addPlayer(clubId: string, p: { name: string; duprSingles?: number; duprDoubles?: number }): Promise<ClubPlayer>;
-  updatePlayer(id: string, patch: { name?: string; duprSingles?: number | null; duprDoubles?: number | null }): Promise<void>;
+  updatePlayer(id: string, patch: { name?: string; duprSingles?: number | null; duprDoubles?: number | null; duprId?: string | null }): Promise<void>;
   setRole(clubId: string, userId: string, role: Role): Promise<void>;
   removeMember(clubId: string, userId: string): Promise<void>;
   leaveClub(clubId: string): Promise<void>;
@@ -68,6 +72,17 @@ export interface ClubBackend {
   addMatches(rows: NewMatchRow[]): Promise<void>;
   matchBundle(matchId: string): Promise<MatchBundle>;
   saveScore(matchId: string, patch: ScorePatch): Promise<void>;
+  /** Organiser edits to matches (coaches and admins). */
+  patchMatches(changes: { id: string; patch: MatchPatch }[]): Promise<void>;
+  addEntry(entry: Entry): Promise<void>;
+  updateEntry(id: string, patch: EntryPatch): Promise<void>;
+  /** Scorer links for an event (coaches and admins only). */
+  scorerLinks(tournamentId: string): Promise<ScorerLink[]>;
+  createScorerLinks(tournamentId: string, clubId: string, courts: (number | null)[]): Promise<ScorerLink[]>;
+  updateScorerLink(id: string, patch: { revoked?: boolean; pin?: string }): Promise<void>;
+  /** Used by someone with a scorer link and PIN, no account needed. */
+  scorerOpen(token: string, pin: string): Promise<ScorerView>;
+  scorerSave(token: string, pin: string, matchId: string, patch: ScorePatch): Promise<void>;
   setMySharing(playerId: string, share: Share): Promise<void>;
   shareMySummary(playerId: string, data: SummaryData): Promise<void>;
   publicTournament(slug: string): Promise<PublicTournament | null>;

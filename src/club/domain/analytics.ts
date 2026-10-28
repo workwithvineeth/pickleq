@@ -76,7 +76,7 @@ export function playerClubStats(playerId: string, matches: ClubMatch[], players:
       if (Math.abs(me - them) <= CLOSE_MARGIN) add(s.close, gWon);
       if (!g.points) return;
       s.trackedGames++;
-      const an = analyseGame(g.points, m.format.pointsTo, thresholds);
+      const an = analyseGame(g.points, m.format.pointsTo, thresholds, !!m.format.golden);
       const momentum = side === 'A' ? an.momentumA : an.momentumB;
       const myGp = side === 'A' ? an.gamePointA : an.gamePointB;
       const theirGp = side === 'A' ? an.gamePointB : an.gamePointA;

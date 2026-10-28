@@ -31,6 +31,8 @@ export interface ClubPlayer {
   name: string;
   duprSingles?: number;
   duprDoubles?: number;
+  /** The player's DUPR ID, needed to send results to DUPR. */
+  duprId?: string;
   userId?: string;
   claimCode?: string;
   share: Share;
@@ -75,6 +77,31 @@ export interface Entry {
   playerIds: string[];
   seed?: number;
   pool?: number;
+  /** Withdrawn entries keep their played results; their unplayed matches become void. */
+  status?: 'active' | 'withdrawn';
+}
+
+/** A link that lets someone score without an account. Only coaches and admins see these. */
+export interface ScorerLink {
+  id: string;
+  tournamentId: string;
+  clubId: string;
+  /** Empty = any court. */
+  court?: number;
+  token: string;
+  pin: string;
+  label?: string;
+  revoked: boolean;
+  lastUsedAt?: string;
+}
+
+/** What a scorer link opens: the event and the matches it may score. Names and scores only. */
+export interface ScorerView {
+  court?: number;
+  label?: string;
+  club: string;
+  tournament: { name: string; startDate: string; startTime: string; slotMinutes: number; courts: number; status: TournamentStatus };
+  matches: { id: string; stage: Stage; pool?: number; round?: number; slot?: number; court?: number; division?: string; format: Format; games: ClubGame[]; status: ClubMatchStatus; winner?: 'A' | 'B'; playedOn?: string; namesA: string[]; namesB: string[] }[];
 }
 
 export type Stage = 'pool' | 'qf' | 'sf' | 'final' | 'friendly';
@@ -83,7 +110,8 @@ export const STAGE_LABEL: Record<Stage, string> = { pool: 'Pool', qf: 'Quarter-f
 /** One game. points is the order points were won: "A" for side A, "B" for side B. Empty if only the final score was entered. */
 export interface ClubGame { points: string; a: number; b: number }
 
-export type ClubMatchStatus = 'scheduled' | 'live' | 'done';
+/** void: cancelled by the organiser (e.g. a team withdrew); not played and not counted. */
+export type ClubMatchStatus = 'scheduled' | 'live' | 'done' | 'void';
 export interface ClubMatch {
   id: string;
   clubId: string;
