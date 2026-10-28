@@ -1,4 +1,4 @@
--- Club mode part 4: the three functions that delete rows (used invite, leaving a club, turning sharing off).
+-- Club mode part 4 (applied 2026-10-29): the three functions that delete rows (used invite, leaving a club, turning sharing off).
 -- Grant any pending roles for the signed-in email (and link roster entries). Safe to call on every sign-in.
 create function public.claim_pending() returns int
 language plpgsql security definer set search_path = '' as $$

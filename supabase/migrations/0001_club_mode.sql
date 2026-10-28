@@ -1,5 +1,5 @@
 -- Applied on the server as club_mode_1_tables, _2_access_rules, _3_functions, _5_permissions.
--- The three functions that delete rows are in 0002 (Supabase asks for a separate confirmation for those).
+-- The three functions that delete rows are in 0002 (applied as club_mode_4_member_functions).
 -- PICKLEQ Club mode: clubs, members, roster, tournaments and club matches.
 -- Personal PICKLEQ data never comes here. Only club data, and summaries a player chooses to share.
 -- Every table has row-level security: the database itself decides who may read or change a row.
