@@ -7,8 +7,8 @@ import { rng, simulateMatch } from './simulate';
 const FIRST = ['Aarav', 'Diya', 'Kabir', 'Ananya', 'Rohan', 'Meera', 'Ishaan', 'Saanvi', 'Arjun', 'Kavya', 'Vihaan', 'Riya', 'Aditya', 'Nisha', 'Karan', 'Pooja', 'Siddharth', 'Tara', 'Nikhil', 'Aditi', 'Rahul', 'Sneha', 'Varun', 'Leela', 'Dev', 'Ira', 'Manav', 'Zoya', 'Yash', 'Anika', 'Pranav', 'Mira', 'Kunal', 'Divya', 'Harsh', 'Neha', 'Akash', 'Ritu', 'Om', 'Sana', 'Vikram', 'Tanvi', 'Neel', 'Gauri', 'Aman', 'Pia', 'Rishi', 'Esha', 'Tejas', 'Avni', 'Samir', 'Lavanya', 'Farhan', 'Jaya', 'Krish'];
 const LAST = ['Sharma', 'Iyer', 'Reddy', 'Menon', 'Kapoor', 'Nair', 'Gupta', 'Rao', 'Bose', 'Pillai', 'Joshi', 'Khan', 'Das', 'Mehta', 'Verma', 'Patel', 'Sen', 'Kulkarni', 'Shetty', 'Chopra'];
 
-export const SAMPLE_CLUB_NAME = 'Pickleball Central';
-export const SAMPLE_TOURNAMENT_NAME = 'Pickleball Central Open';
+export const SAMPLE_CLUB_NAME = 'PQ Demo Club';
+export const SAMPLE_TOURNAMENT_NAME = 'PQ Demo Open';
 
 export interface SampleData {
   club: Club;
@@ -44,14 +44,14 @@ function shuffle<T>(xs: T[], rand: () => number): T[] {
 }
 
 /**
- * Builds Pickleball Central: 56 players, the Open with 20 singles players and 24 doubles teams (pools then knockouts),
+ * Builds PQ Demo Club: 56 players, the Open with 20 singles players and 24 doubles teams (pools then knockouts),
  * and 40 earlier club matches. Singles is finished; doubles has its semi-finals still to play, so live scoring can be tried.
  */
 export function buildSampleClub(ownerUserId: string, ownerName = 'Vineeth', today = new Date(), seed = 20261028): SampleData {
   const rand = rng(seed);
   const id = () => uuidFrom(rand);
   const clubId = id();
-  const club: Club = { id: clubId, name: SAMPLE_CLUB_NAME, city: undefined, inviteCode: 'pbcentral1', settings: {} };
+  const club: Club = { id: clubId, name: SAMPLE_CLUB_NAME, city: undefined, inviteCode: 'pqdemo0001', settings: {} };
 
   const players: ClubPlayer[] = [];
   const you: ClubPlayer = { id: id(), clubId, name: ownerName, duprSingles: 3.71, duprDoubles: 3.82, userId: ownerUserId, share: {}, sample: true };
@@ -73,7 +73,7 @@ export function buildSampleClub(ownerUserId: string, ownerName = 'Vineeth', toda
   ];
 
   const date = isoDay(today);
-  const tournament: ClubTournament = { id: id(), clubId, name: SAMPLE_TOURNAMENT_NAME, startDate: date, startTime: '08:00', courts: 6, slotMinutes: 20, status: 'live', isPublic: true, publicSlug: 'pbc-open' };
+  const tournament: ClubTournament = { id: id(), clubId, name: SAMPLE_TOURNAMENT_NAME, startDate: date, startTime: '08:00', courts: 6, slotMinutes: 20, status: 'live', isPublic: true, publicSlug: 'pq-demo-open' };
   const singles: Division = { id: id(), tournamentId: tournament.id, clubId, name: 'Open Singles', kind: 'singles', format: POOL_FORMAT, koFormat: KO_FORMAT, pools: 4, advance: 2, sort: 0 };
   const doubles: Division = { id: id(), tournamentId: tournament.id, clubId, name: 'Open Doubles', kind: 'doubles', format: POOL_FORMAT, koFormat: KO_FORMAT, pools: 4, advance: 2, sort: 1 };
 

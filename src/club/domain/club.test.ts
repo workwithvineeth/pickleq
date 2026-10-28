@@ -152,7 +152,7 @@ describe('simulation', () => {
   });
 });
 
-describe('Pickleball Central sample club', () => {
+describe('PQ Demo Club sample club', () => {
   const s = buildSampleClub('owner-1', 'Vineeth', new Date('2026-10-28T09:00:00'));
   const pmap = new Map(s.players.map((p) => [p.id, p]));
 
@@ -228,7 +228,7 @@ describe('club matches into your personal PICKLEQ', () => {
 
   it('flips to your side, keeps ratings, and carries the automatic comeback', () => {
     // A led 8–0, B won 11 straight → B (you) came back from 0–8.
-    const p = clubMatchToPersonal(m, 'me', players, 'Pickleball Central', 'Pickleball Central Open')!;
+    const p = clubMatchToPersonal(m, 'me', players, 'PQ Demo Club', 'PQ Demo Open')!;
     expect(p.won).toBe(true);
     expect(p.type).toBe('doubles');
     expect(p.category).toBe('tournament');
@@ -238,8 +238,8 @@ describe('club matches into your personal PICKLEQ', () => {
       { name: 'Ira Sen', role: 'opponent', rating: 4.1 },
       { name: 'Om Das', role: 'opponent' },
     ]);
-    expect(p.club).toEqual({ matchId: 'm1', clubName: 'Pickleball Central' });
-    expect(p.notes).toBe('Pickleball Central Open · Semi-final');
+    expect(p.club).toEqual({ matchId: 'm1', clubName: 'PQ Demo Club' });
+    expect(p.notes).toBe('PQ Demo Open · Semi-final');
   });
 
   it('ignores matches you did not play or that are not finished', () => {

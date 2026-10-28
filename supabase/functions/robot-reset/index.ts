@@ -1,0 +1,31 @@
+// Puts the test robot's sandbox club back to a known state and returns fresh scorer links for it.
+// Only the robot workflow in GitHub repo workwithvineeth/pqclub can call it: it sends a GitHub Actions identity
+// token, which is checked against GitHub's public keys. No password or secret is stored anywhere.
+// Deployed with verify_jwt off, because the caller proves who it is with the GitHub token instead.
+import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createRemoteJWKSet, jwtVerify } from 'npm:jose@5';
+
+const ISSUER = 'https://token.actions.githubusercontent.com';
+const AUDIENCE = 'pickleq-robot';
+const REPO = 'workwithvineeth/pqclub';
+const keys = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks`));
+
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+
+Deno.serve(async (req) => {
+  if (req.method !== 'POST') return json({ error: 'Use POST' }, 405);
+  const token = req.headers.get('x-github-oidc') ?? '';
+  try {
+    const { payload } = await jwtVerify(token, keys, { issuer: ISSUER, audience: AUDIENCE });
+    if (payload.repository !== REPO) return json({ error: 'Not the PQ Club robot' }, 403);
+  } catch {
+    return json({ error: 'Not the PQ Club robot' }, 401);
+  }
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const url = Deno.env.get('SUPABASE_URL');
+  if (!key || !url) return json({ error: 'Server not configured' }, 500);
+  const sb = createClient(url, key, { auth: { persistSession: false } });
+  const { data, error } = await sb.rpc('robot_reset');
+  if (error) return json({ error: error.message }, 500);
+  return json(data);
+});

@@ -61,10 +61,10 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           {server && <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in with email</button>}
           <section className="card section" aria-label="Demo club">
             <h2 style={{ fontSize: 18 }}>Try the demo club</h2>
-            <p className="small muted" style={{ margin: 0 }}>Pickleball Central: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone.</p>
+            <p className="small muted" style={{ margin: 0 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone.</p>
             <label className="label" htmlFor="demo-name">Your name in the demo</label>
             <input id="demo-name" className="input" value={demoName} onChange={(e) => setDemoName(e.target.value)} placeholder="You" maxLength={40} />
-            <button type="button" className="btn btn-outline" disabled={busy} onClick={startDemo}>Open Pickleball Central</button>
+            <button type="button" className="btn btn-outline" disabled={busy} onClick={startDemo}>Open PQ Demo Club</button>
           </section>
         </>
       )}

@@ -23,16 +23,16 @@ function demoState() { return JSON.parse(localStorage.getItem('pq-club-demo-v1')
 
 async function openEvent(user: ReturnType<typeof userEvent.setup>) {
   await openDemo(user);
-  await user.click(screen.getByRole('button', { name: /Pickleball Central Open/ }));
-  await screen.findByRole('heading', { name: 'Pickleball Central Open' });
+  await user.click(screen.getByRole('button', { name: /PQ Demo Open/ }));
+  await screen.findByRole('heading', { name: 'PQ Demo Open' });
 }
 
 async function openDemo(user: ReturnType<typeof userEvent.setup>) {
   window.location.hash = '#/club';
   render(<App />);
   await user.type(await screen.findByLabelText('Your name in the demo'), 'Vineeth');
-  await user.click(screen.getByRole('button', { name: 'Open Pickleball Central' }));
-  await screen.findByRole('heading', { name: 'Pickleball Central' });
+  await user.click(screen.getByRole('button', { name: 'Open PQ Demo Club' }));
+  await screen.findByRole('heading', { name: 'PQ Demo Club' });
 }
 
 describe('Club mode', () => {
@@ -50,14 +50,14 @@ describe('Club mode', () => {
     render(<App />);
     const header = (await screen.findByRole('heading', { name: 'PICKLEQ' })).closest('header') as HTMLElement;
     await user.click(await within(header).findByRole('button', { name: 'Club' }));
-    expect(await screen.findByRole('button', { name: 'Open Pickleball Central' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Open PQ Demo Club' })).toBeInTheDocument();
   });
 
-  it('opens the Pickleball Central demo with its roster, tournament and coach view', async () => {
+  it('opens the PQ Demo Club demo with its roster, tournament and coach view', async () => {
     const user = userEvent.setup();
     await openDemo(user);
     expect(screen.getByText(/Demo club on this phone/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Pickleball Central Open/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /PQ Demo Open/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Players' }));
     expect(await screen.findByRole('heading', { name: '56 players' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Coach' }));
@@ -69,8 +69,8 @@ describe('Club mode', () => {
   it('shows pools with tie-break rules, and the singles knockouts through to the final', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    await user.click(screen.getByRole('button', { name: /Pickleball Central Open/ }));
-    await screen.findByRole('heading', { name: 'Pickleball Central Open' });
+    await user.click(screen.getByRole('button', { name: /PQ Demo Open/ }));
+    await screen.findByRole('heading', { name: 'PQ Demo Open' });
     await user.click(within(screen.getByRole('group', { name: 'Tournament view' })).getByRole('button', { name: 'Pools' }));
     for (const p of ['A', 'B', 'C', 'D']) expect(screen.getByRole('table', { name: `Pool ${p}` })).toBeInTheDocument();
     expect(within(screen.getByRole('table', { name: 'Pool A' })).getAllByText('Through')).toHaveLength(2);
@@ -83,8 +83,8 @@ describe('Club mode', () => {
   it('live-scores a doubles semi-final point by point, then draws the final', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    await user.click(screen.getByRole('button', { name: /Pickleball Central Open/ }));
-    await screen.findByRole('heading', { name: 'Pickleball Central Open' });
+    await user.click(screen.getByRole('button', { name: /PQ Demo Open/ }));
+    await screen.findByRole('heading', { name: 'PQ Demo Open' });
     await user.click(within(screen.getByRole('group', { name: 'Event' })).getByRole('button', { name: 'Open Doubles' }));
     await user.click(within(screen.getByRole('group', { name: 'Tournament view' })).getByRole('button', { name: 'Knockouts' }));
     const semis = screen.getAllByRole('button', { name: /^Score / });
@@ -102,7 +102,7 @@ describe('Club mode', () => {
       await user.click(screen.getByRole('button', { name: 'Start game 2' }));
       for (let i = 0; i < 11; i++) await user.click(screen.getAllByRole('button', { name: /^Point to / })[0]);
       await user.click(screen.getByRole('button', { name: 'Save result' }));
-      await screen.findByRole('heading', { name: 'Pickleball Central Open' });
+      await screen.findByRole('heading', { name: 'PQ Demo Open' });
     }
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Final' })).toBeInTheDocument());
     const d = await demoBackend().myClubs();
@@ -125,7 +125,7 @@ describe('Club mode', () => {
     const all = await db.matches.toArray();
     expect(all).toHaveLength(n + 1);
     const fromClub = all.filter((m) => m.club);
-    expect(fromClub.every((m) => m.club?.clubName === 'Pickleball Central' && m.venue === 'Pickleball Central')).toBe(true);
+    expect(fromClub.every((m) => m.club?.clubName === 'PQ Demo Club' && m.venue === 'PQ Demo Club')).toBe(true);
     expect(fromClub.some((m) => m.category === 'tournament')).toBe(true);
     expect(fromClub.some((m) => m.games.some((g) => g.momentum !== 'neither'))).toBe(true);
     await waitFor(() => expect(screen.queryByRole('button', { name: /club matches to add/ })).not.toBeInTheDocument());
@@ -197,8 +197,8 @@ describe('Club mode', () => {
   it('public results open without signing in and show names and scores only', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    window.location.hash = '#/results/pbc-open';
-    await screen.findByRole('heading', { name: 'Pickleball Central Open' });
+    window.location.hash = '#/results/pq-demo-open';
+    await screen.findByRole('heading', { name: 'PQ Demo Open' });
     expect(screen.getByText('Scored with PICKLEQ.')).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Pool A' })).toBeInTheDocument();
     expect(screen.queryByText(/DUPR/)).not.toBeInTheDocument();
@@ -209,7 +209,7 @@ describe('Club mode', () => {
     await openDemo(user);
     window.location.hash = '#/club';
     await user.click(await screen.findByRole('button', { name: /Close the demo/ }));
-    expect(await screen.findByRole('button', { name: 'Open Pickleball Central' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Open PQ Demo Club' })).toBeInTheDocument();
     expect(localStorage.getItem('pq-club-demo-v1')).toContain('"clubs":[]');
     setClubMode(null);
   });
@@ -267,7 +267,7 @@ describe('Club mode', () => {
     const user = userEvent.setup();
     await openEvent(user);
     await user.click(screen.getByRole('button', { name: 'Desk view' }));
-    await screen.findByRole('heading', { name: 'Pickleball Central Open · Desk' });
+    await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' });
     for (let c = 1; c <= 6; c++) expect(screen.getByLabelText(`Court ${c}`)).toBeInTheDocument();
     const card = screen.getAllByRole('button', { name: 'Enter result' })[0].closest('[aria-label^="Court"]') as HTMLElement;
     await user.click(within(card).getByRole('button', { name: 'Enter result' }));

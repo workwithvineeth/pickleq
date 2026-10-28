@@ -1,6 +1,6 @@
 import { newId } from '../db/db';
 import { ClubError, type ClubBackend, type EntryPatch, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type PublicTournament, type ScorePatch, type TournamentBundle } from './backend';
-import { buildSampleClub } from './domain/sample';
+import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildTournamentRows, checkDivision, type NewMatchRow, type NewTournamentInput } from './plan';
 import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type Member, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
@@ -24,6 +24,13 @@ const randomToken = () => (newId() + newId()).replace(/-/g, '').slice(0, 40);
 const randomPin = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 const SCORE_SHAPE = /^[AB]*$/;
 
+/** Demos made before 29 Oct 2026 used a name a real business has. Rename it in place so nothing else changes. */
+function renameLegacyDemo(s: DemoState): DemoState {
+  for (const c of s.clubs) if (c.name === 'Pickleball Central') c.name = SAMPLE_CLUB_NAME;
+  for (const t of s.tournaments) if (t.name === 'Pickleball Central Open') t.name = SAMPLE_TOURNAMENT_NAME;
+  return s;
+}
+
 /**
  * Club mode kept entirely on this phone, for trying it out. It follows the same rules as the club server
  * (who can see and change what), so it behaves the same. Nothing is sent anywhere.
@@ -41,16 +48,16 @@ export class DemoBackend implements ClubBackend {
   private load(): DemoState {
     try {
       const raw = this.storage?.getItem(KEY);
-      if (raw) { const v = JSON.parse(raw) as DemoState; if (v.v === 1) return { ...v, scorerLinks: v.scorerLinks ?? [] }; }
+      if (raw) { const v = JSON.parse(raw) as DemoState; if (v.v === 1) return renameLegacyDemo({ ...v, scorerLinks: v.scorerLinks ?? [] }); }
     } catch { /* start fresh */ }
     return empty();
   }
   private save() { try { this.storage?.setItem(KEY, JSON.stringify(this.s)); } catch { /* storage full or blocked: keep in memory */ } }
 
-  /** Signs in as you and creates Pickleball Central with its sample tournament (only the first time). */
+  /** Signs in as you and creates PQ Demo Club with its sample tournament (only the first time). */
   async start(name: string): Promise<string> {
     if (!this.s.user) this.s.user = { id: 'demo-you', email: 'demo (on this phone)' };
-    let club = this.s.clubs.find((c) => c.name === 'Pickleball Central');
+    let club = this.s.clubs.find((c) => c.name === SAMPLE_CLUB_NAME);
     if (!club) {
       const d = buildSampleClub(this.s.user.id, name.trim() || 'You');
       club = d.club;
@@ -107,7 +114,7 @@ export class DemoBackend implements ClubBackend {
   async joinClub(code: string) {
     const club = this.s.clubs.find((c) => c.inviteCode === code.trim());
     if (!club) throw new ClubError('That invite link is not valid');
-    if (!this.role(club.id)) throw new ClubError('In the demo you are already in Pickleball Central');
+    if (!this.role(club.id)) throw new ClubError('In the demo you are already in PQ Demo Club');
     return club.id;
   }
 
