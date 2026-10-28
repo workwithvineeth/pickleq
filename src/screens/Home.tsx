@@ -15,6 +15,10 @@ import { activeMatches } from '../db/matches';
 import { recordSummary, winPct, type WinLoss } from '../domain/record';
 import type { Go } from '../navigation';
 import { NextTournamentCard } from './Tournaments';
+import { lazy, Suspense } from 'react';
+import { isClubEnabled } from '../club/config';
+
+const ClubHomeCard = lazy(() => import('../club/screens/HomeCard'));
 
 function today(): string {
   return new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -121,6 +125,8 @@ export function Home({ go }: { go: Go }) {
       {top && <InsightCard insight={top} action={<button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('coach')}>See all insights</button>} />}
 
       <NextTournamentCard go={go} />
+
+      {isClubEnabled() && <Suspense fallback={null}><ClubHomeCard go={go} /></Suspense>}
 
       {matches && matches.length === 0 && (
         <EmptyState icon="ball" title="Log your first match"

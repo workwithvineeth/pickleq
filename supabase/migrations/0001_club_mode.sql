@@ -351,7 +351,7 @@ end $$;
 create function public.public_tournament(slug text) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select case when t.id is null then null else jsonb_build_object(
-    'name', t.name, 'start_date', t.start_date, 'status', t.status, 'club', c.name,
+    'name', t.name, 'start_date', t.start_date, 'start_time', t.start_time, 'slot_minutes', t.slot_minutes, 'status', t.status, 'club', c.name,
     'divisions', coalesce((select jsonb_agg(jsonb_build_object('id', d.id, 'name', d.name, 'kind', d.kind, 'pools', d.pools, 'advance', d.advance, 'format', d.format) order by d.sort) from public.divisions d where d.tournament_id = t.id), '[]'::jsonb),
     'entries', coalesce((select jsonb_agg(jsonb_build_object('id', e.id, 'division_id', e.division_id, 'seed', e.seed, 'pool', e.pool,
         'names', (select jsonb_agg(p.name order by array_position(e.player_ids, p.id)) from public.club_players p where p.id = any (e.player_ids))))

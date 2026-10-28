@@ -6,6 +6,7 @@ import { appVersion, channel } from '../config';
 import { clearAllData, loadSampleData } from '../db/sample';
 import { isInstalled } from '../install';
 import type { Go } from '../navigation';
+import { isClubEnabled } from '../club/config';
 
 export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
   const installed = isInstalled();
@@ -28,6 +29,11 @@ export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('backup')}>
         <span>Backup, restore and export</span><span>›</span>
       </button>
+      {isClubEnabled() && (
+        <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('club')}>
+          <span>Club mode</span><span>›</span>
+        </button>
+      )}
       <AppLock />
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('help')}>
         <span>How to use PICKLEQ</span><span>›</span>
