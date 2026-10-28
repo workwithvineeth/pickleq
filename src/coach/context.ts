@@ -1,3 +1,4 @@
+import { fmtRating } from '../domain/record';
 import { ratingOn } from '../db/ratings';
 import { shotAverages, tagStats } from '../domain/insights';
 import { scoreLine } from '../domain/scoring';
@@ -94,7 +95,7 @@ function ratingsBlock(d: CoachData, today: Date): string[] {
     if (!h.length) return `${name} DUPR: not entered`;
     const cur = h.at(-1)!;
     const then = ratingOn(h, daysBack(today, 90));
-    return `${name} DUPR: ${cur.value.toFixed(2)} on ${cur.date}${then !== undefined ? ` (${then.toFixed(2)} 90 days ago)` : ''}; history ${h.slice(-8).map((r) => `${r.date} ${r.value.toFixed(2)}`).join(', ')}`;
+    return `${name} DUPR: ${fmtRating(cur.value)} on ${cur.date}${then !== undefined ? ` (${fmtRating(then)} 90 days ago)` : ''}; history ${h.slice(-8).map((r) => `${r.date} ${fmtRating(r.value)}`).join(', ')}`;
   };
   return [line('Singles', d.singles), line('Doubles', d.doubles)];
 }

@@ -68,7 +68,7 @@ describe('insights', () => {
   it('reports rating progress over 30 days', () => {
     const r = (value: number, date: string) => ({ id: date, kind: 'doubles' as const, value, date, source: 'dupr-manual' as const, createdAt: 0 });
     const out = insights({ ...base, matches: [], doubles: [r(3.7, '2026-09-20'), r(3.82, '2026-10-25')] });
-    expect(out.find((x) => x.id === 'rating-doubles')?.text).toBe('Your doubles DUPR rose 0.12 in the last 30 days, to 3.82.');
+    expect(out.find((x) => x.id === 'rating-doubles')?.text).toBe('Your doubles DUPR rose 0.120 in the last 30 days, to 3.820.');
   });
 });
 

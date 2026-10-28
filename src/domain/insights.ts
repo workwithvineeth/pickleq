@@ -1,3 +1,4 @@
+import { fmtRating } from './record';
 import { opponentStrength, pct, summarize } from './stats';
 import { drillStats, iso, weekTraining } from './training';
 import { RATED_SHOTS, TAGS, type Match, type RatingEntry, type TrainingSession } from './types';
@@ -197,8 +198,8 @@ export function insights(input: InsightInput): Insight[] {
     const then = ratingOn(hist, from);
     if (cur && then !== undefined) {
       const d = Math.round((cur.value - then) * 100) / 100;
-      if (d >= 0.05) out.push({ id: `rating-${kind}`, kind: 'progress', score: 40, text: `Your ${kind} DUPR rose ${d.toFixed(2)} in the last 30 days, to ${cur.value.toFixed(2)}.` });
-      if (d <= -0.05) out.push({ id: `rating-${kind}`, kind: 'watch', score: 45, text: `Your ${kind} DUPR fell ${Math.abs(d).toFixed(2)} in the last 30 days, to ${cur.value.toFixed(2)}.` });
+      if (d >= 0.05) out.push({ id: `rating-${kind}`, kind: 'progress', score: 40, text: `Your ${kind} DUPR rose ${fmtRating(d)} in the last 30 days, to ${fmtRating(cur.value)}.` });
+      if (d <= -0.05) out.push({ id: `rating-${kind}`, kind: 'watch', score: 45, text: `Your ${kind} DUPR fell ${fmtRating(Math.abs(d))} in the last 30 days, to ${fmtRating(cur.value)}.` });
     }
   }
 

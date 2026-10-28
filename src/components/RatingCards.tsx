@@ -1,3 +1,4 @@
+import { fmtRating } from '../domain/record';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ratingHistory } from '../db/ratings';
 import type { RatingKind } from '../domain/types';
@@ -18,9 +19,9 @@ function Card({ kind, go }: { kind: RatingKind; go: Go }) {
         <span className="small" style={{ color: 'var(--accent)', marginTop: 6 }}>Add your rating ›</span>
       ) : (
         <>
-          <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 600 }}>{current.toFixed(2)}</span>
-            {delta !== null && delta !== 0 && <span className={delta > 0 ? 'delta-up' : 'delta-down'}>{delta > 0 ? '▲' : '▼'} {Math.abs(delta).toFixed(2)}</span>}
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 600 }}>{fmtRating(current)}</span>
+            {delta !== null && delta !== 0 && <span className={delta > 0 ? 'delta-up' : 'delta-down'}>{delta > 0 ? '▲' : '▼'} {fmtRating(Math.abs(delta))}</span>}
           </span>
           <Sparkline values={recent.map((r) => r.value)} color={color} label={`${label} trend over the last ${recent.length} readings`} />
           <span className="small muted">last {recent.length} {recent.length === 1 ? 'reading' : 'readings'}</span>
@@ -32,7 +33,7 @@ function Card({ kind, go }: { kind: RatingKind; go: Go }) {
 
 export function RatingCards({ go }: { go: Go }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+    <div className="cards-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
       <Card kind="singles" go={go} />
       <Card kind="doubles" go={go} />
     </div>

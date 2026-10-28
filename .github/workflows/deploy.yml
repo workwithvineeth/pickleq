@@ -7,6 +7,8 @@ name: Test and deploy
 #   1. move the live branch to the approved commit, then
 #   2. run this workflow on main (workflow_dispatch).
 # Any failing test stops the deploy, so a broken build never reaches a phone.
+# club-mode -> Club test (https://<user>.github.io/pickleq/club/preview/), built only if that branch exists.
+#   A failing Club test build is left out of the site but never blocks Live or Preview.
 on:
   push:
     branches: [main]
@@ -69,12 +71,38 @@ jobs:
           npm test
           npm run build:live
 
+      - name: Check for the Club test branch
+        id: club
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/${{ github.repository }}.git" club-mode; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.club.outputs.exists == 'true'
+        with:
+          ref: club-mode
+          path: club-src
+
+      - name: Test and build Club test
+        id: clubbuild
+        if: steps.club.outputs.exists == 'true'
+        continue-on-error: true
+        working-directory: club-src
+        run: |
+          npm ci
+          npm test
+          npm run build:club
+
       - name: Assemble site
         run: |
           mkdir -p site
           cp -r live-src/dist/live/. site/
           mkdir -p site/preview
           cp -r preview-src/dist/preview/. site/preview/
+          if [ "${{ steps.clubbuild.outcome }}" = "success" ] && [ -d club-src/dist/club ]; then
+            mkdir -p site/club/preview
+            cp -r club-src/dist/club/. site/club/preview/
+          fi
 
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5

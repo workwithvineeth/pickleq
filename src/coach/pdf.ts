@@ -1,3 +1,4 @@
+import { fmtRating } from '../domain/record';
 import { jsPDF } from 'jspdf';
 import { shareOrDownload } from '../backup/share';
 import { drillStats, iso } from '../domain/training';
@@ -20,7 +21,7 @@ export function measuredLines(d: CoachData, today = new Date()): MeasuredLine[] 
   const s = summarize(ms);
   const sp = splits(ms, d.singles, d.doubles);
   const pc = (w: { wins: number; losses: number }) => (w.wins + w.losses ? ` (${Math.round((w.wins / (w.wins + w.losses)) * 100)}%)` : '');
-  const r = (h: CoachData['singles']) => (h.length ? `${h.at(-1)!.value.toFixed(2)} on ${h.at(-1)!.date}` : 'not entered');
+  const r = (h: CoachData['singles']) => (h.length ? `${fmtRating(h.at(-1)!.value)} on ${h.at(-1)!.date}` : 'not entered');
   const hours = Math.round((ss.reduce((n, x) => n + x.minutes, 0) / 60) * 10) / 10;
   const drills = drillStats(ss).slice(0, 6).map((x) => `${x.category} ${x.pct}% (${x.made}/${x.attempts})`).join(', ');
   return [
