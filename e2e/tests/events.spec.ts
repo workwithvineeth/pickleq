@@ -13,11 +13,11 @@ test.describe('Events board and registration (real server, no account)', () => {
     await page.getByRole('button', { name: 'E2E Test Open' }).click();
     await expect(page.getByRole('heading', { name: 'E2E Test Open' })).toBeVisible();
     await expect(page.getByText('Robotville')).toBeVisible();
-    const men = page.getByRole('region', { name: 'Men's Doubles 3.5' });
+    const men = page.getByRole('region', { name: "Men's Doubles 3.5" });
     await expect(men.getByText('Men · Doubles · DUPR 3.5 and under · ₹800')).toBeVisible();
     await expect(men.getByText('16 of 16 left')).toBeVisible();
     await expect(page.getByRole('region', { name: 'Open Singles 35+' }).getByText('Singles · 35+ · ₹500')).toBeVisible();
-    await men.getByRole('button', { name: 'Enter Men's Doubles 3.5' }).click();
+    await men.getByRole('button', { name: "Enter Men's Doubles 3.5" }).click();
     await expect(page.getByRole('button', { name: 'Sign in to enter' })).toBeVisible();
     await page.getByRole('button', { name: 'Sign in to enter' }).click();
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
