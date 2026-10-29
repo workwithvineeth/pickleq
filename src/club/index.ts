@@ -37,3 +37,20 @@ export function publicSources(): ClubBackend[] {
   const s = serverBackend();
   return s ? [s, demoBackend()] : [demoBackend()];
 }
+
+/** Where the Events tab reads the board: the demo when this phone is in demo mode, otherwise the real club server. */
+export function eventsBackend(): ClubBackend {
+  return clubMode() === 'demo' ? demoBackend() : serverBackend() ?? demoBackend();
+}
+
+const RETURN_KEY = 'pq-club-return';
+/**
+ * Remembers a screen to come back to after signing in. Kept in localStorage (not sessionStorage) because the
+ * email's sign-in link opens in a new tab.
+ */
+export function rememberReturn(hash: string | null) {
+  try { if (hash) localStorage.setItem(RETURN_KEY, hash); else localStorage.removeItem(RETURN_KEY); } catch { /* private mode */ }
+}
+export function takeReturn(): string | null {
+  try { const v = localStorage.getItem(RETURN_KEY); localStorage.removeItem(RETURN_KEY); return v; } catch { return null; }
+}

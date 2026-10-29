@@ -87,9 +87,10 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .empty h2 { font-size: 20px; }
 .empty p { margin: 0; color: var(--muted); max-width: 300px; }
 
-.nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 520px; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 6px 4px calc(10px + var(--safe-bottom)); z-index: 10; }
+.nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 520px; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); padding: 6px 4px calc(10px + var(--safe-bottom)); z-index: 10; }
 .nav-btn { min-height: 52px; background: transparent; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--nav-idle); font-size: 12px; }
 .nav-btn[aria-current='page'] { color: var(--accent); font-weight: 600; }
+.nav:has(> :nth-child(6)) .nav-btn { font-size: 11px; letter-spacing: -0.1px; }
 
 .fab { position: fixed; right: max(18px, calc(50% - 260px + 18px)); bottom: calc(86px + var(--safe-bottom)); width: 60px; height: 60px; border-radius: 50%; border: none; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); z-index: 11; }
 

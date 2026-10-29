@@ -19,7 +19,7 @@ describe('Demo club name', () => {
     const id = await b.start('Robot');
     const clubs = await b.myClubs();
     expect(clubs.map((c) => c.club.name)).toEqual(['PQ Demo Club']);
-    expect((await b.clubBundle(id)).tournaments[0].name).toBe('PQ Demo Open');
+    expect((await b.clubBundle(id)).tournaments.map((t) => t.name)).toContain('PQ Demo Open');
   });
 
   it('renames a demo saved under the old name, without making a second club', async () => {
@@ -31,6 +31,6 @@ describe('Demo club name', () => {
     await b.start('Robot');
     const clubs = await b.myClubs();
     expect(clubs.map((c) => c.club.name)).toEqual(['PQ Demo Club']);
-    expect((await b.clubBundle(clubs[0].club.id)).tournaments.map((t) => t.name)).toEqual(['PQ Demo Open']);
+    expect((await b.clubBundle(clubs[0].club.id)).tournaments.map((t) => t.name).filter((n) => n.includes('Open'))).toEqual(['PQ Demo Open']);
   });
 });

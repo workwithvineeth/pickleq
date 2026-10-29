@@ -1,8 +1,10 @@
 import { newId } from '../db/db';
-import { ClubError, type ClubBackend, type EntryPatch, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type PublicTournament, type ScorePatch, type TournamentBundle } from './backend';
+import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
-import { buildTournamentRows, checkDivision, type NewMatchRow, type NewTournamentInput } from './plan';
-import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type Member, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
+import { buildSampleEvents } from './domain/sampleEvents';
+import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
+import { digits, entryProblem, isActive, type DrawPlan } from './registration';
+import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
 interface DemoState {
   v: 1;
@@ -16,6 +18,9 @@ interface DemoState {
   matches: ClubMatch[];
   summaries: (SharedSummary & { clubId: string })[];
   scorerLinks?: (ScorerLink & { failed: number; lockedUntil?: number })[];
+  /** Module 2 (added later, so older demos don't have them yet). */
+  registrations?: Registration[];
+  eventsSeeded?: boolean;
 }
 
 const KEY = 'pq-club-demo-v1';
@@ -68,6 +73,14 @@ export class DemoBackend implements ClubBackend {
       this.s.divisions.push(...d.divisions);
       this.s.entries.push(...d.entries);
       this.s.matches.push(...d.matches);
+    }
+    if (!this.s.eventsSeeded) {
+      const ev = buildSampleEvents(club.id, newId);
+      this.s.clubs.push(...ev.clubs);
+      this.s.tournaments.push(...ev.tournaments);
+      this.s.divisions.push(...ev.divisions);
+      this.s.registrations = [...(this.s.registrations ?? []), ...ev.registrations];
+      this.s.eventsSeeded = true;
     }
     this.save();
     return club.id;
@@ -189,7 +202,7 @@ export class DemoBackend implements ClubBackend {
   async createTournament(input: NewTournamentInput) {
     this.need(input.clubId, isStaff, 'Only coaches and admins can create tournaments');
     if (input.name.trim().length < 2) throw new ClubError('Give the tournament a name');
-    for (const d of input.divisions) { const e = checkDivision(d); if (e) throw new ClubError(e); }
+    for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : input.entryMode ?? 'roster'); if (e) throw new ClubError(e); }
     const players = new Map(this.s.players.filter((p) => p.clubId === input.clubId).map((p) => [p.id, p]));
     const rows = buildTournamentRows(input, players, newId);
     const now = new Date().toISOString();
@@ -398,4 +411,196 @@ export class DemoBackend implements ClubBackend {
       matches: this.s.matches.filter((m) => m.clubId === p.clubId && (m.sideA.includes(p.id) || m.sideB.includes(p.id))),
     }));
   }
+
+  // ---------- Module 2: events board, registration, entries inbox, approval ----------
+  // The demo user is also a PICKLEQ admin, so the approval queue can be tried.
+
+  private regs(): Registration[] { return (this.s.registrations ??= []); }
+  private tournament(id: string): ClubTournament { const t = this.s.tournaments.find((x) => x.id === id); if (!t) throw new ClubError('Tournament not found'); return t; }
+  private today(): string { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+
+  async updateTournamentDetails(id: string, patch: TournamentDetails) {
+    const t = this.tournament(id);
+    this.need(t.clubId, isStaff, 'Only coaches and admins can change the tournament');
+    if (patch.name !== undefined && patch.name.trim().length < 2) throw new ClubError('Give the tournament a name');
+    if (patch.link?.trim() && !/^https:\/\/[^\s<>"]+$/.test(patch.link.trim())) throw new ClubError('A link starts with https://');
+    if (patch.upiId?.trim() && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9.-]{2,64}$/.test(patch.upiId.trim())) throw new ClubError('A UPI ID looks like name@bank');
+    for (const [k, v] of Object.entries(patch)) (t as unknown as Record<string, unknown>)[k] = typeof v === 'string' ? (v.trim() || undefined) : v;
+    this.save();
+  }
+
+  async submitListing(id: string, listing: Listing): Promise<ListingStatus> {
+    const t = this.tournament(id);
+    this.need(t.clubId, isAdmin, 'Only club admins can post to the events board');
+    if (listing !== 'none' && (!t.city || !t.venue)) throw new ClubError('Add the city and venue first');
+    if (listing === 'listed' && !t.contact && !t.link) throw new ClubError('Add a contact number or a link so players can enter');
+    const verified = !!this.club(t.clubId).verified;
+    t.listing = listing;
+    t.listingStatus = listing === 'none' ? 'none' : verified ? 'approved' : 'pending';
+    t.rejectReason = undefined;
+    this.save();
+    return t.listingStatus;
+  }
+
+  private eventOf(t: ClubTournament, detail: boolean): PublicEvent {
+    const open = !!t.registrationOpen && !t.drawnAt && t.listing !== 'listed' && (!t.entriesClose || this.today() <= t.entriesClose);
+    return {
+      slug: t.publicSlug, name: t.name, startDate: t.startDate, startTime: t.startTime, city: t.city, venue: t.venue, club: this.club(t.clubId).name,
+      listing: t.listing ?? 'none', status: t.status, entryMode: t.entryMode ?? 'roster', registrationOpen: open && (t.entryMode === 'registration'), entriesClose: t.entriesClose,
+      results: t.isPublic, drawn: !!t.drawnAt, contact: t.listing === 'listed' ? t.contact : undefined, link: t.listing === 'listed' ? t.link : undefined,
+      about: detail ? t.about : undefined, upiId: detail ? t.upiId : undefined,
+      divisions: this.s.divisions.filter((d) => d.tournamentId === t.id).sort((a, b) => a.sort - b.sort).map((d) => ({
+        id: d.id, name: d.name, kind: d.kind, rules: d.rules ?? {}, taken: this.regs().filter((r) => r.divisionId === d.id && (r.status === 'pending' || r.status === 'accepted')).length,
+      })),
+    };
+  }
+
+  async publicEvents(): Promise<PublicEvent[]> {
+    const from = new Date(); from.setDate(from.getDate() - 1);
+    const min = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`;
+    return this.s.tournaments.filter((t) => (t.listing ?? 'none') !== 'none' && t.listingStatus === 'approved' && t.startDate >= min && t.status !== 'done')
+      .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.startTime.localeCompare(b.startTime) || a.name.localeCompare(b.name))
+      .map((t) => this.eventOf(t, false));
+  }
+
+  async publicEvent(slug: string): Promise<PublicEvent | null> {
+    const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.listingStatus !== 'rejected'
+      && (((x.listing ?? 'none') !== 'none' && x.listingStatus === 'approved') || x.entryMode === 'registration'));
+    return t ? this.eventOf(t, true) : null;
+  }
+
+  private entryTaken(divisionId: string, players: EntryPerson[], except?: string): boolean {
+    const phones = new Set(this.regs().filter((r) => r.divisionId === divisionId && isActive(r) && r.id !== except).flatMap((r) => r.players.map((p) => digits(p.phone)).filter(Boolean)));
+    return players.some((p) => p.phone.trim() && phones.has(digits(p.phone)));
+  }
+
+  async registerEntry(divisionId: string, players: EntryPerson[], payment: 'unpaid' | 'venue' | 'claimed', paymentRef?: string) {
+    const u = this.me();
+    const d = this.s.divisions.find((x) => x.id === divisionId);
+    if (!d) throw new ClubError('That event doesn’t exist');
+    const t = this.tournament(d.tournamentId);
+    if (!this.eventOf(t, false).registrationOpen) throw new ClubError('Entries for this tournament are closed');
+    const problem = entryProblem(d.kind, d.rules, players, true);
+    if (problem) throw new ClubError(problem);
+    if (this.regs().some((r) => r.divisionId === d.id && r.userId === u.id && isActive(r))) throw new ClubError('You already have an entry in this event. You can withdraw it and enter again.');
+    if (this.entryTaken(d.id, players)) throw new ClubError('Someone with that phone number is already entered in this event');
+    if (payment === 'claimed' && ((paymentRef ?? '').trim().length < 4)) throw new ClubError('Add the UPI reference number from your payment');
+    const taken = this.regs().filter((r) => r.divisionId === d.id && (r.status === 'pending' || r.status === 'accepted')).length;
+    const status = d.rules?.cap !== undefined && taken >= d.rules.cap ? 'waitlist' : 'pending';
+    const r: Registration = { id: newId(), tournamentId: t.id, divisionId: d.id, clubId: d.clubId, userId: u.id, source: 'online', players: players.map((p) => ({ ...p, name: p.name.trim(), phone: p.phone.trim(), duprId: p.duprId?.trim().toUpperCase() || undefined })), status, payment, paymentRef: paymentRef?.trim() || undefined, createdAt: new Date().toISOString() };
+    this.regs().push(r);
+    this.save();
+    return { id: r.id, status: r.status };
+  }
+
+  async myEntries(): Promise<MyEntry[]> {
+    const u = this.s.user;
+    if (!u) return [];
+    return this.regs().filter((r) => r.userId === u.id).map((r) => {
+      const d = this.s.divisions.find((x) => x.id === r.divisionId) as Division;
+      const t = this.tournament(r.tournamentId);
+      return {
+        id: r.id, status: r.status, payment: r.payment, paymentRef: r.paymentRef, note: r.note, players: r.players, division: d.name, kind: d.kind, fee: d.rules?.fee,
+        slug: t.publicSlug, tournament: t.name, startDate: t.startDate, startTime: t.startTime, city: t.city, venue: t.venue, club: this.club(t.clubId).name,
+        upiId: t.upiId, drawn: !!t.drawnAt, results: t.isPublic,
+      };
+    }).sort((a, b) => a.startDate.localeCompare(b.startDate));
+  }
+
+  async withdrawMyEntry(id: string) {
+    const u = this.me();
+    const r = this.regs().find((x) => x.id === id && x.userId === u.id);
+    if (!r) throw new ClubError('Entry not found');
+    if (r.entryId) throw new ClubError('The draw is made. Ask the organiser to withdraw you.');
+    if (isActive(r)) r.status = 'withdrawn';
+    this.save();
+  }
+
+  async registrations(tournamentId: string): Promise<Registration[]> {
+    const t = this.tournament(tournamentId);
+    this.need(t.clubId, isStaff, 'Only coaches and admins can see entries');
+    return this.regs().filter((r) => r.tournamentId === tournamentId).sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map((r) => ({ ...r, players: r.players.map((p) => ({ ...p })) }));
+  }
+
+  async updateRegistration(id: string, patch: RegistrationPatch) {
+    const r = this.regs().find((x) => x.id === id);
+    if (!r) throw new ClubError('Entry not found');
+    this.need(r.clubId, isStaff, 'Only coaches and admins can change entries');
+    if (patch.players || patch.divisionId) {
+      const d = this.s.divisions.find((x) => x.id === (patch.divisionId ?? r.divisionId));
+      if (!d || d.tournamentId !== r.tournamentId) throw new ClubError('That event isn’t part of this tournament');
+      const problem = entryProblem(d.kind, d.rules, patch.players ?? r.players, r.source === 'online');
+      if (problem) throw new ClubError(problem);
+    }
+    if (patch.status) r.status = patch.status;
+    if (patch.payment) r.payment = patch.payment;
+    if (patch.note !== undefined) r.note = patch.note?.trim() || undefined;
+    if (patch.players) r.players = patch.players;
+    if (patch.divisionId) r.divisionId = patch.divisionId;
+    this.save();
+  }
+
+  async addOfflineEntry(e: OfflineEntry) {
+    this.need(e.clubId, isStaff, 'Only coaches and admins can add entries');
+    const d = this.s.divisions.find((x) => x.id === e.divisionId);
+    if (!d) throw new ClubError('That event doesn’t exist');
+    const problem = entryProblem(d.kind, d.rules, e.players, false);
+    if (problem) throw new ClubError(problem);
+    this.regs().push({ id: newId(), tournamentId: e.tournamentId, divisionId: e.divisionId, clubId: e.clubId, source: 'offline', players: e.players, status: e.status, payment: e.payment, createdAt: new Date().toISOString() });
+    this.save();
+  }
+
+  async checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null> {
+    const d = this.s.divisions.find((x) => x.id === divisionId);
+    if (!d) return 'That event doesn’t exist';
+    if (!isStaff(this.role(d.clubId))) return 'Only the organiser can do this';
+    return entryProblem(d.kind, d.rules, players, false) ?? (this.entryTaken(d.id, players, exceptId) ? 'Someone with that phone number is already entered in this event' : null);
+  }
+
+  async applyDraw(tournamentId: string, plan: DrawPlan) {
+    const t = this.tournament(tournamentId);
+    this.need(t.clubId, isStaff, 'Only coaches and admins can make the draw');
+    if (t.drawnAt) throw new ClubError('The draw is already made');
+    const now = new Date().toISOString();
+    this.s.players.push(...plan.players);
+    for (const d of plan.divisions) { const x = this.s.divisions.find((y) => y.id === d.id); if (x) { x.pools = d.pools; x.advance = d.advance; } }
+    this.s.entries.push(...plan.entries);
+    this.s.matches.push(...plan.matches.map((m) => ({ ...m, updatedAt: now })));
+    for (const l of plan.links) { const r = this.regs().find((x) => x.id === l.registrationId); if (r) r.entryId = l.entryId; }
+    t.drawnAt = now;
+    t.registrationOpen = false;
+    this.save();
+  }
+
+  async isPlatformAdmin() { return !!this.s.user; }
+
+  async listingQueue(): Promise<ListingReview[]> {
+    this.me();
+    const month = Date.now() - 30 * 86400_000;
+    return this.s.tournaments.filter((t) => (t.listing ?? 'none') !== 'none' && (t.listingStatus === 'pending' || (t.reviewedAt && Date.parse(t.reviewedAt) > month)))
+      .sort((a, b) => Number(b.listingStatus === 'pending') - Number(a.listingStatus === 'pending') || a.startDate.localeCompare(b.startDate))
+      .map((t) => {
+        const c = this.club(t.clubId);
+        return {
+          id: t.id, name: t.name, startDate: t.startDate, startTime: t.startTime, city: t.city, venue: t.venue, about: t.about, contact: t.contact, link: t.link,
+          listing: t.listing ?? 'none', listingStatus: t.listingStatus ?? 'none', rejectReason: t.rejectReason, reviewedAt: t.reviewedAt, slug: t.publicSlug, club: c.name,
+          verified: !!c.verified, postedBy: 'organiser (demo)',
+          divisions: this.s.divisions.filter((d) => d.tournamentId === t.id).map((d) => ({ name: d.name, kind: d.kind, rules: d.rules ?? {} })),
+        };
+      });
+  }
+
+  async reviewListing(id: string, approve: boolean, reason?: string) {
+    this.me();
+    const t = this.tournament(id);
+    if (!approve && (reason ?? '').trim().length < 3) throw new ClubError('Give the organiser a reason');
+    t.listingStatus = approve ? 'approved' : 'rejected';
+    t.rejectReason = approve ? undefined : reason?.trim();
+    t.reviewedAt = new Date().toISOString();
+    if (approve) this.club(t.clubId).verified = true;
+    this.save();
+  }
+
+  async addPlatformAdmin(): Promise<void> { throw new ClubError('In the demo you’re the only PICKLEQ admin. Add admins on the real server.'); }
+  async platformAdmins() { return this.s.user ? [{ email: this.s.user.email, addedAt: new Date().toISOString() }] : []; }
 }

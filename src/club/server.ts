@@ -1,9 +1,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
-import { ClubError, type ClubBackend, type EntryPatch, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type PublicTournament, type ScorePatch, type TournamentBundle } from './backend';
-import { buildTournamentRows, checkDivision, type NewMatchRow, type NewTournamentInput } from './plan';
-import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, Entry, Member, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
+import type { DrawPlan } from './registration';
+import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
@@ -18,7 +19,33 @@ const toPlayer = (r: Row): ClubPlayer => ({
 const toTournament = (r: Row): ClubTournament => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time).slice(0, 5),
   courts: Number(r.courts), slotMinutes: Number(r.slot_minutes), status: r.status as ClubTournament['status'], isPublic: !!r.is_public, publicSlug: String(r.public_slug),
+  city: s(r.city), venue: s(r.venue), about: s(r.about), contact: s(r.contact), link: s(r.link), entryMode: r.entry_mode === 'registration' ? 'registration' : 'roster',
+  registrationOpen: !!r.registration_open, entriesClose: s(r.entries_close), upiId: s(r.upi_id), listing: (r.listing as Listing) ?? 'none',
+  listingStatus: (r.listing_status as ListingStatus) ?? 'none', rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), drawnAt: s(r.drawn_at),
 });
+const toRules = (r: Row): DivisionRules => ({ maxDupr: n(r.max_dupr), gender: (r.gender as DivisionRules['gender']) ?? 'open', minAge: n(r.min_age), cap: n(r.cap), fee: n(r.fee) });
+const fromRules = (r?: DivisionRules): Row => ({ max_dupr: r?.maxDupr ?? null, gender: r?.gender ?? 'open', min_age: r?.minAge ?? null, cap: r?.cap ?? null, fee: r?.fee ?? null });
+const toPerson = (p: Row): EntryPerson => ({ name: String(p.name ?? ''), phone: String(p.phone ?? ''), duprId: s(p.duprId), dupr: n(p.dupr), gender: (p.gender as EntryPerson['gender']) ?? '', age: n(p.age) });
+const fromPerson = (p: EntryPerson): Row => ({ name: p.name.trim(), phone: p.phone.trim(), duprId: p.duprId?.trim().toUpperCase() || '', dupr: p.dupr ?? null, gender: p.gender, age: p.age ?? null });
+const toRegistration = (r: Row): Registration => ({
+  id: String(r.id), tournamentId: String(r.tournament_id), divisionId: String(r.division_id), clubId: String(r.club_id), userId: s(r.user_id),
+  source: r.source === 'offline' ? 'offline' : 'online', players: ((r.players as Row[]) ?? []).map(toPerson), status: r.status as Registration['status'],
+  payment: r.payment as Registration['payment'], paymentRef: s(r.payment_ref), note: s(r.note), entryId: s(r.entry_id), createdAt: String(r.created_at),
+});
+const toEvent = (r: Row): PublicEvent => ({
+  slug: String(r.slug), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '08:00').slice(0, 5), city: s(r.city), venue: s(r.venue),
+  club: String(r.club), listing: r.listing as Listing, status: r.status as ClubTournament['status'], entryMode: r.entry_mode === 'registration' ? 'registration' : 'roster',
+  registrationOpen: !!r.registration_open, entriesClose: s(r.entries_close), results: !!r.results, drawn: !!r.drawn, contact: s(r.contact), link: s(r.link),
+  about: s(r.about), upiId: s(r.upi_id),
+  divisions: ((r.divisions as Row[]) ?? []).map((d) => ({ id: String(d.id), name: String(d.name), kind: d.kind as Division['kind'], rules: toRules(d), taken: Number(d.taken ?? 0) })),
+});
+/** Server functions answer {"error": "..."} for things a person can fix; this turns that into a message. */
+function answer<T extends Row>(r: unknown): T {
+  const x = r as Row | null;
+  if (!x) throw new ClubError('No answer from the club server. Try again.');
+  if (x.error) throw new ClubError(String(x.error));
+  return x as T;
+}
 const formats = (f: unknown): { pool: Format; ko: Format } => {
   const x = f as { pool?: Format; ko?: Format } & Partial<Format>;
   if (x?.pool) return { pool: x.pool, ko: x.ko ?? x.pool };
@@ -26,7 +53,7 @@ const formats = (f: unknown): { pool: Format; ko: Format } => {
 };
 const toDivision = (r: Row): Division => {
   const f = formats(r.format);
-  return { id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), name: String(r.name), kind: r.kind as Division['kind'], format: f.pool, koFormat: f.ko, pools: Number(r.pools), advance: Number(r.advance), sort: Number(r.sort ?? 0) };
+  return { id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), name: String(r.name), kind: r.kind as Division['kind'], format: f.pool, koFormat: f.ko, pools: Number(r.pools), advance: Number(r.advance), sort: Number(r.sort ?? 0), rules: toRules(r) };
 };
 const toEntry = (r: Row): Entry => ({ id: String(r.id), divisionId: String(r.division_id), clubId: String(r.club_id), playerIds: r.player_ids as string[], seed: n(r.seed), pool: n(r.pool), status: r.status === 'withdrawn' ? 'withdrawn' : 'active' });
 const toLink = (r: Row): ScorerLink => ({ id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), court: n(r.court), token: String(r.token), pin: String(r.pin), label: s(r.label), revoked: !!r.revoked, lastUsedAt: s(r.last_used_at) });
@@ -182,14 +209,19 @@ export class ServerBackend implements ClubBackend {
 
   async createTournament(input: NewTournamentInput) {
     if (input.name.trim().length < 2) throw new ClubError('Give the tournament a name');
-    for (const d of input.divisions) { const e = checkDivision(d); if (e) throw new ClubError(e); }
+    const mode = input.entryMode ?? 'roster';
+    for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : mode); if (e) throw new ClubError(e); }
     const ps = (check(await this.sb.from('club_players').select('*').eq('club_id', input.clubId)) as Row[]).map(toPlayer);
     const rows = buildTournamentRows(input, new Map(ps.map((p) => [p.id, p])), newId);
     const t = rows.tournament;
-    check(await this.sb.from('tournaments').insert({ id: t.id, club_id: t.clubId, name: t.name, start_date: t.startDate, start_time: t.startTime, courts: t.courts, slot_minutes: t.slotMinutes, status: t.status, is_public: t.isPublic, public_slug: t.publicSlug }));
-    check(await this.sb.from('divisions').insert(rows.divisions.map((d) => ({ id: d.id, tournament_id: d.tournamentId, club_id: d.clubId, name: d.name, kind: d.kind, format: { pool: d.format, ko: d.koFormat }, pools: d.pools, advance: d.advance, sort: d.sort }))));
-    check(await this.sb.from('entries').insert(rows.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));
-    check(await this.sb.from('club_matches').insert(rows.matches.map(fromMatch)));
+    check(await this.sb.from('tournaments').insert({
+      id: t.id, club_id: t.clubId, name: t.name, start_date: t.startDate, start_time: t.startTime, courts: t.courts, slot_minutes: t.slotMinutes, status: t.status, is_public: t.isPublic, public_slug: t.publicSlug,
+      city: t.city || null, venue: t.venue || null, about: t.about || null, contact: t.contact || null, link: t.link || null, entry_mode: mode,
+      registration_open: mode === 'registration', entries_close: t.entriesClose || null, upi_id: t.upiId || null,
+    }));
+    check(await this.sb.from('divisions').insert(rows.divisions.map((d) => ({ id: d.id, tournament_id: d.tournamentId, club_id: d.clubId, name: d.name, kind: d.kind, format: { pool: d.format, ko: d.koFormat }, pools: d.pools, advance: d.advance, sort: d.sort, ...fromRules(d.rules) }))));
+    if (rows.entries.length) check(await this.sb.from('entries').insert(rows.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));
+    if (rows.matches.length) check(await this.sb.from('club_matches').insert(rows.matches.map(fromMatch)));
     return t.id;
   }
 
@@ -337,5 +369,117 @@ export class ServerBackend implements ClubBackend {
       });
     }
     return out;
+  }
+
+  // ---------- Module 2: events board, registration, entries inbox, approval ----------
+
+  async updateTournamentDetails(id: string, patch: TournamentDetails) {
+    const row: Row = {};
+    const text = (v: string | undefined) => (v?.trim() ? v.trim() : null);
+    if (patch.name !== undefined) { if (patch.name.trim().length < 2) throw new ClubError('Give the tournament a name'); row.name = patch.name.trim(); }
+    if (patch.startDate !== undefined) row.start_date = patch.startDate;
+    if (patch.startTime !== undefined) row.start_time = patch.startTime;
+    for (const [k, col] of [['city', 'city'], ['venue', 'venue'], ['about', 'about'], ['contact', 'contact'], ['link', 'link'], ['upiId', 'upi_id'], ['entriesClose', 'entries_close']] as const) {
+      if (patch[k] !== undefined) row[col] = text(patch[k]);
+    }
+    if (patch.registrationOpen !== undefined) row.registration_open = patch.registrationOpen;
+    if (row.link && !/^https:\/\/[^\s<>"]+$/.test(String(row.link))) throw new ClubError('A link starts with https://');
+    if (row.upi_id && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9.-]{2,64}$/.test(String(row.upi_id))) throw new ClubError('A UPI ID looks like name@bank');
+    const res = check(await this.sb.from('tournaments').update(row).eq('id', id).select('id')) as Row[];
+    if (!res.length) throw new ClubError('You can’t change this tournament');
+  }
+
+  async submitListing(id: string, listing: Listing): Promise<ListingStatus> {
+    const r = answer<{ status: string }>(check(await this.sb.rpc('submit_listing', { p_tournament: id, p_listing: listing })));
+    return r.status as ListingStatus;
+  }
+
+  async publicEvents(includeTest = false): Promise<PublicEvent[]> {
+    return ((check(await this.sb.rpc('public_events', { p_include_test: includeTest })) as Row[]) ?? []).map(toEvent);
+  }
+
+  async publicEvent(slug: string): Promise<PublicEvent | null> {
+    const r = check(await this.sb.rpc('public_event', { p_slug: slug })) as Row | null;
+    return r ? toEvent(r) : null;
+  }
+
+  async registerEntry(divisionId: string, players: EntryPerson[], payment: 'unpaid' | 'venue' | 'claimed', paymentRef?: string) {
+    await this.uid();
+    const r = answer<{ id: string; status: string }>(check(await this.sb.rpc('register_entry', { p_division: divisionId, p_players: players.map(fromPerson), p_payment: payment, p_payment_ref: paymentRef?.trim() || null })));
+    return { id: String(r.id), status: r.status as Registration['status'] };
+  }
+
+  async myEntries(): Promise<MyEntry[]> {
+    const rows = (check(await this.sb.rpc('my_entries')) as Row[]) ?? [];
+    return rows.map((r) => ({
+      id: String(r.id), status: r.status as MyEntry['status'], payment: r.payment as MyEntry['payment'], paymentRef: s(r.payment_ref), note: s(r.note),
+      players: ((r.players as Row[]) ?? []).map(toPerson), division: String(r.division), kind: r.kind as MyEntry['kind'], fee: n(r.fee), slug: String(r.slug),
+      tournament: String(r.tournament), startDate: String(r.start_date), startTime: String(r.start_time ?? '').slice(0, 5), city: s(r.city), venue: s(r.venue),
+      club: String(r.club), upiId: s(r.upi_id), drawn: !!r.drawn, results: !!r.results,
+    }));
+  }
+
+  async withdrawMyEntry(id: string) { answer(check(await this.sb.rpc('withdraw_my_entry', { p_id: id }))); }
+
+  async registrations(tournamentId: string): Promise<Registration[]> {
+    return (check(await this.sb.from('registrations').select('*').eq('tournament_id', tournamentId).order('created_at')) as Row[]).map(toRegistration);
+  }
+
+  async updateRegistration(id: string, patch: RegistrationPatch) {
+    const row: Row = {};
+    if (patch.status) row.status = patch.status;
+    if (patch.payment) row.payment = patch.payment;
+    if (patch.note !== undefined) row.note = patch.note?.trim() || null;
+    if (patch.players) row.players = patch.players.map(fromPerson);
+    if (patch.divisionId) row.division_id = patch.divisionId;
+    const res = check(await this.sb.from('registrations').update(row).eq('id', id).select('id')) as Row[];
+    if (!res.length) throw new ClubError('You can’t change this entry');
+  }
+
+  async addOfflineEntry(e: OfflineEntry) {
+    check(await this.sb.from('registrations').insert({ tournament_id: e.tournamentId, division_id: e.divisionId, club_id: e.clubId, source: 'offline', players: e.players.map(fromPerson), status: e.status, payment: e.payment }));
+  }
+
+  async checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null> {
+    const r = check(await this.sb.rpc('check_entry', { p_division: divisionId, p_players: players.map(fromPerson), p_except: exceptId ?? null })) as Row | null;
+    return r?.error ? String(r.error) : null;
+  }
+
+  async applyDraw(tournamentId: string, plan: DrawPlan) {
+    const t = toTournament(check(await this.sb.from('tournaments').select('*').eq('id', tournamentId).single()) as Row);
+    if (t.drawnAt) throw new ClubError('The draw is already made');
+    check(await this.sb.from('club_players').insert(plan.players.map((p) => ({ id: p.id, club_id: p.clubId, name: p.name, dupr_singles: p.duprSingles ?? null, dupr_doubles: p.duprDoubles ?? null, dupr_id: p.duprId ?? null }))));
+    for (const d of plan.divisions) check(await this.sb.from('divisions').update({ pools: d.pools, advance: d.advance }).eq('id', d.id));
+    check(await this.sb.from('entries').insert(plan.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));
+    check(await this.sb.from('club_matches').insert(plan.matches.map(fromMatch)));
+    for (const l of plan.links) check(await this.sb.from('registrations').update({ entry_id: l.entryId }).eq('id', l.registrationId));
+    check(await this.sb.from('tournaments').update({ drawn_at: new Date().toISOString(), registration_open: false }).eq('id', tournamentId));
+  }
+
+  async isPlatformAdmin() {
+    if (!(await this.currentUser())) return false;
+    return !!check(await this.sb.rpc('is_platform_admin'));
+  }
+
+  async listingQueue(): Promise<ListingReview[]> {
+    const rows = check(await this.sb.rpc('listing_queue')) as Row[] | null;
+    if (!rows) throw new ClubError('Only PICKLEQ admins can review listings');
+    return rows.map((r) => ({
+      id: String(r.id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '').slice(0, 5), city: s(r.city), venue: s(r.venue),
+      about: s(r.about), contact: s(r.contact), link: s(r.link), listing: r.listing as Listing, listingStatus: r.listing_status as ListingStatus,
+      rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), slug: String(r.slug), club: String(r.club), verified: !!r.verified, postedBy: s(r.posted_by),
+      divisions: ((r.divisions as Row[]) ?? []).map((d) => ({ name: String(d.name), kind: d.kind as Division['kind'], rules: toRules(d) })),
+    }));
+  }
+
+  async reviewListing(id: string, approve: boolean, reason?: string) {
+    answer(check(await this.sb.rpc('review_listing', { p_tournament: id, p_approve: approve, p_reason: reason ?? null })));
+  }
+
+  async addPlatformAdmin(email: string) { answer(check(await this.sb.rpc('add_platform_admin', { p_email: email }))); }
+
+  async platformAdmins() {
+    const rows = check(await this.sb.rpc('platform_admin_list')) as Row[] | null;
+    return (rows ?? []).map((r) => ({ email: String(r.email), addedAt: String(r.added_at) }));
   }
 }

@@ -1,6 +1,8 @@
 import type { Go, Route } from '../../navigation';
 import { ClubView, PlayerView, Sharing } from './ClubView';
+import { AdminListings, EnterEvent, EventPage, EventsBoard, MyEntries, PostEvent } from './Events';
 import { ClubHub, ClubJoin, ClubNew, ClubSignIn } from './Hub';
+import { EntriesInbox } from './Inbox';
 import { CourtScorer, Desk, DuprExport, Entries, ScorerLinks } from './Organiser';
 import { ScoreMatch } from './Score';
 import { Results, TournamentNew, TournamentView } from './Tournament';
@@ -24,7 +26,14 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'club-entries': return <Entries key={id} id={id} go={go} onBack={back} />;
     case 'club-dupr': return <DuprExport key={id} id={id} go={go} onBack={back} />;
     case 'court': return <CourtScorer key={id} token={id} onBack={() => go('home')} />;
-    case 'results': return <Results key={id} slug={id} onBack={() => go('home')} />;
+    case 'results': return <Results key={id} slug={id} onBack={back} />;
+    case 'events': return <EventsBoard key={id} go={go} robot={id === 'robot'} />;
+    case 'event': return <EventPage key={id} slug={id} go={go} onBack={() => (window.history.length > 1 ? back() : go('events'))} />;
+    case 'event-enter': return <EnterEvent key={id} id={id} go={go} onBack={back} />;
+    case 'my-entries': return <MyEntries go={go} onBack={back} />;
+    case 'events-post': return <PostEvent go={go} onBack={back} />;
+    case 'admin-listings': return <AdminListings go={go} onBack={back} />;
+    case 'club-inbox': return <EntriesInbox key={id} id={id} go={go} onBack={back} />;
     default: return null;
   }
 }

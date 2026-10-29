@@ -32,7 +32,7 @@ function uuidFrom(rand: () => number): string {
 const POOL_FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: true };
 const KO_FORMAT: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
-function isoDay(d: Date): string {
+export function isoDay(d: Date): string {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }

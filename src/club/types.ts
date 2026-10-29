@@ -18,6 +18,8 @@ export interface Club {
   city?: string;
   inviteCode: string;
   settings: ClubSettings;
+  /** Its first events-board listing was approved, so later ones go straight on. */
+  verified?: boolean;
 }
 
 export interface Member { userId: string; role: Role; name: string }
@@ -52,6 +54,71 @@ export interface ClubTournament {
   status: TournamentStatus;
   isPublic: boolean;
   publicSlug: string;
+  /** Module 2: where it is, how players enter, and whether it's on the PICKLEQ events board. */
+  city?: string;
+  venue?: string;
+  about?: string;
+  /** Phone or WhatsApp number players contact (listed-only events). */
+  contact?: string;
+  /** Organiser's own sign-up page (listed-only events). */
+  link?: string;
+  entryMode?: EntryMode;
+  registrationOpen?: boolean;
+  /** Last day to enter, YYYY-MM-DD (India time). */
+  entriesClose?: string;
+  /** The organiser's UPI ID, for players paying entry fees straight to them. */
+  upiId?: string;
+  listing?: Listing;
+  listingStatus?: ListingStatus;
+  rejectReason?: string;
+  reviewedAt?: string;
+  drawnAt?: string;
+}
+
+/** roster: the organiser picks players (Module 1). registration: players sign up, then the organiser draws. */
+export type EntryMode = 'roster' | 'registration';
+/** none: not on the board. listed: on the board only, players contact the organiser. run: run on PICKLEQ. */
+export type Listing = 'none' | 'listed' | 'run';
+export type ListingStatus = 'none' | 'pending' | 'approved' | 'rejected';
+export type DivisionGender = 'open' | 'men' | 'women' | 'mixed';
+export const GENDER_LABEL: Record<DivisionGender, string> = { open: 'Open', men: 'Men', women: 'Women', mixed: 'Mixed' };
+
+/** Who may enter an event, and how many. */
+export interface DivisionRules {
+  /** DUPR cap: every player's rating must be this or under. */
+  maxDupr?: number;
+  gender?: DivisionGender;
+  /** Age group, e.g. 35 for 35+. Everyone must be 18 or over in any case. */
+  minAge?: number;
+  /** Most entries accepted; more go on the waitlist. */
+  cap?: number;
+  /** Entry fee in rupees, per entry (team for doubles). */
+  fee?: number;
+}
+
+export type PlayerGender = 'm' | 'f' | 'x';
+/** One person on an entry form. Phone is needed for online entries; offline entries may leave it empty. */
+export interface EntryPerson { name: string; phone: string; duprId?: string; dupr?: number; gender: PlayerGender | ''; age?: number }
+
+export type RegistrationStatus = 'pending' | 'accepted' | 'waitlist' | 'rejected' | 'withdrawn';
+export type Payment = 'unpaid' | 'venue' | 'claimed' | 'paid';
+export const REG_STATUS_LABEL: Record<RegistrationStatus, string> = { pending: 'Waiting for the organiser', accepted: 'Accepted', waitlist: 'On the waitlist', rejected: 'Not accepted', withdrawn: 'Withdrawn' };
+export const PAYMENT_LABEL: Record<Payment, string> = { unpaid: 'Not paid', venue: 'Paying at the venue', claimed: 'Paid by UPI (to confirm)', paid: 'Paid' };
+
+export interface Registration {
+  id: string;
+  tournamentId: string;
+  divisionId: string;
+  clubId: string;
+  userId?: string;
+  source: 'online' | 'offline';
+  players: EntryPerson[];
+  status: RegistrationStatus;
+  payment: Payment;
+  paymentRef?: string;
+  note?: string;
+  entryId?: string;
+  createdAt: string;
 }
 
 export type DivisionKind = 'singles' | 'doubles';
@@ -68,6 +135,7 @@ export interface Division {
   pools: number;
   advance: number;
   sort: number;
+  rules?: DivisionRules;
 }
 
 export interface Entry {

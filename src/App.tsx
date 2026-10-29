@@ -43,7 +43,7 @@ if (import.meta.env.VITE_CLUB === 'on' && /[?&](code|error_description)=/.test(w
 
 export default function App() {
   const [route, go, back] = useRoute();
-  const isTab = (TABS as string[]).includes(route.name);
+  const isTab = (TABS as string[]).includes(route.name) && (route.name !== 'events' || isClubEnabled());
   const [locked, setLocked] = useState(() => pinEnabled());
 
   // Lock again when you come back after the chosen time away (a few seconds' grace so the share sheet doesn't lock you out).
@@ -112,5 +112,5 @@ export default function App() {
 }
 
 function isClubRoute(name: string): boolean {
-  return name.startsWith('club') || name === 'results' || name === 'court';
+  return name.startsWith('club') || name.startsWith('event') || ['results', 'court', 'my-entries', 'admin-listings'].includes(name);
 }

@@ -3,11 +3,14 @@ import { Field } from '../../components/Controls';
 import type { NewMatch } from '../../db/matches';
 import type { Go } from '../../navigation';
 import { clubServerConfig, setClubMode } from '../config';
-import { backend, demoBackend, serverBackend } from '../index';
+import { backend, demoBackend, serverBackend, takeReturn } from '../index';
 import { importClubMatches, pendingClubMatches } from '../personal';
 import { DemoNote, errorText, Header, RoleBadge, Status, useLoad } from './common';
 
 const PENDING_JOIN = 'pq-club-pending-join';
+// localStorage, not sessionStorage: the email's sign-in link opens in a new tab.
+const readPendingJoin = () => { try { return localStorage.getItem(PENDING_JOIN); } catch { return null; } };
+const writePendingJoin = (v: string | null) => { try { if (v) localStorage.setItem(PENDING_JOIN, v); else localStorage.removeItem(PENDING_JOIN); } catch { /* private mode */ } };
 
 export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   const b = backend();
@@ -110,8 +113,10 @@ export function ClubSignIn({ go, onBack }: { go: Go; onBack: () => void }) {
 
   function signedIn() {
     setClubMode('server');
-    const pending = sessionStorage.getItem(PENDING_JOIN);
-    if (pending) { sessionStorage.removeItem(PENDING_JOIN); go('club-join', pending, { replace: true }); } else go('club', undefined, { replace: true });
+    const back = takeReturn();
+    if (back) { window.location.replace(back); return; }
+    const pending = readPendingJoin();
+    if (pending) { writePendingJoin(null); go('club-join', pending, { replace: true }); } else go('club', undefined, { replace: true });
   }
 
   // Opened from the email's sign-in link: finish signing in.
@@ -210,7 +215,7 @@ export function ClubJoin({ code, go, onBack }: { code: string; go: Go; onBack: (
     try { go('club-view', await b.joinClub(invite, claim || null, me), { replace: true }); } catch (e) { setMsg(errorText(e)); setBusy(false); }
   }
   function signInFirst() {
-    sessionStorage.setItem(PENDING_JOIN, code);
+    writePendingJoin(code);
     go('club-signin');
   }
   return (

@@ -1,5 +1,6 @@
 import type { NewMatchRow, NewTournamentInput } from './plan';
-import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, Entry, Member, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { DrawPlan } from './registration';
+import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 export interface ClubUser { id: string; email: string }
 export interface MyClub { club: Club; role: Role; myPlayerId?: string }
@@ -51,7 +52,7 @@ export interface MatchPatch { status?: ClubMatch['status']; winner?: 'A' | 'B' |
 export interface EntryPatch { playerIds?: string[]; status?: Entry['status']; pool?: number }
 
 /** Where club data lives: the real club server, or a demo kept on this phone. Screens only talk to this. */
-export interface ClubBackend {
+export interface ClubBackend extends EventsBackend {
   readonly kind: 'demo' | 'server';
   currentUser(): Promise<ClubUser | null>;
   sendCode(email: string): Promise<void>;
@@ -89,6 +90,104 @@ export interface ClubBackend {
   shareMySummary(playerId: string, data: SummaryData): Promise<void>;
   publicTournament(slug: string): Promise<PublicTournament | null>;
   myClubMatches(): Promise<MyClubMatches[]>;
+}
+
+/** A tournament as anyone sees it on the events board or its own page (no login). Never players' details. */
+export interface PublicEvent {
+  slug: string;
+  name: string;
+  startDate: string;
+  startTime: string;
+  city?: string;
+  venue?: string;
+  club: string;
+  listing: Listing;
+  status: ClubTournament['status'];
+  entryMode: EntryMode;
+  registrationOpen: boolean;
+  entriesClose?: string;
+  /** The results link is on. */
+  results: boolean;
+  drawn: boolean;
+  contact?: string;
+  link?: string;
+  about?: string;
+  upiId?: string;
+  divisions: { id: string; name: string; kind: DivisionKind; rules: DivisionRules; taken: number }[];
+}
+
+/** One of your own entries, with its tournament. */
+export interface MyEntry {
+  id: string;
+  status: RegistrationStatus;
+  payment: Payment;
+  paymentRef?: string;
+  note?: string;
+  players: EntryPerson[];
+  division: string;
+  kind: DivisionKind;
+  fee?: number;
+  slug: string;
+  tournament: string;
+  startDate: string;
+  startTime: string;
+  city?: string;
+  venue?: string;
+  club: string;
+  upiId?: string;
+  drawn: boolean;
+  results: boolean;
+}
+
+/** A listing waiting for (or recently given) a PICKLEQ admin's decision. */
+export interface ListingReview {
+  id: string;
+  name: string;
+  startDate: string;
+  startTime: string;
+  city?: string;
+  venue?: string;
+  about?: string;
+  contact?: string;
+  link?: string;
+  listing: Listing;
+  listingStatus: ListingStatus;
+  rejectReason?: string;
+  reviewedAt?: string;
+  slug: string;
+  club: string;
+  verified: boolean;
+  postedBy?: string;
+  divisions: { name: string; kind: DivisionKind; rules: DivisionRules }[];
+}
+
+export type TournamentDetails = Partial<Pick<ClubTournament, 'name' | 'startDate' | 'startTime' | 'city' | 'venue' | 'about' | 'contact' | 'link' | 'registrationOpen' | 'entriesClose' | 'upiId'>>;
+export interface RegistrationPatch { status?: RegistrationStatus; payment?: Payment; note?: string | null; players?: EntryPerson[]; divisionId?: string }
+export interface OfflineEntry { tournamentId: string; divisionId: string; clubId: string; players: EntryPerson[]; status: RegistrationStatus; payment: Payment }
+
+/** Module 2: the events board, registration, the entries inbox and listing approval. */
+export interface EventsBackend {
+  updateTournamentDetails(id: string, patch: TournamentDetails): Promise<void>;
+  /** Puts a tournament on the events board (or takes it off). Returns the listing's status: approved straight away for a verified club. */
+  submitListing(id: string, listing: Listing): Promise<ListingStatus>;
+  publicEvents(includeTest?: boolean): Promise<PublicEvent[]>;
+  publicEvent(slug: string): Promise<PublicEvent | null>;
+  registerEntry(divisionId: string, players: EntryPerson[], payment: 'unpaid' | 'venue' | 'claimed', paymentRef?: string): Promise<{ id: string; status: RegistrationStatus }>;
+  myEntries(): Promise<MyEntry[]>;
+  withdrawMyEntry(id: string): Promise<void>;
+  /** Every entry for a tournament (coaches and admins). */
+  registrations(tournamentId: string): Promise<Registration[]>;
+  updateRegistration(id: string, patch: RegistrationPatch): Promise<void>;
+  addOfflineEntry(e: OfflineEntry): Promise<void>;
+  /** The server's eligibility check, for an entry the organiser is adding or changing. Null if it's fine. */
+  checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null>;
+  /** Makes the draw: roster players, entries, matches; links each registration to its entry and closes entries. */
+  applyDraw(tournamentId: string, plan: DrawPlan): Promise<void>;
+  isPlatformAdmin(): Promise<boolean>;
+  listingQueue(): Promise<ListingReview[]>;
+  reviewListing(id: string, approve: boolean, reason?: string): Promise<void>;
+  addPlatformAdmin(email: string): Promise<void>;
+  platformAdmins(): Promise<{ email: string; addedAt: string }[]>;
 }
 
 export class ClubError extends Error {}

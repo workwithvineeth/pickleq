@@ -6,16 +6,20 @@ import type { Go } from '../../navigation';
 import type { PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, matchResult, poolLetter, slotTime, standings } from '../domain/engine';
 import { backend, publicSources } from '../index';
-import { checkDivision, knockoutMatchesToAdd, type NewDivisionInput } from '../plan';
-import { isStaff, STAGE_LABEL, type ClubMatch, type ClubPlayer, type DivisionKind, type Entry } from '../types';
+import { checkDivisionSetup, knockoutMatchesToAdd, type NewDivisionInput } from '../plan';
+import { isStaff, STAGE_LABEL, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
+import { ListingCard } from './Inbox';
 import { WalkIn } from './Organiser';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 type Shape = 'rr' | 'pools-ko';
-interface DivDraft { name: string; kind: DivisionKind; shape: Shape; pools: number; advance: number; pointsTo: PointsTo; golden: boolean; koBestOf: BestOf; koGolden: boolean; picked: string[]; teams: string[][] }
-const newDraft = (kind: DivisionKind): DivDraft => ({ name: kind === 'singles' ? 'Open Singles' : 'Open Doubles', kind, shape: 'pools-ko', pools: 2, advance: 2, pointsTo: 11, golden: true, koBestOf: 3, koGolden: false, picked: [], teams: [] });
+interface DivDraft { name: string; kind: DivisionKind; shape: Shape; pools: number; advance: number; pointsTo: PointsTo; golden: boolean; koBestOf: BestOf; koGolden: boolean; picked: string[]; teams: string[][]; gender: DivisionGender; maxDupr: string; minAge: string; cap: string; fee: string }
+const newDraft = (kind: DivisionKind): DivDraft => ({ name: kind === 'singles' ? 'Open Singles' : 'Open Doubles', kind, shape: 'pools-ko', pools: 2, advance: 2, pointsTo: 11, golden: true, koBestOf: 3, koGolden: false, picked: [], teams: [], gender: 'open', maxDupr: '', minAge: '', cap: '', fee: '' });
+/** What the organiser is posting: run on PICKLEQ with players picked now, run on PICKLEQ with players registering, or a board listing only. */
+type PostKind = 'roster' | 'registration' | 'listed';
+const optNum = (v: string) => (v.trim() === '' ? undefined : Number(v));
 const SCORING = [{ value: 'golden', label: 'Golden point' }, { value: 'win2', label: 'Win by 2' }];
 
 export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; onBack: () => void }) {
@@ -27,6 +31,15 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   const [courts, setCourts] = useState(4);
   const [slot, setSlot] = useState(20);
   const [divs, setDivs] = useState<DivDraft[]>([newDraft('singles')]);
+  const [post, setPost] = useState<PostKind>('roster');
+  const [city, setCity] = useState('');
+  const [venue, setVenue] = useState('');
+  const [about, setAbout] = useState('');
+  const [upi, setUpi] = useState('');
+  const [closes, setCloses] = useState('');
+  const [contact, setContact] = useState('');
+  const [link, setLink] = useState('');
+  const [onBoard, setOnBoard] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const players = useMemo(() => [...(club.data?.players ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [club.data]);
@@ -35,56 +48,118 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
 
   function toInput(d: DivDraft): NewDivisionInput {
     const fmt: Format = { pointsTo: d.pointsTo, bestOf: 1, scoring: 'sideout', golden: d.golden };
-    const rr = d.shape === 'rr';
-    return { name: d.name, kind: d.kind, format: fmt, koFormat: { ...fmt, bestOf: d.koBestOf, golden: d.koGolden }, pools: rr ? 1 : d.pools, advance: rr ? 0 : d.advance, entries: d.kind === 'singles' ? d.picked.map((p) => [p]) : d.teams };
+    const rr = d.shape === 'rr' || post !== 'roster';
+    const rules = { gender: d.gender, maxDupr: optNum(d.maxDupr), minAge: optNum(d.minAge), cap: optNum(d.cap), fee: optNum(d.fee) };
+    return { name: d.name, kind: d.kind, format: fmt, koFormat: { ...fmt, bestOf: d.koBestOf, golden: d.koGolden }, pools: rr ? 1 : d.pools, advance: rr ? 0 : d.advance, entries: post === 'roster' ? (d.kind === 'singles' ? d.picked.map((p) => [p]) : d.teams) : [], rules: post === 'roster' ? undefined : rules };
   }
+  const mode: EntryMode = post === 'registration' ? 'registration' : 'roster';
   async function create() {
     if (!b) return;
     if (name.trim().length < 2) return setMsg('Give the tournament a name');
-    for (const d of divs) { const e = checkDivision(toInput(d)); if (e) return setMsg(`${d.name || 'Event'}: ${e}`); }
+    if (post !== 'roster' && (!city.trim() || !venue.trim())) return setMsg('Add the city and venue');
+    if (post === 'listed' && !contact.trim() && !link.trim()) return setMsg('Add a contact number or a link so players can enter');
+    if (upi.trim() && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9.-]{2,64}$/.test(upi.trim())) return setMsg('A UPI ID looks like name@bank');
+    if (link.trim() && !/^https:\/\/[^\s<>"]+$/.test(link.trim())) return setMsg('A link starts with https://');
+    for (const d of divs) { const e = checkDivisionSetup(toInput(d), post === 'roster' ? 'roster' : 'registration'); if (e) return setMsg(`${d.name || 'Event'}: ${e}`); }
     setBusy(true); setMsg(null);
-    try { go('club-tournament', await b.createTournament({ clubId, name, startDate: date, startTime: time, courts, slotMinutes: slot, divisions: divs.map(toInput) }), { replace: true }); }
-    catch (e) { setMsg(errorText(e)); setBusy(false); }
+    const opt = (v: string) => v.trim() || undefined;
+    try {
+      const id = await b.createTournament({
+        clubId, name, startDate: date, startTime: time, courts, slotMinutes: slot, divisions: divs.map(toInput), entryMode: mode, listingOnly: post === 'listed',
+        details: { city: opt(city), venue: opt(venue), about: opt(about), upiId: post === 'registration' ? opt(upi) : undefined, entriesClose: post === 'registration' ? opt(closes) : undefined, contact: post === 'listed' ? opt(contact) : undefined, link: post === 'listed' ? opt(link) : undefined },
+      });
+      // Put it on the board now if asked; a listing problem doesn't lose the tournament (it can be posted again from its page).
+      if (post === 'listed' || (post === 'registration' && onBoard)) await b.submitListing(id, post === 'listed' ? 'listed' : 'run').catch(() => undefined);
+      go('club-tournament', id, { replace: true });
+    } catch (e) { setMsg(errorText(e)); setBusy(false); }
   }
 
   return (
     <main className="screen" aria-labelledby="tnew-title">
       <Header id="tnew-title" title="New tournament" onBack={onBack} />
       <Status error={club.error} loading={club.loading && !club.data} />
+      <Field label="How do players enter?">
+        <Segmented<PostKind> label="How do players enter?" value={post} options={[{ value: 'roster', label: 'I pick them' }, { value: 'registration', label: 'They register' }, { value: 'listed', label: 'List only' }]} onChange={setPost} />
+      </Field>
+      <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on PICKLEQ.'}</p>
       <Field label="Tournament name"><input className="input" aria-label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <Field label="Date"><input className="input" type="date" aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <Field label="First match"><input className="input" type="time" aria-label="First match" value={time} onChange={(e) => setTime(e.target.value)} /></Field>
       </div>
-      <Field label="Courts"><Chips label="Courts" value={courts} options={[1, 2, 3, 4, 5, 6, 8, 10].map((n) => ({ value: n, label: String(n) }))} onChange={setCourts} /></Field>
-      <Field label="Minutes per match slot"><Chips label="Minutes per match slot" value={slot} options={[15, 20, 25, 30, 40].map((n) => ({ value: n, label: String(n) }))} onChange={setSlot} /></Field>
+      {post !== 'roster' && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <Field label="City"><input className="input" aria-label="City" value={city} maxLength={60} onChange={(e) => setCity(e.target.value)} /></Field>
+            <Field label="Venue"><input className="input" aria-label="Venue" value={venue} maxLength={120} onChange={(e) => setVenue(e.target.value)} /></Field>
+          </div>
+          <Field label="About (optional)"><textarea className="input" aria-label="About" value={about} maxLength={1000} onChange={(e) => setAbout(e.target.value)} placeholder="Format, prizes, what to bring" /></Field>
+        </>
+      )}
+      {post === 'registration' && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <Field label="Entries close"><input className="input" type="date" aria-label="Entries close" value={closes} onChange={(e) => setCloses(e.target.value)} /></Field>
+            <Field label="Your UPI ID (fees)"><input className="input" aria-label="Your UPI ID" placeholder="name@bank" value={upi} maxLength={130} onChange={(e) => setUpi(e.target.value)} /></Field>
+          </div>
+          <p className="small muted" style={{ margin: 0 }}>Players pay you directly by UPI or at the venue. PICKLEQ never holds the money; you mark entries paid.</p>
+          <label className="check-row"><input type="checkbox" checked={onBoard} onChange={(e) => setOnBoard(e.target.checked)} /><span>Show it on the PICKLEQ events board</span></label>
+        </>
+      )}
+      {post === 'listed' && (
+        <>
+          <Field label="Contact number for entries"><input className="input" aria-label="Contact number for entries" inputMode="tel" value={contact} maxLength={120} onChange={(e) => setContact(e.target.value)} /></Field>
+          <Field label="Your sign-up page (optional)"><input className="input" aria-label="Your sign-up page" placeholder="https://…" value={link} maxLength={300} onChange={(e) => setLink(e.target.value)} /></Field>
+        </>
+      )}
+      {post !== 'listed' && <><Field label="Courts"><Chips label="Courts" value={courts} options={[1, 2, 3, 4, 5, 6, 8, 10].map((n) => ({ value: n, label: String(n) }))} onChange={setCourts} /></Field>
+      <Field label="Minutes per match slot"><Chips label="Minutes per match slot" value={slot} options={[15, 20, 25, 30, 40].map((n) => ({ value: n, label: String(n) }))} onChange={setSlot} /></Field></>}
       {divs.map((d, i) => (
         <section key={i} className="card section" aria-label={`Event ${i + 1}`}>
           <input className="input" aria-label={`Event ${i + 1} name`} value={d.name} onChange={(e) => update(i, { name: e.target.value })} />
           <Segmented label={`Event ${i + 1} type`} value={d.kind} options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} onChange={(k) => update(i, { kind: k, picked: [], teams: [] })} />
-          <Field label="Format"><Segmented label={`Event ${i + 1} format`} value={d.shape} options={[{ value: 'rr', label: 'Round robin' }, { value: 'pools-ko', label: 'Pools, then knockouts' }]} onChange={(v) => update(i, { shape: v })} /></Field>
-          {d.shape === 'rr' && <p className="small muted" style={{ margin: 0 }}>Everyone plays everyone once. The table decides the winner.</p>}
-          {d.shape === 'pools-ko' && <>
+          {post !== 'roster' && <DivisionRulesFields d={d} label={`Event ${i + 1}`} onChange={(patch) => update(i, patch)} />}
+          {post === 'registration' && <p className="small muted" style={{ margin: 0 }}>You choose round robin or pools and knockouts when you make the draw, once you know how many entered.</p>}
+          {post === 'roster' && <Field label="Format"><Segmented label={`Event ${i + 1} format`} value={d.shape} options={[{ value: 'rr', label: 'Round robin' }, { value: 'pools-ko', label: 'Pools, then knockouts' }]} onChange={(v) => update(i, { shape: v })} /></Field>}
+          {post === 'roster' && d.shape === 'rr' && <p className="small muted" style={{ margin: 0 }}>Everyone plays everyone once. The table decides the winner.</p>}
+          {post === 'roster' && d.shape === 'pools-ko' && <>
             <Field label="Pools"><Chips label={`Event ${i + 1} pools`} value={d.pools} options={[1, 2, 3, 4, 6, 8].map((n) => ({ value: n, label: String(n) }))} onChange={(v) => update(i, { pools: v })} /></Field>
             <Field label="Go through to knockouts, per pool"><Chips label={`Event ${i + 1} going through`} value={d.advance} options={[1, 2, 4].map((n) => ({ value: n, label: String(n) }))} onChange={(v) => update(i, { advance: v })} /></Field>
           </>}
-          <Field label="Games to"><Chips label={`Event ${i + 1} games to`} value={d.pointsTo} options={[11, 15, 21].map((n) => ({ value: n as PointsTo, label: String(n) }))} onChange={(v) => update(i, { pointsTo: v })} /></Field>
+          {post !== 'listed' && <><Field label="Games to"><Chips label={`Event ${i + 1} games to`} value={d.pointsTo} options={[11, 15, 21].map((n) => ({ value: n as PointsTo, label: String(n) }))} onChange={(v) => update(i, { pointsTo: v })} /></Field>
           <Field label={d.shape === 'rr' ? 'At level scores' : 'Pool games, at level scores'}><Segmented label={`Event ${i + 1} scoring`} value={d.golden ? 'golden' : 'win2'} options={SCORING} onChange={(v) => update(i, { golden: v === 'golden' })} /></Field>
-          <p className="small muted" style={{ margin: 0 }}>{d.golden ? `Golden point: at ${d.pointsTo - 1}–${d.pointsTo - 1} the next point wins.` : `Win by 2: play on past ${d.pointsTo} until someone leads by 2.`}</p>
-          {d.shape === 'pools-ko' && <>
+          <p className="small muted" style={{ margin: 0 }}>{d.golden ? `Golden point: at ${d.pointsTo - 1}–${d.pointsTo - 1} the next point wins.` : `Win by 2: play on past ${d.pointsTo} until someone leads by 2.`}</p></>}
+          {(post === 'registration' || (post === 'roster' && d.shape === 'pools-ko')) && <>
             <Field label="Knockout matches"><Chips label={`Event ${i + 1} knockout matches`} value={d.koBestOf} options={[{ value: 1 as BestOf, label: 'One game' }, { value: 3 as BestOf, label: 'Best of 3' }]} onChange={(v) => update(i, { koBestOf: v })} /></Field>
             <Field label="Knockout games, at level scores"><Segmented label={`Event ${i + 1} knockout scoring`} value={d.koGolden ? 'golden' : 'win2'} options={SCORING} onChange={(v) => update(i, { koGolden: v === 'golden' })} /></Field>
           </>}
-          <EntryPicker d={d} players={players} pmap={pmap} onChange={(patch) => update(i, patch)} label={`Event ${i + 1}`} />
+          {post === 'roster' && <EntryPicker d={d} players={players} pmap={pmap} onChange={(patch) => update(i, patch)} label={`Event ${i + 1}`} />}
           {divs.length > 1 && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setDivs((ds) => ds.filter((_, j) => j !== i))}>Remove this event</button>}
         </section>
       ))}
       <button type="button" className="btn btn-outline" onClick={() => setDivs((ds) => [...ds, newDraft(ds.some((x) => x.kind === 'doubles') ? 'singles' : 'doubles')])}>Add another event</button>
-      {b && club.data && <WalkIn b={b} clubId={clubId} onAdded={(p) => { setMsg(null); club.reload(); setDivs((ds) => ds.map((d, j) => (j === ds.length - 1 ? { ...d, picked: [...d.picked, p.id] } : d))); }} />}
-      <p className="small muted" style={{ margin: 0 }}>Players are seeded by DUPR and spread across pools so the strongest don’t meet early. Each match gets a court and a time, and nobody is booked on two courts at once.</p>
+      {post === 'roster' && b && club.data && <WalkIn b={b} clubId={clubId} onAdded={(p) => { setMsg(null); club.reload(); setDivs((ds) => ds.map((d, j) => (j === ds.length - 1 ? { ...d, picked: [...d.picked, p.id] } : d))); }} />}
+      {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players are seeded by DUPR and spread across pools so the strongest don’t meet early. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
+      {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by PICKLEQ before it shows on the board. Adults only (18+).</p>}
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
-      <button type="button" className="btn btn-primary" disabled={busy || !club.data} onClick={create}>Create tournament</button>
+      <button type="button" className="btn btn-primary" disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Post the listing' : post === 'registration' ? 'Create and open entries' : 'Create tournament'}</button>
     </main>
+  );
+}
+
+function DivisionRulesFields({ d, label, onChange }: { d: DivDraft; label: string; onChange: (p: Partial<DivDraft>) => void }) {
+  const genders: { value: DivisionGender; label: string }[] = [{ value: 'open', label: 'Open' }, { value: 'men', label: 'Men' }, { value: 'women', label: 'Women' }, ...(d.kind === 'doubles' ? [{ value: 'mixed' as const, label: 'Mixed' }] : [])];
+  const num = (k: 'maxDupr' | 'minAge' | 'cap' | 'fee', v: string, decimal = false) => onChange({ [k]: v.replace(decimal ? /[^\d.]/g : /\D/g, '') });
+  return (
+    <div className="section">
+      <Field label="Who can enter"><Segmented label={`${label} gender`} value={d.gender} options={genders} onChange={(g) => onChange({ gender: g })} /></Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <Field label="DUPR cap (optional)"><input className="input" aria-label={`${label} DUPR cap`} inputMode="decimal" placeholder="e.g. 3.5" value={d.maxDupr} onChange={(e) => num('maxDupr', e.target.value, true)} /></Field>
+        <Field label="Age group (optional)"><input className="input" aria-label={`${label} age group`} inputMode="numeric" placeholder="e.g. 35 for 35+" value={d.minAge} onChange={(e) => num('minAge', e.target.value)} /></Field>
+        <Field label="Most entries (optional)"><input className="input" aria-label={`${label} most entries`} inputMode="numeric" placeholder="e.g. 16" value={d.cap} onChange={(e) => num('cap', e.target.value)} /></Field>
+        <Field label="Entry fee, ₹ (optional)"><input className="input" aria-label={`${label} entry fee`} inputMode="numeric" placeholder={d.kind === 'doubles' ? 'per team' : 'per player'} value={d.fee} onChange={(e) => num('fee', e.target.value)} /></Field>
+      </div>
+    </div>
   );
 }
 
@@ -169,12 +244,15 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       )}
       {staff && (
         <nav className="meta" aria-label="Run the tournament">
+          {t.entryMode === 'registration' && <button type="button" className="btn btn-primary" onClick={() => go('club-inbox', t.id)}>{t.drawnAt ? 'Entries inbox' : 'Entries inbox and draw'}</button>}
           <button type="button" className="btn btn-outline" onClick={() => go('club-desk', t.id)}>Desk view</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Scorer links</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>Entries</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>
         </nav>
       )}
+      {staff && b && <ListingCard b={b} t={t} role={d.role} onChanged={state.reload} />}
+      {t.entryMode === 'registration' && !t.drawnAt && <p className="small muted" style={{ margin: 0 }}>Players are registering. The pools and schedule appear here once you make the draw in the entries inbox.</p>}
       {t.isPublic && (
         <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={async () => setMsg(await shareLink(`${t.name} results`, link))}>
           <span>Share the results link (no login needed)</span><span>›</span>

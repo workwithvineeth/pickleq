@@ -1,6 +1,6 @@
 import type { Format } from '../domain/types';
 import { emptySlotState, entryRating, firstKnockoutPairs, KNOCKOUT_SIZES, nextRoundPairs, nextStage, planPoolMatches, scheduleSlots, seedOrder, snakePools, stageForSize, standings, type Qualifier } from './domain/engine';
-import type { ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, Entry } from './types';
+import type { ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, DivisionRules, Entry, EntryMode } from './types';
 
 export interface NewDivisionInput {
   name: string;
@@ -9,8 +9,9 @@ export interface NewDivisionInput {
   koFormat: Format;
   pools: number;
   advance: number;
-  /** Each entry is one player (singles) or two (doubles team). */
+  /** Each entry is one player (singles) or two (doubles team). Empty when players will register. */
   entries: string[][];
+  rules?: DivisionRules;
 }
 
 export interface NewTournamentInput {
@@ -21,6 +22,30 @@ export interface NewTournamentInput {
   courts: number;
   slotMinutes: number;
   divisions: NewDivisionInput[];
+  /** roster (default): entries are picked now. registration: players sign up later, then the organiser draws. */
+  entryMode?: EntryMode;
+  /** A listing only: the events are just categories on the board, with no entries. */
+  listingOnly?: boolean;
+  details?: Pick<ClubTournament, 'city' | 'venue' | 'about' | 'contact' | 'link' | 'entriesClose' | 'upiId'>;
+}
+
+/** Checks an event's entry rules (cap, age, gender). Returns a message, or null. */
+export function checkRules(kind: DivisionKind, r: DivisionRules | undefined): string | null {
+  if (!r) return null;
+  if (r.maxDupr !== undefined && (!Number.isFinite(r.maxDupr) || r.maxDupr < 1 || r.maxDupr > 8)) return 'A DUPR cap is a rating between 1 and 8';
+  if (r.minAge !== undefined && (!Number.isInteger(r.minAge) || r.minAge < 18 || r.minAge > 99)) return 'An age group starts at 18 or more';
+  if (r.cap !== undefined && (!Number.isInteger(r.cap) || r.cap < 2 || r.cap > 256)) return 'The most entries is a number from 2 to 256';
+  if (r.fee !== undefined && (!Number.isInteger(r.fee) || r.fee < 0 || r.fee > 100000)) return 'The entry fee is in whole rupees, up to 1,00,000';
+  if (r.gender === 'mixed' && kind !== 'doubles') return 'Mixed is for doubles only';
+  return null;
+}
+
+/** Checks an event before it's created: its rules, and its entries unless players will register. */
+export function checkDivisionSetup(d: NewDivisionInput, mode: EntryMode): string | null {
+  if (!d.name.trim()) return 'Give each event a name';
+  const r = checkRules(d.kind, d.rules);
+  if (r) return r;
+  return mode === 'registration' ? null : checkDivision(d);
 }
 
 export type NewMatchRow = Omit<ClubMatch, 'updatedAt'>;
@@ -52,28 +77,37 @@ export function buildTournamentRows(input: NewTournamentInput, players: Map<stri
     id: newId(), clubId: input.clubId, name: input.name.trim(), startDate: input.startDate, startTime: input.startTime,
     courts: input.courts, slotMinutes: input.slotMinutes, status: 'draft', isPublic: false, publicSlug: newId().replace(/-/g, '').slice(0, 10),
   };
-  const divisions: Division[] = [];
+  if (input.entryMode === 'registration') Object.assign(tournament, { entryMode: 'registration', registrationOpen: true }, input.details ?? {});
+  else if (input.details) Object.assign(tournament, input.details);
+  const divisions = input.divisions.map((d, sort): Division => ({ id: newId(), tournamentId: tournament.id, clubId: input.clubId, name: d.name.trim(), kind: d.kind, format: d.format, koFormat: d.koFormat, pools: d.pools, advance: d.advance, sort, rules: d.rules }));
+  const drawn = drawRows(tournament, divisions.map((division, i) => ({ division, entries: input.divisions[i].entries })), players, newId);
+  return { tournament, divisions, entries: drawn.entries, matches: drawn.matches };
+}
+
+/**
+ * The draw for divisions that already exist: seeds each division's entries by DUPR, snake-seeds them into pools,
+ * builds every pool match, and books courts and times across all divisions so nobody is on two courts at once.
+ */
+export function drawRows(t: ClubTournament, divs: { division: Division; entries: string[][] }[], players: Map<string, ClubPlayer>, newId: () => string): { entries: Entry[]; matches: NewMatchRow[] } {
   const entries: Entry[] = [];
   const matches: NewMatchRow[] = [];
-  input.divisions.forEach((d, sort) => {
-    const div: Division = { id: newId(), tournamentId: tournament.id, clubId: input.clubId, name: d.name.trim(), kind: d.kind, format: d.format, koFormat: d.koFormat, pools: d.pools, advance: d.advance, sort };
-    divisions.push(div);
-    const ordered = seedOrder(d.entries, (e) => entryRating(e, players, d.kind));
-    const pools = snakePools(ordered.length, d.pools);
-    const divEntries = ordered.map((ids, i): Entry => ({ id: newId(), divisionId: div.id, clubId: input.clubId, playerIds: ids, seed: i + 1, pool: pools[i] }));
+  for (const { division: div, entries: groups } of divs) {
+    const ordered = seedOrder(groups, (e) => entryRating(e, players, div.kind));
+    const pools = snakePools(ordered.length, div.pools);
+    const divEntries = ordered.map((ids, i): Entry => ({ id: newId(), divisionId: div.id, clubId: div.clubId, playerIds: ids, seed: i + 1, pool: pools[i] }));
     entries.push(...divEntries);
     const emap = new Map(divEntries.map((e) => [e.id, e]));
     for (const p of planPoolMatches(divEntries)) {
       matches.push({
-        id: newId(), clubId: input.clubId, tournamentId: tournament.id, divisionId: div.id, stage: 'pool', pool: p.pool, round: p.round,
+        id: newId(), clubId: div.clubId, tournamentId: t.id, divisionId: div.id, stage: 'pool', pool: p.pool, round: p.round,
         entryA: p.entryA, entryB: p.entryB, sideA: (emap.get(p.entryA) as Entry).playerIds, sideB: (emap.get(p.entryB) as Entry).playerIds,
-        format: d.format, games: [], status: 'scheduled', playedOn: input.startDate,
+        format: div.format, games: [], status: 'scheduled', playedOn: t.startDate,
       });
     }
-  });
-  const plan = scheduleSlots(matches.map((m) => ({ key: m.id, playerIds: [...m.sideA, ...m.sideB] })), input.courts);
-  for (const m of matches) { const s = plan.get(m.id); if (s) { m.slot = s.slot; m.court = s.court; } }
-  return { tournament, divisions, entries, matches };
+  }
+  const plan = scheduleSlots(matches.map((m) => ({ key: m.id, playerIds: [...m.sideA, ...m.sideB] })), t.courts);
+  for (const m of matches) { const sl = plan.get(m.id); if (sl) { m.slot = sl.slot; m.court = sl.court; } }
+  return { entries, matches };
 }
 
 /**
