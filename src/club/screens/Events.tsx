@@ -3,7 +3,7 @@ import { Field, Segmented } from '../../components/Controls';
 import type { Go } from '../../navigation';
 import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backend';
 import { clubMode } from '../config';
-import { eventsBackend, publicSources, rememberReturn } from '../index';
+import { demoBackend, eventsBackend, publicSources, rememberReturn, serverBackend } from '../index';
 import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../registration';
 import { isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
@@ -48,7 +48,15 @@ function EventBadges({ e }: { e: PublicEvent }) {
 export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
   const b = eventsBackend();
   const state = useLoad(async () => {
-    const [events, admin] = await Promise.all([b.publicEvents(robot), b.isPlatformAdmin().catch(() => false)]);
+    // Real events always show; a phone in demo mode also sees the demo's made-up ones (never instead of the real board).
+    const server = serverBackend();
+    const [real, demo, admin] = await Promise.all([
+      server ? server.publicEvents(robot) : Promise.resolve([]),
+      clubMode() === 'demo' ? demoBackend().publicEvents() : Promise.resolve([]),
+      b.isPlatformAdmin().catch(() => false),
+    ]);
+    const seen = new Set(real.map((e) => e.slug));
+    const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
     const queue = admin ? await b.listingQueue().catch(() => []) : [];
     return { events, pending: queue.filter((q) => q.listingStatus === 'pending').length, admin };
   }, [b, robot]);

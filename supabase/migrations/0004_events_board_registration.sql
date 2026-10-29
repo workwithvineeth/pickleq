@@ -145,6 +145,7 @@ create trigger registrations_guard before insert or update on public.registratio
 -- ---------- Eligibility (the app checks the same rules first, for quick messages) ----------
 
 -- Returns null if the players may enter this event, or a message saying why not.
+-- (cap_text was added in 0006 / club_mode_10; this is the current definition.)
 -- need_phone: online registrations need a phone number; the organiser's offline entries may leave it empty.
 create function public.entry_problem(d public.divisions, players jsonb, need_phone boolean) returns text
 language plpgsql stable set search_path = '' as $$
@@ -175,8 +176,8 @@ begin
     if (p ->> 'age')::int < 18 then return 'Players must be 18 or over. Junior events aren''t supported yet.'; end if;
     if (p ->> 'age')::int < min_age then return format('%s: this event is for players aged %s and over', p ->> 'name', min_age); end if;
     if d.max_dupr is not null then
-      if coalesce(p ->> 'dupr', '') = '' then return format('%s: this event needs a DUPR rating (%s and under)', p ->> 'name', d.max_dupr); end if;
-      if (p ->> 'dupr')::numeric > d.max_dupr then return format('%s: rating %s is above this event''s cap of %s', p ->> 'name', p ->> 'dupr', d.max_dupr); end if;
+      if coalesce(p ->> 'dupr', '') = '' then return format('%s: this event needs a DUPR rating (%s and under)', p ->> 'name', public.cap_text(d.max_dupr)); end if;
+      if (p ->> 'dupr')::numeric > d.max_dupr then return format('%s: rating %s is above this event''s cap of %s', p ->> 'name', p ->> 'dupr', public.cap_text(d.max_dupr)); end if;
     end if;
     genders := genders || (p ->> 'gender');
   end loop;

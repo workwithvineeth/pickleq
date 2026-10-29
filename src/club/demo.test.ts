@@ -22,6 +22,18 @@ describe('Demo club name', () => {
     expect((await b.clubBundle(id)).tournaments.map((t) => t.name)).toContain('PQ Demo Open');
   });
 
+  it('adds the sample events to a demo started before the events board existed', async () => {
+    const first = memoryStorage();
+    await new DemoBackend(first).start('Robot');
+    const old = JSON.parse(first.getItem('pq-club-demo-v1') ?? '{}');
+    const sampleIds = new Set<string>(old.tournaments.filter((t: { name: string }) => t.name.startsWith('PQ Demo ') && t.name !== 'PQ Demo Open').map((t: { id: string }) => t.id));
+    old.tournaments = old.tournaments.filter((t: { id: string }) => !sampleIds.has(t.id));
+    old.clubs = old.clubs.filter((c: { name: string }) => c.name !== 'PQ Demo Friends Club');
+    delete old.eventsSeeded; delete old.registrations;
+    const b = new DemoBackend(memoryStorage({ 'pq-club-demo-v1': JSON.stringify(old) }));
+    expect((await b.publicEvents()).map((e) => e.name)).toContain('PQ Demo Night');
+  });
+
   it('renames a demo saved under the old name, without making a second club', async () => {
     const first = memoryStorage();
     const old = new DemoBackend(first);

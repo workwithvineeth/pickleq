@@ -48,6 +48,18 @@ export class DemoBackend implements ClubBackend {
   constructor(storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null) {
     this.storage = storage;
     this.s = this.load();
+    // Demos started before the events board existed get its sample events too.
+    const club = this.s.user ? this.s.clubs.find((c) => c.name === SAMPLE_CLUB_NAME) : undefined;
+    if (club && !this.s.eventsSeeded) { this.seedEvents(club.id); this.save(); }
+  }
+
+  private seedEvents(clubId: string) {
+    const ev = buildSampleEvents(clubId, newId);
+    this.s.clubs.push(...ev.clubs);
+    this.s.tournaments.push(...ev.tournaments);
+    this.s.divisions.push(...ev.divisions);
+    this.s.registrations = [...(this.s.registrations ?? []), ...ev.registrations];
+    this.s.eventsSeeded = true;
   }
 
   private load(): DemoState {
@@ -74,14 +86,7 @@ export class DemoBackend implements ClubBackend {
       this.s.entries.push(...d.entries);
       this.s.matches.push(...d.matches);
     }
-    if (!this.s.eventsSeeded) {
-      const ev = buildSampleEvents(club.id, newId);
-      this.s.clubs.push(...ev.clubs);
-      this.s.tournaments.push(...ev.tournaments);
-      this.s.divisions.push(...ev.divisions);
-      this.s.registrations = [...(this.s.registrations ?? []), ...ev.registrations];
-      this.s.eventsSeeded = true;
-    }
+    if (!this.s.eventsSeeded) this.seedEvents(club.id);
     this.save();
     return club.id;
   }
