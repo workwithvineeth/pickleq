@@ -113,6 +113,7 @@ export interface PublicEvent {
   link?: string;
   about?: string;
   upiId?: string;
+  posterUrl?: string;
   divisions: { id: string; name: string; kind: DivisionKind; rules: DivisionRules; taken: number }[];
 }
 
@@ -158,6 +159,7 @@ export interface ListingReview {
   club: string;
   verified: boolean;
   postedBy?: string;
+  posterUrl?: string;
   divisions: { name: string; kind: DivisionKind; rules: DivisionRules }[];
 }
 
@@ -172,6 +174,10 @@ export interface EventsBackend {
   submitListing(id: string, listing: Listing): Promise<ListingStatus>;
   publicEvents(includeTest?: boolean): Promise<PublicEvent[]>;
   publicEvent(slug: string): Promise<PublicEvent | null>;
+  /** Board tournaments finished in the last 30 days, newest first. */
+  recentResults(includeTest?: boolean): Promise<PublicEvent[]>;
+  /** Sets the tournament's poster (an image the app has already shrunk). Returns its address. Coaches and admins. */
+  setPoster(t: ClubTournament, image: Blob): Promise<string>;
   registerEntry(divisionId: string, players: EntryPerson[], payment: 'unpaid' | 'venue' | 'claimed', paymentRef?: string): Promise<{ id: string; status: RegistrationStatus }>;
   myEntries(): Promise<MyEntry[]>;
   withdrawMyEntry(id: string): Promise<void>;

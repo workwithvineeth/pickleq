@@ -11,7 +11,7 @@ const day = (iso) => new Date(`${iso}T00:00:00+05:30`).toLocaleDateString('en-IN
 const time = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`; };
 
 /** The page: preview tags for chat apps, then straight on to the app (a link for anyone without JavaScript). */
-export function page({ title, description, url, target }) {
+export function page({ title, description, url, target, image }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -24,10 +24,13 @@ export function page({ title, description, url, target }) {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${esc(url)}">
-<meta property="og:image" content="${esc(`${site}icons/club-512.png`)}">
+${image ? `<meta property="og:image" content="${esc(image)}">
+<meta property="og:image:width" content="1080">
+<meta property="og:image:height" content="1350">
+<meta name="twitter:card" content="summary_large_image">` : `<meta property="og:image" content="${esc(`${site}icons/club-512.png`)}">
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary">`}
 <meta http-equiv="refresh" content="0; url=${esc(target)}">
 <style>body{font-family:system-ui,sans-serif;background:#F3EBDD;color:#2a2420;margin:0;padding:32px 20px}a{color:#2F5D62}</style>
 </head>
@@ -67,7 +70,9 @@ async function main() {
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(e.slug)) continue;
     const dir = join(outDir, 'e', e.slug);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), page({ title: `${e.name} · ${e.club}`, description: describe(e), url: `${site}e/${e.slug}/`, target: `${site}#/event/${e.slug}` }));
+    writeFileSync(join(dir, 'index.html'), page({ title: `${e.name} · ${e.club}`, description: describe(e), url: `${site}e/${e.slug}/`, target: `${site}#/event/${e.slug}`,
+      // The poster is the preview picture when there is one (only server posters; demo ones never reach here).
+      image: typeof e.poster_url === 'string' && /^https:\/\//.test(e.poster_url) ? e.poster_url : undefined }));
   }
   // Any other missing address: forward event links (/e/<slug>/) to the app; everything else to the app's home.
   const fallback = page({ title: 'PICKLEQ events', description: 'Pickleball tournaments: enter, follow live scores and results.', url: site, target: site })

@@ -8,6 +8,7 @@ import { blankPerson, drawProblem, entryProblem, inboxCounts, planDraw, rulesLin
 import { isAdmin, isStaff, PAYMENT_LABEL, REG_STATUS_LABEL, type ClubTournament, type Division, type EntryPerson, type Listing, type Payment, type Registration, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { eventShareLink, PersonFields } from './Events';
+import { PosterPicker } from './Poster';
 
 type Filter = 'waiting' | 'accepted' | 'waitlist' | 'out' | 'all';
 const FILTERS: { value: Filter; label: string }[] = [
@@ -250,6 +251,9 @@ export function ListingCard({ b, t, role, onChanged }: { b: ClubBackend; t: Club
   return (
     <section className="card section" aria-label="Events board">
       <div className="row"><h2 style={{ fontSize: 16 }}>Events board</h2>{status !== 'none' && <span className={`pill${status === 'approved' ? ' pill-ok' : status === 'rejected' ? ' pill-warn' : ''}`}>{status === 'approved' ? (t.listing === 'listed' ? 'Listed' : 'On the board') : status === 'pending' ? 'Being checked' : 'Not approved'}</span>}</div>
+      {isStaff(role as never)
+        ? <PosterPicker b={b} t={t} current={t.posterUrl} onChanged={onChanged} />
+        : null}
       <p className="small muted" style={{ margin: 0 }}>{LISTING_TEXT[status]}{status === 'rejected' && t.rejectReason ? ` Reason: ${t.rejectReason}. Fix it and post again.` : ''}</p>
       <div className="small">{[t.venue, t.city].filter(Boolean).join(', ') || 'No venue yet'}{t.entriesClose ? ` · entries close ${t.entriesClose}` : ''}{t.upiId ? ` · UPI ${t.upiId}` : ''}</div>
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}

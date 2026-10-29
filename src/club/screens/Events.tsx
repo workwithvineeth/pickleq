@@ -7,6 +7,7 @@ import { demoBackend, eventsBackend, publicSources, rememberReturn, serverBacken
 import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../registration';
 import { isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
+import { PosterImage } from './Poster';
 
 // ---------- Helpers ----------
 
@@ -50,15 +51,25 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
   const state = useLoad(async () => {
     // Real events always show; a phone in demo mode also sees the demo's made-up ones (never instead of the real board).
     const server = serverBackend();
-    const [real, demo, admin] = await Promise.all([
-      server ? server.publicEvents(robot) : Promise.resolve([]),
-      clubMode() === 'demo' ? demoBackend().publicEvents() : Promise.resolve([]),
+    const demoOn = clubMode() === 'demo';
+    // A server that can't be reached (no signal) mustn't hide the demo's events: note it and carry on.
+    let serverDown = false;
+    const fromServer = async <T,>(f: () => Promise<T[]>): Promise<T[]> => {
+      try { return await f(); } catch (e) { serverDown = true; if (!demoOn) throw e; return []; }
+    };
+    const [real, demo, pastReal, pastDemo, admin] = await Promise.all([
+      server ? fromServer(() => server.publicEvents(robot)) : Promise.resolve([]),
+      demoOn ? demoBackend().publicEvents() : Promise.resolve([]),
+      server ? fromServer(() => server.recentResults(robot)) : Promise.resolve([]),
+      demoOn ? demoBackend().recentResults() : Promise.resolve([]),
       b.isPlatformAdmin().catch(() => false),
     ]);
     const seen = new Set(real.map((e) => e.slug));
     const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
+    const pastSeen = new Set(pastReal.map((e) => e.slug));
+    const past = [...pastReal, ...pastDemo.filter((e) => !pastSeen.has(e.slug))].sort((x, y) => y.startDate.localeCompare(x.startDate));
     const queue = admin ? await b.listingQueue().catch(() => []) : [];
-    return { events, pending: queue.filter((q) => q.listingStatus === 'pending').length, admin };
+    return { events, past, pending: queue.filter((q) => q.listingStatus === 'pending').length, admin, serverDown };
   }, [b, robot]);
   const [city, setCity] = useState('all');
   const [kind, setKind] = useState<'all' | 'open'>('all');
@@ -81,12 +92,14 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       {cities.length > 1 && <Segmented label="City" value={city} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} onChange={setCity} />}
       <Segmented label="Show" value={kind} options={[{ value: 'all', label: 'All events' }, { value: 'open', label: 'Entries open' }]} onChange={setKind} />
       <Status error={state.error} loading={state.loading && !state.data} />
+      {state.data?.serverDown && <div role="status" className="msg msg-bad small">Can’t reach the club server right now, so only the demo’s events are showing.</div>}
       {state.data && shown.length === 0 && <p className="muted">No upcoming events{city !== 'all' ? ` in ${city}` : ''} yet.</p>}
       {[...byDay.entries()].map(([day, list]) => (
         <section key={day} className="section" aria-label={dayLabel(day)}>
           <div className="label">{dayLabel(day)}</div>
           {list.map((e) => (
-            <button key={e.slug} type="button" className="match-row" aria-label={e.name} onClick={() => go('event', e.slug)} style={{ alignItems: 'flex-start' }}>
+            <button key={e.slug} type="button" className="match-row" aria-label={e.name} onClick={() => go('event', e.slug)} style={{ alignItems: 'flex-start', gap: 12 }}>
+              <PosterImage src={e.posterUrl} name={e.name} size="thumb" />
               <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontWeight: 600 }}>{e.name}</span>
                 <span className="small muted">{timeLabel(e.startTime)} · {[e.venue, e.city].filter(Boolean).join(', ')} · {e.club}</span>
@@ -98,6 +111,22 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
           ))}
         </section>
       ))}
+      {(state.data?.past.length ?? 0) > 0 && (
+        <section className="section" aria-label="Recent results">
+          <div className="label">Recent results</div>
+          {state.data!.past.map((e) => (
+            <button key={e.slug} type="button" className="match-row" aria-label={`${e.name} results`} onClick={() => go('results', e.slug)} style={{ alignItems: 'flex-start', gap: 12 }}>
+              <PosterImage src={e.posterUrl} name={e.name} size="thumb" />
+              <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontWeight: 600 }}>{e.name}</span>
+                <span className="small muted">{dayLabel(e.startDate)} · {e.club}</span>
+                <span className="pill" style={{ alignSelf: 'flex-start' }}>Finished · see results</span>
+              </span>
+              <span aria-hidden="true">›</span>
+            </button>
+          ))}
+        </section>
+      )}
       <section className="card section" aria-label="Organisers">
         <h2 style={{ fontSize: 16 }}>Running a tournament?</h2>
         <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on PICKLEQ: entries, draw, a scorer on every court and live results.</p>
@@ -127,6 +156,7 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
     <main className="screen" aria-labelledby="event-title">
       <Header id="event-title" title={e.name} onBack={onBack} />
       {state.data?.src.kind === 'demo' && <DemoNote b={state.data.src} />}
+      <PosterImage src={e.posterUrl} name={e.name} />
       <section className="card section" aria-label="When and where">
         <div style={{ fontWeight: 600 }}>{dayLabel(e.startDate)} · from {timeLabel(e.startTime)}</div>
         {where && <div>{where}</div>}
@@ -417,6 +447,7 @@ export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
   const card = (q: ListingReview) => (
     <section key={q.id} className="card section" aria-label={q.name}>
       <div className="row"><b>{q.name}</b><span className={`pill${q.listingStatus === 'approved' ? ' pill-ok' : q.listingStatus === 'rejected' ? ' pill-warn' : ''}`}>{q.listingStatus === 'pending' ? 'To review' : q.listingStatus === 'approved' ? 'Approved' : 'Rejected'}</span></div>
+      {q.posterUrl ? <PosterImage src={q.posterUrl} name={q.name} /> : <div className="small muted">No poster</div>}
       <div className="small">{dayLabel(q.startDate)} · {timeLabel(q.startTime)} · {[q.venue, q.city].filter(Boolean).join(', ')}</div>
       <div className="small muted">{q.club}{q.verified ? ' (verified)' : ' (new organiser)'}{q.postedBy ? ` · posted by ${q.postedBy}` : ''} · {q.listing === 'run' ? 'Run on PICKLEQ' : 'Listed only'}</div>
       {q.divisions.map((d) => <div key={d.name} className="small">• {d.name}: {rulesLine(d.kind, d.rules)}</div>)}
@@ -451,7 +482,7 @@ export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {state.data && (
         <>
-          <p className="small muted" style={{ margin: 0 }}>Approving an organiser’s first listing verifies their club, so its later listings go on the board straight away.</p>
+          <p className="small muted" style={{ margin: 0 }}>Approving an organiser’s first listing verifies their club, so its later listings go on the board straight away. Check the poster too: it’s shown on the board.</p>
           <h2 style={{ fontSize: 18 }}>To review ({pending.length})</h2>
           {pending.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nothing waiting.</p>}
           {pending.map(card)}

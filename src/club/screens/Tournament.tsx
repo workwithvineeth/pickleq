@@ -9,6 +9,7 @@ import { backend, publicSources } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, type NewDivisionInput } from '../plan';
 import { isStaff, STAGE_LABEL, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
+import { PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 
@@ -40,6 +41,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   const [contact, setContact] = useState('');
   const [link, setLink] = useState('');
   const [onBoard, setOnBoard] = useState(true);
+  const [poster, setPoster] = useState<Blob | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const players = useMemo(() => [...(club.data?.players ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [club.data]);
@@ -68,6 +70,11 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
         clubId, name, startDate: date, startTime: time, courts, slotMinutes: slot, divisions: divs.map(toInput), entryMode: mode, listingOnly: post === 'listed',
         details: { city: opt(city), venue: opt(venue), about: opt(about), upiId: post === 'registration' ? opt(upi) : undefined, entriesClose: post === 'registration' ? opt(closes) : undefined, contact: post === 'listed' ? opt(contact) : undefined, link: post === 'listed' ? opt(link) : undefined },
       });
+      // A poster problem doesn't lose the tournament either: it can be added again from the tournament's page.
+      if (poster) {
+        const bundle = await b.tournamentBundle(id);
+        await b.setPoster(bundle.tournament, poster).catch(() => undefined);
+      }
       // Put it on the board now if asked; a listing problem doesn't lose the tournament (it can be posted again from its page).
       if (post === 'listed' || (post === 'registration' && onBoard)) await b.submitListing(id, post === 'listed' ? 'listed' : 'run').catch(() => undefined);
       go('club-tournament', id, { replace: true });
@@ -96,6 +103,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
           <Field label="About (optional)"><textarea className="input" aria-label="About" value={about} maxLength={1000} onChange={(e) => setAbout(e.target.value)} placeholder="Format, prizes, what to bring" /></Field>
         </>
       )}
+      {post !== 'roster' && <PosterPicker onPicked={(blob) => setPoster(blob)} />}
       {post === 'registration' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
@@ -234,6 +242,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
     <main className="screen wide-ok" aria-labelledby="t-title">
       <Header id="t-title" title={t.name} onBack={onBack} />
       <DemoNote b={b} />
+      {!staff && <PosterImage src={t.posterUrl} name={t.name} />}
       <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {t.startDate} · from {t.startTime} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
       {staff && (
         <div className="meta">

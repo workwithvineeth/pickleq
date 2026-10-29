@@ -17,7 +17,7 @@ export function cspFor(clubServer?: string): string {
     "default-src 'self'",
     "script-src 'self' https://www.youtube.com https://s.ytimg.com",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://i.ytimg.com",
+    `img-src 'self' data: blob: https://i.ytimg.com${clubServer ? ` ${clubServer}` : ''}`,
     "font-src 'self' data:",
     `connect-src 'self' https://api.anthropic.com${club}`,
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com",

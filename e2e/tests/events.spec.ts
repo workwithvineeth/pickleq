@@ -48,6 +48,10 @@ test.describe('Events board and registration (real server, no account)', () => {
     }
     const ins = await rest('registrations', { method: 'POST', body: JSON.stringify({ tournament_id: 'e2e00000-0000-4000-8000-000000000211', division_id: 'e2e00000-0000-4000-8000-000000000312', club_id: 'e2e00000-0000-4000-8000-000000000001', source: 'offline', players: [] }) });
     expect(ins.status).toBeGreaterThanOrEqual(400);
+    // Posters: anyone can view them, but visitors can't upload.
+    const { SUPABASE_URL, SUPABASE_KEY } = await import('./helpers');
+    const up = await fetch(`${SUPABASE_URL}/storage/v1/object/posters/robot/robot.jpg`, { method: 'POST', headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'image/jpeg' }, body: new Uint8Array([255, 216, 255]) });
+    expect(up.status).toBeGreaterThanOrEqual(400);
     const board = JSON.stringify((await rpc('public_events', { p_include_test: false })).body);
     expect(board).not.toContain('E2E Test');
     expect(JSON.stringify((await rpc('share_events')).body)).not.toContain('E2E Test');
@@ -65,6 +69,32 @@ async function fillPerson(page: Page, label: string, p: { name: string; phone: s
   await box.getByLabel(`${label} age`).fill(p.age);
   await box.getByRole('group', { name: `${label} gender` }).getByRole('button', { name: 'Man', exact: true }).click();
 }
+
+test.describe('Board with posters (demo club on the phone)', () => {
+  test('posters on the board, recent results open, and approving a listing puts it and its poster on the board', async ({ page }) => {
+    await page.goto('#/club');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
+    await page.goto('#/events');
+    for (const name of ['PQ Demo Night', 'PQ Demo Sunday Social', 'PQ Demo Women’s Open']) {
+      await expect(page.getByRole('button', { name, exact: true }).getByRole('img', { name: `Poster for ${name}` })).toBeVisible();
+    }
+    // Posters really render (not a broken picture).
+    const w = await page.getByRole('img', { name: 'Poster for PQ Demo Night' }).first().evaluate((img: HTMLImageElement) => img.naturalWidth);
+    expect(w).toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: 'PQ Demo Ladder Cup', exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: 'PQ Demo Diwali Doubles results' }).click();
+    await expect(page.getByRole('table', { name: 'Pool A' })).toBeVisible();
+    await page.goto('#/admin-listings');
+    const ladder = page.getByRole('region', { name: 'PQ Demo Ladder Cup' });
+    await expect(ladder.getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeVisible();
+    await ladder.getByRole('button', { name: 'Approve' }).click();
+    await expect(page.getByText('PQ Demo Ladder Cup is on the board. PQ Demo New Club is now verified.')).toBeVisible();
+    await page.goto('#/events');
+    await expect(page.getByRole('button', { name: 'PQ Demo Ladder Cup', exact: true }).getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeVisible();
+  });
+});
 
 test.describe('Registration to draw (demo club on the phone)', () => {
   test('a player enters; the organiser accepts and makes the draw', async ({ page }) => {

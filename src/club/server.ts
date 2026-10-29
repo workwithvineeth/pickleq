@@ -21,7 +21,7 @@ const toTournament = (r: Row): ClubTournament => ({
   courts: Number(r.courts), slotMinutes: Number(r.slot_minutes), status: r.status as ClubTournament['status'], isPublic: !!r.is_public, publicSlug: String(r.public_slug),
   city: s(r.city), venue: s(r.venue), about: s(r.about), contact: s(r.contact), link: s(r.link), entryMode: r.entry_mode === 'registration' ? 'registration' : 'roster',
   registrationOpen: !!r.registration_open, entriesClose: s(r.entries_close), upiId: s(r.upi_id), listing: (r.listing as Listing) ?? 'none',
-  listingStatus: (r.listing_status as ListingStatus) ?? 'none', rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), drawnAt: s(r.drawn_at),
+  listingStatus: (r.listing_status as ListingStatus) ?? 'none', rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), drawnAt: s(r.drawn_at), posterUrl: s(r.poster_url),
 });
 const toRules = (r: Row): DivisionRules => ({ maxDupr: n(r.max_dupr), gender: (r.gender as DivisionRules['gender']) ?? 'open', minAge: n(r.min_age), cap: n(r.cap), fee: n(r.fee) });
 const fromRules = (r?: DivisionRules): Row => ({ max_dupr: r?.maxDupr ?? null, gender: r?.gender ?? 'open', min_age: r?.minAge ?? null, cap: r?.cap ?? null, fee: r?.fee ?? null });
@@ -36,7 +36,7 @@ const toEvent = (r: Row): PublicEvent => ({
   slug: String(r.slug), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '08:00').slice(0, 5), city: s(r.city), venue: s(r.venue),
   club: String(r.club), listing: r.listing as Listing, status: r.status as ClubTournament['status'], entryMode: r.entry_mode === 'registration' ? 'registration' : 'roster',
   registrationOpen: !!r.registration_open, entriesClose: s(r.entries_close), results: !!r.results, drawn: !!r.drawn, contact: s(r.contact), link: s(r.link),
-  about: s(r.about), upiId: s(r.upi_id),
+  about: s(r.about), upiId: s(r.upi_id), posterUrl: s(r.poster_url),
   divisions: ((r.divisions as Row[]) ?? []).map((d) => ({ id: String(d.id), name: String(d.name), kind: d.kind as Division['kind'], rules: toRules(d), taken: Number(d.taken ?? 0) })),
 });
 /** Server functions answer {"error": "..."} for things a person can fix; this turns that into a message. */
@@ -403,6 +403,20 @@ export class ServerBackend implements ClubBackend {
     return r ? toEvent(r) : null;
   }
 
+  async recentResults(includeTest = false): Promise<PublicEvent[]> {
+    return ((check(await this.sb.rpc('recent_results', { p_include_test: includeTest })) as Row[]) ?? []).map(toEvent);
+  }
+
+  async setPoster(t: ClubTournament, image: Blob): Promise<string> {
+    const path = `${t.clubId}/${t.id}.jpg`;
+    const up = await this.sb.storage.from('posters').upload(path, image, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+    if (up.error) throw new ClubError(/row-level|policy|Unauthorized|403/i.test(up.error.message) ? 'Only the club’s coaches and admins can change the poster' : `The poster didn’t upload: ${up.error.message}`);
+    const url = `${this.sb.storage.from('posters').getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+    const res = check(await this.sb.from('tournaments').update({ poster_url: url }).eq('id', t.id).select('id')) as Row[];
+    if (!res.length) throw new ClubError('You can’t change this tournament');
+    return url;
+  }
+
   async registerEntry(divisionId: string, players: EntryPerson[], payment: 'unpaid' | 'venue' | 'claimed', paymentRef?: string) {
     await this.uid();
     const r = answer<{ id: string; status: string }>(check(await this.sb.rpc('register_entry', { p_division: divisionId, p_players: players.map(fromPerson), p_payment: payment, p_payment_ref: paymentRef?.trim() || null })));
@@ -467,7 +481,7 @@ export class ServerBackend implements ClubBackend {
     return rows.map((r) => ({
       id: String(r.id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '').slice(0, 5), city: s(r.city), venue: s(r.venue),
       about: s(r.about), contact: s(r.contact), link: s(r.link), listing: r.listing as Listing, listingStatus: r.listing_status as ListingStatus,
-      rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), slug: String(r.slug), club: String(r.club), verified: !!r.verified, postedBy: s(r.posted_by),
+      rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), slug: String(r.slug), club: String(r.club), verified: !!r.verified, postedBy: s(r.posted_by), posterUrl: s(r.poster_url),
       divisions: ((r.divisions as Row[]) ?? []).map((d) => ({ name: String(d.name), kind: d.kind as Division['kind'], rules: toRules(d) })),
     }));
   }

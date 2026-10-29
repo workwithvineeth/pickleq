@@ -52,19 +52,59 @@ describe('Events tab (Club builds only)', () => {
     expect(within(nav).getAllByRole('button')).toHaveLength(5);
   });
 
-  it('shows the board: dates, entries open, listed-only events, and a pending listing kept off', async () => {
+  it('shows the board with posters: upcoming events, recent results, and pending listings kept off until approved', async () => {
     const user = userEvent.setup();
     await openDemo(user);
     window.location.hash = '#/home';
     await goTab(user, 'Events');
     expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'PQ Demo Night' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'PQ Demo Sunday Social' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'PQ Demo Ladder Cup' })).not.toBeInTheDocument();
+    for (const name of ['PQ Demo Night', 'PQ Demo Sunday Social', 'PQ Demo Women’s Open']) {
+      const card = await screen.findByRole('button', { name });
+      expect(within(card).getByRole('img', { name: `Poster for ${name}` })).toBeInTheDocument();
+    }
+    for (const name of ['PQ Demo Ladder Cup', 'PQ Demo Corporate Cup']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    const recent = screen.getByRole('region', { name: 'Recent results' });
+    expect(within(recent).getByRole('button', { name: 'PQ Demo Diwali Doubles results' })).toBeInTheDocument();
+    expect(within(recent).getByRole('button', { name: 'PQ Demo Monsoon Singles results' })).toBeInTheDocument();
     await user.click(within(screen.getByRole('group', { name: 'Show' })).getByRole('button', { name: 'Entries open' }));
     expect(screen.queryByRole('button', { name: 'PQ Demo Sunday Social' })).not.toBeInTheDocument();
-    // The demo user is a PICKLEQ admin, so the review queue shows.
-    expect(screen.getByRole('button', { name: /1 listing to review/ })).toBeInTheDocument();
+
+    // The demo user is a PICKLEQ admin: two listings wait, each with its poster. Approving puts it (and its poster) on the board.
+    await user.click(screen.getByRole('button', { name: /2 listings to review/ }));
+    await screen.findByRole('heading', { name: 'Review listings' });
+    const ladder = screen.getByRole('region', { name: 'PQ Demo Ladder Cup' });
+    expect(within(ladder).getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'PQ Demo Corporate Cup' })).getByRole('img', { name: 'Poster for PQ Demo Corporate Cup' })).toBeInTheDocument();
+    await user.click(within(ladder).getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByText('PQ Demo Ladder Cup is on the board. PQ Demo New Club is now verified.')).toBeInTheDocument();
+    window.location.hash = '#/events';
+    const card = await screen.findByRole('button', { name: 'PQ Demo Ladder Cup' });
+    expect(within(card).getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeInTheDocument();
+  });
+
+  it('with no signal to the club server, the demo’s events still show, with a note', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://club-server.invalid');
+    vi.stubEnv('VITE_SUPABASE_KEY', 'test-key');
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
+    try {
+      const user = userEvent.setup();
+      await openDemo(user);
+      window.location.hash = '#/events';
+      expect(await screen.findByRole('button', { name: 'PQ Demo Night' })).toBeInTheDocument();
+      expect(screen.getByText(/Can’t reach the club server right now/)).toBeInTheDocument();
+    } finally { vi.unstubAllGlobals(); }
+  });
+
+  it('a finished event opens its results; the event page shows the poster', async () => {
+    const user = userEvent.setup();
+    await openDemo(user);
+    window.location.hash = '#/events';
+    await user.click(await screen.findByRole('button', { name: 'PQ Demo Diwali Doubles results' }));
+    expect(await screen.findByRole('heading', { name: 'PQ Demo Diwali Doubles' })).toBeInTheDocument();
+    expect(screen.getByText(/Finished/)).toBeInTheDocument();
+    expect(within(screen.getByRole('table', { name: 'Pool A' })).getAllByRole('row')).toHaveLength(7);
+    window.location.hash = '#/event/pq-demo-night';
+    expect(await screen.findByRole('img', { name: 'Poster for PQ Demo Night' })).toBeInTheDocument();
   });
 
   it('a listed-only event shows how to contact the organiser, with no entry form', async () => {

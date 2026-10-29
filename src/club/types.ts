@@ -73,6 +73,8 @@ export interface ClubTournament {
   rejectReason?: string;
   reviewedAt?: string;
   drawnAt?: string;
+  /** The tournament's poster (an image address, or a data: image in the demo). */
+  posterUrl?: string;
 }
 
 /** roster: the organiser picks players (Module 1). registration: players sign up, then the organiser draws. */

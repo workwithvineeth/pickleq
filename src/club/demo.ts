@@ -1,7 +1,8 @@
 import { newId } from '../db/db';
 import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
-import { buildSampleEvents } from './domain/sampleEvents';
+import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
+import { blobToDataUrl } from './poster';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { digits, entryProblem, isActive, type DrawPlan } from './registration';
 import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
@@ -20,7 +21,8 @@ interface DemoState {
   scorerLinks?: (ScorerLink & { failed: number; lockedUntil?: number })[];
   /** Module 2 (added later, so older demos don't have them yet). */
   registrations?: Registration[];
-  eventsSeeded?: boolean;
+  /** Version 1 was a boolean; later sample sets bump SAMPLE_EVENTS_VERSION. */
+  eventsSeeded?: boolean | number;
 }
 
 const KEY = 'pq-club-demo-v1';
@@ -50,16 +52,32 @@ export class DemoBackend implements ClubBackend {
     this.s = this.load();
     // Demos started before the events board existed get its sample events too.
     const club = this.s.user ? this.s.clubs.find((c) => c.name === SAMPLE_CLUB_NAME) : undefined;
-    if (club && !this.s.eventsSeeded) { this.seedEvents(club.id); this.save(); }
+    if (club && this.seededVersion() < SAMPLE_EVENTS_VERSION) { this.seedEvents(club.id); this.save(); }
   }
 
+  private seededVersion(): number { const v = this.s.eventsSeeded; return typeof v === 'number' ? v : v ? 1 : 0; }
+
+  /** Puts in the current sample events, replacing earlier sample ones. Anything made in the demo by hand stays. */
   private seedEvents(clubId: string) {
-    const ev = buildSampleEvents(clubId, newId);
+    const oldClubs = new Set(this.s.clubs.filter((c) => c.name === 'PQ Demo Friends Club' || c.name === 'PQ Demo New Club').map((c) => c.id));
+    const oldT = new Set(this.s.tournaments.filter((t) => oldClubs.has(t.clubId) || (/^pq-demo-/.test(t.publicSlug) && t.publicSlug !== 'pq-demo-open')).map((t) => t.id));
+    const oldD = new Set(this.s.divisions.filter((d) => oldT.has(d.tournamentId)).map((d) => d.id));
+    this.s.clubs = this.s.clubs.filter((c) => !oldClubs.has(c.id));
+    this.s.tournaments = this.s.tournaments.filter((t) => !oldT.has(t.id));
+    this.s.divisions = this.s.divisions.filter((d) => !oldD.has(d.id));
+    this.s.entries = this.s.entries.filter((e) => !oldD.has(e.divisionId));
+    this.s.matches = this.s.matches.filter((m) => !m.tournamentId || !oldT.has(m.tournamentId));
+    this.s.registrations = (this.s.registrations ?? []).filter((r) => !oldT.has(r.tournamentId));
+    const ev = buildSampleEvents(clubId, newId, this.s.players.filter((p) => p.clubId === clubId && p.sample));
     this.s.clubs.push(...ev.clubs);
     this.s.tournaments.push(...ev.tournaments);
     this.s.divisions.push(...ev.divisions);
-    this.s.registrations = [...(this.s.registrations ?? []), ...ev.registrations];
-    this.s.eventsSeeded = true;
+    this.s.entries.push(...ev.entries);
+    this.s.matches.push(...ev.matches);
+    this.s.registrations.push(...ev.registrations);
+    const open = this.s.tournaments.find((t) => t.clubId === clubId && t.name === SAMPLE_TOURNAMENT_NAME);
+    if (open && !open.posterUrl) open.posterUrl = ev.openPoster;
+    this.s.eventsSeeded = SAMPLE_EVENTS_VERSION;
   }
 
   private load(): DemoState {
@@ -86,7 +104,7 @@ export class DemoBackend implements ClubBackend {
       this.s.entries.push(...d.entries);
       this.s.matches.push(...d.matches);
     }
-    if (!this.s.eventsSeeded) this.seedEvents(club.id);
+    if (this.seededVersion() < SAMPLE_EVENTS_VERSION) this.seedEvents(club.id);
     this.save();
     return club.id;
   }
@@ -453,7 +471,7 @@ export class DemoBackend implements ClubBackend {
       slug: t.publicSlug, name: t.name, startDate: t.startDate, startTime: t.startTime, city: t.city, venue: t.venue, club: this.club(t.clubId).name,
       listing: t.listing ?? 'none', status: t.status, entryMode: t.entryMode ?? 'roster', registrationOpen: open && (t.entryMode === 'registration'), entriesClose: t.entriesClose,
       results: t.isPublic, drawn: !!t.drawnAt, contact: t.listing === 'listed' ? t.contact : undefined, link: t.listing === 'listed' ? t.link : undefined,
-      about: detail ? t.about : undefined, upiId: detail ? t.upiId : undefined,
+      about: detail ? t.about : undefined, upiId: detail ? t.upiId : undefined, posterUrl: t.posterUrl,
       divisions: this.s.divisions.filter((d) => d.tournamentId === t.id).sort((a, b) => a.sort - b.sort).map((d) => ({
         id: d.id, name: d.name, kind: d.kind, rules: d.rules ?? {}, taken: this.regs().filter((r) => r.divisionId === d.id && (r.status === 'pending' || r.status === 'accepted')).length,
       })),
@@ -466,6 +484,22 @@ export class DemoBackend implements ClubBackend {
     return this.s.tournaments.filter((t) => (t.listing ?? 'none') !== 'none' && t.listingStatus === 'approved' && t.startDate >= min && t.status !== 'done')
       .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.startTime.localeCompare(b.startTime) || a.name.localeCompare(b.name))
       .map((t) => this.eventOf(t, false));
+  }
+
+  async recentResults(): Promise<PublicEvent[]> {
+    const from = new Date(); from.setDate(from.getDate() - 30);
+    const min = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`;
+    return this.s.tournaments.filter((t) => (t.listing ?? 'none') !== 'none' && t.listingStatus === 'approved' && t.status === 'done' && t.isPublic && t.startDate >= min)
+      .sort((a, b) => b.startDate.localeCompare(a.startDate)).map((t) => this.eventOf(t, false));
+  }
+
+  async setPoster(t: ClubTournament, image: Blob): Promise<string> {
+    const x = this.tournament(t.id);
+    this.need(x.clubId, isStaff, 'Only the club’s coaches and admins can change the poster');
+    if (image.size > 1_200_000) throw new ClubError('That picture is too big for the demo');
+    x.posterUrl = await blobToDataUrl(image);
+    this.save();
+    return x.posterUrl;
   }
 
   async publicEvent(slug: string): Promise<PublicEvent | null> {
@@ -589,7 +623,7 @@ export class DemoBackend implements ClubBackend {
         return {
           id: t.id, name: t.name, startDate: t.startDate, startTime: t.startTime, city: t.city, venue: t.venue, about: t.about, contact: t.contact, link: t.link,
           listing: t.listing ?? 'none', listingStatus: t.listingStatus ?? 'none', rejectReason: t.rejectReason, reviewedAt: t.reviewedAt, slug: t.publicSlug, club: c.name,
-          verified: !!c.verified, postedBy: 'organiser (demo)',
+          verified: !!c.verified, postedBy: 'organiser (demo)', posterUrl: t.posterUrl,
           divisions: this.s.divisions.filter((d) => d.tournamentId === t.id).map((d) => ({ name: d.name, kind: d.kind, rules: d.rules ?? {} })),
         };
       });
