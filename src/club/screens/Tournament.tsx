@@ -83,13 +83,13 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       </Field>
       <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on PICKLEQ.'}</p>
       <Field label="Tournament name"><input className="input" aria-label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
         <Field label="Date"><input className="input" type="date" aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <Field label="First match"><input className="input" type="time" aria-label="First match" value={time} onChange={(e) => setTime(e.target.value)} /></Field>
       </div>
       {post !== 'roster' && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
             <Field label="City"><input className="input" aria-label="City" value={city} maxLength={60} onChange={(e) => setCity(e.target.value)} /></Field>
             <Field label="Venue"><input className="input" aria-label="Venue" value={venue} maxLength={120} onChange={(e) => setVenue(e.target.value)} /></Field>
           </div>
@@ -98,7 +98,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       )}
       {post === 'registration' && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
             <Field label="Entries close"><input className="input" type="date" aria-label="Entries close" value={closes} onChange={(e) => setCloses(e.target.value)} /></Field>
             <Field label="Your UPI ID (fees)"><input className="input" aria-label="Your UPI ID" placeholder="name@bank" value={upi} maxLength={130} onChange={(e) => setUpi(e.target.value)} /></Field>
           </div>
@@ -153,7 +153,7 @@ function DivisionRulesFields({ d, label, onChange }: { d: DivDraft; label: strin
   return (
     <div className="section">
       <Field label="Who can enter"><Segmented label={`${label} gender`} value={d.gender} options={genders} onChange={(g) => onChange({ gender: g })} /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
         <Field label="DUPR cap (optional)"><input className="input" aria-label={`${label} DUPR cap`} inputMode="decimal" placeholder="e.g. 3.5" value={d.maxDupr} onChange={(e) => num('maxDupr', e.target.value, true)} /></Field>
         <Field label="Age group (optional)"><input className="input" aria-label={`${label} age group`} inputMode="numeric" placeholder="e.g. 35 for 35+" value={d.minAge} onChange={(e) => num('minAge', e.target.value)} /></Field>
         <Field label="Most entries (optional)"><input className="input" aria-label={`${label} most entries`} inputMode="numeric" placeholder="e.g. 16" value={d.cap} onChange={(e) => num('cap', e.target.value)} /></Field>

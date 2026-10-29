@@ -180,11 +180,11 @@ export function PersonFields({ p, onChange, label }: { p: EntryPerson; onChange:
       <legend className="label" style={{ padding: 0 }}>{label}</legend>
       <input className="input" aria-label={`${label} name`} placeholder="Full name" autoComplete={label === 'You' ? 'name' : 'off'} maxLength={60} value={p.name} onChange={(e) => set({ name: e.target.value })} />
       <input className="input" aria-label={`${label} phone`} placeholder="Phone (WhatsApp)" inputMode="tel" autoComplete={label === 'You' ? 'tel' : 'off'} maxLength={18} value={p.phone} onChange={(e) => set({ phone: e.target.value })} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
         <input className="input" aria-label={`${label} DUPR rating`} placeholder="DUPR rating" inputMode="decimal" value={rating} onChange={(e) => { const v = e.target.value.replace(/[^\d.]/g, ''); setRating(v); set({ dupr: v === '' ? undefined : Number(v) }); }} />
         <input className="input" aria-label={`${label} DUPR ID`} placeholder="DUPR ID" autoCapitalize="characters" maxLength={20} value={p.duprId ?? ''} onChange={(e) => set({ duprId: e.target.value })} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8, alignItems: 'center' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)', gap: 8, alignItems: 'center' }}>
         <input className="input" aria-label={`${label} age`} placeholder="Age" inputMode="numeric" maxLength={3} value={p.age ?? ''} onChange={(e) => set({ age: num(e.target.value.replace(/\D/g, '')) })} />
         <Segmented<PlayerGender | ''> label={`${label} gender`} value={p.gender} options={[{ value: 'm', label: 'Man' }, { value: 'f', label: 'Woman' }, { value: 'x', label: 'Other' }]} onChange={(g) => set({ gender: g })} />
       </div>

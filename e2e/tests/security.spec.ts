@@ -9,7 +9,7 @@ test.describe('Server security (no account)', () => {
   test.beforeAll(async () => { box = await resetSandbox(); });
 
   test('club tables are closed to visitors', async () => {
-    for (const t of ['clubs', 'club_members', 'club_players', 'club_claims', 'tournaments', 'divisions', 'entries', 'club_matches', 'scorer_links', 'shared_summaries', 'profiles']) {
+    for (const t of ['clubs', 'club_members', 'club_players', 'club_claims', 'tournaments', 'divisions', 'entries', 'club_matches', 'scorer_links', 'shared_summaries', 'profiles', 'registrations', 'platform_admins']) {
       const r = await rest(`${t}?select=*&limit=5`);
       if (r.status === 200) expect(r.body, t).toEqual([]);
       else expect(r.status, t).toBeGreaterThanOrEqual(400);

@@ -170,7 +170,7 @@ function AddPlayer({ clubId, onDone }: { clubId: string; onDone: () => void }) {
   return (
     <section className="card section" aria-label="Add a player">
       <input className="input" aria-label="Player name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
         <input className="input" aria-label="DUPR singles" placeholder="DUPR singles" inputMode="decimal" value={s} onChange={(e) => setS(e.target.value)} />
         <input className="input" aria-label="DUPR doubles" placeholder="DUPR doubles" inputMode="decimal" value={dd} onChange={(e) => setD(e.target.value)} />
       </div>

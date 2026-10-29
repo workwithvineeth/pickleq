@@ -481,7 +481,7 @@ export function WalkIn({ b, clubId, busy, onAdded }: { b: ClubBackend; clubId: s
   return (
     <section className="card section" aria-label="Add a walk-in player">
       <h3 style={{ fontSize: 16 }}>Add a walk-in player</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 8 }}>
         <input className="input" aria-label="Walk-in player name" placeholder="Name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
         <input className="input" aria-label="Walk-in player DUPR" placeholder="DUPR" inputMode="decimal" value={rating} onChange={(e) => setRating(e.target.value)} />
       </div>
