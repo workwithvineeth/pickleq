@@ -11,7 +11,7 @@ const FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: tr
 const KO: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
 /** Bump when the sample events change, so demos already on a phone get the new set. */
-export const SAMPLE_EVENTS_VERSION = 2;
+export const SAMPLE_EVENTS_VERSION = 3;
 
 export interface SampleEvents {
   clubs: Club[];
@@ -31,7 +31,9 @@ const fmtDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('
  * - finished, with results: PQ Demo Diwali Doubles and PQ Demo Monsoon Singles (played by the demo club's players);
  * - upcoming, on the board: PQ Demo Night (entries open, some already in), PQ Demo Sunday Social (listed only),
  *   PQ Demo Women's Open (entries open);
- * - waiting for approval, from a new club: PQ Demo Ladder Cup and PQ Demo Corporate Cup.
+ * - waiting for approval, from a new club: PQ Demo Ladder Cup and PQ Demo Corporate Cup;
+ * - live today: Pickleball Central Season 8 (the demo club's own). Singles started about 80 minutes ago and is mid-pools;
+ *   doubles starts in about 2 hours, so the owner can still add or withdraw doubles teams.
  */
 export function buildSampleEvents(demoClubId: string, id: () => string, players: ClubPlayer[], today = new Date()): SampleEvents {
   const day = (n: number) => { const d = new Date(today); d.setDate(d.getDate() + n); return isoDay(d); };
@@ -122,11 +124,44 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
       { name: b, phone: `90000 0${String(i * 2 + 11).padStart(4, '0')}`, gender: 'm', age: 31 + i, dupr: rb },
     ],
   }));
+  // Live today: singles running, doubles in about 2 hours. Times are set from when the demo is made.
+  const SLOT = 20;
+  const nowMin = today.getHours() * 60 + today.getMinutes();
+  const startMin = Math.max(0, Math.floor(nowMin / SLOT) * SLOT - 4 * SLOT);
+  const doneSlots = Math.max(0, Math.floor((nowMin - startMin) / SLOT));
+  const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const doublesSlot = doneSlots + 6;
+  const s8 = t({ clubId: demoClubId, name: 'Pickleball Central Season 8', startDate: day(0), startTime: hhmm(startMin), publicSlug: 'pq-demo-central-s8', venue: 'PQ Demo Courts',
+    about: `Season 8 is live. Singles is under way; doubles starts at ${hhmm(startMin + doublesSlot * SLOT)}. Pools of four (singles) and three (doubles), top two into the knockouts.`,
+    entryMode: 'roster', listing: 'run', listingStatus: 'approved', reviewedAt, status: 'live', isPublic: true, slotMinutes: SLOT },
+  { tag: 'Season 8 · live today', bg: '#0B3B2E', ink: '#F4FFF8', accent: '#9BE15D', motif: 'trophy' });
+  const s8s: Division = { ...div(s8, 'Season 8 Singles', 'singles', 0, { gender: 'open' }), pools: 4, advance: 2 };
+  const s8d: Division = { ...div(s8, 'Season 8 Doubles', 'doubles', 1, { gender: 'open' }), pools: 4, advance: 2 };
+  const at = (i: number) => pick[i % pick.length].id;
+  const s8Singles = Array.from({ length: 16 }, (_, i) => [at(20 + i)]);
+  // Twelve teams of two different players; a few play both events, as at a real club day.
+  const s8Teams = Array.from({ length: 12 }, (_, i) => [at(32 + i * 2), at(33 + i * 2)]);
+  const rs = drawRows(s8, [{ division: s8s, entries: s8Singles }], pmap, id);
+  const rd = drawRows(s8, [{ division: s8d, entries: s8Teams }], pmap, id);
+  entries.push(...rs.entries, ...rd.entries);
+  const stamp = today.toISOString();
+  for (const m of rs.matches) {
+    const slot = m.slot ?? 0;
+    if (slot > doneSlots) { matches.push({ ...m, updatedAt: stamp }); continue; }
+    const r = simulateMatch(entryRating(m.sideA, pmap, 'singles') ?? 3.5, entryRating(m.sideB, pmap, 'singles') ?? 3.5, m.format, rand);
+    if (slot < doneSlots) { matches.push({ ...m, games: r.games, winner: r.winner, status: 'done', updatedAt: stamp }); continue; }
+    // On court now: part-way through the first game.
+    const pts = r.games[0].points.slice(0, Math.max(3, Math.floor(r.games[0].points.length * 0.6)));
+    const g = { points: pts, a: [...pts].filter((c) => c === 'A').length, b: [...pts].filter((c) => c === 'B').length };
+    matches.push({ ...m, games: [g], status: 'live', updatedAt: stamp });
+  }
+  for (const m of rd.matches) matches.push({ ...m, slot: (m.slot ?? 0) + doublesSlot, updatedAt: stamp });
+
   const openPoster = samplePoster({ title: 'Demo Open', date: 'Live today', place: 'PQ Demo Courts, Hyderabad', tag: 'Club championship', bg: '#7A1F2B', ink: '#FFF6EC', accent: '#F3C77A', motif: 'court' });
   return {
     clubs: [friends, newbie],
-    tournaments: [diwali, monsoon, night, social, women, ladder, corporate],
-    divisions: [dd, ms, md, mx, s35, soc, ws, wd, lad, corp],
+    tournaments: [s8, diwali, monsoon, night, social, women, ladder, corporate],
+    divisions: [s8s, s8d, dd, ms, md, mx, s35, soc, ws, wd, lad, corp],
     entries, matches, registrations, openPoster,
   };
 }

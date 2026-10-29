@@ -250,6 +250,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
 export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
   const { b, state } = useTournament(id, 8000);
   const [entering, setEntering] = useState<string | null>(null);
+  const [walkover, setWalkover] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const d = state.data;
@@ -273,6 +274,13 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
     setEntering(null);
   }
   const who = (m: ClubMatch) => `${names(m.sideA, pmap)} v ${names(m.sideB, pmap)}`;
+  /** A no-show (nothing played) or a retirement (games so far are kept): the other side goes through. */
+  async function giveWalkover(m: ClubMatch, winner: 'A' | 'B') {
+    const kept = m.games.filter((g) => g.a > 0 || g.b > 0);
+    await run(() => b!.patchMatches([{ id: m.id, patch: { status: 'done', winner, games: kept } }]),
+      `${names(winner === 'A' ? m.sideA : m.sideB, pmap)} ${kept.length ? 'win: the other side retired' : 'win by walkover'}`);
+    setWalkover(null);
+  }
 
   return (
     <main className="screen wide-ok" aria-labelledby="desk-title">
@@ -302,9 +310,17 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
                   <div className="small muted">{formatRule(m.format)}</div>
                   {entering === m.id
                     ? <ManualScores format={m.format} nameA={names(m.sideA, pmap)} nameB={names(m.sideB, pmap)} busy={busy} onSave={(g) => saveFinal(m, g)} onCancel={() => setEntering(null)} />
-                    : <div className="meta">
+                    : walkover === m.id
+                      ? <section className="section" aria-label="Walkover or retired">
+                          <p className="small muted" style={{ margin: 0 }}>Who goes through? Games already played are kept (a retirement); with none, it’s a walkover.</p>
+                          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => void giveWalkover(m, 'A')}>{names(m.sideA, pmap)} go through</button>
+                          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => void giveWalkover(m, 'B')}>{names(m.sideB, pmap)} go through</button>
+                          <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setWalkover(null)}>Cancel</button>
+                        </section>
+                      : <div className="meta">
                         <button type="button" className="btn btn-primary" onClick={() => go('club-score', m.id)}>Score</button>
                         <button type="button" className="btn btn-outline" onClick={() => setEntering(m.id)}>Enter result</button>
+                        <button type="button" className="btn btn-outline" onClick={() => setWalkover(m.id)}>Walkover…</button>
                       </div>}
                 </>
               )}

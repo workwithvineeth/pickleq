@@ -38,6 +38,23 @@ export function publicSources(): ClubBackend[] {
   return s ? [s, demoBackend()] : [demoBackend()];
 }
 
+let viewer: Promise<DemoBackend> | null = null;
+/**
+ * A demo's sample events (slugs starting pq-demo-) are made on each phone, so a shared link opened somewhere else
+ * (another phone, or Instagram's or WhatsApp's own browser) has no demo to read. This builds the same sample set in
+ * memory, for reading only; nothing is saved on that phone.
+ */
+export function isSampleSlug(slug: string): boolean { return /^pq-demo-/.test(slug); }
+export function sampleViewer(): Promise<DemoBackend> {
+  if (!viewer) viewer = (async () => { const v = new DemoBackend(null); await v.start('Guest'); return v; })();
+  return viewer;
+}
+/** Where to look up a shared event or results link, adding the sample viewer for demo links. */
+export async function publicSourcesFor(slug: string): Promise<ClubBackend[]> {
+  const list = publicSources();
+  return isSampleSlug(slug) ? [...list, await sampleViewer()] : list;
+}
+
 /** Where the Events tab reads the board: the demo when this phone is in demo mode, otherwise the real club server. */
 export function eventsBackend(): ClubBackend {
   return clubMode() === 'demo' ? demoBackend() : serverBackend() ?? demoBackend();

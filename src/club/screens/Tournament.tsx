@@ -5,7 +5,7 @@ import type { BestOf, Format, PointsTo } from '../../domain/types';
 import type { Go } from '../../navigation';
 import type { PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, matchResult, poolLetter, slotTime, standings } from '../domain/engine';
-import { backend, publicSources } from '../index';
+import { backend, publicSourcesFor } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, type NewDivisionInput } from '../plan';
 import { isStaff, STAGE_LABEL, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
@@ -370,7 +370,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
   const [tick, setTick] = useState(0);
   const state = useLoad<PublicTournament | null>(async () => {
     let lastError: unknown = null;
-    for (const src of publicSources()) {
+    for (const src of await publicSourcesFor(slug)) {
       try { const r = await src.publicTournament(slug); if (r) return r; } catch (e) { lastError = e; }
     }
     if (lastError) throw lastError;

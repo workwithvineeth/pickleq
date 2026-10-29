@@ -3,7 +3,7 @@ import { Field, Segmented } from '../../components/Controls';
 import type { Go } from '../../navigation';
 import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backend';
 import { clubMode } from '../config';
-import { demoBackend, eventsBackend, publicSources, rememberReturn, serverBackend } from '../index';
+import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBackend } from '../index';
 import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../registration';
 import { isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
@@ -26,7 +26,7 @@ const waLink = (phone: string) => { const d = phone.replace(/\D/g, ''); return `
 /** Opens a public event on whichever club server knows it (the real server first, then the demo on this phone). */
 async function findEvent(slug: string): Promise<{ src: ClubBackend; event: PublicEvent } | null> {
   let lastError: unknown = null;
-  for (const src of publicSources()) {
+  for (const src of await publicSourcesFor(slug)) {
     try { const event = await src.publicEvent(slug); if (event) return { src, event }; } catch (e) { lastError = e; }
   }
   if (lastError) throw lastError;
@@ -147,7 +147,7 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
       <main className="screen" aria-labelledby="event-title">
         <Header id="event-title" title="Tournament" onBack={onBack} />
         <Status error={state.error} loading={state.loading} />
-        {!state.loading && !state.error && <p className="muted">This tournament isn’t available. The organiser may have taken it down.</p>}
+        {!state.loading && !state.error && <p className="muted">This tournament isn’t available. The organiser may have taken it down. A tournament made in the demo club only opens on the phone that made it.</p>}
       </main>
     );
   }

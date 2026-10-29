@@ -32,8 +32,22 @@ describe('Posters', () => {
     expect(new Set(posters).size).toBe(ev.tournaments.length);
     const done = ev.tournaments.filter((t) => t.status === 'done');
     expect(done.map((t) => t.name)).toEqual(['PQ Demo Diwali Doubles', 'PQ Demo Monsoon Singles']);
-    expect(ev.matches.length).toBe(30); // 6 teams and 6 players, round robin: 15 matches each
-    expect(ev.matches.every((m) => m.status === 'done' && m.winner && m.games.length && m.court)).toBe(true);
+    const doneIds = new Set(done.map((t) => t.id));
+    const finished = ev.matches.filter((m) => doneIds.has(m.tournamentId ?? ''));
+    expect(finished.length).toBe(30); // 6 teams and 6 players, round robin: 15 matches each
+    expect(finished.every((m) => m.status === 'done' && m.winner && m.games.length && m.court)).toBe(true);
+    // Season 8 is live: singles part-way through the pools, doubles not started and about two hours away.
+    const s8 = ev.tournaments.find((t) => t.name === 'Pickleball Central Season 8')!;
+    expect(s8.status).toBe('live');
+    const [sing, dbl] = ev.divisions.filter((d) => d.tournamentId === s8.id);
+    const sm = ev.matches.filter((m) => m.divisionId === sing.id), dm = ev.matches.filter((m) => m.divisionId === dbl.id);
+    expect(sm.length).toBe(24);
+    expect(sm.some((m) => m.status === 'done') && sm.some((m) => m.status === 'live') && sm.some((m) => m.status === 'scheduled')).toBe(true);
+    expect(dm.length).toBe(12);
+    expect(dm.every((m) => m.status === 'scheduled')).toBe(true);
+    const firstDoubles = Math.min(...dm.map((m) => m.slot ?? 99));
+    expect((firstDoubles - 4) * s8.slotMinutes).toBe(120); // 10:00 demo time: singles started 80 min ago (slot 4 now)
+    expect(ev.entries.filter((e) => e.divisionId === dbl.id).every((e) => new Set(e.playerIds).size === 2)).toBe(true);
     expect(ev.tournaments.filter((t) => t.listingStatus === 'pending').map((t) => t.name)).toEqual(['PQ Demo Ladder Cup', 'PQ Demo Corporate Cup']);
   });
 
@@ -64,6 +78,6 @@ describe('Posters', () => {
     expect(names).toContain('My Own Cup');
     expect(names).toContain('PQ Demo Diwali Doubles');
     expect(JSON.parse(memory().getItem('x') ?? 'null')).toBeNull();
-    expect(SAMPLE_EVENTS_VERSION).toBe(2);
+    expect(SAMPLE_EVENTS_VERSION).toBe(3);
   });
 });
