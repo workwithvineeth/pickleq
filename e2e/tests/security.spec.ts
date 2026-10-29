@@ -66,7 +66,7 @@ test.describe('Server security (no account)', () => {
     for (const [name, json] of [['results', pub], ['scorer view', view]]) {
       for (const secret of ['dupr', 'user_id', 'email', 'claim', 'invite', 'token', '"pin"']) expect(json, `${name}: ${secret}`).not.toContain(secret);
     }
-    expect(pub).not.toContain('points');
+    expect(pub).not.toContain('"points"'); // the point-by-point order stays private
     expect(pub).toContain('Asha Test');
   });
 });

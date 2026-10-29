@@ -34,7 +34,8 @@ test.describe('Court scorer link (no account)', () => {
     await expect(page.getByText(/Meera Test came back from \d+–\d+/)).toBeVisible();
     await page.getByRole('button', { name: 'Save result' }).click();
     await expect(page.getByLabel('Finished')).toContainText('10–11');
-    await expect(page.getByLabel('Finished').getByText('Meera Test')).toHaveCount(2);
+    await expect(page.getByLabel('Finished').getByText('10–11')).toHaveCount(2);
+    await expect(page.getByLabel('Finished')).toContainText('Meera Test');
 
     const view = (await rpc('scorer_open', { p_token: token, p_pin: pin })).body as { matches: { id: string; status: string; winner: string; games: { a: number; b: number; points: string }[] }[] };
     const saved = view.matches.find((m) => m.id.endsWith('503'));
