@@ -11,7 +11,7 @@ alter table public.clubs
   add column hosting_requested_at timestamptz not null default now(),
   add column hosting_reviewed_at timestamptz;
 
-update public.clubs set hosting = 'approved', hosting_reviewed_at = now();
+update public.clubs set hosting = 'approved', hosting_reviewed_at = now() where hosting = 'pending';
 
 -- Only PaddleQ changes the approval; organisers can't approve themselves, on insert or update.
 create or replace function public.guard_club_flags() returns trigger
@@ -28,8 +28,8 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists clubs_guard_flags on public.clubs;
-create trigger clubs_guard_flags before insert or update on public.clubs for each row execute function public.guard_club_flags();
+-- The existing clubs_guard_flags trigger (before update) now runs this; a second one covers inserts.
+create trigger clubs_guard_flags_insert before insert on public.clubs for each row execute function public.guard_club_flags();
 
 -- No tournament for a club PaddleQ hasn't approved (platform admins may, e.g. to set one up for a club).
 -- Runs for every insert, including the ones made inside other server functions.
