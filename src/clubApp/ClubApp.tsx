@@ -3,6 +3,7 @@ import { Icon, type IconName } from '../components/Icon';
 import { UpdatePrompt } from '../components/UpdatePrompt';
 import ClubRoutes from '../club/screens/ClubRoutes';
 import { useRoute, type Go, type RouteName } from '../navigation';
+import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results';
@@ -35,6 +36,7 @@ export default function ClubApp() {
       {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
       {name === 'club-results' && <ClubResultsTab go={clubGo} />}
       {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}
+      {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>PQ Club {appVersion} · build {buildId}</p>}
       {tab && (
         <nav className="nav" aria-label="Main">
           {TABS.map((t) => (
