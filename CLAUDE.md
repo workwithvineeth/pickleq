@@ -9,7 +9,7 @@ The owner is Vineeth, a non-developer founder. Reply in short, plain words. Work
   - `src/club`: backend interface, `server.ts` (Supabase) and `demo.ts` (on-phone demo with the same rules), `plan.ts` (draw, schedule, withdraw, late entry), `registration.ts`, `domain/` (engine: standings/tie-breaks, knockouts, scheduling; sample data), `screens/`.
   - `supabase/migrations` (RLS, security-definer functions with guards), `supabase/tests/*.sql` (each rolls back; rows say FAIL on a problem), `supabase/functions/robot-reset`.
   - `e2e/` robot (Playwright, Android + iPhone): `e2e/tests/*.spec.ts`, `e2e/season-sim.ts` (10 tournaments, 300 players).
-- **Published club site**: repo `workwithvineeth/pqclub` → https://workwithvineeth.github.io/pqclub/. It builds the `pickleq` commit named in its `club-ref` file (`deploy.yml`, plus an hourly rebuild for WhatsApp share pages). `robot.yml` runs the robot after deploys, nightly and on demand.
+- **Published club site**: repo `workwithvineeth/pqclub` → https://paddleq.in/ (since 31 Oct 2026; old github.io/pqclub/ links forward there, checked by the robot). It builds the `pickleq` commit named in its `club-ref` file (`deploy.yml`, plus an hourly rebuild for WhatsApp share pages). `robot.yml` runs the robot after deploys, nightly and on demand.
 - Supabase project `bgaorexagktxxofdkbcm`. Project docs (claude.ai Project "PICKLEQ") hold handovers, milestones and requirements; read the latest `claude/handover-*.md` first.
 
 ## Commands (quiet by design: read the one-line result, not full logs)

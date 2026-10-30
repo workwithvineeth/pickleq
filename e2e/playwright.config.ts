@@ -10,7 +10,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   reporter: process.env.CI ? [['github'], ['list'], ['html', { open: 'never' }], ['json', { outputFile: 'results.json' }]] : [['list']],
   use: {
-    baseURL: process.env.PQ_BASE ?? 'https://workwithvineeth.github.io/pqclub/',
+    baseURL: process.env.PQ_BASE ?? 'https://paddleq.in/',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     serviceWorkers: 'block',
