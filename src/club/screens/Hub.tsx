@@ -49,6 +49,8 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   }
 
   const signedIn = state.data;
+  // PaddleQ (the club app): signed out, My club is the sign-in page, so paddleq.in opens on it.
+  if (isClubApp() && server && !state.loading && !state.error && !signedIn) return <ClubSignIn go={go} onBack={onBack} landing onSignedIn={state.reload} />;
   return (
     <main className="screen" aria-labelledby="club-title">
       <Header id="club-title" title={isClubApp() ? 'My club' : 'Club'} onBack={isClubApp() ? undefined : onBack} />
@@ -77,13 +79,13 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           )}
           {server && <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in</button>}
           {isClubApp() && <JoinByLink go={go} />}
-          <section className="card section" aria-label="Demo club">
+          {!isClubApp() && <section className="card section" aria-label="Demo club">
             <h2 style={{ fontSize: 18 }}>Try the demo club</h2>
             <p className="small muted" style={{ margin: 0 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone.</p>
             <label className="label" htmlFor="demo-name">Your name in the demo</label>
             <input id="demo-name" className="input" value={demoName} onChange={(e) => setDemoName(e.target.value)} placeholder="You" maxLength={40} />
             <button type="button" className="btn btn-outline" disabled={busy} onClick={startDemo}>Open PQ Demo Club</button>
-          </section>
+          </section>}
         </>
       )}
       {signedIn && (
@@ -119,6 +121,30 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   );
 }
 
+/** The demo club on this phone (opened from the admin dashboard): made-up players, nothing sent anywhere. */
+export function DemoStart({ go, onBack }: { go: Go; onBack: () => void }) {
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  async function start() {
+    setBusy(true);
+    try { const id = await demoBackend().start(name || 'You'); setClubMode('demo'); go('club-view', id); }
+    catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
+  }
+  return (
+    <main className="screen" aria-labelledby="demo-title">
+      <Header id="demo-title" title="Demo club" onBack={onBack} />
+      <section className="card section" aria-label="Demo club">
+        <p className="small muted" style={{ margin: 0 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone, for showing PaddleQ to clubs and for practice. Close it from My club when you’re done.</p>
+        <label className="label" htmlFor="demo-name">Your name in the demo</label>
+        <input id="demo-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="You" maxLength={40} />
+        {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={start}>Open PQ Demo Club</button>
+      </section>
+    </main>
+  );
+}
+
 /** Paste an invite link (or its code) to join a club. */
 function JoinByLink({ go }: { go: Go }) {
   const [v, setV] = useState('');
@@ -137,7 +163,7 @@ type SignInStep = 'signin' | 'signup' | 'confirm' | 'forgot' | 'reset';
 /** Organisers and admins: email + password (at least 8 characters). New accounts confirm their email with a 6-digit
  * code; "Forgot password" sends a code too. `admin` is the PaddleQ admin sign-in page: no new accounts, and it only
  * lets platform admins through to the admin dashboard. */
-export function ClubSignIn({ go, onBack, admin = false }: { go: Go; onBack: () => void; admin?: boolean }) {
+export function ClubSignIn({ go, onBack, admin = false, landing = false, onSignedIn }: { go: Go; onBack: () => void; admin?: boolean; landing?: boolean; onSignedIn?: () => void }) {
   const [step, setStep] = useState<SignInStep>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -158,7 +184,9 @@ export function ClubSignIn({ go, onBack, admin = false }: { go: Go; onBack: () =
     const back = takeReturn();
     if (back) { window.location.replace(back); return; }
     const pending = readPendingJoin();
-    if (pending) { writePendingJoin(null); go('club-join', pending, { replace: true }); } else go('club', undefined, { replace: true });
+    if (pending) { writePendingJoin(null); go('club-join', pending, { replace: true }); }
+    else if (onSignedIn) onSignedIn();
+    else go('club', undefined, { replace: true });
   }
 
   // Opened from an older email's sign-in link: finish signing in.
@@ -202,7 +230,7 @@ export function ClubSignIn({ go, onBack, admin = false }: { go: Go; onBack: () =
   const reset = () => { if (!/^\d{6}$/.test(code.replace(/\s/g, ''))) return setMsg({ ok: false, text: 'Enter the 6-digit code from the email' }); if (!newPasswordOk()) return;
     void run(async () => { await b?.resetPassword?.(email, code, password); await signedIn(); }); };
 
-  const title = admin ? 'PaddleQ admin' : step === 'signup' ? 'Create your account' : step === 'confirm' ? 'Confirm your email' : step === 'forgot' || step === 'reset' ? 'Reset your password' : 'Sign in';
+  const title = admin ? 'PaddleQ admin' : landing && step === 'signin' ? 'Welcome to PaddleQ' : step === 'signup' ? 'Create your account' : step === 'confirm' ? 'Confirm your email' : step === 'forgot' || step === 'reset' ? 'Reset your password' : 'Sign in';
   const enter = (fn: () => void) => (e: React.KeyboardEvent) => { if (e.key === 'Enter') fn(); };
   const emailField = (
     <Field label="Email">
@@ -230,7 +258,8 @@ export function ClubSignIn({ go, onBack, admin = false }: { go: Go; onBack: () =
 
   return (
     <main className="screen" aria-labelledby="signin-title">
-      <Header id="signin-title" title={title} onBack={onBack} />
+      <Header id="signin-title" title={title} onBack={landing && step === 'signin' ? undefined : landing ? () => to('signin') : onBack} />
+      {landing && step === 'signin' && <img src="icons/club-192.png" alt="PaddleQ logo" width={88} height={88} className="club-logo" style={{ width: 88, height: 88, border: 'none', background: 'none' }} />}
       {!b && <div role="alert" className="msg msg-bad">The club server isn’t set up in this version.</div>}
       {step === 'signin' && (
         <>
@@ -245,6 +274,7 @@ export function ClubSignIn({ go, onBack, admin = false }: { go: Go; onBack: () =
           <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={signIn}>{busy ? 'Signing in…' : 'Sign in'}</button>
           {link('Forgot password?', () => to('forgot'))}
           {!admin && link('New to PaddleQ? Create an account', () => to('signup'))}
+          {landing && <JoinByLink go={go} />}
         </>
       )}
       {step === 'signup' && (

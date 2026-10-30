@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** The demo club runs on the phone, so this checks the organiser screens (desk and entries) without an account. */
 async function openDemoEvent(page: Page) {
-  await page.goto('#/club');
+  await page.goto('#/demo');
   await page.getByLabel('Your name in the demo').fill('Robot');
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
   await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();

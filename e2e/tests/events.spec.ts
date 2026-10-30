@@ -72,7 +72,7 @@ async function fillPerson(page: Page, label: string, p: { name: string; phone: s
 
 test.describe('Board with posters (demo club on the phone)', () => {
   test('posters on the board, recent results open, and approving a listing puts it and its poster on the board', async ({ page }) => {
-    await page.goto('#/club');
+    await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
@@ -98,7 +98,7 @@ test.describe('Board with posters (demo club on the phone)', () => {
 
 test.describe('Registration to draw (demo club on the phone)', () => {
   test('a player enters; the organiser accepts and makes the draw', async ({ page }) => {
-    await page.goto('#/club');
+    await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
@@ -134,7 +134,7 @@ test.describe('Registration to draw (demo club on the phone)', () => {
 
 test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
   test('overview, clubs, reopening a tournament and the last-admin rule; fits a small phone', async ({ page }) => {
-    await page.goto('#/club');
+    await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
@@ -180,7 +180,7 @@ test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
 
 test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', () => {
   test('a new club asks to host, can’t post until approved, then can; fits a small phone', async ({ page }) => {
-    await page.goto('#/club');
+    await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();

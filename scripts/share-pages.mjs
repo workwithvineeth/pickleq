@@ -32,7 +32,7 @@ ${image ? `<meta property="og:image" content="${esc(image)}">
 <meta property="og:image:height" content="512">
 <meta name="twitter:card" content="summary">`}
 <meta http-equiv="refresh" content="0; url=${esc(target)}">
-<style>body{font-family:system-ui,sans-serif;background:#F3EBDD;color:#2a2420;margin:0;padding:32px 20px}a{color:#2F5D62}</style>
+<style>body{font-family:system-ui,sans-serif;background:#F3EBDD;color:#2a2420;margin:0;padding:32px 20px}a{color:#7A1F2B}</style>
 </head>
 <body>
 <p><a href="${esc(target)}">Open ${esc(title)} in PaddleQ</a></p>

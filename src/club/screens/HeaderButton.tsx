@@ -3,7 +3,7 @@ import { backend } from '../index';
 import { pendingClubMatches } from '../personal';
 import { useLoad } from './common';
 
-/** Club button at the top of Home, in the Paddle Q style: teal pill, serif word, the logo's ball. */
+/** Club button at the top of Home, in the Paddle Q style: maroon pill, serif word, the logo's ball. */
 export default function ClubHeaderButton({ go }: { go: Go }) {
   const pending = useLoad(async () => {
     const b = backend();

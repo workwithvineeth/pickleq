@@ -103,6 +103,21 @@ describe('Sign in with a password', () => {
     expect(fake.resetPassword).toHaveBeenCalledWith('organiser@example.com', '654321', 'brandnew99');
   });
 
+  it('as the landing page: welcome, logo, join by invite link, and stays put after signing in', async () => {
+    const go = vi.fn(); const done = vi.fn();
+    const user = userEvent.setup();
+    render(<ClubSignIn go={go} onBack={() => {}} landing onSignedIn={done} />);
+    expect(screen.getByRole('heading', { name: 'Welcome to PaddleQ' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'PaddleQ logo' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Join a club' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Email'), 'organiser@example.com');
+    await user.type(screen.getByLabelText('Password'), 'rightpass1');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await vi.waitFor(() => expect(done).toHaveBeenCalled());
+    expect(go).not.toHaveBeenCalled();
+  });
+
   it('admin sign-in lets admins into the dashboard and turns others away', async () => {
     const go = vi.fn();
     const user = userEvent.setup();

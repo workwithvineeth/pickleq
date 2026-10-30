@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => {
           display: 'standalone',
           orientation: 'portrait',
           background_color: '#F3EBDD',
-          theme_color: isLive ? '#7A1F2B' : isClub ? '#2F5D62' : '#9A6B1E',
+          theme_color: isLive || isClub ? '#7A1F2B' : '#9A6B1E',
           icons: [
             { src: `icons/${icon}-192.png`, sizes: '192x192', type: 'image/png' },
             { src: `icons/${icon}-512.png`, sizes: '512x512', type: 'image/png' },

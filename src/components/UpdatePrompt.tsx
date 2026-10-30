@@ -20,7 +20,7 @@ export function UpdatePrompt() {
   if (needRefresh) {
     return (
       <div className="toast" role="status">
-        <span>A new version of {import.meta.env.VITE_CLUB_APP === "on" ? "PQ Club" : "PICKLEQ"} is ready.</span>
+        <span>A new version of {import.meta.env.VITE_CLUB_APP === "on" ? "PaddleQ" : "PICKLEQ"} is ready.</span>
         <span style={{ display: 'flex', gap: 6 }}>
           <button type="button" className="toast-dismiss" onClick={() => setNeedRefresh(false)}>Later</button>
           <button type="button" onClick={() => {
@@ -35,7 +35,7 @@ export function UpdatePrompt() {
   if (offlineReady) {
     return (
       <div className="toast" role="status">
-        <span>{import.meta.env.VITE_CLUB_APP === "on" ? "PQ Club" : "PICKLEQ"} now works offline.</span>
+        <span>{import.meta.env.VITE_CLUB_APP === "on" ? "PaddleQ" : "PICKLEQ"} now works offline.</span>
         <button type="button" onClick={() => setOfflineReady(false)}>OK</button>
       </div>
     );

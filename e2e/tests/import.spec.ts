@@ -14,8 +14,14 @@ test.describe('PaddleQ app', () => {
     for (const t of ['Events', 'My club', 'Tournaments', 'Results']) await expect(nav.getByRole('button', { name: t })).toBeVisible();
     for (const t of ['Home', 'Train', 'Stats', 'Coach']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Log a match' })).toHaveCount(0);
+    // Signed out, paddleq.in opens on the sign-in page; the demo lives in the admin dashboard, not here.
+    await expect(page.getByRole('heading', { name: 'Welcome to PaddleQ' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'PaddleQ logo' })).toBeVisible();
+    await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Join a club' })).toBeVisible();
+    await expect(page.getByText('Try the demo club')).toHaveCount(0);
     await page.goto('#/stats');
-    await expect(page.getByRole('heading', { name: 'My club' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome to PaddleQ' })).toBeVisible();
     await nav.getByRole('button', { name: 'Results' }).click();
     await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
   });
@@ -23,7 +29,7 @@ test.describe('PaddleQ app', () => {
 
 test.describe('Google Form import to draw (demo club on the phone)', () => {
   test('imports the sheet once, flags problems, re-import adds nobody, then a knockout draw with a time estimate', async ({ page }) => {
-    await page.goto('#/club');
+    await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();

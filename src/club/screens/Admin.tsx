@@ -59,6 +59,13 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           </div>
           <h2 style={{ fontSize: 20, margin: 0 }}>{current.title}</h2>
           {section === 'overview' && <Overview go={go} />}
+          {section === 'overview' && b.kind === 'server' && (
+            <section className="card section" aria-label="Demo club">
+              <h2 style={{ fontSize: 16 }}>Demo club</h2>
+              <p className="small muted" style={{ margin: 0 }}>Made-up players and tournaments on this phone, for showing PaddleQ to a club or practising. Nothing is sent to the server.</p>
+              <button type="button" className="btn btn-outline" onClick={() => go('demo')}>Open the demo club</button>
+            </section>
+          )}
           {section === 'clubs' && <Clubs go={go} />}
           {section === 'tournaments' && <Tournaments go={go} />}
           {section === 'listings' && <ListingReviews go={go} />}

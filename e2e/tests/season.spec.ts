@@ -57,7 +57,7 @@ test.describe('Full-scale day (13 tournaments, 300 players)', () => {
 });
 
 async function openSeason8(page: Page) {
-  await page.goto('#/club');
+  await page.goto('#/demo');
   await page.getByLabel('Your name in the demo').fill('Robot');
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
   await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
