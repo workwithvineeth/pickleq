@@ -365,7 +365,7 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
     <main className="screen pq-screen" aria-labelledby="signin-title">
       {step === 'signin' && (admin
         ? <FlowHeader title="PaddleQ admin" sub="For PaddleQ admins only." onBack={onBack} />
-        : landing ? <LandingHero go={go} /> : <FlowHeader title="Sign in" sub="For clubs and organisers." onBack={onBack} />)}
+        : landing ? <LandingHero /> : <FlowHeader title="Sign in" sub="For clubs and organisers." onBack={onBack} />)}
       {step === 'signup' && <FlowHeader title="Create your account" sub="Run your club’s tournaments on PaddleQ." onBack={back} step={1} />}
       {step === 'confirm' && <FlowHeader title="Check your email" sub={<>We sent a 6-digit code to <b>{email.trim()}</b></>} onBack={back} step={2} />}
       {(step === 'forgot' || step === 'reset') && <FlowHeader title="Reset your password" sub={step === 'forgot' ? 'We’ll email you a 6-digit code.' : <>We sent a code to <b>{email.trim()}</b></>} onBack={back} />}
@@ -457,7 +457,7 @@ function Tick() {
   return <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>;
 }
 
-/** Below the sign-in on paddleq.in: join a club by its invite link, or just watch live results. */
+/** Below the sign-in on paddleq.in: join a club by its invite link. */
 function MoreWays({ go }: { go: Go }) {
   const [joining, setJoining] = useState(false);
   const [v, setV] = useState('');
@@ -475,11 +475,6 @@ function MoreWays({ go }: { go: Go }) {
           <button type="button" className="btn btn-outline" disabled={code.length < 4} onClick={() => go('club-join', code)}>Join</button>
         </section>
       )}
-      <button type="button" className="pq-link-row" onClick={() => go('club-results')}>
-        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
-        <span><b>Just watching?</b> See live results</span>
-        <span aria-hidden="true" className="pq-chev">›</span>
-      </button>
     </div>
   );
 }

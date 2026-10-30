@@ -1,10 +1,6 @@
 // PaddleQ brand pieces for the club app's sign-in and My club screens (brand guide: maroon + cream, Fraunces).
 import { Q_PATH } from '../../components/Logo';
 import type { ReactNode } from 'react';
-import type { Go } from '../../navigation';
-import type { PublicEvent } from '../backend';
-import { serverBackend } from '../index';
-import { useLoad } from './common';
 
 export const CAPTION = 'Out of the kitchen, into the stats.';
 
@@ -23,36 +19,8 @@ export function BrandMark({ size = 120, label }: { size?: number; label?: string
   );
 }
 
-const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
-const dayLabel = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-
-/** The tournament to show in the hero: one live now, else the next one in the coming week. */
-export function heroEvent(events: PublicEvent[], now = today()): { e: PublicEvent; live: boolean } | null {
-  const live = events.find((e) => e.status === 'live' && e.startDate <= now && e.results);
-  if (live) return { e: live, live: true };
-  const week = new Date(`${now}T00:00:00Z`); week.setUTCDate(week.getUTCDate() + 7);
-  const soon = events.filter((e) => e.status !== 'done' && e.startDate >= now && e.startDate <= week.toISOString().slice(0, 10))
-    .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
-  return soon ? { e: soon, live: false } : null;
-}
-
-/** "LIVE · TPC Diwali Dhamaka" (opens live results) or "NEXT · … · Sun 1 Nov" (opens the event). Hidden when there's none. */
-function EventChip({ go }: { go: Go }) {
-  const b = serverBackend();
-  const state = useLoad(async () => (b ? heroEvent(await b.publicEvents().catch(() => [])) : null), [b]);
-  const h = state.data;
-  if (!h) return null;
-  return (
-    <button type="button" className="pq-chip" onClick={() => go(h.live ? 'results' : 'event', h.e.slug)}>
-      <span aria-hidden="true" className={`pq-dot${h.live ? ' pq-dot-live' : ''}`} />
-      <b>{h.live ? 'LIVE' : 'NEXT'}</b>
-      <span className="pq-chip-text">{h.e.name}{h.live ? '' : ` · ${dayLabel(h.e.startDate)}`}</span>
-    </button>
-  );
-}
-
 /** The big maroon welcome: court lines, the Paddle Q, the wordmark and the caption. */
-export function LandingHero({ go }: { go: Go }) {
+export function LandingHero() {
   return (
     <header className="pq-hero">
       <span aria-hidden="true" className="pq-court" />
@@ -61,7 +29,6 @@ export function LandingHero({ go }: { go: Go }) {
       <BrandMark size={112} label="PaddleQ logo" />
       <h1 id="signin-title" className="pq-wordmark">PaddleQ</h1>
       <p className="pq-caption">{CAPTION}</p>
-      <EventChip go={go} />
     </header>
   );
 }

@@ -115,7 +115,8 @@ describe('Sign in with a password', () => {
     expect(screen.queryByRole('region', { name: 'Join a club' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Got an invite from a club/ }));
     expect(screen.getByRole('region', { name: 'Join a club' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Just watching/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Just watching/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^LIVE$/)).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Email'), 'organiser@example.com');
     await user.type(screen.getByLabelText('Password'), 'rightpass1');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
