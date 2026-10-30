@@ -234,7 +234,7 @@ describe('Posting a tournament and approving it', () => {
 
     window.location.hash = '#/admin-listings';
     await screen.findByRole('heading', { name: 'Review listings' });
-    const review = screen.getByRole('region', { name: 'Robot Mixed Cup' });
+    const review = await screen.findByRole('region', { name: 'Robot Mixed Cup' });
     expect(review).toHaveTextContent('Mixed · Doubles · ₹700');
     await user.click(within(review).getByRole('button', { name: 'Reject…' }));
     await user.click(within(review).getByRole('button', { name: 'Reject with this reason' }));
