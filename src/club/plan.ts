@@ -1,6 +1,6 @@
 import type { Format } from '../domain/types';
-import { emptySlotState, entryRating, firstKnockoutPairs, KNOCKOUT_SIZES, nextRoundPairs, nextStage, planPoolMatches, scheduleSlots, seedOrder, snakePools, stageForSize, standings, type Qualifier } from './domain/engine';
-import type { ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, DivisionRules, Entry, EntryMode } from './types';
+import { bracketSize, crossPoolOrder, emptySlotState, entryRating, firstKnockoutPairs, formatFor, KNOCKOUT_SIZES, knockoutOnlyPairs, MAX_BRACKET, nextRoundPairs, nextStage, planPoolMatches, scheduleSlots, seedOrder, snakePools, stageForSize, standings, type Qualifier, type StandingRow } from './domain/engine';
+import type { ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, DivisionRules, Entry, EntryMode, KnockoutStage } from './types';
 
 export interface NewDivisionInput {
   name: string;
@@ -12,6 +12,9 @@ export interface NewDivisionInput {
   /** Each entry is one player (singles) or two (doubles team). Empty when players will register. */
   entries: string[][];
   rules?: DivisionRules;
+  shape?: 'ko';
+  extra?: number;
+  stageFormats?: Partial<Record<KnockoutStage, Format>>;
 }
 
 export interface NewTournamentInput {
@@ -60,10 +63,23 @@ export function checkDivision(d: NewDivisionInput): string | null {
   const ids = d.entries.flat();
   if (new Set(ids).size !== ids.length) return 'A player is entered twice in the same event';
   if (d.entries.length < 2) return 'An event needs at least 2 entries';
-  if (d.pools < 1 || d.entries.length < d.pools * 2) return 'Each pool needs at least 2 entries';
-  const q = d.pools * d.advance;
-  if (d.advance > 0 && !KNOCKOUT_SIZES.includes(q)) return 'Pools × players going through must make 2, 4 or 8 for the knockouts';
-  if (d.advance > 0 && Math.min(...poolSizes(d.entries.length, d.pools)) < d.advance) return 'More players go through than some pools have';
+  return checkShape(d, d.entries.length);
+}
+
+/** Checks pools, places going through and best runners-up (or a knockout-only event) for n entries. */
+export function checkShape(d0: { pools: number; advance: number; shape?: string; extra?: number }, n: number): string | null {
+  const d = d0.shape === 'rr' ? { pools: 1, advance: 0, extra: 0 } : d0;
+  if (d0.shape === 'ko') return n < 2 || n > MAX_BRACKET ? `A knockout-only event needs 2 to ${MAX_BRACKET} entries` : null;
+  if (d.pools < 1 || n < d.pools * 2) return 'Each pool needs at least 2 entries';
+  const extra = d.extra ?? 0;
+  if (extra < 0 || !Number.isInteger(extra)) return 'Best runners-up is a whole number';
+  if (extra > 0 && d.advance === 0) return 'Best runners-up need knockouts';
+  if (extra >= d.pools && extra > 0) return 'Best runners-up must be fewer than the number of pools';
+  const q = d.pools * d.advance + extra;
+  if (d.advance > 0 && !KNOCKOUT_SIZES.includes(q)) return extra ? `Going through makes ${q}: knockouts need 2, 4, 8 or 16` : 'Pools × players going through must make 2, 4, 8 or 16 for the knockouts';
+  const smallest = Math.min(...poolSizes(n, d.pools));
+  if (d.advance > 0 && smallest < d.advance) return 'More players go through than some pools have';
+  if (extra > 0 && smallest <= d.advance) return 'Every pool needs a runner-up for best runners-up';
   return null;
 }
 
@@ -79,7 +95,7 @@ export function buildTournamentRows(input: NewTournamentInput, players: Map<stri
   };
   if (input.entryMode === 'registration') Object.assign(tournament, { entryMode: 'registration', registrationOpen: true }, input.details ?? {});
   else if (input.details) Object.assign(tournament, input.details);
-  const divisions = input.divisions.map((d, sort): Division => ({ id: newId(), tournamentId: tournament.id, clubId: input.clubId, name: d.name.trim(), kind: d.kind, format: d.format, koFormat: d.koFormat, pools: d.pools, advance: d.advance, sort, rules: d.rules }));
+  const divisions = input.divisions.map((d, sort): Division => ({ id: newId(), tournamentId: tournament.id, clubId: input.clubId, name: d.name.trim(), kind: d.kind, format: d.format, koFormat: d.koFormat, pools: d.shape === 'ko' ? 1 : d.pools, advance: d.shape === 'ko' ? 0 : d.advance, sort, rules: d.rules, ...shapeFields(d) }));
   const drawn = drawRows(tournament, divisions.map((division, i) => ({ division, entries: input.divisions[i].entries })), players, newId);
   return { tournament, divisions, entries: drawn.entries, matches: drawn.matches };
 }
@@ -93,6 +109,18 @@ export function drawRows(t: ClubTournament, divs: { division: Division; entries:
   const matches: NewMatchRow[] = [];
   for (const { division: div, entries: groups } of divs) {
     const ordered = seedOrder(groups, (e) => entryRating(e, players, div.kind));
+    if (div.shape === 'ko') {
+      const divEntries = ordered.map((ids, i): Entry => ({ id: newId(), divisionId: div.id, clubId: div.clubId, playerIds: ids, seed: i + 1 }));
+      entries.push(...divEntries);
+      const stage = stageForSize(bracketSize(divEntries.length));
+      knockoutOnlyPairs(divEntries).forEach(([a, b], pos) => matches.push({
+        id: newId(), clubId: div.clubId, tournamentId: t.id, divisionId: div.id, stage, round: 1, bracketPos: pos,
+        entryA: a.id, entryB: b?.id, sideA: a.playerIds, sideB: b?.playerIds ?? [], format: formatFor(div, stage), games: [],
+        // A bye: no opponent, so the entry goes straight through.
+        status: b ? 'scheduled' : 'done', winner: b ? undefined : 'A', playedOn: t.startDate,
+      }));
+      continue;
+    }
     const pools = snakePools(ordered.length, div.pools);
     const divEntries = ordered.map((ids, i): Entry => ({ id: newId(), divisionId: div.id, clubId: div.clubId, playerIds: ids, seed: i + 1, pool: pools[i] }));
     entries.push(...divEntries);
@@ -105,8 +133,17 @@ export function drawRows(t: ClubTournament, divs: { division: Division; entries:
       });
     }
   }
-  const plan = scheduleSlots(matches.map((m) => ({ key: m.id, playerIds: [...m.sideA, ...m.sideB] })), t.courts);
-  for (const m of matches) { const sl = plan.get(m.id); if (sl) { m.slot = sl.slot; m.court = sl.court; } }
+  // Round-two matches between two byes can be made straight away (with their courts and times).
+  const rows = matches as ClubMatch[];
+  for (let guard = 0; guard < 6; guard++) {
+    const more = laterRounds(t, divs.map((x) => x.division).filter((x) => x.shape === 'ko'), entries, rows, newId);
+    if (!more.length) break;
+    matches.push(...more);
+  }
+  // Byes aren't played, so they get no court or time.
+  const toPlay = matches.filter((m) => m.status === 'scheduled');
+  const plan = scheduleSlots(toPlay.map((m) => ({ key: m.id, playerIds: [...m.sideA, ...m.sideB] })), t.courts);
+  for (const m of toPlay) { const sl = plan.get(m.id); if (sl) { m.slot = sl.slot; m.court = sl.court; } }
   return { entries, matches };
 }
 
@@ -119,38 +156,16 @@ export function knockoutMatchesToAdd(t: ClubTournament, divisions: Division[], e
   const emap = new Map(entries.map((e) => [e.id, e]));
   const lastSlot = Math.max(-1, ...matches.filter((m) => m.status !== 'void').map((m) => m.slot ?? -1));
   for (const div of divisions) {
-    if (div.advance === 0) continue;
+    if (div.advance === 0 || div.shape === 'ko') continue;
     const dm = matches.filter((m) => m.divisionId === div.id);
-    const pool = dm.filter((m) => m.stage === 'pool');
-    const ko = dm.filter((m) => m.stage !== 'pool' && m.status !== 'void');
-    const make = (stage: ClubMatch['stage'], bracketPos: number, round: number, a: string, b: string): NewMatchRow => ({
-      id: newId(), clubId: div.clubId, tournamentId: t.id, divisionId: div.id, stage, bracketPos, round, entryA: a, entryB: b,
-      sideA: (emap.get(a) as Entry).playerIds, sideB: (emap.get(b) as Entry).playerIds, format: div.koFormat, games: [], status: 'scheduled', playedOn: t.startDate,
-    });
-    if (!ko.length) {
-      if (!poolsComplete(div.id, matches)) continue;
-      const divEntries = entries.filter((e) => e.divisionId === div.id && e.status !== 'withdrawn');
-      const qualifiers: Qualifier[] = [];
-      const key = new Map<string, number>();
-      for (let p = 1; p <= div.pools; p++) {
-        const table = standings(divEntries.filter((e) => e.pool === p).map((e) => e.id), pool, (id) => emap.get(id)?.seed ?? 99);
-        table.slice(0, div.advance).forEach((row, i) => { qualifiers.push({ entryId: row.entryId, pool: p, place: i + 1 }); key.set(row.entryId, -(row.wins * 1000 + row.diff)); });
-      }
-      if (!KNOCKOUT_SIZES.includes(qualifiers.length)) continue;
-      const stage = stageForSize(qualifiers.length);
-      firstKnockoutPairs(qualifiers, (q) => key.get(q.entryId) ?? 0).forEach(([a, b], pos) => out.push(make(stage, pos, 1, a.entryId, b.entryId)));
-      continue;
-    }
-    // Fill in any later-round match whose two feeder matches are finished and that doesn't exist yet.
-    const latest = ko.reduce((r, m) => Math.max(r, m.round ?? 1), 1);
-    for (let r = 1; r <= latest; r++) {
-      const round = ko.filter((m) => (m.round ?? 1) === r);
-      const stage = round.length >= 2 ? nextStage(round[0].stage) : null;
-      if (!stage) continue;
-      const have = new Set(ko.filter((m) => (m.round ?? 1) === r + 1).map((m) => m.bracketPos));
-      for (const p of nextRoundPairs(round)) if (!have.has(p.bracketPos)) out.push(make(stage, p.bracketPos, r + 1, p.entryA, p.entryB));
-    }
+    if (dm.some((m) => m.stage !== 'pool' && m.status !== 'void')) continue;
+    if (!poolsComplete(div.id, matches)) continue;
+    const q = poolQualifiers(div, entries, dm.filter((m) => m.stage === 'pool'));
+    if (!KNOCKOUT_SIZES.includes(q.qualifiers.length)) continue;
+    const stage = stageForSize(q.qualifiers.length);
+    firstKnockoutPairs(q.qualifiers, (x) => q.order.get(x.entryId) ?? 0).forEach(([a, b], pos) => out.push(koRow(t, div, emap, stage, pos, 1, a.entryId, b.entryId, newId)));
   }
+  out.push(...laterRounds(t, divisions, entries, matches, newId));
   if (out.length) {
     const state = emptySlotState();
     for (const m of matches) {
@@ -163,6 +178,78 @@ export function knockoutMatchesToAdd(t: ClubTournament, divisions: Division[], e
     const plan = scheduleSlots(out.map((m) => ({ key: m.id, playerIds: [...m.sideA, ...m.sideB] })), t.courts, lastSlot + 1, state);
     for (const m of out) { const s = plan.get(m.id); if (s) { m.slot = s.slot; m.court = s.court; } }
   }
+  return out;
+}
+
+function koRow(t: ClubTournament, div: Division, emap: Map<string, Entry>, stage: KnockoutStage, bracketPos: number, round: number, a: string, b: string, newId: () => string): NewMatchRow {
+  return {
+    id: newId(), clubId: div.clubId, tournamentId: t.id, divisionId: div.id, stage, bracketPos, round, entryA: a, entryB: b,
+    sideA: (emap.get(a) as Entry).playerIds, sideB: (emap.get(b) as Entry).playerIds, format: formatFor(div, stage), games: [], status: 'scheduled', playedOn: t.startDate,
+  };
+}
+
+/** Any later-round knockout match whose two feeder matches are finished and that doesn't exist yet (not yet given a court). */
+function laterRounds(t: ClubTournament, divisions: Division[], entries: Entry[], matches: ClubMatch[], newId: () => string): NewMatchRow[] {
+  const out: NewMatchRow[] = [];
+  const emap = new Map(entries.map((e) => [e.id, e]));
+  for (const div of divisions) {
+    const ko = matches.filter((m) => m.divisionId === div.id && m.stage !== 'pool' && m.status !== 'void');
+    if (!ko.length) continue;
+    const latest = ko.reduce((r, m) => Math.max(r, m.round ?? 1), 1);
+    for (let r = 1; r <= latest; r++) {
+      const round = ko.filter((m) => (m.round ?? 1) === r);
+      const stage = round.length >= 2 ? nextStage(round[0].stage) : null;
+      if (!stage) continue;
+      const have = new Set(ko.filter((m) => (m.round ?? 1) === r + 1).map((m) => m.bracketPos));
+      for (const p of nextRoundPairs(round)) if (!have.has(p.bracketPos)) out.push(koRow(t, div, emap, stage, p.bracketPos, r + 1, p.entryA, p.entryB, newId));
+    }
+  }
+  return out;
+}
+
+export interface PoolQualifiers {
+  /** Everyone going through, with their pool and place. */
+  qualifiers: Qualifier[];
+  /** Seeding order across pools (lower is better), used to seed the knockout. */
+  order: Map<string, number>;
+  /** The runners-up compared for the best-runner-up places, best first, and how many of them go through. */
+  runnersUp: StandingRow[];
+  extra: number;
+}
+
+/**
+ * Who goes through from the pools: the top `advance` of each pool, plus (with best runners-up) the best next-placed
+ * entries across pools. Places and the cross-pool order use the same tie-breaks as the pool tables.
+ */
+export function poolQualifiers(div: Division, entries: Entry[], poolMatches: ClubMatch[]): PoolQualifiers {
+  const emap = new Map(entries.map((e) => [e.id, e]));
+  const seedOf = (id: string) => emap.get(id)?.seed ?? 99;
+  const active = entries.filter((e) => e.divisionId === div.id && e.status !== 'withdrawn');
+  const extra = div.extra ?? 0;
+  const byPlace: { row: StandingRow; pool: number; place: number }[] = [];
+  const runnersUp: { row: StandingRow; pool: number }[] = [];
+  for (let p = 1; p <= div.pools; p++) {
+    const table = standings(active.filter((e) => (e.pool ?? 1) === p).map((e) => e.id), poolMatches, seedOf);
+    table.slice(0, div.advance).forEach((row, i) => byPlace.push({ row, pool: p, place: i + 1 }));
+    if (extra > 0 && table[div.advance]) runnersUp.push({ row: table[div.advance], pool: p });
+  }
+  const ranked = crossPoolOrder(runnersUp.map((r) => r.row), seedOf);
+  const best = ranked.slice(0, extra).map((row) => ({ row, pool: (runnersUp.find((r) => r.row === row) as { pool: number }).pool, place: div.advance + 1 }));
+  const all = [...byPlace, ...best];
+  const order = new Map<string, number>();
+  // Seed within each place across pools by the same per-match comparison.
+  for (const place of [...new Set(all.map((x) => x.place))]) {
+    crossPoolOrder(all.filter((x) => x.place === place).map((x) => x.row), seedOf).forEach((row, i) => order.set(row.entryId, i));
+  }
+  return { qualifiers: all.map((x) => ({ entryId: x.row.entryId, pool: x.pool, place: x.place })), order, runnersUp: ranked, extra };
+}
+
+/** The knockout/shape fields to copy onto a division. */
+export function shapeFields(d: Pick<NewDivisionInput, 'shape' | 'extra' | 'stageFormats'>): Pick<Division, 'shape' | 'extra' | 'stageFormats'> {
+  const out: Pick<Division, 'shape' | 'extra' | 'stageFormats'> = {};
+  if (d.shape === 'ko') out.shape = 'ko';
+  if (d.extra) out.extra = d.extra;
+  if (d.stageFormats && Object.keys(d.stageFormats).length) out.stageFormats = d.stageFormats;
   return out;
 }
 
@@ -221,6 +308,7 @@ export function planLateEntry(t: ClubTournament, div: Division, playerIds: strin
   if (playerIds.length !== need || new Set(playerIds).size !== need) return div.kind === 'doubles' ? 'Choose two different players' : 'Choose a player';
   const taken = enteredPlayers(entries, div.id);
   if (playerIds.some((p) => taken.has(p))) return 'A player is already entered in this event';
+  if (div.shape === 'ko') return 'This is a knockout, so new entries can’t join after the draw';
   if (matches.some((m) => m.divisionId === div.id && m.stage !== 'pool')) return 'Knockouts have started, so new entries can’t join';
   const active = entries.filter((e) => e.divisionId === div.id && e.status !== 'withdrawn');
   const sizes = Array.from({ length: div.pools }, (_, i) => ({ pool: i + 1, n: active.filter((e) => (e.pool ?? 1) === i + 1).length }));

@@ -32,7 +32,8 @@ export function duprCheck(matches: ClubMatch[], players: Map<string, ClubPlayer>
   const out: DuprCheck = { ready: [], missingIds: [], playersMissing: [], unfinished: 0, noScores: 0 };
   const missing = new Set<string>();
   for (const m of matches) {
-    if (m.status === 'void') continue;
+    // Cancelled matches and knockout byes (no opponent) were never played.
+    if (m.status === 'void' || !m.sideB.length || !m.sideA.length) continue;
     if (m.status !== 'done') { out.unfinished++; continue; }
     if (!m.games.length || !matchResult(m).winner) { out.noScores++; continue; }
     const ids = [...m.sideA, ...m.sideB];

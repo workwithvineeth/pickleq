@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Field } from '../../components/Controls';
 import type { NewMatch } from '../../db/matches';
 import type { Go } from '../../navigation';
-import { clubServerConfig, setClubMode } from '../config';
+import { clubServerConfig, isClubApp, setClubMode } from '../config';
 import { backend, demoBackend, serverBackend, takeReturn } from '../index';
 import { importClubMatches, pendingClubMatches } from '../personal';
 import { DemoNote, errorText, Header, RoleBadge, Status, useLoad } from './common';
@@ -18,7 +18,8 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     if (!b) return null;
     const user = await b.currentUser();
     if (!user) return null;
-    const [clubs, pending] = await Promise.all([b.myClubs(), pendingClubMatches(b).catch(() => [] as NewMatch[])]);
+    // PQ Club (the club-only app) has no personal history to add club matches to.
+    const [clubs, pending] = await Promise.all([b.myClubs(), isClubApp() ? [] as NewMatch[] : pendingClubMatches(b).catch(() => [] as NewMatch[])]);
     return { user, clubs, pending };
   }, [b]);
   const [msg, setMsg] = useState<string | null>(null);
@@ -48,20 +49,32 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   const signedIn = state.data;
   return (
     <main className="screen" aria-labelledby="club-title">
-      <Header id="club-title" title="Club" onBack={onBack} />
+      <Header id="club-title" title={isClubApp() ? 'My club' : 'Club'} onBack={isClubApp() ? undefined : onBack} />
       <Status error={state.error} loading={state.loading && !signedIn} />
       {!state.loading && !signedIn && (
         <>
-          <section className="card section" aria-label="About Club mode">
-            <h2 style={{ fontSize: 18 }}>Play with your club</h2>
-            <p className="small" style={{ margin: 0 }}>Run club tournaments with live scoring, and give coaches a view of where each player wins and loses points.</p>
-            <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
-              <li>Your personal PICKLEQ stays on this phone. Nothing is shared unless you choose.</li>
-              <li>Club matches you play can be added to your own history.</li>
-              <li>Signing in is only needed for Club mode.</li>
-            </ul>
-          </section>
+          {isClubApp() ? (
+            <section className="card section" aria-label="About PQ Club">
+              <h2 style={{ fontSize: 18 }}>Run your club’s tournaments</h2>
+              <p className="small" style={{ margin: 0 }}>Entries (or import them from a Google Form), the draw, a scorer on every court with a PIN link, and live results anyone can open.</p>
+              <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
+                <li>Organisers and helpers sign in with email. Players and scorers don’t need an account.</li>
+                <li>Joining a club? Open the invite link the club sent you, or paste it below.</li>
+              </ul>
+            </section>
+          ) : (
+            <section className="card section" aria-label="About Club mode">
+              <h2 style={{ fontSize: 18 }}>Play with your club</h2>
+              <p className="small" style={{ margin: 0 }}>Run club tournaments with live scoring, and give coaches a view of where each player wins and loses points.</p>
+              <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
+                <li>Your personal PICKLEQ stays on this phone. Nothing is shared unless you choose.</li>
+                <li>Club matches you play can be added to your own history.</li>
+                <li>Signing in is only needed for Club mode.</li>
+              </ul>
+            </section>
+          )}
           {server && <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in with email</button>}
+          {isClubApp() && <JoinByLink go={go} />}
           <section className="card section" aria-label="Demo club">
             <h2 style={{ fontSize: 18 }}>Try the demo club</h2>
             <p className="small muted" style={{ margin: 0 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone.</p>
@@ -95,11 +108,24 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           </section>
           {b?.kind === 'server' && <button type="button" className="btn btn-outline" onClick={() => go('club-new')}>Create a club</button>}
           <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={signOut}>
-            {b?.kind === 'demo' ? 'Close the demo and delete it from this phone' : 'Sign out of Club mode'}
+            {b?.kind === 'demo' ? 'Close the demo and delete it from this phone' : isClubApp() ? 'Sign out' : 'Sign out of Club mode'}
           </button>
         </>
       )}
     </main>
+  );
+}
+
+/** Paste an invite link (or its code) to join a club. */
+function JoinByLink({ go }: { go: Go }) {
+  const [v, setV] = useState('');
+  const code = (v.match(/club-join\/([^/?#\s]+)/)?.[1] ?? v.trim()).replace(/[^A-Za-z0-9-]/g, '');
+  return (
+    <section className="card section" aria-label="Join a club">
+      <h2 style={{ fontSize: 18 }}>Join a club</h2>
+      <input className="input" aria-label="Invite link or code" placeholder="Paste the invite link" value={v} onChange={(e) => setV(e.target.value)} />
+      <button type="button" className="btn btn-outline" disabled={code.length < 4} onClick={() => go('club-join', code)}>Join</button>
+    </section>
   );
 }
 

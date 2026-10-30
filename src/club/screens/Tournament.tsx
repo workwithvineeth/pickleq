@@ -1,27 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/db';
-import type { BestOf, Format, PointsTo } from '../../domain/types';
 import type { Go } from '../../navigation';
 import type { PublicTournament, TournamentBundle } from '../backend';
-import { entryRating, matchResult, poolLetter, slotTime, standings } from '../domain/engine';
+import { entryRating, formatFor, matchResult, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor } from '../index';
-import { checkDivisionSetup, knockoutMatchesToAdd, type NewDivisionInput } from '../plan';
-import { isStaff, STAGE_LABEL, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
+import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, type NewDivisionInput } from '../plan';
+import { isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
+import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-type Shape = 'rr' | 'pools-ko';
-interface DivDraft { name: string; kind: DivisionKind; shape: Shape; pools: number; advance: number; pointsTo: PointsTo; golden: boolean; koBestOf: BestOf; koGolden: boolean; picked: string[]; teams: string[][]; gender: DivisionGender; maxDupr: string; minAge: string; cap: string; fee: string }
-const newDraft = (kind: DivisionKind): DivDraft => ({ name: kind === 'singles' ? 'Open Singles' : 'Open Doubles', kind, shape: 'pools-ko', pools: 2, advance: 2, pointsTo: 11, golden: true, koBestOf: 3, koGolden: false, picked: [], teams: [], gender: 'open', maxDupr: '', minAge: '', cap: '', fee: '' });
+interface DivDraft { name: string; kind: DivisionKind; fmt: FormatDraft; picked: string[]; teams: string[][]; gender: DivisionGender; maxDupr: string; duprCap: 'each' | 'average'; minAge: string; cap: string; fee: string }
+const newDraft = (kind: DivisionKind): DivDraft => ({ name: kind === 'singles' ? 'Open Singles' : 'Open Doubles', kind, fmt: defaultFormatDraft(), picked: [], teams: [], gender: 'open', maxDupr: '', duprCap: 'each', minAge: '', cap: '', fee: '' });
 /** What the organiser is posting: run on PICKLEQ with players picked now, run on PICKLEQ with players registering, or a board listing only. */
 type PostKind = 'roster' | 'registration' | 'listed';
 const optNum = (v: string) => (v.trim() === '' ? undefined : Number(v));
-const SCORING = [{ value: 'golden', label: 'Golden point' }, { value: 'win2', label: 'Win by 2' }];
 
 export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; onBack: () => void }) {
   const b = backend();
@@ -31,6 +29,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   const [time, setTime] = useState('08:00');
   const [courts, setCourts] = useState(4);
   const [slot, setSlot] = useState(20);
+  const [finishBy, setFinishBy] = useState('');
   const [divs, setDivs] = useState<DivDraft[]>([newDraft('singles')]);
   const [post, setPost] = useState<PostKind>('roster');
   const [city, setCity] = useState('');
@@ -46,13 +45,14 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   const [busy, setBusy] = useState(false);
   const players = useMemo(() => [...(club.data?.players ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [club.data]);
   const pmap = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  const entryCount = (d: DivDraft) => (d.kind === 'singles' ? d.picked.length : d.teams.length);
   const update = (i: number, patch: Partial<DivDraft>) => setDivs((ds) => ds.map((d, j) => (j === i ? { ...d, ...patch } : d)));
 
   function toInput(d: DivDraft): NewDivisionInput {
-    const fmt: Format = { pointsTo: d.pointsTo, bestOf: 1, scoring: 'sideout', golden: d.golden };
-    const rr = d.shape === 'rr' || post !== 'roster';
-    const rules = { gender: d.gender, maxDupr: optNum(d.maxDupr), minAge: optNum(d.minAge), cap: optNum(d.cap), fee: optNum(d.fee) };
-    return { name: d.name, kind: d.kind, format: fmt, koFormat: { ...fmt, bestOf: d.koBestOf, golden: d.koGolden }, pools: rr ? 1 : d.pools, advance: rr ? 0 : d.advance, entries: post === 'roster' ? (d.kind === 'singles' ? d.picked.map((p) => [p]) : d.teams) : [], rules: post === 'roster' ? undefined : rules };
+    // Players who register: the format is chosen at the draw, once the number of entries is known.
+    const f = draftToDivision(post === 'roster' ? d.fmt : { ...d.fmt, shape: 'rr' });
+    const rules = { gender: d.gender, maxDupr: optNum(d.maxDupr), ...(d.kind === 'doubles' && d.duprCap === 'average' && d.maxDupr.trim() ? { duprCap: 'average' as const } : {}), minAge: optNum(d.minAge), cap: optNum(d.cap), fee: optNum(d.fee) };
+    return { name: d.name, kind: d.kind, ...f, entries: post === 'roster' ? (d.kind === 'singles' ? d.picked.map((p) => [p]) : d.teams) : [], rules: post === 'roster' ? undefined : rules };
   }
   const mode: EntryMode = post === 'registration' ? 'registration' : 'roster';
   async function create() {
@@ -121,32 +121,21 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
         </>
       )}
       {post !== 'listed' && <><Field label="Courts"><Chips label="Courts" value={courts} options={[1, 2, 3, 4, 5, 6, 8, 10].map((n) => ({ value: n, label: String(n) }))} onChange={setCourts} /></Field>
-      <Field label="Minutes per match slot"><Chips label="Minutes per match slot" value={slot} options={[15, 20, 25, 30, 40].map((n) => ({ value: n, label: String(n) }))} onChange={setSlot} /></Field></>}
+      <Field label="Minutes per match slot"><Chips label="Minutes per match slot" value={slot} options={SLOT_OPTIONS.map((n) => ({ value: n, label: String(n) }))} onChange={setSlot} /></Field></>}
       {divs.map((d, i) => (
         <section key={i} className="card section" aria-label={`Event ${i + 1}`}>
           <input className="input" aria-label={`Event ${i + 1} name`} value={d.name} onChange={(e) => update(i, { name: e.target.value })} />
           <Segmented label={`Event ${i + 1} type`} value={d.kind} options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} onChange={(k) => update(i, { kind: k, picked: [], teams: [] })} />
           {post !== 'roster' && <DivisionRulesFields d={d} label={`Event ${i + 1}`} onChange={(patch) => update(i, patch)} />}
-          {post === 'registration' && <p className="small muted" style={{ margin: 0 }}>You choose round robin or pools and knockouts when you make the draw, once you know how many entered.</p>}
-          {post === 'roster' && <Field label="Format"><Segmented label={`Event ${i + 1} format`} value={d.shape} options={[{ value: 'rr', label: 'Round robin' }, { value: 'pools-ko', label: 'Pools, then knockouts' }]} onChange={(v) => update(i, { shape: v })} /></Field>}
-          {post === 'roster' && d.shape === 'rr' && <p className="small muted" style={{ margin: 0 }}>Everyone plays everyone once. The table decides the winner.</p>}
-          {post === 'roster' && d.shape === 'pools-ko' && <>
-            <Field label="Pools"><Chips label={`Event ${i + 1} pools`} value={d.pools} options={[1, 2, 3, 4, 6, 8].map((n) => ({ value: n, label: String(n) }))} onChange={(v) => update(i, { pools: v })} /></Field>
-            <Field label="Go through to knockouts, per pool"><Chips label={`Event ${i + 1} going through`} value={d.advance} options={[1, 2, 4].map((n) => ({ value: n, label: String(n) }))} onChange={(v) => update(i, { advance: v })} /></Field>
-          </>}
-          {post !== 'listed' && <><Field label="Games to"><Chips label={`Event ${i + 1} games to`} value={d.pointsTo} options={[11, 15, 21].map((n) => ({ value: n as PointsTo, label: String(n) }))} onChange={(v) => update(i, { pointsTo: v })} /></Field>
-          <Field label={d.shape === 'rr' ? 'At level scores' : 'Pool games, at level scores'}><Segmented label={`Event ${i + 1} scoring`} value={d.golden ? 'golden' : 'win2'} options={SCORING} onChange={(v) => update(i, { golden: v === 'golden' })} /></Field>
-          <p className="small muted" style={{ margin: 0 }}>{d.golden ? `Golden point: at ${d.pointsTo - 1}–${d.pointsTo - 1} the next point wins.` : `Win by 2: play on past ${d.pointsTo} until someone leads by 2.`}</p></>}
-          {(post === 'registration' || (post === 'roster' && d.shape === 'pools-ko')) && <>
-            <Field label="Knockout matches"><Chips label={`Event ${i + 1} knockout matches`} value={d.koBestOf} options={[{ value: 1 as BestOf, label: 'One game' }, { value: 3 as BestOf, label: 'Best of 3' }]} onChange={(v) => update(i, { koBestOf: v })} /></Field>
-            <Field label="Knockout games, at level scores"><Segmented label={`Event ${i + 1} knockout scoring`} value={d.koGolden ? 'golden' : 'win2'} options={SCORING} onChange={(v) => update(i, { koGolden: v === 'golden' })} /></Field>
-          </>}
+          {post === 'registration' && <p className="small muted" style={{ margin: 0 }}>You choose the format (round robin, pools and knockouts, or knockout only, and the points for each round) when you make the draw, once you know how many entered.</p>}
+          {post === 'roster' && <FormatFields label={`Event ${i + 1}`} entries={entryCount(d)} value={d.fmt} onChange={(patch) => update(i, { fmt: { ...d.fmt, ...patch } })} />}
           {post === 'roster' && <EntryPicker d={d} players={players} pmap={pmap} onChange={(patch) => update(i, patch)} label={`Event ${i + 1}`} />}
           {divs.length > 1 && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setDivs((ds) => ds.filter((_, j) => j !== i))}>Remove this event</button>}
         </section>
       ))}
       <button type="button" className="btn btn-outline" onClick={() => setDivs((ds) => [...ds, newDraft(ds.some((x) => x.kind === 'doubles') ? 'singles' : 'doubles')])}>Add another event</button>
       {post === 'roster' && b && club.data && <WalkIn b={b} clubId={clubId} onAdded={(p) => { setMsg(null); club.reload(); setDivs((ds) => ds.map((d, j) => (j === ds.length - 1 ? { ...d, picked: [...d.picked, p.id] } : d))); }} />}
+      {post === 'roster' && <DayEstimateBox events={divs.map((d) => ({ name: d.name, entries: entryCount(d), ...d.fmt }))} courts={courts} slotMinutes={slot} startTime={time} finishBy={finishBy} onFinishBy={setFinishBy} onUse={(i, c) => update(i, { fmt: { ...divs[i].fmt, ...c } })} />}
       {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players are seeded by DUPR and spread across pools so the strongest don’t meet early. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
       {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by PICKLEQ before it shows on the board. Adults only (18+).</p>}
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
@@ -167,6 +156,11 @@ function DivisionRulesFields({ d, label, onChange }: { d: DivDraft; label: strin
         <Field label="Most entries (optional)"><input className="input" aria-label={`${label} most entries`} inputMode="numeric" placeholder="e.g. 16" value={d.cap} onChange={(e) => num('cap', e.target.value)} /></Field>
         <Field label="Entry fee, ₹ (optional)"><input className="input" aria-label={`${label} entry fee`} inputMode="numeric" placeholder={d.kind === 'doubles' ? 'per team' : 'per player'} value={d.fee} onChange={(e) => num('fee', e.target.value)} /></Field>
       </div>
+      {d.kind === 'doubles' && d.maxDupr.trim() !== '' && (
+        <Field label="The DUPR cap is for">
+          <Segmented label={`${label} DUPR cap is for`} value={d.duprCap} options={[{ value: 'each', label: 'Each player' }, { value: 'average', label: 'Team average' }]} onChange={(v) => onChange({ duprCap: v })} />
+        </Field>
+      )}
     </div>
   );
 }
@@ -276,7 +270,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
 }
 
 /** Shared by the club's tournament view and the public results page. */
-function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<TournamentBundle, 'divisions' | 'entries' | 'matches'> & { tournament: { startTime: string; slotMinutes: number } }; divisionId: string; view: View; onScore?: (matchId: string) => void; label: (e?: Entry) => string }) {
+export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<TournamentBundle, 'divisions' | 'entries' | 'matches'> & { tournament: { startTime: string; slotMinutes: number } }; divisionId: string; view: View; onScore?: (matchId: string) => void; label: (e?: Entry) => string }) {
   const division = d.divisions.find((x) => x.id === divisionId);
   const entries = d.entries.filter((e) => e.divisionId === divisionId);
   const emap = new Map(entries.map((e) => [e.id, e]));
@@ -297,30 +291,26 @@ function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<Tournam
     );
   }
   if (view === 'pools') {
+    if (division.shape === 'ko') return <p className="small muted">This event is a knockout only: see Knockouts.</p>;
     const pools = [...new Set(entries.map((e) => e.pool ?? 1))].sort((a, b) => a - b);
+    const poolMatches = matches.filter((m) => m.stage === 'pool');
+    const q = (division.extra ?? 0) > 0 ? poolQualifiers(division, entries, poolMatches) : null;
+    const bestIds = new Set(q ? q.runnersUp.slice(0, q.extra).map((r) => r.entryId) : []);
     return (
       <section className="section" aria-label="Pools">
         {pools.map((p) => {
           const ids = entries.filter((e) => (e.pool ?? 1) === p).map((e) => e.id);
-          const rows = standings(ids, matches.filter((m) => m.stage === 'pool'), (id) => emap.get(id)?.seed ?? 99);
-          return (
-            <div key={p} className="card section">
-              <h3 style={{ fontSize: 16 }}>Pool {poolLetter(p)}</h3>
-              <table className="table" aria-label={`Pool ${poolLetter(p)}`}>
-                <thead><tr><th>#</th><th>Name</th><th>P</th><th>W</th><th>+/−</th></tr></thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.entryId} style={r.rank <= division.advance ? { fontWeight: 600 } : undefined}>
-                      <td>{r.rank}</td><td>{label(emap.get(r.entryId))}{r.rank <= division.advance && <span className="pill pill-ok" style={{ marginLeft: 6 }}>Through</span>}</td>
-                      <td>{r.played}</td><td>{r.wins}</td><td>{r.diff > 0 ? `+${r.diff}` : r.diff}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          );
+          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={(id) => label(emap.get(id))} />;
         })}
-        <p className="small muted" style={{ margin: 0 }}>Ties are split by: wins, then head-to-head between the tied players, then points difference, then points won, then seed.</p>
+        {q && q.runnersUp.length > 0 && (
+          <div className="card section">
+            <h3 style={{ fontSize: 16 }}>Best {division.advance === 1 ? 'runners-up' : `${division.advance + 1}-placed`} ({q.extra} go through)</h3>
+            <PoolTable title={`Best ${division.advance === 1 ? 'runners-up' : 'next-placed'}`} bare rows={q.runnersUp.map((r, i) => ({ ...r, rank: i + 1 }))} through={(r) => r.rank <= q.extra} label={(id) => `${label(emap.get(id))} (${poolLetter(emap.get(id)?.pool)})`} />
+            <p className="small muted" style={{ margin: 0 }}>{RUNNERS_UP_TEXT}</p>
+          </div>
+        )}
+        <p className="small muted" style={{ margin: 0 }}>P played · W won · L lost · PF points scored · PA points conceded · +/− points difference.</p>
+        <p className="small muted" style={{ margin: 0 }}>{TIE_BREAK_TEXT}</p>
       </section>
     );
   }
@@ -328,19 +318,44 @@ function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<Tournam
   const rounds = [...new Set(ko.map((m) => m.round ?? 1))];
   return (
     <section className="section" aria-label="Knockouts">
-      {division.advance === 0 && <p className="small muted">This event has no knockouts.</p>}
+      {division.advance === 0 && division.shape !== 'ko' && <p className="small muted">This event has no knockouts.</p>}
       {division.advance > 0 && ko.length === 0 && <p className="small muted">Knockouts are drawn once every pool match is finished.</p>}
       {rounds.map((r) => {
         const ms = ko.filter((m) => (m.round ?? 1) === r);
+        const stage = ms[0].stage as KnockoutStage;
+        const f = formatFor(division, stage);
         return (
           <div key={r} className="section">
-            <h3 style={{ fontSize: 16 }}>{STAGE_LABEL[ms[0].stage]}{ms[0].stage === 'final' ? '' : 's'}</h3>
-            {ms.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} onScore={onScore} />)}
+            <h3 style={{ fontSize: 16 }}>{ROUND_LABEL[stage] ?? STAGE_LABEL[stage]}</h3>
+            <p className="small muted" style={{ margin: 0 }}>{f.bestOf === 3 ? 'Best of 3 games' : 'One game'} to {f.pointsTo}{f.golden ? ', golden point' : ''}</p>
+            {ms.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={m.entryB ? label(emap.get(m.entryB)) : 'Bye'} onScore={onScore} />)}
           </div>
         );
       })}
     </section>
   );
+}
+
+/** A pool table: P · W · L · PF · PA · +/−. Names wrap so it fits a 320 px phone. */
+function PoolTable({ title, rows, through, best, label, bare }: { title: string; rows: StandingRow[]; through: (r: StandingRow) => boolean; best?: (r: StandingRow) => boolean; label: (id: string) => string; bare?: boolean }) {
+  const table = (
+    <table className="table pool-table" aria-label={title} style={{ fontSize: 13, tableLayout: 'auto', width: '100%' }}>
+      <thead><tr><th>#</th><th style={{ width: '100%' }}>Name</th><th>P</th><th>W</th><th>L</th><th>PF</th><th>PA</th><th>+/−</th></tr></thead>
+      <tbody>
+        {rows.map((r) => {
+          const pill = through(r) ? 'Through' : best?.(r) ? 'Best runner-up' : null;
+          return (
+            <tr key={r.entryId} style={pill ? { fontWeight: 600 } : undefined}>
+              <td>{r.rank}</td><td style={{ wordBreak: 'break-word' }}>{label(r.entryId)}{pill && <><br /><span className="pill pill-ok">{pill}</span></>}</td>
+              <td>{r.played}</td><td>{r.wins}</td><td>{r.losses}</td><td>{r.pointsFor}</td><td>{r.pointsAgainst}</td><td>{r.diff > 0 ? `+${r.diff}` : r.diff}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+  if (bare) return table;
+  return <div className="card section"><h3 style={{ fontSize: 16 }}>{title}</h3>{table}</div>;
 }
 
 function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; onScore?: (id: string) => void }) {
@@ -356,7 +371,7 @@ function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; 
         <span className="small muted">{where}</span>
       </span>
       <span className="small" style={{ textAlign: 'right' }}>
-        {m.status === 'void' ? <span className="pill">Cancelled</span> : m.status === 'done' && !m.games.length ? 'Walkover' : m.status === 'done' ? score : m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : onScore ? <span className="pill">Score</span> : <span className="pill">To play</span>}
+        {m.status === 'void' ? <span className="pill">Cancelled</span> : m.status === 'done' && !m.entryB && !m.sideB.length && m.stage !== 'pool' ? 'Through (bye)' : m.status === 'done' && !m.games.length ? 'Walkover' : m.status === 'done' ? score : m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : onScore ? <span className="pill">Score</span> : <span className="pill">To play</span>}
       </span>
     </>
   );
@@ -401,7 +416,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
               entries: d.entries.map((e) => ({ ...e, clubId: '', playerIds: e.names })),
               matches: d.matches.map((m): ClubMatch => {
                 const dv = d.divisions.find((x) => x.id === m.divisionId) ?? division;
-                return { ...m, clubId: '', sideA: [], sideB: [], format: m.stage === 'pool' ? dv.format : dv.koFormat, updatedAt: '' };
+                return { ...m, clubId: '', sideA: [], sideB: [], format: formatFor(dv, m.stage), updatedAt: '' };
               }),
               tournament: { startTime: d.startTime, slotMinutes: d.slotMinutes },
             }}

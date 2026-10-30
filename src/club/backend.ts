@@ -37,7 +37,7 @@ export interface PublicTournament {
   slotMinutes: number;
   status: ClubTournament['status'];
   club: string;
-  divisions: Pick<Division, 'id' | 'name' | 'kind' | 'pools' | 'advance' | 'format' | 'koFormat'>[];
+  divisions: Pick<Division, 'id' | 'name' | 'kind' | 'pools' | 'advance' | 'format' | 'koFormat' | 'shape' | 'extra' | 'stageFormats'>[];
   entries: { id: string; divisionId: string; seed?: number; pool?: number; names: string[] }[];
   matches: Pick<ClubMatch, 'id' | 'divisionId' | 'stage' | 'pool' | 'round' | 'bracketPos' | 'slot' | 'court' | 'entryA' | 'entryB' | 'games' | 'status' | 'winner'>[];
 }
@@ -165,6 +165,8 @@ export interface ListingReview {
 
 export type TournamentDetails = Partial<Pick<ClubTournament, 'name' | 'startDate' | 'startTime' | 'city' | 'venue' | 'about' | 'contact' | 'link' | 'registrationOpen' | 'entriesClose' | 'upiId'>>;
 export interface RegistrationPatch { status?: RegistrationStatus; payment?: Payment; note?: string | null; players?: EntryPerson[]; divisionId?: string }
+export interface ImportEntryRow { divisionId: string; players: EntryPerson[]; status: 'accepted' | 'pending'; payment: 'unpaid' | 'venue' | 'paid' }
+export interface ImportResult { added: number; waitlisted: number; skipped: number; problems: { row: number; error: string }[] }
 export interface OfflineEntry { tournamentId: string; divisionId: string; clubId: string; players: EntryPerson[]; status: RegistrationStatus; payment: Payment }
 
 /** Module 2: the events board, registration, the entries inbox and listing approval. */
@@ -185,6 +187,11 @@ export interface EventsBackend {
   registrations(tournamentId: string): Promise<Registration[]>;
   updateRegistration(id: string, patch: RegistrationPatch): Promise<void>;
   addOfflineEntry(e: OfflineEntry): Promise<void>;
+  /**
+   * Adds entries imported from a sheet. Anyone already entered in that event (same phone, else name) is skipped, so
+   * importing the same sheet again adds only new rows. Full events put new entries on the waitlist.
+   */
+  importEntries(tournamentId: string, rows: ImportEntryRow[]): Promise<ImportResult>;
   /** The server's eligibility check, for an entry the organiser is adding or changing. Null if it's fine. */
   checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null>;
   /** Makes the draw: roster players, entries, matches; links each registration to its entry and closes entries. */

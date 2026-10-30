@@ -1,0 +1,10 @@
+Timestamp,Email Address,Are you playing,Player Name,Phone Number,DUPR Rating,DUPR ID,Partner Name,Partner Phone Number,Partner DUPR Rating
+10/28/2026 18:02:11,robot.one@example.com,SINGLES,Robot Aarav,98480 11001,3.21,ROB001,,,
+10/28/2026 18:05:40,robot.two@example.com,SINGLES,Robot Bhavya,+91 98480 11002,3.4,,,,
+10/28/2026 18:09:03,robot.three@example.com,DOUBLES,Robot Chetan,9848011003,3.6,ROB003,Robot Divya,9848011004,3.2
+10/28/2026 18:12:55,robot.four@example.com,DOUBLES,Robot Esha,9848011005,3.1,,"Robot Farhan, Jr",9848011006,NA
+10/28/2026 18:20:10,robot.five@example.com,SINGLES,Robot Gopal,9848011007,3.9,,,,
+10/28/2026 18:31:42,robot.six@example.com,DOUBLES,Robot Harsha,9848011008,3.3,,,,
+10/28/2026 18:40:00,robot.seven@example.com,SINGLES,Robot Aarav again,98480-11001,3.21,,,,
+10/28/2026 18:44:19,robot.eight@example.com,SINGLES,Robot Chetan,9848011003,3.4,ROB003,,,
+10/28/2026 19:02:41,robot.nine@example.com,DOUBLES,Robot Ishaan,9848011009,3.0,,Robot Jaya,9848011010,3.4

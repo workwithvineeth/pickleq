@@ -310,7 +310,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
       <p className="small muted" style={{ margin: 0 }}>{e.name} · {dayLabel(e.startDate)} · {rulesLine(d.kind, d.rules)}</p>
       <PersonFields label="You" p={me} onChange={setMe} />
       {d.kind === 'doubles' && <PersonFields label="Partner" p={partner} onChange={setPartner} />}
-      {d.rules.maxDupr !== undefined && <p className="small muted" style={{ margin: 0 }}>This event is for DUPR {capText(d.rules.maxDupr)} and under, so every player needs a rating.</p>}
+      {d.rules.maxDupr !== undefined && <p className="small muted" style={{ margin: 0 }}>{d.kind === 'doubles' && d.rules.duprCap === 'average' ? `This event is for teams with an average DUPR of ${capText(d.rules.maxDupr)} and under, so both players need a rating.` : `This event is for DUPR ${capText(d.rules.maxDupr)} and under, so every player needs a rating.`}</p>}
       {fee > 0 && (
         <section className="card section" aria-label="Entry fee">
           <div className="row"><b>Entry fee</b><b>₹{fee}</b></div>

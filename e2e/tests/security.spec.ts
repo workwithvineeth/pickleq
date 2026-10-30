@@ -27,6 +27,8 @@ test.describe('Server security (no account)', () => {
       ['set_member_role', { cid: '00000000-0000-0000-0000-000000000000', member: '00000000-0000-0000-0000-000000000000', new_role: 'admin' }],
       ['scorer_check', { p_token: box.links.court1.token, p_pin: box.links.court1.pin }],
       ['robot_reset', {}],
+      ['import_entries', { p_tournament: '00000000-0000-0000-0000-000000000000', p_rows: [] }],
+      ['person_key', { p: {} }],
     ] as const) {
       const r = await rpc(fn, args);
       expect(r.status, fn).toBeGreaterThanOrEqual(400);

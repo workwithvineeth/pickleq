@@ -1,10 +1,10 @@
 import { newId } from '../db/ids';
-import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
 import { blobToDataUrl } from './poster';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
-import { digits, entryProblem, isActive, type DrawPlan } from './registration';
+import { digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
 import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
 interface DemoState {
@@ -415,7 +415,7 @@ export class DemoBackend implements ClubBackend {
     const divs = this.s.divisions.filter((d) => d.tournamentId === t.id).sort((a, b) => a.sort - b.sort);
     return {
       name: t.name, startDate: t.startDate, startTime: t.startTime, slotMinutes: t.slotMinutes, status: t.status, club: this.club(t.clubId).name,
-      divisions: divs.map(({ id, name, kind, pools, advance, format, koFormat }) => ({ id, name, kind, pools, advance, format, koFormat })),
+      divisions: divs.map(({ id, name, kind, pools, advance, format, koFormat, shape, extra, stageFormats }) => ({ id, name, kind, pools, advance, format, koFormat, shape, extra, stageFormats })),
       entries: this.s.entries.filter((e) => divs.some((d) => d.id === e.divisionId)).map((e) => ({ id: e.id, divisionId: e.divisionId, seed: e.seed, pool: e.pool, names: e.playerIds.map((p) => names.get(p) ?? '') })),
       matches: this.s.matches.filter((m) => m.tournamentId === t.id).map((m) => ({
         id: m.id, divisionId: m.divisionId, stage: m.stage, pool: m.pool, round: m.round, bracketPos: m.bracketPos, slot: m.slot, court: m.court,
@@ -589,6 +589,31 @@ export class DemoBackend implements ClubBackend {
     this.save();
   }
 
+  async importEntries(tournamentId: string, rows: ImportEntryRow[]): Promise<ImportResult> {
+    const t = this.tournament(tournamentId);
+    this.need(t.clubId, isStaff, 'Only the organiser can import entries');
+    if (t.entryMode !== 'registration') throw new ClubError('Importing is for tournaments where players register');
+    if (t.drawnAt) throw new ClubError('The draw is made. Add new players as late entries.');
+    if (rows.length > 400) throw new ClubError('Import up to 400 rows at a time');
+    const out: ImportResult = { added: 0, waitlisted: 0, skipped: 0, problems: [] };
+    rows.forEach((x, i) => {
+      const d = this.s.divisions.find((y) => y.id === x.divisionId && y.tournamentId === t.id);
+      if (!d) { out.problems.push({ row: i + 1, error: 'That event isn’t part of this tournament' }); return; }
+      // Same rule as the server: anyone already entered in this event (any status) is skipped.
+      const known = new Set(this.regs().filter((r) => r.divisionId === d.id).flatMap((r) => r.players.map(personKey)));
+      if (x.players.some((p) => known.has(personKey(p)))) { out.skipped++; return; }
+      const problem = entryProblem(d.kind, d.rules, x.players, false);
+      if (problem) { out.problems.push({ row: i + 1, error: problem }); return; }
+      const taken = this.regs().filter((r) => r.divisionId === d.id && (r.status === 'pending' || r.status === 'accepted')).length;
+      const status = d.rules?.cap !== undefined && taken >= d.rules.cap ? 'waitlist' : x.status;
+      this.regs().push({ id: newId(), tournamentId: t.id, divisionId: d.id, clubId: d.clubId, source: 'offline', players: x.players.map((p) => ({ ...p, name: p.name.trim(), phone: p.phone.trim() })), status, payment: x.payment, createdAt: new Date().toISOString() });
+      out.added++;
+      if (status === 'waitlist') out.waitlisted++;
+    });
+    this.save();
+    return out;
+  }
+
   async checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null> {
     const d = this.s.divisions.find((x) => x.id === divisionId);
     if (!d) return 'That event doesn’t exist';
@@ -602,7 +627,11 @@ export class DemoBackend implements ClubBackend {
     if (t.drawnAt) throw new ClubError('The draw is already made');
     const now = new Date().toISOString();
     this.s.players.push(...plan.players);
-    for (const d of plan.divisions) { const x = this.s.divisions.find((y) => y.id === d.id); if (x) { x.pools = d.pools; x.advance = d.advance; } }
+    if (plan.timing) Object.assign(t, plan.timing);
+    for (const d of plan.divisions) {
+      const i = this.s.divisions.findIndex((y) => y.id === d.id);
+      if (i >= 0) this.s.divisions[i] = { ...d };
+    }
     this.s.entries.push(...plan.entries);
     this.s.matches.push(...plan.matches.map((m) => ({ ...m, updatedAt: now })));
     for (const l of plan.links) { const r = this.regs().find((x) => x.id === l.registrationId); if (r) r.entryId = l.entryId; }

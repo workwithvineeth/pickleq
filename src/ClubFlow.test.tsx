@@ -74,7 +74,7 @@ describe('Club mode', () => {
     await user.click(within(screen.getByRole('group', { name: 'Tournament view' })).getByRole('button', { name: 'Pools' }));
     for (const p of ['A', 'B', 'C', 'D']) expect(screen.getByRole('table', { name: `Pool ${p}` })).toBeInTheDocument();
     expect(within(screen.getByRole('table', { name: 'Pool A' })).getAllByText('Through')).toHaveLength(2);
-    expect(screen.getByText(/head-to-head between the tied players/)).toBeInTheDocument();
+    expect(screen.getByText(/head-to-head \(wins in matches between the tied players\)/)).toBeInTheDocument();
     await user.click(within(screen.getByRole('group', { name: 'Tournament view' })).getByRole('button', { name: 'Knockouts' }));
     expect(screen.getByRole('heading', { name: 'Quarter-finals' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Final' })).toBeInTheDocument();

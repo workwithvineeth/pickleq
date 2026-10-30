@@ -6,6 +6,7 @@ import type { ClubBundle } from '../backend';
 import { biggest, type Swing, playerClubStats, playerFlags, playerMatches, sideOf, squadTable, squadTotals, winRate, type SquadRow } from '../domain/analytics';
 import { matchResult } from '../domain/engine';
 import { backend } from '../index';
+import { isClubApp } from '../config';
 import { mySummary } from '../personal';
 import { isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
@@ -265,7 +266,7 @@ function Members({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void 
           ))}
         </tbody>
       </table>
-      {d.myPlayerId && <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('club-sharing', d.myPlayerId)}><span>What this club can see about me</span><span>›</span></button>}
+      {d.myPlayerId && !isClubApp() && <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('club-sharing', d.myPlayerId)}><span>What this club can see about me</span><span>›</span></button>}
       {d.role !== 'owner' && b?.kind === 'server' && (
         <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => act(async () => { await b.leaveClub(d.club.id); go('club', undefined, { replace: true }); }, 'You left the club')}>Leave this club</button>
       )}
@@ -348,7 +349,7 @@ export function PlayerView({ playerId, go, onBack }: { playerId: string; go: Go;
               );
             })}
           </section>
-          {d?.myPlayerId === playerId && <button type="button" className="btn btn-outline" onClick={() => go('club-sharing', playerId)}>What this club can see about me</button>}
+          {d?.myPlayerId === playerId && !isClubApp() && <button type="button" className="btn btn-outline" onClick={() => go('club-sharing', playerId)}>What this club can see about me</button>}
         </>
       )}
     </main>

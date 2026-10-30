@@ -10,6 +10,7 @@ import { courtBoard, enteredPlayers, knockoutMatchesToAdd, nextMatchToCall, plan
 import { isStaff, STAGE_LABEL, type ClubGame, type ClubMatch, type ClubPlayer, type Entry, type ScorerLink, type ScorerView } from '../types';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 import { formatRule, ManualScores, ScorePad } from './ScorePad';
+import { DivisionBody } from './Tournament';
 
 /** Loads a tournament for an organiser screen, drawing any knockout round that's ready. */
 function useTournament(id: string, poll?: number) {
@@ -260,7 +261,9 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
   const active = d.matches.filter((m) => m.status !== 'void');
   const board = courtBoard(active, t.courts);
   const queue = upNext(active, 10);
-  const played = active.filter((m) => m.status === 'done').length;
+  // Byes (no opponent) aren't matches.
+  const real = active.filter((m) => m.entryB || m.sideB.length || m.stage === 'pool' || m.stage === 'friendly');
+  const played = real.filter((m) => m.status === 'done').length;
 
   async function run(fn: () => Promise<unknown>, ok: string) {
     setBusy(true); setMsg(null);
@@ -286,7 +289,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
     <main className="screen wide-ok" aria-labelledby="desk-title">
       <Header id="desk-title" title={`${t.name} · Desk`} onBack={onBack} />
       <DemoNote b={b} />
-      <p className="small muted" style={{ margin: 0 }}>{played} of {active.length} matches played · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'} · refreshes every 8 seconds</p>
+      <p className="small muted" style={{ margin: 0 }}>{played} of {real.length} matches played · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'} · refreshes every 8 seconds</p>
       <div className="meta">
         {t.status === 'draft' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.updateTournament(t.id, { status: 'live' }), 'The tournament is live')}>Start tournament</button>}
         <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Scorer links</button>
@@ -353,6 +356,15 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
           </div>
         ))}
       </section>
+      <details className="card" style={{ padding: 10 }}>
+        <summary>Pool tables</summary>
+        {d.divisions.filter((x) => x.shape !== 'ko').map((x) => (
+          <div key={x.id} className="section" aria-label={`${x.name} pool tables`}>
+            <h2 style={{ fontSize: 16 }}>{x.name}</h2>
+            <DivisionBody d={d} divisionId={x.id} view="pools" label={(e) => (e ? names(e.playerIds, pmap) : 'To be decided')} />
+          </div>
+        ))}
+      </details>
     </main>
   );
 }

@@ -26,7 +26,13 @@ export class MemoryStorage {
 const POOL: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: true };
 const KO: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
-interface DivPlan { name: string; kind: 'singles' | 'doubles'; size: number; pools: number; advance: number }
+interface DivPlan {
+  name: string; kind: 'singles' | 'doubles'; size: number; pools: number; advance: number;
+  /** Knockout only, best runners-up and per-round formats (the format options). */
+  shape?: 'ko'; extra?: number; stageFormats?: NewDivisionInput['stageFormats']; koFormat?: Format;
+  /** Doubles made of the same people as the event before it (people who play singles and doubles). */
+  samePeople?: boolean;
+}
 /** What happens in each tournament, on top of normal play. */
 type Twist = 'no-show' | 'withdraw-pool' | 'withdraw-ko' | 'late-single' | 'late-team' | 'late-refused' | 'retired' | 'replace' | 'cancel' | 'move' | 'scorer-link' | 'live-points';
 interface TPlan { name: string; courts: number; divisions: DivPlan[]; twists: Twist[] }
@@ -41,6 +47,9 @@ export const SEASON: TPlan[] = [
   { name: 'Robot Season 07', courts: 3, divisions: [{ name: 'Women’s Doubles', kind: 'doubles', size: 12, pools: 2, advance: 2 }], twists: ['cancel', 'withdraw-ko'] },
   { name: 'Robot Season 08', courts: 4, divisions: [{ name: 'Singles 35+', kind: 'singles', size: 12, pools: 2, advance: 2 }, { name: 'Doubles 35+', kind: 'doubles', size: 8, pools: 2, advance: 1 }], twists: ['no-show', 'live-points', 'late-single'] },
   { name: 'Robot Season 09', courts: 4, divisions: [{ name: 'Ladder Singles', kind: 'singles', size: 10, pools: 1, advance: 0 }, { name: 'Ladder Doubles', kind: 'doubles', size: 10, pools: 2, advance: 2 }], twists: ['withdraw-pool', 'retired'] },
+  { name: 'Robot Season 11', courts: 3, divisions: [{ name: 'Best Runners-up Singles', kind: 'singles', size: 20, pools: 5, advance: 1, extra: 3 }], twists: ['no-show', 'live-points'] },
+  { name: 'Robot Season 12', courts: 6, divisions: [{ name: 'Round of 16 Doubles', kind: 'doubles', size: 24, pools: 4, advance: 4, koFormat: { pointsTo: 21, bestOf: 3, scoring: 'rally' }, stageFormats: { r16: { pointsTo: 11, bestOf: 1, scoring: 'rally', golden: true }, qf: { pointsTo: 15, bestOf: 1, scoring: 'rally' }, sf: { pointsTo: 15, bestOf: 3, scoring: 'rally' } } }], twists: ['withdraw-ko', 'retired'] },
+  { name: 'Robot Season 13', courts: 3, divisions: [{ name: 'TPC-style Singles (knockout)', kind: 'singles', size: 20, pools: 1, advance: 0, shape: 'ko' }, { name: 'TPC-style Doubles (knockout)', kind: 'doubles', size: 10, pools: 1, advance: 0, shape: 'ko', samePeople: true }], twists: ['no-show', 'withdraw-ko', 'live-points'] },
   { name: 'Robot Season 10', courts: 4, divisions: [{ name: 'Juniors Singles', kind: 'singles', size: 20, pools: 4, advance: 2 }, { name: 'Juniors Doubles', kind: 'doubles', size: 12, pools: 4, advance: 1 }], twists: ['late-team', 'scorer-link', 'replace', 'cancel'] },
 ];
 
@@ -75,10 +84,12 @@ export async function runSeason(seed = 8): Promise<{ storage: MemoryStorage; rep
 
   const tids: string[] = [];
   for (const plan of SEASON) {
+    let last: string[] = [];
     const divisions: NewDivisionInput[] = plan.divisions.map((d) => {
-      const people = take(d.size * (d.kind === 'doubles' ? 2 : 1));
+      const people = d.samePeople ? last.slice(0, d.size * 2) : take(d.size * (d.kind === 'doubles' ? 2 : 1));
+      last = people;
       const entries = d.kind === 'doubles' ? Array.from({ length: d.size }, (_, i) => [people[i * 2], people[i * 2 + 1]]) : people.map((p) => [p]);
-      return { name: d.name, kind: d.kind, format: POOL, koFormat: KO, pools: d.pools, advance: d.advance, entries };
+      return { name: d.name, kind: d.kind, format: POOL, koFormat: d.koFormat ?? KO, pools: d.pools, advance: d.advance, entries, shape: d.shape, extra: d.extra, stageFormats: d.stageFormats };
     });
     const id = await b.createTournament({ clubId, name: plan.name, startDate: today, startTime: '08:00', courts: plan.courts, slotMinutes: 20, divisions });
     await b.updateTournament(id, { status: 'live', isPublic: true });
@@ -248,7 +259,21 @@ export async function runSeason(seed = 8): Promise<{ storage: MemoryStorage; rep
     const emap = new Map<string, Entry>(bd.entries.map((e) => [e.id, e]));
     for (const d of bd.divisions) {
       const dm = bd.matches.filter((m) => m.divisionId === d.id);
-      if (d.advance > 0) {
+      if (d.advance > 0 || d.shape === 'ko') {
+        // Each knockout round is played in its own format (per-round formats), else the knockout default.
+        for (const m of dm.filter((x) => x.stage !== 'pool')) {
+          const want = d.stageFormats?.[m.stage as 'qf'] ?? d.koFormat;
+          if (m.format.pointsTo !== want.pointsTo || m.format.bestOf !== want.bestOf) problem(`${name} ${d.name}: a ${m.stage} match has the wrong format`);
+        }
+        const first = dm.filter((m) => m.stage !== 'pool' && (m.round ?? 1) === 1);
+        const size = first.length * 2;
+        if (d.extra && size !== d.pools * d.advance + d.extra) problem(`${name} ${d.name}: best runners-up made a knockout of ${size}`);
+        if (d.shape === 'ko') {
+          const n = bd.entries.filter((e) => e.divisionId === d.id).length;
+          const byes = first.filter((m) => !m.entryB).length;
+          if (dm.some((m) => m.stage === 'pool')) problem(`${name} ${d.name}: a knockout-only event has pool matches`);
+          if (byes !== size - n) problem(`${name} ${d.name}: ${byes} byes for ${n} entries in a ${size} bracket`);
+        }
         const final = dm.find((m) => m.stage === 'final' && m.status === 'done');
         if (!final) { problem(`${name} ${d.name}: no final was played`); continue; }
         const w = emap.get(final.winner === 'A' ? final.entryA : final.entryB);

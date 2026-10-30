@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { runSeason, type SeasonReport } from '../season-sim';
 
 /**
- * Full-scale day: 10 tournaments at once, 300 players, with walkovers, retirements, withdrawals, late entries,
+ * Full-scale day: 13 tournaments at once (incl. best runners-up, a round of 16 with per-round formats, and knockout-only singles and doubles with the same people), 300 players, with walkovers, retirements, withdrawals, late entries,
  * a replaced player, a cancelled and a moved match, live scores and a scorer link. The day is run with the app's
  * own club code, then the robot opens every tournament in the app (on a phone screen) to check it all shows.
  */
@@ -17,7 +17,7 @@ async function loadDay(page: Page, state: string) {
   await page.evaluate((s) => { localStorage.setItem('pq-club-demo-v1', s); localStorage.setItem('pq-club-mode', 'demo'); }, state);
 }
 
-test.describe('Full-scale day (10 tournaments, 300 players)', () => {
+test.describe('Full-scale day (13 tournaments, 300 players)', () => {
   test.describe.configure({ timeout: 240_000 });
 
   test('the day runs to the end and every rule holds', async ({}, info) => {
@@ -25,7 +25,7 @@ test.describe('Full-scale day (10 tournaments, 300 players)', () => {
     await info.attach('season-report.json', { body: JSON.stringify(report, null, 2), contentType: 'application/json' });
     console.log(`Season: ${report.tournaments} tournaments, ${report.divisions} events, ${report.players} players (${report.playersEntered} entered), ${report.matchesPlayed} matches, ${report.walkovers} walkovers, ${report.retirements} retirements, ${report.withdrawals} withdrawals, ${report.lateEntries} late entries, ${report.replacements} replaced, ${report.matchesCancelled} cancelled, ${report.moved} moved, ${report.scorerLinkScores} by scorer link, ${report.livePointUpdates} live updates, ${report.rounds} rounds, ${report.ms} ms, ${Math.round(report.storageBytes / 1024)} KB`);
     expect(report.problems).toEqual([]);
-    expect(report.tournaments).toBe(10);
+    expect(report.tournaments).toBe(13);
     expect(report.playersEntered).toBe(300);
     expect(report.champions).toHaveLength(report.divisions);
     expect(report.lateRefused).toContain('Knockouts have started, so new entries can’t join');

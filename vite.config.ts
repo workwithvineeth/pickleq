@@ -31,6 +31,13 @@ export function cspFor(clubServer?: string): string {
 }
 export const CSP = cspFor();
 
+/** The PQ Club app starts from its own entry (club screens only) instead of the personal app's. */
+const clubAppEntry = () => ({
+  name: 'pq-club-app-entry',
+  // 'pre': before Vite reads the page's script, so the build starts from the club entry.
+  transformIndexHtml: { order: 'pre' as const, handler: (html: string) => html.replace('/src/main.tsx', '/src/clubApp/main.tsx') },
+});
+
 const cspPlugin = (csp: string) => ({
   name: 'pickleq-csp',
   apply: 'build' as const,
@@ -49,6 +56,7 @@ export default defineConfig(({ mode }) => {
   const channel = env.VITE_CHANNEL === 'live' ? 'live' : 'preview';
   const isLive = channel === 'live';
   const isClub = env.VITE_CLUB === 'on';
+  const isClubApp = isClub && env.VITE_CLUB_APP === 'on';
   const base = env.VITE_BASE || '/';
   const icon = env.VITE_ICON || channel;
   const otherIcons = ['live', 'preview', 'club'].filter((x) => x !== icon);
@@ -63,14 +71,15 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       cspPlugin(cspFor(env.VITE_SUPABASE_URL)),
+      ...(isClubApp ? [clubAppEntry()] : []),
       VitePWA({
         registerType: 'prompt',
         includeAssets: [`icons/${icon}-apple-180.png`],
         manifest: {
           id: base,
-          name: isLive ? 'PICKLEQ' : isClub ? 'PICKLEQ Club' : 'PICKLEQ Preview',
+          name: isLive ? 'PICKLEQ' : isClubApp ? 'PQ Club' : isClub ? 'PICKLEQ Club' : 'PICKLEQ Preview',
           short_name: isLive ? 'PICKLEQ' : isClub ? 'PQ Club' : 'PQ Preview',
-          description: 'Personal pickleball tracker and AI coach',
+          description: isClubApp ? 'Run pickleball tournaments: entries, draw, a scorer on every court and live results' : 'Personal pickleball tracker and AI coach',
           start_url: base,
           scope: base,
           display: 'standalone',

@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
-import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
 import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
@@ -23,10 +23,10 @@ const toTournament = (r: Row): ClubTournament => ({
   registrationOpen: !!r.registration_open, entriesClose: s(r.entries_close), upiId: s(r.upi_id), listing: (r.listing as Listing) ?? 'none',
   listingStatus: (r.listing_status as ListingStatus) ?? 'none', rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), drawnAt: s(r.drawn_at), posterUrl: s(r.poster_url),
 });
-const toRules = (r: Row): DivisionRules => ({ maxDupr: n(r.max_dupr), gender: (r.gender as DivisionRules['gender']) ?? 'open', minAge: n(r.min_age), cap: n(r.cap), fee: n(r.fee) });
-const fromRules = (r?: DivisionRules): Row => ({ max_dupr: r?.maxDupr ?? null, gender: r?.gender ?? 'open', min_age: r?.minAge ?? null, cap: r?.cap ?? null, fee: r?.fee ?? null });
-const toPerson = (p: Row): EntryPerson => ({ name: String(p.name ?? ''), phone: String(p.phone ?? ''), duprId: s(p.duprId), dupr: n(p.dupr), gender: (p.gender as EntryPerson['gender']) ?? '', age: n(p.age) });
-const fromPerson = (p: EntryPerson): Row => ({ name: p.name.trim(), phone: p.phone.trim(), duprId: p.duprId?.trim().toUpperCase() || '', dupr: p.dupr ?? null, gender: p.gender, age: p.age ?? null });
+const toRules = (r: Row): DivisionRules => ({ maxDupr: n(r.max_dupr), ...(r.dupr_cap === 'average' ? { duprCap: 'average' as const } : {}), gender: (r.gender as DivisionRules['gender']) ?? 'open', minAge: n(r.min_age), cap: n(r.cap), fee: n(r.fee) });
+const fromRules = (r?: DivisionRules): Row => ({ max_dupr: r?.maxDupr ?? null, dupr_cap: r?.duprCap === 'average' ? 'average' : 'each', gender: r?.gender ?? 'open', min_age: r?.minAge ?? null, cap: r?.cap ?? null, fee: r?.fee ?? null });
+const toPerson = (p: Row): EntryPerson => ({ name: String(p.name ?? ''), phone: String(p.phone ?? ''), duprId: s(p.duprId), dupr: n(p.dupr), gender: (p.gender as EntryPerson['gender']) ?? '', age: n(p.age), ...(p.adult === true ? { adult: true } : {}) });
+const fromPerson = (p: EntryPerson): Row => ({ name: p.name.trim(), phone: p.phone.trim(), duprId: p.duprId?.trim().toUpperCase() || '', dupr: p.dupr ?? null, gender: p.gender, age: p.age ?? null, ...(p.adult && p.age === undefined ? { adult: true } : {}) });
 const toRegistration = (r: Row): Registration => ({
   id: String(r.id), tournamentId: String(r.tournament_id), divisionId: String(r.division_id), clubId: String(r.club_id), userId: s(r.user_id),
   source: r.source === 'offline' ? 'offline' : 'online', players: ((r.players as Row[]) ?? []).map(toPerson), status: r.status as Registration['status'],
@@ -46,15 +46,31 @@ function answer<T extends Row>(r: unknown): T {
   if (x.error) throw new ClubError(String(x.error));
   return x as T;
 }
-const formats = (f: unknown): { pool: Format; ko: Format } => {
-  const x = f as { pool?: Format; ko?: Format } & Partial<Format>;
-  if (x?.pool) return { pool: x.pool, ko: x.ko ?? x.pool };
-  return { pool: x as Format, ko: x as Format };
+/**
+ * A division's format column: { pool, ko } plus, since the format options, the knockout shape and per-round formats:
+ * { stages: { qf, sf, final, … }, shape: 'ko', extra: n }. Older rows hold one format for everything.
+ */
+type FormatJson = { pool?: Format; ko?: Format; stages?: Division['stageFormats']; shape?: 'ko'; extra?: number } & Partial<Format>;
+const formats = (f: unknown): Pick<Division, 'format' | 'koFormat' | 'shape' | 'extra' | 'stageFormats'> => {
+  const x = (f ?? {}) as FormatJson;
+  if (!x.pool) return { format: x as Format, koFormat: x as Format };
+  return {
+    format: x.pool, koFormat: x.ko ?? x.pool,
+    ...(x.shape === 'ko' ? { shape: 'ko' as const } : {}),
+    ...(x.extra ? { extra: Number(x.extra) } : {}),
+    ...(x.stages && Object.keys(x.stages).length ? { stageFormats: x.stages } : {}),
+  };
 };
-const toDivision = (r: Row): Division => {
-  const f = formats(r.format);
-  return { id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), name: String(r.name), kind: r.kind as Division['kind'], format: f.pool, koFormat: f.ko, pools: Number(r.pools), advance: Number(r.advance), sort: Number(r.sort ?? 0), rules: toRules(r) };
-};
+export const formatJson = (d: Pick<Division, 'format' | 'koFormat' | 'shape' | 'extra' | 'stageFormats'>): FormatJson => ({
+  pool: d.format, ko: d.koFormat,
+  ...(d.stageFormats && Object.keys(d.stageFormats).length ? { stages: d.stageFormats } : {}),
+  ...(d.shape === 'ko' ? { shape: 'ko' as const } : {}),
+  ...(d.extra ? { extra: d.extra } : {}),
+});
+const toDivision = (r: Row): Division => ({
+  id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), name: String(r.name), kind: r.kind as Division['kind'],
+  ...formats(r.format), pools: Number(r.pools), advance: Number(r.advance), sort: Number(r.sort ?? 0), rules: toRules(r),
+});
 const toEntry = (r: Row): Entry => ({ id: String(r.id), divisionId: String(r.division_id), clubId: String(r.club_id), playerIds: r.player_ids as string[], seed: n(r.seed), pool: n(r.pool), status: r.status === 'withdrawn' ? 'withdrawn' : 'active' });
 const toLink = (r: Row): ScorerLink => ({ id: String(r.id), tournamentId: String(r.tournament_id), clubId: String(r.club_id), court: n(r.court), token: String(r.token), pin: String(r.pin), label: s(r.label), revoked: !!r.revoked, lastUsedAt: s(r.last_used_at) });
 const toScorerView = (r: Row): ScorerView => {
@@ -219,7 +235,7 @@ export class ServerBackend implements ClubBackend {
       city: t.city || null, venue: t.venue || null, about: t.about || null, contact: t.contact || null, link: t.link || null, entry_mode: mode,
       registration_open: mode === 'registration', entries_close: t.entriesClose || null, upi_id: t.upiId || null,
     }));
-    check(await this.sb.from('divisions').insert(rows.divisions.map((d) => ({ id: d.id, tournament_id: d.tournamentId, club_id: d.clubId, name: d.name, kind: d.kind, format: { pool: d.format, ko: d.koFormat }, pools: d.pools, advance: d.advance, sort: d.sort, ...fromRules(d.rules) }))));
+    check(await this.sb.from('divisions').insert(rows.divisions.map((d) => ({ id: d.id, tournament_id: d.tournamentId, club_id: d.clubId, name: d.name, kind: d.kind, format: formatJson(d), pools: d.pools, advance: d.advance, sort: d.sort, ...fromRules(d.rules) }))));
     if (rows.entries.length) check(await this.sb.from('entries').insert(rows.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));
     if (rows.matches.length) check(await this.sb.from('club_matches').insert(rows.matches.map(fromMatch)));
     return t.id;
@@ -341,7 +357,7 @@ export class ServerBackend implements ClubBackend {
     if (!r) return null;
     return {
       name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '08:00').slice(0, 5), slotMinutes: Number(r.slot_minutes ?? 20), status: r.status as PublicTournament['status'], club: String(r.club),
-      divisions: (r.divisions as Row[]).map((d) => { const f = formats(d.format); return { id: String(d.id), name: String(d.name), kind: d.kind as Division['kind'], pools: Number(d.pools), advance: Number(d.advance), format: f.pool, koFormat: f.ko }; }),
+      divisions: (r.divisions as Row[]).map((d) => ({ id: String(d.id), name: String(d.name), kind: d.kind as Division['kind'], pools: Number(d.pools), advance: Number(d.advance), ...formats(d.format) })),
       entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), names: (e.names as string[]) ?? [] })),
       matches: (r.matches as Row[]).map((m) => ({
         id: String(m.id), divisionId: s(m.division_id), stage: m.stage as ClubMatch['stage'], pool: n(m.pool), round: n(m.round), bracketPos: n(m.bracket_pos),
@@ -454,6 +470,11 @@ export class ServerBackend implements ClubBackend {
     check(await this.sb.from('registrations').insert({ tournament_id: e.tournamentId, division_id: e.divisionId, club_id: e.clubId, source: 'offline', players: e.players.map(fromPerson), status: e.status, payment: e.payment }));
   }
 
+  async importEntries(tournamentId: string, rows: ImportEntryRow[]): Promise<ImportResult> {
+    const r = answer<Row>(check(await this.sb.rpc('import_entries', { p_tournament: tournamentId, p_rows: rows.map((x) => ({ division: x.divisionId, players: x.players.map(fromPerson), status: x.status, payment: x.payment })) })));
+    return { added: Number(r.added ?? 0), waitlisted: Number(r.waitlisted ?? 0), skipped: Number(r.skipped ?? 0), problems: ((r.problems as Row[]) ?? []).map((p) => ({ row: Number(p.row), error: String(p.error) })) };
+  }
+
   async checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null> {
     const r = check(await this.sb.rpc('check_entry', { p_division: divisionId, p_players: players.map(fromPerson), p_except: exceptId ?? null })) as Row | null;
     return r?.error ? String(r.error) : null;
@@ -463,7 +484,8 @@ export class ServerBackend implements ClubBackend {
     const t = toTournament(check(await this.sb.from('tournaments').select('*').eq('id', tournamentId).single()) as Row);
     if (t.drawnAt) throw new ClubError('The draw is already made');
     check(await this.sb.from('club_players').insert(plan.players.map((p) => ({ id: p.id, club_id: p.clubId, name: p.name, dupr_singles: p.duprSingles ?? null, dupr_doubles: p.duprDoubles ?? null, dupr_id: p.duprId ?? null }))));
-    for (const d of plan.divisions) check(await this.sb.from('divisions').update({ pools: d.pools, advance: d.advance }).eq('id', d.id));
+    if (plan.timing) check(await this.sb.from('tournaments').update({ courts: plan.timing.courts, slot_minutes: plan.timing.slotMinutes, start_time: plan.timing.startTime }).eq('id', tournamentId));
+    for (const d of plan.divisions) check(await this.sb.from('divisions').update({ pools: d.pools, advance: d.advance, format: formatJson(d) }).eq('id', d.id));
     check(await this.sb.from('entries').insert(plan.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));
     check(await this.sb.from('club_matches').insert(plan.matches.map(fromMatch)));
     for (const l of plan.links) check(await this.sb.from('registrations').update({ entry_id: l.entryId }).eq('id', l.registrationId));

@@ -22,3 +22,8 @@ export function clubMode(): ClubMode | null {
 export function setClubMode(m: ClubMode | null) {
   try { if (m) localStorage.setItem(MODE_KEY, m); else localStorage.removeItem(MODE_KEY); } catch { /* private mode */ }
 }
+
+/** The standalone PQ Club app (club screens only, no personal PICKLEQ). */
+export function isClubApp(): boolean {
+  return import.meta.env.VITE_CLUB_APP === 'on';
+}

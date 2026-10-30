@@ -9,6 +9,8 @@ import { isAdmin, isStaff, PAYMENT_LABEL, REG_STATUS_LABEL, type ClubTournament,
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { eventShareLink, PersonFields } from './Events';
 import { PosterPicker } from './Poster';
+import { ImportEntries } from './Import';
+import { DayEstimateBox, divisionToDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 
 type Filter = 'waiting' | 'accepted' | 'waitlist' | 'out' | 'all';
 const FILTERS: { value: Filter; label: string }[] = [
@@ -33,6 +35,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
   const [editing, setEditing] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState('');
+  const [importing, setImporting] = useState(false);
   const d = state.data;
   if (!d || !b) return <main className="screen" aria-labelledby="inbox-title"><Header id="inbox-title" title="Entries inbox" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const t = d.t.tournament;
@@ -59,8 +62,10 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         <div className="meta">
           <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Reopen entries'}</button>
           <button type="button" className="btn btn-outline" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>
+          <button type="button" className="btn btn-primary" aria-expanded={importing} onClick={() => setImporting((x) => !x)}>Import entries</button>
         </div>
       )}
+      {!drawn && importing && <ImportEntries b={b} t={t} divisions={d.t.divisions} regs={d.regs} onClose={() => setImporting(false)} onDone={() => state.reload()} />}
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {d.t.divisions.length > 1 && <Segmented label="Event" value={div.id} options={d.t.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setDivId(v); setEditing(null); }} />}
       <section className="card section" aria-label={`${div.name} entries`}>
@@ -159,15 +164,21 @@ function EntryForm({ b, t, divisions, divisionId, start, busy, offline, onSave, 
   );
 }
 
-/** Making the draw: choose pools for each event, then create entries, matches, courts and times in one go. */
+/** Making the draw: choose the format for each event, see when the day finishes, then create entries, matches, courts and times in one go. */
 function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubTournament; divisions: Division[]; regs: Registration[]; onDrawn: () => void; go: Go }) {
   const withEntries = divisions.map((d) => ({ d, n: regs.filter((r) => r.divisionId === d.id && r.status === 'accepted').length })).filter((x) => x.n > 0);
-  const [choices, setChoices] = useState<Record<string, DrawChoice>>({});
+  const [drafts, setDrafts] = useState<Record<string, FormatDraft>>({});
+  const [courts, setCourts] = useState(t.courts);
+  const [slot, setSlot] = useState(t.slotMinutes);
+  const [start, setStart] = useState(t.startTime);
+  const [finishBy, setFinishBy] = useState('');
   const [confirm, setConfirm] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const choice = (d: Division): DrawChoice => choices[d.id] ?? { divisionId: d.id, pools: 1, advance: 0 };
-  const problems = useMemo(() => withEntries.map(({ d, n }) => drawProblem(d, n, choice(d))).filter(Boolean) as string[], [withEntries, choices]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Until the organiser chooses, each event starts as a round robin (small events) or knockout only (bigger ones).
+  const draft = (d: Division, n: number): FormatDraft => drafts[d.id] ?? { ...divisionToDraft(d), ...(n > 8 ? { shape: 'ko' as const } : { shape: 'rr' as const }) };
+  const choice = (d: Division, n: number): DrawChoice => ({ divisionId: d.id, ...draftToDivision(draft(d, n)) });
+  const problems = useMemo(() => withEntries.map(({ d, n }) => drawProblem(d, n, choice(d, n))).filter(Boolean) as string[], [withEntries, drafts]); // eslint-disable-line react-hooks/exhaustive-deps
   if (t.drawnAt) {
     return (
       <section className="card section" aria-label="Draw">
@@ -180,33 +191,34 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
       </section>
     );
   }
+  const timing = courts !== t.courts || slot !== t.slotMinutes || start !== t.startTime ? { courts, slotMinutes: slot, startTime: start } : undefined;
   async function draw() {
-    const plan = planDraw(t, divisions, regs, withEntries.map(({ d }) => choice(d)), newId);
+    const plan = planDraw(t, divisions, regs, withEntries.map(({ d, n }) => choice(d, n)), newId, timing);
     if (typeof plan === 'string') return setMsg(plan);
     setBusy(true); setMsg(null);
     try { await b.applyDraw(t.id, plan); onDrawn(); } catch (e) { setMsg(errorText(e)); setBusy(false); }
   }
-  const set = (d: Division, patch: Partial<DrawChoice>) => setChoices((c) => ({ ...c, [d.id]: { ...choice(d), ...patch } }));
+  const set = (d: Division, n: number, patch: Partial<FormatDraft>) => { setConfirm(false); setDrafts((c) => ({ ...c, [d.id]: { ...draft(d, n), ...patch } })); };
   return (
     <section className="card section" aria-label="Draw">
       <h2 style={{ fontSize: 16 }}>Make the draw</h2>
-      <p className="small muted" style={{ margin: 0 }}>Accepted entries go into pools, seeded by DUPR, and every match gets a court and a time. Entries close when you draw.</p>
+      <p className="small muted" style={{ margin: 0 }}>You choose the format for each event. Accepted entries are seeded by DUPR, and every match gets a court and a time. Entries close when you draw.</p>
       {withEntries.length === 0 && <p className="small muted" style={{ margin: 0 }}>Accept some entries first.</p>}
-      {withEntries.map(({ d, n }) => {
-        const c = choice(d);
-        return (
-          <div key={d.id} className="section" aria-label={`Draw for ${d.name}`}>
-            <b>{d.name} · {n} {d.kind === 'doubles' ? 'teams' : 'players'}</b>
-            <Segmented label={`${d.name} format`} value={c.advance === 0 ? 'rr' : 'ko'} options={[{ value: 'rr', label: 'Round robin' }, { value: 'ko', label: 'Pools, then knockouts' }]} onChange={(v) => set(d, v === 'rr' ? { pools: 1, advance: 0 } : { pools: Math.max(2, c.pools), advance: 2 })} />
-            {c.advance > 0 && (
-              <>
-                <Field label="Pools"><Chips label={`${d.name} pools`} value={c.pools} options={[1, 2, 3, 4, 6, 8].map((x) => ({ value: x, label: String(x) }))} onChange={(v) => set(d, { pools: v })} /></Field>
-                <Field label="Go through, per pool"><Chips label={`${d.name} going through`} value={c.advance} options={[1, 2, 4].map((x) => ({ value: x, label: String(x) }))} onChange={(v) => set(d, { advance: v })} /></Field>
-              </>
-            )}
-          </div>
-        );
-      })}
+      {withEntries.length > 0 && <>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+          <Field label="First match"><input className="input" type="time" aria-label="Draw first match" value={start} onChange={(e) => setStart(e.target.value)} /></Field>
+          <Field label="Courts"><input className="input" type="number" min={1} max={64} aria-label="Draw courts" value={courts} onChange={(e) => setCourts(Math.max(1, Math.min(64, Number(e.target.value) || 1)))} /></Field>
+        </div>
+        <Field label="Minutes per match"><Chips label="Draw minutes per match" value={slot} options={SLOT_OPTIONS.map((n) => ({ value: n, label: String(n) }))} onChange={setSlot} /></Field>
+      </>}
+      {withEntries.map(({ d, n }) => (
+        <section key={d.id} className="section" aria-label={`Format for ${d.name}`} style={{ borderTop: '1px solid var(--line, #ddd)', paddingTop: 8 }}>
+          <b>{d.name} · {n} {d.kind === 'doubles' ? 'teams' : 'players'}</b>
+          <FormatFields label={d.name} entries={n} value={draft(d, n)} onChange={(patch) => set(d, n, patch)} />
+        </section>
+      ))}
+      {withEntries.length > 0 && <DayEstimateBox events={withEntries.map(({ d, n }) => ({ name: d.name, entries: n, ...draft(d, n) }))} courts={courts} slotMinutes={slot} startTime={start} finishBy={finishBy} onFinishBy={setFinishBy}
+        onUse={(i, c) => { const x = withEntries[i]; set(x.d, x.n, c); }} />}
       {problems.map((p) => <div key={p} className="msg msg-bad small">{p}</div>)}
       {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
       {withEntries.length > 0 && (confirm

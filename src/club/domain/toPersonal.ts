@@ -12,7 +12,8 @@ import { sideOf } from './analytics';
  */
 export function clubMatchToPersonal(m: ClubMatch, playerId: string, players: Map<string, ClubPlayer>, clubName: string, eventName: string | undefined, thresholds?: Thresholds): NewMatch | null {
   const side = sideOf(m, playerId);
-  if (!side || m.status !== 'done' || !m.winner) return null;
+  // Walkovers and byes (no games played) aren't matches in the personal history (walkovers aren't logged there).
+  if (!side || m.status !== 'done' || !m.winner || !m.sideA.length || !m.sideB.length) return null;
   const mine = side === 'A' ? m.sideA : m.sideB;
   const theirs = side === 'A' ? m.sideB : m.sideA;
   const kind = mine.length > 1 ? 'doubles' : 'singles';

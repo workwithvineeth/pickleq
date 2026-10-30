@@ -87,8 +87,10 @@ export const GENDER_LABEL: Record<DivisionGender, string> = { open: 'Open', men:
 
 /** Who may enter an event, and how many. */
 export interface DivisionRules {
-  /** DUPR cap: every player's rating must be this or under. */
+  /** DUPR cap: every player's rating (or, with duprCap 'average', a doubles team's average) must be this or under. */
   maxDupr?: number;
+  /** 'each' (default): every player under the cap. 'average': the doubles team's average rating. */
+  duprCap?: 'each' | 'average';
   gender?: DivisionGender;
   /** Age group, e.g. 35 for 35+. Everyone must be 18 or over in any case. */
   minAge?: number;
@@ -100,7 +102,11 @@ export interface DivisionRules {
 
 export type PlayerGender = 'm' | 'f' | 'x';
 /** One person on an entry form. Phone is needed for online entries; offline entries may leave it empty. */
-export interface EntryPerson { name: string; phone: string; duprId?: string; dupr?: number; gender: PlayerGender | ''; age?: number }
+export interface EntryPerson {
+  name: string; phone: string; duprId?: string; dupr?: number; gender: PlayerGender | ''; age?: number;
+  /** No age given, but the organiser confirmed the player is 18 or over (imported entries only). */
+  adult?: boolean;
+}
 
 export type RegistrationStatus = 'pending' | 'accepted' | 'waitlist' | 'rejected' | 'withdrawn';
 export type Payment = 'unpaid' | 'venue' | 'claimed' | 'paid';
@@ -135,9 +141,16 @@ export interface Division {
   /** Knockout games (stored inside format JSON on the server) */
   koFormat: Format;
   pools: number;
+  /** Places going through from each pool to the knockouts (0 = no knockouts, unless shape is 'ko'). */
   advance: number;
   sort: number;
   rules?: DivisionRules;
+  /** 'ko': knockout only (single elimination, byes for the top seeds). Otherwise pools (or one round robin) first. */
+  shape?: 'ko';
+  /** Best runners-up: this many next-placed entries also go through, ranked across pools (e.g. 5 pools: winners + 3 best seconds). */
+  extra?: number;
+  /** Knockout rounds with their own game format (games to, best of); rounds not listed use koFormat. */
+  stageFormats?: Partial<Record<KnockoutStage, Format>>;
 }
 
 export interface Entry {
@@ -174,8 +187,12 @@ export interface ScorerView {
   matches: { id: string; stage: Stage; pool?: number; round?: number; slot?: number; court?: number; division?: string; format: Format; games: ClubGame[]; status: ClubMatchStatus; winner?: 'A' | 'B'; playedOn?: string; namesA: string[]; namesB: string[] }[];
 }
 
-export type Stage = 'pool' | 'qf' | 'sf' | 'final' | 'friendly';
-export const STAGE_LABEL: Record<Stage, string> = { pool: 'Pool', qf: 'Quarter-final', sf: 'Semi-final', final: 'Final', friendly: 'Club match' };
+export type Stage = 'pool' | 'r32' | 'r16' | 'qf' | 'sf' | 'final' | 'friendly';
+export type KnockoutStage = 'r32' | 'r16' | 'qf' | 'sf' | 'final';
+export const KNOCKOUT_STAGES: KnockoutStage[] = ['r32', 'r16', 'qf', 'sf', 'final'];
+export const STAGE_LABEL: Record<Stage, string> = { pool: 'Pool', r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-final', sf: 'Semi-final', final: 'Final', friendly: 'Club match' };
+/** Heading for a whole knockout round. */
+export const ROUND_LABEL: Record<KnockoutStage, string> = { r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-finals', sf: 'Semi-finals', final: 'Final' };
 
 /** One game. points is the order points were won: "A" for side A, "B" for side B. Empty if only the final score was entered. */
 export interface ClubGame { points: string; a: number; b: number }
