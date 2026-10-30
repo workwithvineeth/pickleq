@@ -58,7 +58,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               <h2 style={{ fontSize: 18 }}>Run your club’s tournaments</h2>
               <p className="small" style={{ margin: 0 }}>Entries (or import them from a Google Form), the draw, a scorer on every court with a PIN link, and live results anyone can open.</p>
               <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
-                <li>Organisers and helpers sign in with email. Players and scorers don’t need an account.</li>
+                <li>Organisers sign in with email and a PIN. Helpers and court scorers use the event PIN the organiser gives them. Players don’t need an account.</li>
                 <li>Joining a club? Open the invite link the club sent you, or paste it below.</li>
               </ul>
             </section>
@@ -73,7 +73,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               </ul>
             </section>
           )}
-          {server && <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in with email</button>}
+          {server && <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in</button>}
           {isClubApp() && <JoinByLink go={go} />}
           <section className="card section" aria-label="Demo club">
             <h2 style={{ fontSize: 18 }}>Try the demo club</h2>
@@ -106,6 +106,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               </button>
             ))}
           </section>
+          {b?.kind === 'server' && <MyPinCard />}
           {b?.kind === 'server' && <button type="button" className="btn btn-outline" onClick={() => go('club-new')}>Create a club</button>}
           <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={signOut}>
             {b?.kind === 'demo' ? 'Close the demo and delete it from this phone' : isClubApp() ? 'Sign out' : 'Sign out of Club mode'}
@@ -131,10 +132,11 @@ function JoinByLink({ go }: { go: Go }) {
 
 export function ClubSignIn({ go, onBack }: { go: Go; onBack: () => void }) {
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [pin, setPin] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [useLink, setUseLink] = useState(false);
   const b = serverBackend();
 
   function signedIn() {
@@ -158,42 +160,135 @@ export function ClubSignIn({ go, onBack }: { go: Go; onBack: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [b]);
 
+  const emailOk = /^\S+@\S+\.\S+$/.test(email.trim());
+  async function withPin() {
+    if (!emailOk) return setMsg('Enter your email address');
+    if (!/^\d{4,6}$/.test(pin)) return setMsg('Enter your PIN (4 to 6 digits)');
+    setBusy(true); setMsg(null);
+    try { await b?.pinSignIn?.({ mode: 'account', email: email.trim(), pin }); signedIn(); }
+    catch (e) { setMsg(errorText(e)); setPin(''); } finally { setBusy(false); }
+  }
   async function send() {
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setMsg('Enter your email address');
+    if (!emailOk) return setMsg('Enter your email address');
     setBusy(true); setMsg(null);
     try { await b?.sendCode(email); setSent(true); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
-  }
-  async function verify() {
-    if (!/^\d{6}$/.test(code.trim())) return setMsg('Enter the 6-digit code from the email');
-    setBusy(true); setMsg(null);
-    try { await b?.verifyCode(email, code); signedIn(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
   }
 
   return (
     <main className="screen" aria-labelledby="signin-title">
       <Header id="signin-title" title="Sign in" onBack={onBack} />
       {!b && <div role="alert" className="msg msg-bad">The club server isn’t set up in this version.</div>}
-      <p className="small muted" style={{ margin: 0 }}>We email you a sign-in link. There’s no password to remember.</p>
+      <p className="small muted" style={{ margin: 0 }}>
+        Organisers sign in with their email and their own PIN. Helping at a tournament? Open the helper link the organiser sent you instead; it asks for the event PIN.
+      </p>
       <Field label="Email">
         <input className="input" type="email" inputMode="email" autoComplete="email" aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={sent} />
       </Field>
-      {sent && (
+      {!useLink && (
         <>
-          <div role="status" className="msg msg-ok">Email sent. Open it on this phone and tap <b>Sign in</b>. Use the same browser you’re in now. Check spam if it isn’t there in a minute.</div>
-          <Field label="Or enter the 6-digit code, if your email has one">
-            <input className="input" inputMode="numeric" autoComplete="one-time-code" aria-label="Code from the email" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+          <Field label="Your PIN">
+            <input className="input" type="password" inputMode="numeric" autoComplete="current-password" aria-label="Your PIN" maxLength={6} value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') void withPin(); }} />
           </Field>
+          {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
+          <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={withPin}>{busy ? 'Signing in…' : 'Sign in'}</button>
+          <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setUseLink(true); setMsg(null); }}>
+            No PIN yet? Get an email sign-in link
+          </button>
         </>
       )}
-      {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
-      {busy && !sent && !email && <p className="small muted" role="status">Signing you in…</p>}
-      {!sent
-        ? <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={send}>Email me a sign-in link</button>
-        : <>
-            {code.length === 6 && <button type="button" className="btn btn-primary" disabled={busy} onClick={verify}>Sign in with the code</button>}
-            <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setSent(false); setCode(''); }}>Use a different email, or send again</button>
-          </>}
+      {useLink && (
+        <>
+          <p className="small muted" style={{ margin: 0 }}>We email you a sign-in link. Open it in this same browser (a laptop is easiest). Once you’re in, set your PIN in My club, so next time you just type it.</p>
+          {sent && <div role="status" className="msg msg-ok">Email sent. Open it in this browser and tap the link. Check spam if it isn’t there in a minute.</div>}
+          {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
+          {busy && !sent && !email && <p className="small muted" role="status">Signing you in…</p>}
+          {!sent
+            ? <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={send}>Email me a sign-in link</button>
+            : <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setSent(false)}>Use a different email, or send again</button>}
+          <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setUseLink(false); setSent(false); setMsg(null); }}>Sign in with a PIN instead</button>
+        </>
+      )}
     </main>
+  );
+}
+
+/** Desk helpers: the organiser shares this tournament's helper link and the event PIN (the same PIN as the court scorers). */
+export function HelperSignIn({ slug, go }: { slug: string; go: Go }) {
+  const b = serverBackend();
+  const info = useLoad(async () => (b ? b.publicClubLogo(slug).catch(() => null) : null), [b, slug]);
+  const [name, setName] = useState(() => { try { return localStorage.getItem('pq-helper-name') ?? ''; } catch { return ''; } });
+  const [pin, setPin] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  async function signIn() {
+    if (name.trim().length < 2) return setMsg('Add your name, so the organiser knows who you are');
+    if (!/^\d{4,6}$/.test(pin)) return setMsg('Enter the event PIN');
+    setBusy(true); setMsg(null);
+    try {
+      try { localStorage.setItem('pq-helper-name', name.trim()); } catch { /* private mode */ }
+      const r = await b?.pinSignIn?.({ mode: 'helper', slug, name: name.trim(), pin });
+      setClubMode('server');
+      if (r?.tournamentId) go('club-tournament', r.tournamentId, { replace: true }); else go('club', undefined, { replace: true });
+    } catch (e) { setMsg(errorText(e)); setPin(''); } finally { setBusy(false); }
+  }
+  return (
+    <main className="screen" aria-labelledby="helper-title">
+      <Header id="helper-title" title="Help run the tournament" />
+      {info.data?.logoUrl && <img src={info.data.logoUrl} alt={`${info.data.club} logo`} className="club-logo" />}
+      {info.data && <p className="small" style={{ margin: 0 }}><b>{info.data.club}</b></p>}
+      <p className="small muted" style={{ margin: 0 }}>Type your name and the event PIN the organiser gave you (the same PIN the court scorers use). You’ll get the desk, entries and scores for this tournament.</p>
+      {!b && <div role="alert" className="msg msg-bad">The club server isn’t set up in this version.</div>}
+      <Field label="Your name">
+        <input className="input" aria-label="Your name" autoComplete="name" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+      </Field>
+      <Field label="Event PIN">
+        <input className="input" type="password" inputMode="numeric" aria-label="Event PIN" maxLength={6} value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') void signIn(); }} />
+      </Field>
+      {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
+      <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={signIn}>{busy ? 'Signing in…' : 'Sign in as a helper'}</button>
+    </main>
+  );
+}
+
+/** Signed in on the club server: set or change your own sign-in PIN. */
+function MyPinCard() {
+  const b = serverBackend();
+  const has = useLoad(async () => (b?.hasMyPin ? b.hasMyPin() : false), [b]);
+  const [open, setOpen] = useState(false);
+  const [pin, setPin] = useState('');
+  const [again, setAgain] = useState('');
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function save() {
+    if (!/^\d{4,6}$/.test(pin)) return setMsg({ ok: false, text: 'A PIN is 4 to 6 digits' });
+    if (pin !== again) return setMsg({ ok: false, text: 'The two PINs don’t match' });
+    setBusy(true); setMsg(null);
+    try { await b?.setMyPin?.(pin); setMsg({ ok: true, text: 'PIN saved. Next time, sign in with your email and this PIN.' }); setOpen(false); setPin(''); setAgain(''); has.reload(); }
+    catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
+  }
+  return (
+    <section className="card section" aria-label="Your sign-in PIN">
+      <div className="row"><h2 style={{ fontSize: 18 }}>Your sign-in PIN</h2>{has.data && <span className="pill pill-ok">Set</span>}</div>
+      <p className="small muted" style={{ margin: 0 }}>{has.data ? 'You sign in with your email and this PIN. Keep it to yourself.' : 'Set a 4 to 6 digit PIN so you can sign in without an email next time.'}</p>
+      {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+      {!open && <button type="button" className="btn btn-outline" onClick={() => { setOpen(true); setMsg(null); }}>{has.data ? 'Change my PIN' : 'Set my PIN'}</button>}
+      {open && (
+        <>
+          <Field label="New PIN">
+            <input className="input" type="password" inputMode="numeric" autoComplete="new-password" aria-label="New PIN" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
+          </Field>
+          <Field label="Type it again">
+            <input className="input" type="password" inputMode="numeric" autoComplete="new-password" aria-label="New PIN again" maxLength={6} value={again} onChange={(e) => setAgain(e.target.value.replace(/\D/g, ''))} />
+          </Field>
+          <div className="meta">
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={save}>Save PIN</button>
+            <button type="button" className="btn btn-outline" onClick={() => { setOpen(false); setPin(''); setAgain(''); }}>Cancel</button>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 

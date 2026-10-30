@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
-import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
 import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
@@ -11,7 +11,7 @@ type Row = Record<string, unknown>;
 const s = (v: unknown) => (v === null || v === undefined ? undefined : String(v));
 const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
 
-const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {} });
+const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {}, logoUrl: s(r.logo_url) });
 const toPlayer = (r: Row): ClubPlayer => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), duprSingles: n(r.dupr_singles), duprDoubles: n(r.dupr_doubles),
   duprId: s(r.dupr_id), userId: s(r.user_id), claimCode: s(r.claim_code), share: (r.share as Share) ?? {}, sample: !!r.sample,
@@ -147,6 +147,48 @@ export class ServerBackend implements ClubBackend {
     check(await this.sb.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' }));
     // Pick up any club roles waiting for this email.
     check(await this.sb.rpc('claim_pending'));
+  }
+
+  async pinSignIn(a: PinSignIn) {
+    const { data, error } = await this.sb.functions.invoke('pin-sign-in', { body: a });
+    // Expected problems (wrong PIN, lockout) come back as { error } with status 200; anything else is a failure.
+    const r = (data ?? {}) as Row;
+    if (r.error) throw new ClubError(String(r.error));
+    if (error || !r.token_hash) throw new ClubError('Sign-in didn’t work just now. Check your internet and try again.');
+    check(await this.sb.auth.verifyOtp({ token_hash: String(r.token_hash), type: 'magiclink' }));
+    if (a.mode === 'account') check(await this.sb.rpc('claim_pending'));
+    return { tournamentId: s(r.tournament_id) };
+  }
+
+  async hasMyPin() { return !!check(await this.sb.rpc('has_my_pin')); }
+
+  async setMyPin(pin: string) {
+    if (!/^\d{4,6}$/.test(pin)) throw new ClubError('A PIN is 4 to 6 digits');
+    check(await this.sb.rpc('set_my_pin', { p_pin: pin }));
+  }
+
+  async eventPin(tournamentId: string) {
+    const rows = check(await this.sb.from('tournament_pins').select('pin').eq('tournament_id', tournamentId)) as Row[];
+    return rows[0] ? String(rows[0].pin) : null;
+  }
+
+  async setEventPin(tournamentId: string, pin?: string) {
+    if (pin !== undefined && !/^\d{4,6}$/.test(pin)) throw new ClubError('A PIN is 4 to 6 digits');
+    return String(check(await this.sb.rpc('set_event_pin', { p_tournament: tournamentId, p_pin: pin ?? null })));
+  }
+
+  async setClubLogo(clubId: string, image: Blob) {
+    const path = `${clubId}/logo.jpg`;
+    const up = await this.sb.storage.from('posters').upload(path, image, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+    if (up.error) throw new ClubError(/row-level|policy|Unauthorized|403/i.test(up.error.message) ? 'Only the club’s coaches and admins can change the logo' : `The logo didn’t upload: ${up.error.message}`);
+    const url = `${this.sb.storage.from('posters').getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+    check(await this.sb.rpc('set_club_logo', { p_club: clubId, p_url: url }));
+    return url;
+  }
+
+  async publicClubLogo(slug: string) {
+    const r = check(await this.sb.rpc('public_club_logo', { p_slug: slug })) as Row | null;
+    return r ? { club: String(r.club), logoUrl: s(r.logo_url) } : null;
   }
 
   async signOut() { await this.sb.auth.signOut(); }

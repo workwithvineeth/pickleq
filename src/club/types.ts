@@ -20,6 +20,8 @@ export interface Club {
   settings: ClubSettings;
   /** Its first events-board listing was approved, so later ones go straight on. */
   verified?: boolean;
+  /** The club's logo (shown on its pages, event pages and public results). */
+  logoUrl?: string;
 }
 
 export interface Member { userId: string; role: Role; name: string }

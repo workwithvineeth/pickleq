@@ -60,3 +60,39 @@ export function PosterPicker({ b, t, onChanged, onPicked, current }: {
     </div>
   );
 }
+
+/** The club's logo, small and square, kept whole (not cropped). */
+export function ClubLogo({ src, club, size = 64 }: { src?: string; club: string; size?: number }) {
+  const [broken, setBroken] = useState(false);
+  if (!src || broken) return null;
+  return <img src={src} alt={`${club} logo`} className="club-logo" width={size} height={size} style={{ width: size, height: size }} onError={() => setBroken(true)} />;
+}
+
+/** Choose or change the club's logo (coaches and admins). Shrunk on the phone to 512 px first. */
+export function LogoPicker({ b, clubId, club, current, onChanged }: { b: ClubBackend; clubId: string; club: string; current?: string; onChanged?: (url: string) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [url, setUrl] = useState(current);
+  useEffect(() => setUrl(current), [current]);
+  async function choose(file: File | undefined) {
+    if (!file) return;
+    setBusy(true); setMsg(null);
+    try {
+      const blob = await shrinkImage(file, 512, 400_000);
+      const u = await b.setClubLogo(clubId, blob);
+      setUrl(u); onChanged?.(u); setMsg({ ok: true, text: 'Logo saved. It shows on your club, event and results pages.' });
+    } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); if (input.current) input.current.value = ''; }
+  }
+  return (
+    <section className="card section" aria-label="Club logo">
+      <div className="row" style={{ justifyContent: 'flex-start', gap: 12 }}>
+        <ClubLogo src={url} club={club} />
+        <h2 style={{ fontSize: 18 }}>Club logo</h2>
+      </div>
+      <input ref={input} type="file" accept="image/*" aria-label="Logo picture" style={{ display: 'none' }} onChange={(e) => void choose(e.target.files?.[0])} />
+      <button type="button" className="btn btn-outline" disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Saving the logo…' : url ? 'Change logo' : 'Add a logo'}</button>
+      {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+    </section>
+  );
+}

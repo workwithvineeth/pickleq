@@ -46,3 +46,31 @@ describe('Demo club name', () => {
     expect((await b.clubBundle(clubs[0].club.id)).tournaments.map((t) => t.name).filter((n) => n.includes('Open'))).toEqual(['PQ Demo Open']);
   });
 });
+
+describe('Event PIN and club logo (same rules as the server)', () => {
+  it('gives every scorer link the event PIN, and a new PIN reaches them all', async () => {
+    const b = new DemoBackend(memoryStorage());
+    const id = await b.start('Robot');
+    const t = (await b.clubBundle(id)).tournaments.find((x) => x.name === 'PQ Demo Open')!;
+    const pin = await b.eventPin(t.id);
+    const links = await b.createScorerLinks(t.id, id, [1, 2, null]);
+    expect(links.every((l) => l.pin === pin)).toBe(true);
+    await b.updateScorerLink(links[0].id, { pin: '4826' });
+    expect((await b.scorerLinks(t.id)).map((l) => l.pin)).toEqual(['4826', '4826', '4826']);
+    expect(await b.eventPin(t.id)).toBe('4826');
+    const fresh = await b.setEventPin(t.id);
+    expect((await b.scorerLinks(t.id)).every((l) => l.pin === fresh)).toBe(true);
+    await expect(b.setEventPin(t.id, '12')).rejects.toThrow('4 to 6 digits');
+  });
+
+  it('saves a club logo and shows it on the public link', async () => {
+    const b = new DemoBackend(memoryStorage());
+    const id = await b.start('Robot');
+    const t = (await b.clubBundle(id)).tournaments.find((x) => x.name === 'PQ Demo Open')!;
+    expect((await b.publicClubLogo(t.publicSlug))?.logoUrl).toBeUndefined();
+    const url = await b.setClubLogo(id, new Blob(['logo'], { type: 'image/jpeg' }));
+    expect(url).toMatch(/^data:image\/jpeg/);
+    expect((await b.clubBundle(id)).club.logoUrl).toBe(url);
+    expect(await b.publicClubLogo(t.publicSlug)).toEqual({ club: 'PQ Demo Club', logoUrl: url });
+  });
+});

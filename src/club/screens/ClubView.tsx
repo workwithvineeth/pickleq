@@ -9,6 +9,7 @@ import { backend } from '../index';
 import { isClubApp } from '../config';
 import { mySummary } from '../personal';
 import { isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
+import { ClubLogo, LogoPicker } from './Poster';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
 
 type Tab = 'events' | 'players' | 'squad' | 'members';
@@ -30,10 +31,12 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
       <DemoNote b={b} />
       {d && (
         <>
+          {d.club.logoUrl && <ClubLogo src={d.club.logoUrl} club={d.club.name} />}
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
           {tab === 'squad' && staff && <Squad d={d} go={go} />}
+          {tab === 'members' && staff && b && <LogoPicker b={b} clubId={d.club.id} club={d.club.name} current={d.club.logoUrl} onChanged={state.reload} />}
           {tab === 'members' && <Members d={d} go={go} reload={state.reload} />}
         </>
       )}

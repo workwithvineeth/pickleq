@@ -7,7 +7,7 @@ import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBac
 import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../registration';
 import { isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
-import { PosterImage } from './Poster';
+import { ClubLogo, PosterImage } from './Poster';
 
 // ---------- Helpers ----------
 
@@ -140,6 +140,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
 
 export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: () => void }) {
   const state = useLoad(() => findEvent(slug), [slug]);
+  const logo = useLoad(async () => (state.data ? state.data.src.publicClubLogo(slug).catch(() => null) : null), [state.data, slug]);
   const [msg, setMsg] = useState<string | null>(null);
   const e = state.data?.event;
   if (!e) {
@@ -160,7 +161,10 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
       <section className="card section" aria-label="When and where">
         <div style={{ fontWeight: 600 }}>{dayLabel(e.startDate)} · from {timeLabel(e.startTime)}</div>
         {where && <div>{where}</div>}
-        <div className="small muted">Organised by {e.club}</div>
+        <div className="row" style={{ justifyContent: 'flex-start', gap: 10 }}>
+          <ClubLogo src={logo.data?.logoUrl} club={e.club} size={48} />
+          <div className="small muted">Organised by {e.club}</div>
+        </div>
         <EventBadges e={e} />
         {e.registrationOpen && e.entriesClose && <div className="small">Entries close {dayLabel(e.entriesClose)}</div>}
       </section>

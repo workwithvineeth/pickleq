@@ -286,3 +286,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pool-table th, .pool-table td { padding: 6px 4px; }
 .pool-table th:nth-child(n + 3), .pool-table td:nth-child(n + 3) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pool-table .pill { display: inline-block; margin: 2px 0 0 !important; font-size: 11px; }
+
+/* Club logo: square, whole picture shown, on a white tile so dark logos stay visible in dark mode. */
+.club-logo { display: block; width: 64px; height: 64px; object-fit: contain; border-radius: 14px; border: 1px solid var(--border); background: #fff; flex-shrink: 0; }

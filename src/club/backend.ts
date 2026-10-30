@@ -45,6 +45,8 @@ export interface PublicTournament {
 /** One match with what the scoring screen needs. */
 export interface MatchBundle { club: Club; role: Role; match: ClubMatch; players: ClubPlayer[]; tournament?: ClubTournament; divisionName?: string }
 
+export type PinSignIn = { mode: 'account'; email: string; pin: string } | { mode: 'helper'; slug: string; name: string; pin: string };
+
 export interface ScorePatch { games: ClubMatch['games']; status: ClubMatch['status']; winner?: 'A' | 'B'; playedOn?: string }
 
 /** Organiser changes to a match: cancel it, give a walkover, move it to another court or time, or change players. */
@@ -57,6 +59,20 @@ export interface ClubBackend extends EventsBackend {
   currentUser(): Promise<ClubUser | null>;
   sendCode(email: string): Promise<void>;
   verifyCode(email: string, code: string): Promise<void>;
+  /** Signs in with a PIN: an organiser's email + personal PIN, or a helper link's slug + the event PIN + a name.
+   * Helpers come back with the tournament they help with. Club server only. */
+  pinSignIn?(a: PinSignIn): Promise<{ tournamentId?: string }>;
+  /** Whether the signed-in person has set a personal sign-in PIN, and setting it. Club server only. */
+  hasMyPin?(): Promise<boolean>;
+  setMyPin?(pin: string): Promise<void>;
+  /** The tournament's event PIN: every court's scorer link uses it, and desk helpers sign in with it. Staff only. */
+  eventPin(tournamentId: string): Promise<string | null>;
+  /** A new event PIN (random when none is given) for every link of the tournament. Returns it. */
+  setEventPin(tournamentId: string, pin?: string): Promise<string>;
+  /** Sets the club's logo (an image the app has already shrunk). Returns its address. Coaches and admins. */
+  setClubLogo(clubId: string, image: Blob): Promise<string>;
+  /** Public: the club name and logo for a tournament's public link. */
+  publicClubLogo(slug: string): Promise<{ club: string; logoUrl?: string } | null>;
   /** Finishes signing in when the app is opened from the email's sign-in link. True if that just happened. */
   finishLinkSignIn?(): Promise<boolean>;
   signOut(): Promise<void>;

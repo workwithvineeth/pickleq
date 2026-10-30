@@ -9,7 +9,7 @@ import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, type NewDivis
 import { isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
 import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
-import { PosterImage, PosterPicker } from './Poster';
+import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 
@@ -222,6 +222,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   const setDiv = (v: string) => { setDivState(v); remember({ div: v, view }); };
   const setView = (v: View) => { setViewState(v); remember({ div, view: v }); };
   const [msg, setMsg] = useState<string | null>(null);
+  const [confirmDone, setConfirmDone] = useState(false);
   const d = state.data;
   if (!d) return <main className="screen wide-ok" aria-labelledby="t-title"><Header id="t-title" title="Tournament" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const staff = isStaff(d.role);
@@ -237,13 +238,24 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       <Header id="t-title" title={t.name} onBack={onBack} />
       <DemoNote b={b} />
       {!staff && <PosterImage src={t.posterUrl} name={t.name} />}
+      <ClubLogo src={d.club.logoUrl} club={d.club.name} />
       <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {t.startDate} · from {t.startTime} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
       {staff && (
         <div className="meta">
           {t.status === 'draft' && <button type="button" className="btn btn-primary" onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
-          {t.status === 'live' && <button type="button" className="btn btn-outline" onClick={() => set({ status: 'done' }, 'Marked as finished')}>Mark as finished</button>}
+          {t.status === 'live' && !confirmDone && <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(true)}>Mark as finished</button>}
+          {t.status === 'done' && <button type="button" className="btn btn-outline" onClick={() => set({ status: 'live' }, 'Reopened: the tournament is live again')}>Reopen tournament</button>}
           <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: !t.isPublic }, t.isPublic ? 'Results link turned off' : 'Results link is on')}>{t.isPublic ? 'Turn off results link' : 'Turn on results link'}</button>
         </div>
+      )}
+      {staff && confirmDone && t.status === 'live' && (
+        <section className="card section" aria-label="Finish the tournament">
+          <p className="small" style={{ margin: 0 }}>Mark it as finished? Scorer links and helper sign-in stop working. You can reopen it later if needed.</p>
+          <div className="meta">
+            <button type="button" className="btn btn-primary" onClick={() => { setConfirmDone(false); void set({ status: 'done' }, 'Marked as finished'); }}>Yes, mark as finished</button>
+            <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(false)}>Cancel</button>
+          </div>
+        </section>
       )}
       {staff && (
         <nav className="meta" aria-label="Run the tournament">
@@ -393,6 +405,12 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
   }, [slug, tick]);
   const [div, setDiv] = useState<string | null>(null);
   const [view, setView] = useState<View>('pools');
+  const logo = useLoad(async () => {
+    for (const src of await publicSourcesFor(slug)) {
+      try { const r = await src.publicClubLogo(slug); if (r) return r; } catch { /* next place */ }
+    }
+    return null;
+  }, [slug]);
   const d = state.data;
   useEffect(() => {
     if (d?.status !== 'live') return;
@@ -407,6 +425,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
       {!state.loading && !d && !state.error && <p className="muted">These results aren’t available. The link may be turned off.</p>}
       {d && division && (
         <>
+          <ClubLogo src={logo.data?.logoUrl} club={d.club} />
           <p className="small muted" style={{ margin: 0 }}>{d.club} · {d.startDate}{d.status === 'live' ? ' · Live, updates every 20 seconds' : d.status === 'done' ? ' · Finished' : ''}</p>
           {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
           <Segmented label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />

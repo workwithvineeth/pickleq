@@ -263,6 +263,44 @@ describe('Club mode', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/isn’t valid/);
   });
 
+  it('one event PIN: every court link shares it, New PIN changes them all, and the helper link is offered', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Scorer links' }));
+    await user.click(await screen.findByRole('button', { name: 'Make a link for each court (6)' }));
+    await screen.findByText('Made 6 court links');
+    await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
+    await screen.findByText('Made an any-court link');
+    const pins = new Set(demoState().scorerLinks.map((l: { pin: string }) => l.pin));
+    expect(pins.size).toBe(1);
+    const [first] = [...pins] as string[];
+    const card = screen.getByRole('region', { name: 'Event PIN' });
+    expect(within(card).getByLabelText(`Event PIN ${first}`)).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Share helper link' })).toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'New PIN' }));
+    await screen.findByText(/New event PIN for every link/);
+    const after = new Set(demoState().scorerLinks.map((l: { pin: string }) => l.pin));
+    expect(after.size).toBe(1);
+    const [next] = [...after] as string[];
+    expect(await within(card).findByLabelText(`Event PIN ${next}`)).toBeInTheDocument();
+    expect(screen.getAllByText(`PIN ${next}`)).toHaveLength(7);
+  });
+
+  it('a tournament marked finished by mistake can be reopened (with a check before finishing)', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Mark as finished' }));
+    const confirm = screen.getByRole('region', { name: 'Finish the tournament' });
+    await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('region', { name: 'Finish the tournament' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Mark as finished' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, mark as finished' }));
+    await screen.findByText('Marked as finished');
+    await user.click(await screen.findByRole('button', { name: 'Reopen tournament' }));
+    await screen.findByText('Reopened: the tournament is live again');
+    expect(await screen.findByRole('button', { name: 'Mark as finished' })).toBeInTheDocument();
+  });
+
   it('desk view: every court on one screen, results typed in at the desk', async () => {
     const user = userEvent.setup();
     await openEvent(user);

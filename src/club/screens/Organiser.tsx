@@ -48,13 +48,13 @@ const matchLabel = (m: ClubMatch, d: TournamentBundle) => {
 
 // ---------- Scorer links ----------
 
-const randomPin = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 const courtName = (c?: number) => (c ? `Court ${c}` : 'Any court');
 
 export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () => void }) {
   const { b, state } = useTournament(id);
   const [tick, setTick] = useState(0);
   const links = useLoad(async () => (b ? b.scorerLinks(id) : []), [b, id, tick]);
+  const eventPin = useLoad(async () => (b ? b.eventPin(id) : null), [b, id, tick]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const d = state.data;
@@ -74,9 +74,20 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
       <Header id="links-title" title="Scorer links" onBack={onBack} />
       <DemoNote b={b} />
       <p className="small muted" style={{ margin: 0 }}>
-        Give each court’s scorer a link. They don’t need an account, just the link and its PIN. Send the PIN separately, by voice or another message.
+        Give each court’s scorer a link. They don’t need an account, just the link and the event PIN. Send the PIN separately, by voice or another message.
         A court link only shows that court’s matches.
       </p>
+      <section className="card section" aria-label="Event PIN">
+        <div className="row">
+          <h2 style={{ fontSize: 18 }}>Event PIN</h2>
+          {eventPin.data && <b style={{ fontSize: 24, letterSpacing: 4 }} aria-label={`Event PIN ${eventPin.data}`}>{eventPin.data}</b>}
+        </div>
+        <p className="small muted" style={{ margin: 0 }}>One PIN for the whole tournament: every court link uses it, and desk helpers sign in with it on the helper link (they can then run the desk, entries and scores). Only share it with people you trust.</p>
+        <div className="meta">
+          {t.publicSlug && <button type="button" className="btn btn-primary" onClick={async () => setMsg(await shareLink(`${t.name}: helper sign-in`, appLink(`#/helper/${t.publicSlug}`)))}>Share helper link</button>}
+          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.setEventPin(t.id), 'New event PIN for every link. Tell your scorers and helpers.')}>New PIN</button>
+        </div>
+      </section>
       {t.status === 'done' && <div className="msg msg-bad">This tournament is finished, so scorer links no longer work.</div>}
       <div className="meta">
         {missing.length > 0 && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, missing), `Made ${missing.length} court link${missing.length > 1 ? 's' : ''}`)}>{have.size ? `Add links for ${missing.length} more court${missing.length > 1 ? 's' : ''}` : `Make a link for each court (${t.courts})`}</button>}
@@ -94,7 +105,6 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
           {!l.revoked && (
             <div className="meta">
               <button type="button" className="btn btn-primary" onClick={async () => setMsg(await shareLink(`${t.name}: score ${courtName(l.court)}`, url(l)))}>Share link</button>
-              <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { pin: randomPin() }), `New PIN for ${courtName(l.court)}`)}>New PIN</button>
               <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { revoked: true }), `${courtName(l.court)} link turned off`)}>Turn off</button>
             </div>
           )}

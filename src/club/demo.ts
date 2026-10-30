@@ -19,6 +19,8 @@ interface DemoState {
   matches: ClubMatch[];
   summaries: (SharedSummary & { clubId: string })[];
   scorerLinks?: (ScorerLink & { failed: number; lockedUntil?: number })[];
+  /** One PIN per tournament for every scorer link (and, on the server, desk helpers). */
+  eventPins?: Record<string, string>;
   /** Module 2 (added later, so older demos don't have them yet). */
   registrations?: Registration[];
   /** Version 1 was a boolean; later sample sets bump SAMPLE_EVENTS_VERSION. */
@@ -325,7 +327,8 @@ export class DemoBackend implements ClubBackend {
 
   async createScorerLinks(tournamentId: string, clubId: string, courts: (number | null)[]) {
     this.need(clubId, isStaff, 'Only coaches and admins can make scorer links');
-    const made = courts.map((c) => ({ id: newId(), tournamentId, clubId, court: c ?? undefined, token: randomToken(), pin: randomPin(), revoked: false, failed: 0 }));
+    const pin = this.pinOf(tournamentId);
+    const made = courts.map((c) => ({ id: newId(), tournamentId, clubId, court: c ?? undefined, token: randomToken(), pin, revoked: false, failed: 0 }));
     this.s.scorerLinks = [...(this.s.scorerLinks ?? []), ...made];
     this.save();
     return made.map(({ failed: _f, ...l }) => l);
@@ -337,7 +340,57 @@ export class DemoBackend implements ClubBackend {
     this.need(l.clubId, isStaff, 'Only coaches and admins can change scorer links');
     if (patch.pin !== undefined && !/^\d{4,6}$/.test(patch.pin)) throw new ClubError('A PIN is 4 to 6 digits');
     Object.assign(l, patch, { failed: 0, lockedUntil: undefined });
+    // Same as the server: one PIN for every link of the tournament.
+    if (patch.pin !== undefined) this.applyPin(l.tournamentId, patch.pin);
     this.save();
+  }
+
+  private pinOf(tournamentId: string): string {
+    const pins = (this.s.eventPins ??= {});
+    if (!pins[tournamentId]) {
+      const first = (this.s.scorerLinks ?? []).find((x) => x.tournamentId === tournamentId && !x.revoked);
+      pins[tournamentId] = first?.pin ?? randomPin();
+    }
+    return pins[tournamentId];
+  }
+
+  private applyPin(tournamentId: string, pin: string) {
+    (this.s.eventPins ??= {})[tournamentId] = pin;
+    for (const x of this.s.scorerLinks ?? []) if (x.tournamentId === tournamentId) Object.assign(x, { pin, failed: 0, lockedUntil: undefined });
+  }
+
+  async eventPin(tournamentId: string) {
+    const t = this.tournament(tournamentId);
+    this.need(t.clubId, isStaff, 'Only coaches and admins can see the PIN');
+    const p = this.pinOf(tournamentId);
+    this.save();
+    return p;
+  }
+
+  async setEventPin(tournamentId: string, pin?: string) {
+    const t = this.tournament(tournamentId);
+    this.need(t.clubId, isStaff, 'Only the club’s coaches and admins can change the PIN');
+    if (pin !== undefined && !/^\d{4,6}$/.test(pin)) throw new ClubError('A PIN is 4 to 6 digits');
+    const p = pin ?? randomPin();
+    this.applyPin(tournamentId, p);
+    this.save();
+    return p;
+  }
+
+  async setClubLogo(clubId: string, image: Blob) {
+    this.need(clubId, isStaff, 'Only the club’s coaches and admins can change the logo');
+    if (image.size > 600_000) throw new ClubError('That picture is too big for the demo');
+    const c = this.s.clubs.find((x) => x.id === clubId);
+    if (!c) throw new ClubError('Club not found');
+    c.logoUrl = await blobToDataUrl(image);
+    this.save();
+    return c.logoUrl;
+  }
+
+  async publicClubLogo(slug: string) {
+    const t = this.s.tournaments.find((x) => x.publicSlug === slug);
+    const c = t && this.s.clubs.find((x) => x.id === t.clubId);
+    return c ? { club: c.name, logoUrl: c.logoUrl } : null;
   }
 
   /** Same rules as the server: unknown or cancelled link, finished event, lockout after 8 wrong PINs. */
