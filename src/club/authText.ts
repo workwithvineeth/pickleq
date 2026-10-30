@@ -6,6 +6,7 @@ export const MIN_PASSWORD = 8;
 export function passwordProblem(p: string): string | null {
   if (p.length < MIN_PASSWORD) return `Use at least ${MIN_PASSWORD} characters`;
   if (p.length > 72) return 'Use 72 characters or fewer';
+  if (!/[A-Za-z]/.test(p) || !/\d/.test(p)) return 'Use at least one letter and one number';
   if (/^\s|\s$/.test(p)) return 'Don’t start or end the password with a space';
   return null;
 }
@@ -19,6 +20,7 @@ export function authMessage(raw: string): string {
   if (/email not confirmed/.test(m)) return 'Confirm your email first: enter the 6-digit code we emailed you.';
   if (/already (been )?registered|already exists/.test(m)) return 'There’s already an account with this email. Sign in, or use “Forgot password” to set a new password.';
   if (/token has expired|otp.*(expired|invalid)|invalid.*(otp|token)|expired/.test(m)) return 'That code is wrong or has expired. Check the latest email, or send a new code.';
+  if (/should contain at least one character of each/.test(m)) return 'Use at least one letter and one number';
   if (/password should be at least|weak password|password.*(short|length)/.test(m)) return `Use at least ${MIN_PASSWORD} characters`;
   if (/should be different from the old/.test(m)) return 'Choose a password different from your old one.';
   if (/rate limit|too many|only request this after/.test(m)) return 'Too many tries just now. Wait a minute, then try again.';

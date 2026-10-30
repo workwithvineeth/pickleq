@@ -211,7 +211,7 @@ export function ClubSignIn({ go, onBack, admin = false }: { go: Go; onBack: () =
   );
   const newPasswordFields = (onEnter: () => void) => (
     <>
-      <Field label={`${step === 'reset' ? 'New password' : 'Password'} (at least ${MIN_PASSWORD} characters)`}>
+      <Field label={`${step === 'reset' ? 'New password' : 'Password'} (${MIN_PASSWORD}+ characters, letters and numbers)`}>
         <input className="input" type="password" autoComplete="new-password" aria-label={step === 'reset' ? 'New password' : 'Choose a password'} value={password} onChange={(e) => setPassword(e.target.value)} />
       </Field>
       <Field label="Type it again">
@@ -360,7 +360,7 @@ function MyPasswordCard() {
       {!open && <button type="button" className="btn btn-outline" onClick={() => { setOpen(true); setMsg(null); }}>Set or change my password</button>}
       {open && (
         <>
-          <Field label={`New password (at least ${MIN_PASSWORD} characters)`}>
+          <Field label={`New password (${MIN_PASSWORD}+ characters, letters and numbers)`}>
             <input className="input" type="password" autoComplete="new-password" aria-label="New password" value={pw} onChange={(e) => setPw(e.target.value)} />
           </Field>
           <Field label="Type it again">

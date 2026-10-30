@@ -25,7 +25,9 @@ beforeEach(() => { for (const f of Object.values(fake)) if (typeof f === 'functi
 describe('password rules and messages', () => {
   it('needs at least 8 characters', () => {
     expect(passwordProblem('1234567')).toBe('Use at least 8 characters');
-    expect(passwordProblem('12345678')).toBeNull();
+    expect(passwordProblem('abcd1234')).toBeNull();
+    expect(passwordProblem('12345678')).toBe('Use at least one letter and one number');
+    expect(passwordProblem('abcdefgh')).toBe('Use at least one letter and one number');
     expect(passwordProblem(' padded1 ')).toMatch(/space/);
   });
   it('turns server wording into plain English', () => {
@@ -34,6 +36,7 @@ describe('password rules and messages', () => {
     expect(authMessage('Token has expired or is invalid')).toMatch(/wrong or has expired/);
     expect(authMessage('Password should be at least 6 characters.')).toBe('Use at least 8 characters');
     expect(authMessage('email rate limit exceeded')).toMatch(/Too many tries/);
+    expect(authMessage('Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, 0123456789')).toBe('Use at least one letter and one number');
   });
 });
 
