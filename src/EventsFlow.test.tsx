@@ -303,7 +303,7 @@ describe('New clubs need PaddleQ’s approval to host', () => {
     await user.type(screen.getByLabelText('About your club'), 'Two courts in Baner');
     await user.click(screen.getByRole('button', { name: 'Create club and ask to host' }));
     const card = await screen.findByRole('region', { name: 'Hosting tournaments' });
-    expect(card).toHaveTextContent('Waiting for PaddleQ');
+    expect(card).toHaveTextContent(/waiting for paddleq/i);
     expect(card).toHaveTextContent('98765 43210');
     expect(screen.queryByRole('button', { name: 'New tournament' })).not.toBeInTheDocument();
 

@@ -192,7 +192,7 @@ test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', ()
     await page.getByLabel('About your club').fill('Two courts');
     await page.getByRole('button', { name: 'Create club and ask to host' }).click();
     const card = page.getByRole('region', { name: 'Hosting tournaments' });
-    await expect(card).toContainText('Waiting for PaddleQ');
+    await expect(card).toContainText(/waiting for paddleq/i);
     await expect(page.getByRole('button', { name: 'New tournament' })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 

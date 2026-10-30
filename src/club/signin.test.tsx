@@ -78,7 +78,7 @@ describe('Sign in with a password', () => {
     await user.clear(screen.getByLabelText('Password again'));
     await user.type(screen.getByLabelText('Password again'), 'longenough1');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
-    expect(await screen.findByRole('heading', { name: 'Confirm your email' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('emailed a 6-digit code to new@example.com');
     await user.type(screen.getByLabelText('6-digit code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Confirm and sign in' }));
@@ -107,10 +107,15 @@ describe('Sign in with a password', () => {
     const go = vi.fn(); const done = vi.fn();
     const user = userEvent.setup();
     render(<ClubSignIn go={go} onBack={() => {}} landing onSignedIn={done} />);
-    expect(screen.getByRole('heading', { name: 'Welcome to PaddleQ' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'PaddleQ', level: 1 })).toBeInTheDocument();
+    expect(screen.getByText('Out of the kitchen, into the stats.')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'PaddleQ logo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sign in', level: 2 })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Join a club' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Got an invite from a club/ }));
     expect(screen.getByRole('region', { name: 'Join a club' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Just watching/ })).toBeInTheDocument();
     await user.type(screen.getByLabelText('Email'), 'organiser@example.com');
     await user.type(screen.getByLabelText('Password'), 'rightpass1');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));

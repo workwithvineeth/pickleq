@@ -63,9 +63,25 @@ function HostingRequest({ d, reload }: { d: ClubBundle; reload: () => void }) {
     <section className="card section" aria-label="Hosting tournaments">
       <div className="row" style={{ padding: 0 }}>
         <h2 style={{ fontSize: 18 }}>Hosting tournaments</h2>
-        <span className={`pill${c.hosting === 'rejected' ? ' pill-bad' : ' pill-warn'}`}>{waiting ? 'Waiting for PaddleQ' : c.hosting === 'rejected' ? 'Not approved' : 'Not asked yet'}</span>
+        {!waiting && <span className={`pill${c.hosting === 'rejected' ? ' pill-bad' : ' pill-warn'}`}>{c.hosting === 'rejected' ? 'Not approved' : 'Not asked yet'}</span>}
       </div>
-      {waiting && <p className="small" style={{ margin: 0 }}>PaddleQ is checking your club. We’ll call or WhatsApp you on {c.hostingPhone}. Once approved, you can post and run tournaments here.</p>}
+      {waiting && (
+        <>
+          <div className="pq-wait">
+            <span className="pq-badge pq-badge-gold" style={{ alignSelf: 'flex-start' }}>WAITING FOR PADDLEQ</span>
+            <p style={{ margin: 0, fontSize: 15 }}>We’re checking your club. We’ll call or WhatsApp you on <b>{c.hostingPhone}</b>, usually within a day.</p>
+          </div>
+          <ol className="pq-progress" aria-label="Getting approved">
+            <li className="pq-progress-done"><span aria-hidden="true" className="pq-progress-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg></span>
+              <span><b>Request sent</b><span className="small">Club, phone and a note about your courts</span></span></li>
+            <li className="pq-progress-now"><span aria-hidden="true" className="pq-progress-dot" />
+              <span><b>PaddleQ reviews</b><span className="small">A quick call to say hello</span></span></li>
+            <li><span aria-hidden="true" className="pq-progress-dot" />
+              <span><b>Host tournaments</b><span className="small">Post, take entries, make the draw, score live</span></span></li>
+          </ol>
+          <p className="small muted" style={{ margin: 0 }}>While you wait: add your club logo and invite co-organisers in the Members tab.</p>
+        </>
+      )}
       {c.hosting === 'rejected' && <div role="status" className="msg msg-bad">PaddleQ’s note: {c.hostingReason ?? 'not approved yet'}. Fix it and ask again.</div>}
       {!waiting && (
         <>
