@@ -1,0 +1,64 @@
+name: Club checks
+
+# On every push to club-mode: typecheck, lint and unit tests (quiet), then every SQL check in supabase/tests against a
+# fresh local Supabase built from supabase/migrations (multi-user checks included, no manual SQL Editor runs).
+# Results are a short summary on the run page; failures also open (or update) one "Club checks failed" issue,
+# which closes itself on the next green run.
+on:
+  push:
+    branches: [club-mode]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: club-checks
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: App checks
+        id: app
+        continue-on-error: true
+        run: npm run -s check 2>&1 | tee app.txt
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start a local Supabase from the migrations
+        id: sb
+        continue-on-error: true
+        run: |
+          [ -f supabase/config.toml ] || supabase init --force >/dev/null
+          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
+      - name: Database checks
+        id: db
+        continue-on-error: true
+        run: bash scripts/db-tests.sh 2>&1 | tee db.txt
+      - name: Summary
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OK: ${{ steps.app.outcome == 'success' && steps.db.outcome == 'success' }}
+        run: |
+          { echo "### Club checks for ${GITHUB_SHA::7}"; echo '```'; cat app.txt 2>/dev/null || echo "App checks did not run"; echo; cat db.txt 2>/dev/null || echo "Database checks did not run"; echo '```'; } > summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+          num=$(gh issue list --state open --label club-checks --json number --jq '.[0].number' 2>/dev/null)
+          if [ "$OK" = "true" ]; then
+            [ -n "$num" ] && gh issue close "$num" --comment "Green again on ${GITHUB_SHA::7}." || true
+          else
+            gh label create club-checks --color B60205 2>/dev/null || true
+            if [ -n "$num" ]; then gh issue comment "$num" --body-file summary.md
+            else gh issue create --title "Club checks failed" --label club-checks --body-file summary.md; fi
+            exit 1
+          fi
