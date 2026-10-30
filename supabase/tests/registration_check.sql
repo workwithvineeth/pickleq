@@ -24,6 +24,10 @@ $$;
 set local role authenticated;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000a1');
 insert into ids values ('club', public.create_club('Reg Club', 'Hyderabad', 'Anu'));
+-- PaddleQ approves the test club, so it can host (club_mode_16).
+reset role;
+update public.clubs set hosting = 'approved' where id in (select v from ids);
+set local role authenticated;
 with x as (insert into public.tournaments (club_id, name, start_date, entry_mode, registration_open, city, venue, listing_status)
   select v, 'Reg Open', current_date + 10, 'registration', true, 'Hyderabad', 'Court One', 'approved' from ids where k = 'club' returning id)
 insert into ids select 't', id from x;

@@ -10,3 +10,4 @@ do $$ begin
     perform public.create_club('Pickleyard', 'Hyderabad', 'Vineeth');
   end if;
 end $$;
+update public.clubs set hosting = 'approved' where name = 'Pickleyard';

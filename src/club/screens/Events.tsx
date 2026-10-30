@@ -5,7 +5,7 @@ import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backen
 import { clubMode } from '../config';
 import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBackend } from '../index';
 import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../registration';
-import { isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
+import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { ClubLogo, PosterImage } from './Poster';
 
@@ -129,7 +129,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       )}
       <section className="card section" aria-label="Organisers">
         <h2 style={{ fontSize: 16 }}>Running a tournament?</h2>
-        <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on PaddleQ: entries, draw, a scorer on every court and live results.</p>
+        <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on PaddleQ: entries, draw, a referee on every court and live results.</p>
         <button type="button" className="btn btn-outline" onClick={() => go('events-post')}>Post a tournament</button>
       </section>
     </main>
@@ -418,8 +418,10 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
         <section className="section" aria-label="Post as">
           <div className="label">Post as</div>
           {clubs.map(({ club }) => (
-            <button key={club.id} type="button" className="match-row" onClick={() => go('club-tournament-new', club.id)}>
-              <span style={{ flex: 1 }}><b>{club.name}</b>{club.city ? <span className="small muted"> · {club.city}</span> : null}</span><span aria-hidden="true">›</span>
+            <button key={club.id} type="button" className="match-row" onClick={() => go(canHost(club) ? 'club-tournament-new' : 'club-view', club.id)}>
+              <span style={{ flex: 1 }}><b>{club.name}</b>{club.city ? <span className="small muted"> · {club.city}</span> : null}
+                {!canHost(club) && <span className="small muted" style={{ display: 'block' }}>{club.hosting === 'rejected' ? 'Not approved by PaddleQ yet: open the club to see why' : 'Waiting for PaddleQ to approve this club'}</span>}</span>
+              <span aria-hidden="true">›</span>
             </button>
           ))}
         </section>

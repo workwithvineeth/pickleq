@@ -289,6 +289,43 @@ describe('Signing in to enter (real server)', () => {
   });
 });
 
+describe('New clubs need PaddleQ’s approval to host', () => {
+  it('asks when the club is made, waits, and can host once an admin approves', async () => {
+    const user = userEvent.setup();
+    await openDemo(user);
+    window.location.hash = '#/club-new';
+    await screen.findByRole('heading', { name: 'Create a club' });
+    await user.type(screen.getByLabelText('Club name'), 'Smash Yard');
+    await user.type(screen.getByLabelText('Your name'), 'Robot');
+    await user.click(screen.getByRole('button', { name: 'Create club and ask to host' }));
+    expect(await screen.findByText('Add a phone number PaddleQ can call (10 digits)')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Phone number'), '98765 43210');
+    await user.type(screen.getByLabelText('About your club'), 'Two courts in Baner');
+    await user.click(screen.getByRole('button', { name: 'Create club and ask to host' }));
+    const card = await screen.findByRole('region', { name: 'Hosting tournaments' });
+    expect(card).toHaveTextContent('Waiting for PaddleQ');
+    expect(card).toHaveTextContent('98765 43210');
+    expect(screen.queryByRole('button', { name: 'New tournament' })).not.toBeInTheDocument();
+
+    window.location.hash = '#/admin/clubs';
+    expect(await screen.findByText(/1 club waiting for your approval/)).toBeInTheDocument();
+    const req = screen.getByRole('region', { name: 'Smash Yard' });
+    expect(req).toHaveTextContent('Wants to host');
+    expect(req).toHaveTextContent('Two courts in Baner');
+    await user.click(within(req).getByRole('button', { name: 'Reject…' }));
+    await user.click(within(req).getByRole('button', { name: 'Reject with this reason' }));
+    expect(await screen.findByText('Give the organiser a reason')).toBeInTheDocument();
+    await user.type(within(req).getByLabelText('Reason for rejecting Smash Yard'), 'Add your venue');
+    await user.click(within(req).getByRole('button', { name: 'Reject with this reason' }));
+    expect(await screen.findByText('Smash Yard was told: Add your venue')).toBeInTheDocument();
+    await user.click(within(screen.getByRole('region', { name: 'Smash Yard' })).getByRole('button', { name: 'Approve to host' }));
+    expect(await screen.findByText('Smash Yard can now host tournaments')).toBeInTheDocument();
+
+    await user.click(within(screen.getByRole('region', { name: 'Smash Yard' })).getByRole('button', { name: 'People and events' }));
+    await screen.findByRole('heading', { name: 'Smash Yard' });
+  });
+});
+
 describe('PaddleQ admin dashboard', () => {
   it('shows the numbers, clubs, tournaments (reopen with a confirm), listings and admins', async () => {
     const user = userEvent.setup();

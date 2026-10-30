@@ -250,7 +250,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       )}
       {staff && confirmDone && t.status === 'live' && (
         <section className="card section" aria-label="Finish the tournament">
-          <p className="small" style={{ margin: 0 }}>Mark it as finished? Scorer links and helper sign-in stop working. You can reopen it later if needed.</p>
+          <p className="small" style={{ margin: 0 }}>Mark it as finished? Referee links and desk sign-in stop working. You can reopen it later if needed.</p>
           <div className="meta">
             <button type="button" className="btn btn-primary" onClick={() => { setConfirmDone(false); void set({ status: 'done' }, 'Marked as finished'); }}>Yes, mark as finished</button>
             <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(false)}>Cancel</button>
@@ -261,7 +261,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
         <nav className="meta" aria-label="Run the tournament">
           {t.entryMode === 'registration' && <button type="button" className="btn btn-primary" onClick={() => go('club-inbox', t.id)}>{t.drawnAt ? 'Entries inbox' : 'Entries inbox and draw'}</button>}
           <button type="button" className="btn btn-outline" onClick={() => go('club-desk', t.id)}>Desk view</button>
-          <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Scorer links</button>
+          <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>Entries</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>
         </nav>

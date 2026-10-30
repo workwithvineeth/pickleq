@@ -2,16 +2,18 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
 import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { authMessage, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
-import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { Club, ClubMatch, HostingStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
 const s = (v: unknown) => (v === null || v === undefined ? undefined : String(v));
 const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
 
-const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {}, logoUrl: s(r.logo_url) });
+const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {}, logoUrl: s(r.logo_url),
+  hosting: (s(r.hosting) as Club['hosting']) ?? undefined, hostingReason: s(r.hosting_reason), hostingPhone: s(r.hosting_phone) });
 const toPlayer = (r: Row): ClubPlayer => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), duprSingles: n(r.dupr_singles), duprDoubles: n(r.dupr_doubles),
   duprId: s(r.dupr_id), userId: s(r.user_id), claimCode: s(r.claim_code), share: (r.share as Share) ?? {}, sample: !!r.sample,
@@ -107,6 +109,12 @@ function check<T>(res: { data: T; error: { message: string } | null }): T {
   return res.data;
 }
 
+/** Like check(), for sign-in calls: the server's wording becomes something a person can act on. */
+function auth<R extends { data: unknown; error: { message: string } | null }>(res: R): R['data'] {
+  if (res.error) throw new ClubError(authMessage(res.error.message));
+  return res.data;
+}
+
 export class ServerBackend implements ClubBackend {
   readonly kind = 'server' as const;
   private sb: SupabaseClient;
@@ -158,6 +166,50 @@ export class ServerBackend implements ClubBackend {
     check(await this.sb.auth.verifyOtp({ token_hash: String(r.token_hash), type: 'magiclink' }));
     if (a.mode === 'account') check(await this.sb.rpc('claim_pending'));
     return { tournamentId: s(r.tournament_id) };
+  }
+
+  async passwordSignIn(email: string, password: string) {
+    auth(await this.sb.auth.signInWithPassword({ email: email.trim(), password }));
+    check(await this.sb.rpc('claim_pending'));
+  }
+
+  async signUp(email: string, password: string) {
+    const bad = passwordProblem(password);
+    if (bad) throw new ClubError(bad);
+    const back = `${window.location.origin}${window.location.pathname}`;
+    const data = auth(await this.sb.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: back } }));
+    // An email that already has an account comes back with no identities (Supabase hides that it exists).
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw new ClubError(authMessage('already registered'));
+    if (data.session) { check(await this.sb.rpc('claim_pending')); return false; }
+    return true;
+  }
+
+  async confirmEmail(email: string, code: string) {
+    const e = email.trim(), token = code.replace(/\s/g, '');
+    const first = await this.sb.auth.verifyOtp({ email: e, token, type: 'signup' });
+    if (first.error) auth(await this.sb.auth.verifyOtp({ email: e, token, type: 'email' }));
+    check(await this.sb.rpc('claim_pending'));
+  }
+
+  async resendConfirm(email: string) { auth(await this.sb.auth.resend({ type: 'signup', email: email.trim() })); }
+
+  async sendPasswordReset(email: string) {
+    const back = `${window.location.origin}${window.location.pathname}`;
+    auth(await this.sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: back }));
+  }
+
+  async resetPassword(email: string, code: string, password: string) {
+    const bad = passwordProblem(password);
+    if (bad) throw new ClubError(bad);
+    auth(await this.sb.auth.verifyOtp({ email: email.trim(), token: code.replace(/\s/g, ''), type: 'recovery' }));
+    auth(await this.sb.auth.updateUser({ password }));
+    check(await this.sb.rpc('claim_pending'));
+  }
+
+  async setMyPassword(password: string) {
+    const bad = passwordProblem(password);
+    if (bad) throw new ClubError(bad);
+    auth(await this.sb.auth.updateUser({ password }));
   }
 
   async hasMyPin() { return !!check(await this.sb.rpc('has_my_pin')); }
@@ -381,7 +433,7 @@ export class ServerBackend implements ClubBackend {
 
   async scorerOpen(token: string, pin: string): Promise<ScorerView> {
     const r = check(await this.sb.rpc('scorer_open', { p_token: token, p_pin: pin })) as Row | null;
-    if (!r) throw new ClubError('This scorer link isn’t valid. Ask the organiser for a new one.');
+    if (!r) throw new ClubError('This referee link isn’t valid. Ask the organiser for a new one.');
     if (r.error) throw new ClubError(String(r.error));
     return toScorerView(r);
   }
@@ -574,7 +626,7 @@ export class ServerBackend implements ClubBackend {
 
   async adminClubs(): Promise<AdminClub[]> {
     return adminList(check(await this.sb.rpc('admin_clubs'))).map((r) => ({
-      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test,
+      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, hosting: (String(r.hosting ?? 'approved') as HostingStatus), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
       owners: ((r.owners as unknown[]) ?? []).map(String), members: Number(r.members ?? 0), tournaments: Number(r.tournaments ?? 0), lastEvent: s(r.last_event),
     }));
   }
@@ -582,12 +634,14 @@ export class ServerBackend implements ClubBackend {
   async adminClub(id: string): Promise<AdminClubDetail> {
     const r = answer(check(await this.sb.rpc('admin_club', { p_club: id })));
     return {
-      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test,
+      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, hosting: (String(r.hosting ?? 'approved') as HostingStatus), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
       people: ((r.people as Row[]) ?? []).map((p) => ({ name: String(p.name ?? ''), email: s(p.email), role: p.role as Role, helper: !!p.helper })),
       tournaments: ((r.tournaments as Row[]) ?? []).map((t) => ({ id: String(t.id), name: String(t.name), startDate: String(t.start_date), status: t.status as ClubTournament['status'] })),
     };
   }
 
+  async setClubHosting(id: string, approve: boolean, reason?: string) { answer(check(await this.sb.rpc('admin_set_club_hosting', { p_club: id, p_approve: approve, p_reason: reason ?? null }))); }
+  async requestHosting(clubId: string, phone: string, note: string) { answer(check(await this.sb.rpc('request_hosting', { p_club: clubId, p_phone: phone, p_note: note }))); }
   async setClubVerified(id: string, verified: boolean) { answer(check(await this.sb.rpc('admin_set_club_verified', { p_club: id, p_verified: verified }))); }
 
   async adminTournaments(): Promise<AdminTournament[]> {

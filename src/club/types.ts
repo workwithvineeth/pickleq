@@ -22,7 +22,17 @@ export interface Club {
   verified?: boolean;
   /** The club's logo (shown on its pages, event pages and public results). */
   logoUrl?: string;
+  /** Can it host tournaments? New clubs ask PaddleQ ("pending"); PaddleQ approves or rejects with a reason.
+   * Missing means approved (clubs from before approvals, and demo samples). */
+  hosting?: HostingStatus;
+  hostingReason?: string;
+  hostingPhone?: string;
+  hostingNote?: string;
 }
+
+export type HostingStatus = 'pending' | 'approved' | 'rejected';
+/** True when the club may host tournaments. */
+export const canHost = (c: Pick<Club, 'hosting'>) => !c.hosting || c.hosting === 'approved';
 
 export interface Member { userId: string; role: Role; name: string }
 

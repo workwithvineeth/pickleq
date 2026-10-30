@@ -14,6 +14,7 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
   switch (route.name) {
     case 'club': return <ClubHub go={go} onBack={() => go('home')} />;
     case 'club-signin': return <ClubSignIn go={go} onBack={back} />;
+    case 'admin-login': return <ClubSignIn admin go={go} onBack={() => go('events')} />;
     case 'club-new': return <ClubNew go={go} onBack={back} />;
     case 'club-join': return <ClubJoin key={id} code={id} go={go} onBack={() => go('club')} />;
     case 'club-view': return <ClubView key={id} clubId={id} go={go} onBack={() => go('club')} />;

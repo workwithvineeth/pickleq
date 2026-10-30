@@ -6,7 +6,7 @@ import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents'
 import { blobToDataUrl } from './poster';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
-import { isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
+import { canHost, isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
 interface DemoState {
   v: 1;
@@ -142,7 +142,7 @@ export class DemoBackend implements ClubBackend {
   async createClub(name: string, city: string, myName: string) {
     const u = this.me();
     if (name.trim().length < 2) throw new ClubError('Give the club a name');
-    const club: Club = { id: newId(), name: name.trim(), city: city.trim() || undefined, inviteCode: newId().replace(/-/g, '').slice(0, 10), settings: {} };
+    const club: Club = { id: newId(), name: name.trim(), city: city.trim() || undefined, inviteCode: newId().replace(/-/g, '').slice(0, 10), settings: {}, hosting: 'pending' };
     this.s.clubs.push(club);
     this.s.members.push({ clubId: club.id, userId: u.id, role: 'owner', name: myName.trim() || 'Me' });
     this.s.players.push({ id: newId(), clubId: club.id, name: myName.trim() || 'Me', userId: u.id, share: {} });
@@ -227,6 +227,8 @@ export class DemoBackend implements ClubBackend {
 
   async createTournament(input: NewTournamentInput) {
     this.need(input.clubId, isStaff, 'Only coaches and admins can create tournaments');
+    // Same rule as the server: an unapproved club can't host, unless a platform admin adds it (the demo's user is one).
+    if (!canHost(this.club(input.clubId)) && !(await this.isPlatformAdmin())) throw new ClubError('PaddleQ hasn’t approved this club to host tournaments yet. Send the request from the club page; we’ll reply soon.');
     if (input.name.trim().length < 2) throw new ClubError('Give the tournament a name');
     for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : input.entryMode ?? 'roster'); if (e) throw new ClubError(e); }
     const players = new Map(this.s.players.filter((p) => p.clubId === input.clubId).map((p) => [p.id, p]));
@@ -321,13 +323,13 @@ export class DemoBackend implements ClubBackend {
   async scorerLinks(tournamentId: string): Promise<ScorerLink[]> {
     const t = this.s.tournaments.find((x) => x.id === tournamentId);
     if (!t) throw new ClubError('Tournament not found');
-    this.need(t.clubId, isStaff, 'Only coaches and admins can see scorer links');
+    this.need(t.clubId, isStaff, 'Only coaches and admins can see referee links');
     return (this.s.scorerLinks ?? []).filter((l) => l.tournamentId === tournamentId).map(({ failed: _f, lockedUntil: _l, ...l }) => l)
       .sort((a, b) => (a.court ?? 999) - (b.court ?? 999));
   }
 
   async createScorerLinks(tournamentId: string, clubId: string, courts: (number | null)[]) {
-    this.need(clubId, isStaff, 'Only coaches and admins can make scorer links');
+    this.need(clubId, isStaff, 'Only coaches and admins can make referee links');
     const pin = this.pinOf(tournamentId);
     const made = courts.map((c) => ({ id: newId(), tournamentId, clubId, court: c ?? undefined, token: randomToken(), pin, revoked: false, failed: 0 }));
     this.s.scorerLinks = [...(this.s.scorerLinks ?? []), ...made];
@@ -338,7 +340,7 @@ export class DemoBackend implements ClubBackend {
   async updateScorerLink(id: string, patch: { revoked?: boolean; pin?: string }) {
     const l = (this.s.scorerLinks ?? []).find((x) => x.id === id);
     if (!l) throw new ClubError('Link not found');
-    this.need(l.clubId, isStaff, 'Only coaches and admins can change scorer links');
+    this.need(l.clubId, isStaff, 'Only coaches and admins can change referee links');
     if (patch.pin !== undefined && !/^\d{4,6}$/.test(patch.pin)) throw new ClubError('A PIN is 4 to 6 digits');
     Object.assign(l, patch, { failed: 0, lockedUntil: undefined });
     // Same as the server: one PIN for every link of the tournament.
@@ -397,9 +399,9 @@ export class DemoBackend implements ClubBackend {
   /** Same rules as the server: unknown or cancelled link, finished event, lockout after 8 wrong PINs. */
   private checkLink(token: string, pin: string) {
     const l = (this.s.scorerLinks ?? []).find((x) => x.token === token);
-    if (!l || l.revoked) throw new ClubError('This scorer link isn’t valid. Ask the organiser for a new one.');
+    if (!l || l.revoked) throw new ClubError('This referee link isn’t valid. Ask the organiser for a new one.');
     const t = this.s.tournaments.find((x) => x.id === l.tournamentId);
-    if (!t || t.status === 'done') throw new ClubError('This event has finished, so the scorer link no longer works.');
+    if (!t || t.status === 'done') throw new ClubError('This event has finished, so the referee link no longer works.');
     if (l.lockedUntil && l.lockedUntil > Date.now()) throw new ClubError('Too many wrong PINs. Try again in 15 minutes, or ask the organiser.');
     if (pin !== l.pin) {
       l.failed += 1;
@@ -752,7 +754,7 @@ export class DemoBackend implements ClubBackend {
       const ts = this.s.tournaments.filter((t) => t.clubId === c.id);
       const owners = this.s.members.filter((m) => m.clubId === c.id && m.role === 'owner').map((m) => (m.userId === u.id ? u.email : `${m.name} (demo)`));
       return {
-        id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, owners,
+        id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, hosting: c.hosting ?? 'approved', hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason, owners,
         members: this.s.members.filter((m) => m.clubId === c.id).length, tournaments: ts.length,
         lastEvent: ts.map((t) => t.startDate).sort().pop(),
       };
@@ -764,7 +766,7 @@ export class DemoBackend implements ClubBackend {
     const c = this.club(id);
     const order: Role[] = ['owner', 'admin', 'coach', 'player'];
     return {
-      id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false,
+      id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, hosting: c.hosting ?? 'approved', hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason,
       people: this.s.members.filter((m) => m.clubId === id).sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role))
         .map((m) => ({ name: m.name, email: m.userId === u.id ? u.email : undefined, role: m.role, helper: false })),
       tournaments: this.s.tournaments.filter((t) => t.clubId === id).sort((a, b) => b.startDate.localeCompare(a.startDate))
@@ -772,6 +774,21 @@ export class DemoBackend implements ClubBackend {
     };
   }
 
+  async setClubHosting(id: string, approve: boolean, reason?: string) {
+    this.me();
+    if (!approve && (reason ?? '').trim().length < 3) throw new ClubError('Give the organiser a reason');
+    const c = this.club(id);
+    c.hosting = approve ? 'approved' : 'rejected'; c.hostingReason = approve ? undefined : reason!.trim().slice(0, 300);
+    this.save();
+  }
+  async requestHosting(clubId: string, phone: string, note: string) {
+    this.need(clubId, isAdmin, 'Only the club’s owner and admins can ask to host tournaments');
+    const c = this.club(clubId);
+    if (canHost(c)) throw new ClubError('This club can already host tournaments');
+    if (phone.replace(/\D/g, '').length < 10) throw new ClubError('Add a phone number PaddleQ can call (10 digits)');
+    c.hosting = 'pending'; c.hostingPhone = phone.trim().slice(0, 20); c.hostingNote = note.trim().slice(0, 500) || undefined; c.hostingReason = undefined;
+    this.save();
+  }
   async setClubVerified(id: string, verified: boolean) { this.me(); this.club(id).verified = verified; this.save(); }
 
   async adminTournaments(): Promise<AdminTournament[]> {

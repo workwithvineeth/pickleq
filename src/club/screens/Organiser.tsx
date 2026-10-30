@@ -58,7 +58,7 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const d = state.data;
-  if (!d || !b) return shell('Scorer links', onBack, state);
+  if (!d || !b) return shell('Referee links', onBack, state);
   const t = d.tournament;
   const have = new Set((links.data ?? []).filter((l) => !l.revoked).map((l) => l.court ?? 0));
   const missing = Array.from({ length: t.courts }, (_, i) => i + 1).filter((c) => !have.has(c));
@@ -71,10 +71,10 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
 
   return (
     <main className="screen" aria-labelledby="links-title">
-      <Header id="links-title" title="Scorer links" onBack={onBack} />
+      <Header id="links-title" title="Referee links" onBack={onBack} />
       <DemoNote b={b} />
       <p className="small muted" style={{ margin: 0 }}>
-        Give each court’s scorer a link. They don’t need an account, just the link and the event PIN. Send the PIN separately, by voice or another message.
+        Give each court’s referee a link. They don’t need an account, just the link and the event PIN. Send the PIN separately, by voice or another message.
         A court link only shows that court’s matches.
       </p>
       <section className="card section" aria-label="Event PIN">
@@ -82,13 +82,13 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
           <h2 style={{ fontSize: 18 }}>Event PIN</h2>
           {eventPin.data && <b style={{ fontSize: 24, letterSpacing: 4 }} aria-label={`Event PIN ${eventPin.data}`}>{eventPin.data}</b>}
         </div>
-        <p className="small muted" style={{ margin: 0 }}>One PIN for the whole tournament: every court link uses it, and desk helpers sign in with it on the helper link (they can then run the desk, entries and scores). Only share it with people you trust.</p>
+        <p className="small muted" style={{ margin: 0 }}>One PIN for the whole tournament: every referee link uses it, and your desk team signs in with it on the desk link (they can then run the desk, entries and scores). Only share it with people you trust.</p>
         <div className="meta">
-          {t.publicSlug && <button type="button" className="btn btn-primary" onClick={async () => setMsg(await shareLink(`${t.name}: helper sign-in`, appLink(`#/helper/${t.publicSlug}`)))}>Share helper link</button>}
-          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.setEventPin(t.id), 'New event PIN for every link. Tell your scorers and helpers.')}>New PIN</button>
+          {t.publicSlug && <button type="button" className="btn btn-primary" onClick={async () => setMsg(await shareLink(`${t.name}: desk sign-in`, appLink(`#/helper/${t.publicSlug}`)))}>Share desk link</button>}
+          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.setEventPin(t.id), 'New event PIN for every link. Tell your referees and desk team.')}>New PIN</button>
         </div>
       </section>
-      {t.status === 'done' && <div className="msg msg-bad">This tournament is finished, so scorer links no longer work.</div>}
+      {t.status === 'done' && <div className="msg msg-bad">This tournament is finished, so referee links no longer work.</div>}
       <div className="meta">
         {missing.length > 0 && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, missing), `Made ${missing.length} court link${missing.length > 1 ? 's' : ''}`)}>{have.size ? `Add links for ${missing.length} more court${missing.length > 1 ? 's' : ''}` : `Make a link for each court (${t.courts})`}</button>}
         {!have.has(0) && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, [null]), 'Made an any-court link')}>Add an any-court link</button>}
@@ -96,7 +96,7 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
       <Status error={links.error} loading={links.loading && !links.data} />
       {(links.data ?? []).map((l) => (
-        <section key={l.id} className="card section" aria-label={`${courtName(l.court)} scorer link`} style={l.revoked ? { opacity: 0.6 } : undefined}>
+        <section key={l.id} className="card section" aria-label={`${courtName(l.court)} referee link`} style={l.revoked ? { opacity: 0.6 } : undefined}>
           <div className="row">
             <h3 style={{ fontSize: 18 }}>{courtName(l.court)}</h3>
             {l.revoked ? <span className="pill">Turned off</span> : <span className="pill pill-ok">PIN {l.pin}</span>}
@@ -175,12 +175,12 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
     catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }
 
-  const title = view ? (view.court ? `Court ${view.court}` : 'Scoring') : 'Scorer';
+  const title = view ? (view.court ? `Court ${view.court}` : 'Scoring') : 'Referee';
   if (!pin || !view || !src) {
     return (
       <main className="screen" aria-labelledby="court-title">
         <Header id="court-title" title={title} onBack={onBack} />
-        <p className="small muted" style={{ margin: 0 }}>Enter the PIN the organiser gave you to score matches. No account needed.</p>
+        <p className="small muted" style={{ margin: 0 }}>Referee: enter the event PIN the organiser gave you to score this court’s matches. No account needed.</p>
         <Field label="PIN">
           <input className="input" inputMode="numeric" autoComplete="off" aria-label="PIN" maxLength={6} value={typed} onChange={(e) => setTyped(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') void enter(); }} />
         </Field>
@@ -302,7 +302,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
       <p className="small muted" style={{ margin: 0 }}>{played} of {real.length} matches played · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'} · refreshes every 8 seconds</p>
       <div className="meta">
         {t.status === 'draft' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.updateTournament(t.id, { status: 'live' }), 'The tournament is live')}>Start tournament</button>}
-        <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Scorer links</button>
+        <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>
         <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>Entries</button>
         <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Standings and draw</button>
       </div>

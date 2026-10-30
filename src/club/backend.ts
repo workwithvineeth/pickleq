@@ -1,6 +1,6 @@
 import type { NewMatchRow, NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
-import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 export interface ClubUser { id: string; email: string }
 export interface MyClub { club: Club; role: Role; myPlayerId?: string }
@@ -62,6 +62,16 @@ export interface ClubBackend extends EventsBackend {
   /** Signs in with a PIN: an organiser's email + personal PIN, or a helper link's slug + the event PIN + a name.
    * Helpers come back with the tournament they help with. Club server only. */
   pinSignIn?(a: PinSignIn): Promise<{ tournamentId?: string }>;
+  /** Accounts with a password (organisers and admins). New accounts confirm their email with a 6-digit code;
+   * "forgot password" also works by code. Club server only. */
+  passwordSignIn?(email: string, password: string): Promise<void>;
+  /** Creates an account. Returns true when a code was emailed (the usual case), false when it signed straight in. */
+  signUp?(email: string, password: string): Promise<boolean>;
+  confirmEmail?(email: string, code: string): Promise<void>;
+  resendConfirm?(email: string): Promise<void>;
+  sendPasswordReset?(email: string): Promise<void>;
+  resetPassword?(email: string, code: string, password: string): Promise<void>;
+  setMyPassword?(password: string): Promise<void>;
   /** Whether the signed-in person has set a personal sign-in PIN, and setting it. Club server only. */
   hasMyPin?(): Promise<boolean>;
   setMyPin?(pin: string): Promise<void>;
@@ -78,6 +88,8 @@ export interface ClubBackend extends EventsBackend {
   signOut(): Promise<void>;
   myClubs(): Promise<MyClub[]>;
   createClub(name: string, city: string, myName: string): Promise<string>;
+  /** The club's owner or admin asks PaddleQ to let the club host tournaments (again, after a rejection). */
+  requestHosting(clubId: string, phone: string, note: string): Promise<void>;
   joinClub(code: string, claim: string | null, myName: string): Promise<string>;
   clubBundle(clubId: string): Promise<ClubBundle>;
   addPlayer(clubId: string, p: { name: string; duprSingles?: number; duprDoubles?: number }): Promise<ClubPlayer>;
@@ -222,6 +234,8 @@ export interface EventsBackend {
   adminClubs(): Promise<AdminClub[]>;
   adminClub(id: string): Promise<AdminClubDetail>;
   setClubVerified(id: string, verified: boolean): Promise<void>;
+  /** Approve a club to host tournaments, or reject its request with a reason the organiser sees. */
+  setClubHosting(id: string, approve: boolean, reason?: string): Promise<void>;
   adminTournaments(): Promise<AdminTournament[]>;
   /** Reopens a finished tournament ('live') or marks it finished ('done'), for support. */
   adminSetTournamentStatus(id: string, status: 'live' | 'done'): Promise<void>;
@@ -235,9 +249,9 @@ export interface AdminOverview {
   /** Matches scored in each of the last 8 weeks (weeks start Monday), oldest first. */
   weeks: { week: string; matches: number }[];
 }
-export interface AdminClub { id: string; name: string; city?: string; verified: boolean; isTest: boolean; owners: string[]; members: number; tournaments: number; lastEvent?: string }
+export interface AdminClub { id: string; name: string; city?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string; hostingRequestedAt?: string; owners: string[]; members: number; tournaments: number; lastEvent?: string }
 export interface AdminClubDetail {
-  id: string; name: string; city?: string; verified: boolean; isTest: boolean;
+  id: string; name: string; city?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string;  hostingRequestedAt?: string;
   people: { name: string; email?: string; role: Role; helper: boolean }[];
   tournaments: { id: string; name: string; startDate: string; status: ClubTournament['status'] }[];
 }

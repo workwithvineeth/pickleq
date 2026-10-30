@@ -170,10 +170,58 @@ test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
 
     // Nothing wider than a 320 px phone.
     await page.setViewportSize({ width: 320, height: 640 });
-    for (const s of ['Overview', 'Clubs', 'Events', 'Listings', 'Admins', 'Helpers']) {
+    for (const s of ['Overview', 'Clubs', 'Events', 'Listings', 'Admins', 'Desk team']) {
       await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: s, exact: true }).click();
       const wide = await page.evaluate(() => document.documentElement.scrollWidth);
       expect(wide, s).toBeLessThanOrEqual(320);
     }
+  });
+});
+
+test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', () => {
+  test('a new club asks to host, can’t post until approved, then can; fits a small phone', async ({ page }) => {
+    await page.goto('#/club');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto('#/club-new');
+    await page.getByLabel('Club name').fill('Robot Smash Yard');
+    await page.getByLabel('Your name').fill('Robot');
+    await page.getByLabel('Phone number').fill('98765 43210');
+    await page.getByLabel('About your club').fill('Two courts');
+    await page.getByRole('button', { name: 'Create club and ask to host' }).click();
+    const card = page.getByRole('region', { name: 'Hosting tournaments' });
+    await expect(card).toContainText('Waiting for PaddleQ');
+    await expect(page.getByRole('button', { name: 'New tournament' })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+
+    await page.goto('#/admin/clubs');
+    const req = page.getByRole('region', { name: 'Robot Smash Yard' });
+    await expect(req).toContainText('Wants to host');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    await req.getByRole('button', { name: 'Approve to host' }).click();
+    await expect(page.getByText('Robot Smash Yard can now host tournaments')).toBeVisible();
+    await req.getByRole('button', { name: 'People and events' }).click();
+    await expect(page.getByRole('heading', { name: 'Robot Smash Yard' })).toBeVisible();
+  });
+});
+
+test.describe('Sign-in pages (no account needed)', () => {
+  test('password sign-in, create account and admin pages fit a small phone', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto('#/club-signin');
+    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    await page.getByRole('button', { name: /Create an account/ }).click();
+    await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
+    await page.getByLabel('Email').fill('robot@example.com');
+    await page.getByLabel('Choose a password').fill('short');
+    await page.getByLabel('Password again').fill('short');
+    await page.getByRole('button', { name: 'Create account' }).click();
+    await expect(page.getByRole('alert')).toHaveText('Use at least 8 characters');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    await page.goto('#/admin-login');
+    await expect(page.getByRole('heading', { name: 'PaddleQ admin' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
 });

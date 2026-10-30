@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Segmented } from '../../components/Controls';
+import { Field, Segmented } from '../../components/Controls';
 import { scoreLine } from '../../domain/scoring';
 import type { Go } from '../../navigation';
 import type { ClubBundle } from '../backend';
@@ -8,7 +8,7 @@ import { matchResult } from '../domain/engine';
 import { backend } from '../index';
 import { isClubApp } from '../config';
 import { mySummary } from '../personal';
-import { isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
+import { canHost, isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
 import { ClubLogo, LogoPicker } from './Poster';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
 
@@ -32,6 +32,7 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
       {d && (
         <>
           {d.club.logoUrl && <ClubLogo src={d.club.logoUrl} club={d.club.name} />}
+          {!canHost(d.club) && isAdmin(d.role) && <HostingRequest d={d} reload={state.reload} />}
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
@@ -41,6 +42,41 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
         </>
       )}
     </main>
+  );
+}
+
+/** A club PaddleQ hasn't approved yet: where its request stands, and sending it (again). */
+function HostingRequest({ d, reload }: { d: ClubBundle; reload: () => void }) {
+  const b = backend();
+  const c = d.club;
+  const [phone, setPhone] = useState(c.hostingPhone ?? '');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const waiting = c.hosting === 'pending' && !!c.hostingPhone;
+  async function send() {
+    if (!b) return;
+    setBusy(true); setMsg(null);
+    try { await b.requestHosting(c.id, phone, note); reload(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
+  }
+  return (
+    <section className="card section" aria-label="Hosting tournaments">
+      <div className="row" style={{ padding: 0 }}>
+        <h2 style={{ fontSize: 18 }}>Hosting tournaments</h2>
+        <span className={`pill${c.hosting === 'rejected' ? ' pill-bad' : ' pill-warn'}`}>{waiting ? 'Waiting for PaddleQ' : c.hosting === 'rejected' ? 'Not approved' : 'Not asked yet'}</span>
+      </div>
+      {waiting && <p className="small" style={{ margin: 0 }}>PaddleQ is checking your club. We’ll call or WhatsApp you on {c.hostingPhone}. Once approved, you can post and run tournaments here.</p>}
+      {c.hosting === 'rejected' && <div role="status" className="msg msg-bad">PaddleQ’s note: {c.hostingReason ?? 'not approved yet'}. Fix it and ask again.</div>}
+      {!waiting && (
+        <>
+          {c.hosting !== 'rejected' && <p className="small muted" style={{ margin: 0 }}>PaddleQ checks every new club before it can host tournaments.</p>}
+          <Field label="Phone number"><input className="input" type="tel" inputMode="tel" aria-label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} /></Field>
+          <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
+          {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={send}>{c.hosting === 'rejected' ? 'Ask again' : 'Ask to host tournaments'}</button>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -71,7 +107,7 @@ function Events({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void }
   return (
     <>
       <section className="section" aria-label="Tournaments">
-        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && <button type="button" className="link-btn" onClick={() => go('club-tournament-new', d.club.id)}>New tournament</button>}</div>
+        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && canHost(d.club) && <button type="button" className="link-btn" onClick={() => go('club-tournament-new', d.club.id)}>New tournament</button>}</div>
         {d.tournaments.length === 0 && <p className="small muted">No tournaments yet.</p>}
         {d.tournaments.map((t) => (
           <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>

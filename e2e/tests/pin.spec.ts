@@ -18,25 +18,37 @@ test.describe('PIN sign-in (helpers and organisers)', () => {
   test('a helper with a wrong PIN is refused; with the event PIN they get the tournament desk', async ({ page }) => {
     const pin = box.links.court1.pin;
     await page.goto(`#/helper/${TEST.slug}`);
-    await expect(page.getByRole('heading', { name: 'Help run the tournament' })).toBeVisible();
-    await expect(page.getByText(TEST.club)).toBeVisible();
+    await expect(page.getByRole('heading', { name: `${TEST.club} Desk` })).toBeVisible();
+    await expect(page.getByText(`Run by ${TEST.club} on PaddleQ`)).toBeVisible();
     await page.getByLabel('Your name').fill('Robot Helper');
     await page.getByLabel('Event PIN').fill(wrongPin(pin));
-    await page.getByRole('button', { name: 'Sign in as a helper' }).click();
+    await page.getByRole('button', { name: 'Sign in to the desk' }).click();
     await expect(page.getByRole('alert')).toHaveText('Wrong PIN');
     await page.getByLabel('Event PIN').fill(pin);
-    await page.getByRole('button', { name: 'Sign in as a helper' }).click();
+    await page.getByRole('button', { name: 'Sign in to the desk' }).click();
     await expect(page.getByRole('heading', { name: TEST.event })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Desk view' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Scorer links' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Referee links' })).toBeVisible();
   });
 
-  test('an organiser with a wrong email or PIN is refused with a clear message', async ({ page }) => {
+  test('an organiser with a wrong email or password is refused with a clear message', async ({ page }) => {
     await page.goto('#/club-signin');
     await page.getByLabel('Email').fill('nobody-robot@example.com');
-    await page.getByLabel('Your PIN').fill('4826');
+    await page.getByLabel('Password', { exact: true }).fill('wrong-password-1');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText(/That email and PIN don.t match/);
+    await expect(page.getByRole('alert')).toContainText(/That email and password don.t match/);
+    await expect(page.getByRole('button', { name: /Create an account/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Forgot password?' })).toBeVisible();
+  });
+
+  test('the admin sign-in page refuses a wrong password and offers no sign-up', async ({ page }) => {
+    await page.goto('#/admin-login');
+    await expect(page.getByRole('heading', { name: 'PaddleQ admin' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Create an account/ })).toHaveCount(0);
+    await page.getByLabel('Email').fill('nobody-robot@example.com');
+    await page.getByLabel('Password', { exact: true }).fill('wrong-password-1');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText(/That email and password don.t match/);
   });
 
   test('visitors can’t read event PINs or call the PIN checks directly', async () => {

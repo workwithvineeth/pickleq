@@ -76,6 +76,26 @@ describe('Admin dashboard in the demo (same rules as the server)', () => {
     expect((await b.adminTournaments()).find((t) => t.id === done.id)?.status).toBe('done');
   });
 
+  it('a new club must be approved before it hosts; rejection needs a reason', async () => {
+    const b = new DemoBackend(memoryStorage());
+    await b.start('Robot');
+    const id = await b.createClub('Smash Yard', 'Pune', 'Robot');
+    let c = (await b.adminClubs()).find((x) => x.id === id)!;
+    expect(c.hosting).toBe('pending');
+    await expect(b.requestHosting(id, '12345', '')).rejects.toThrow('Add a phone number PaddleQ can call');
+    await b.requestHosting(id, '+91 98765 43210', 'Two courts in Baner');
+    c = (await b.adminClubs()).find((x) => x.id === id)!;
+    expect(c).toMatchObject({ hosting: 'pending', hostingPhone: '+91 98765 43210', hostingNote: 'Two courts in Baner' });
+    await expect(b.setClubHosting(id, false, '')).rejects.toThrow('Give the organiser a reason');
+    await b.setClubHosting(id, false, 'Add your venue');
+    expect((await b.clubBundle(id)).club).toMatchObject({ hosting: 'rejected', hostingReason: 'Add your venue' });
+    await b.requestHosting(id, '9876543210', 'Venue: Baner Courts');
+    expect((await b.clubBundle(id)).club.hosting).toBe('pending');
+    await b.setClubHosting(id, true);
+    expect((await b.clubBundle(id)).club.hosting).toBe('approved');
+    await expect(b.requestHosting(id, '9876543210', '')).rejects.toThrow('already host');
+  });
+
   it('never removes the last admin', async () => {
     const b = new DemoBackend(memoryStorage());
     await b.start('Robot');

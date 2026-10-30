@@ -152,6 +152,8 @@ textarea.input { padding: 10px 12px; min-height: 84px; resize: vertical; }
 .pill { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--card-2); color: var(--muted); }
 .pill-warn { background: var(--warn-bg); color: var(--warn-fg); }
 .pill-ok { background: var(--win-bg); color: var(--win-fg); }
+.pill-bad { background: var(--loss-bg); color: #B3261E; }
+@media (prefers-color-scheme: dark) { .pill-bad { color: #F2B8B5; } }
 .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 .kv { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 15px; }
 .kv:first-child { border-top: none; }

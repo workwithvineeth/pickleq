@@ -217,8 +217,8 @@ describe('Club mode', () => {
   it('scorer links: a court scorer with no account scores with the PIN; wrong PINs are refused', async () => {
     const user = userEvent.setup();
     await openEvent(user);
-    await user.click(screen.getByRole('button', { name: 'Scorer links' }));
-    await screen.findByRole('heading', { name: 'Scorer links' });
+    await user.click(screen.getByRole('button', { name: 'Referee links' }));
+    await screen.findByRole('heading', { name: 'Referee links' });
     await user.click(screen.getByRole('button', { name: 'Make a link for each court (6)' }));
     await screen.findByText('Made 6 court links');
     await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
@@ -251,11 +251,11 @@ describe('Club mode', () => {
   it('a court link only shows that court, and a turned-off link stops working', async () => {
     const user = userEvent.setup();
     await openEvent(user);
-    await user.click(screen.getByRole('button', { name: 'Scorer links' }));
+    await user.click(screen.getByRole('button', { name: 'Referee links' }));
     await user.click(await screen.findByRole('button', { name: 'Make a link for each court (6)' }));
     await screen.findByText('Made 6 court links');
     const c1 = demoState().scorerLinks.find((l: { court?: number }) => l.court === 1);
-    await user.click(within(screen.getByLabelText('Court 1 scorer link')).getByRole('button', { name: 'Turn off' }));
+    await user.click(within(screen.getByLabelText('Court 1 referee link')).getByRole('button', { name: 'Turn off' }));
     await screen.findByText('Court 1 link turned off');
     window.location.hash = `#/court/${c1.token}`;
     await user.type(await screen.findByLabelText('PIN'), c1.pin);
@@ -266,7 +266,7 @@ describe('Club mode', () => {
   it('one event PIN: every court link shares it, New PIN changes them all, and the helper link is offered', async () => {
     const user = userEvent.setup();
     await openEvent(user);
-    await user.click(screen.getByRole('button', { name: 'Scorer links' }));
+    await user.click(screen.getByRole('button', { name: 'Referee links' }));
     await user.click(await screen.findByRole('button', { name: 'Make a link for each court (6)' }));
     await screen.findByText('Made 6 court links');
     await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
@@ -276,7 +276,7 @@ describe('Club mode', () => {
     const [first] = [...pins] as string[];
     const card = screen.getByRole('region', { name: 'Event PIN' });
     expect(within(card).getByLabelText(`Event PIN ${first}`)).toBeInTheDocument();
-    expect(within(card).getByRole('button', { name: 'Share helper link' })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Share desk link' })).toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: 'New PIN' }));
     await screen.findByText(/New event PIN for every link/);
     const after = new Set(demoState().scorerLinks.map((l: { pin: string }) => l.pin));

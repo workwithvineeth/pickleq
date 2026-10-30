@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Go } from '../../navigation';
-import type { AdminTournament } from '../backend';
+import type { AdminClub, AdminTournament } from '../backend';
 import { trend, weekLabel } from '../adminStats';
 import { eventsBackend } from '../index';
 import { ROLE_LABEL } from '../types';
@@ -14,7 +14,7 @@ const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'tournaments', label: 'Events', title: 'Tournaments' },
   { id: 'listings', label: 'Listings', title: 'Review listings' },
   { id: 'admins', label: 'Admins', title: 'PaddleQ admins' },
-  { id: 'helpers', label: 'Helpers', title: 'Desk helpers' },
+  { id: 'helpers', label: 'Desk team', title: 'Desk team' },
 ];
 export const isAdminSection = (s: string | undefined): s is AdminSection => SECTIONS.some((x) => x.id === s);
 
@@ -44,7 +44,12 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
       <Header id="admin-title" title="PaddleQ admin" onBack={onBack} />
       <DemoNote b={b.kind === 'demo' ? b : null} />
       <Status error={allowed.error} loading={allowed.loading && allowed.data === null} />
-      {allowed.data === false && <p className="muted">Only PaddleQ admins can see this.</p>}
+      {allowed.data === false && (
+        <>
+          <p className="muted">Only PaddleQ admins can see this.</p>
+          {b.kind === 'server' && <button type="button" className="btn btn-primary" onClick={() => go('admin-login')}>Admin sign-in</button>}
+        </>
+      )}
       {allowed.data && (
         <>
           <div className="seg seg-wrap" role="group" aria-label="Admin sections">
@@ -124,8 +129,10 @@ function Clubs({ go }: { go: Go }) {
   const [q, setQ] = useState('');
   const [tests, setTests] = useState(false);
   const shown = (state.data ?? []).filter((c) => (tests || !c.isTest) && `${c.name} ${c.city ?? ''} ${c.owners.join(' ')}`.toLowerCase().includes(q.trim().toLowerCase()));
+  const waiting = (state.data ?? []).filter((c) => c.hosting === 'pending' && !c.isTest).length;
   return (
     <>
+      {waiting > 0 && <div role="status" className="msg msg-ok">{waiting} club{waiting === 1 ? '' : 's'} waiting for your approval (shown first).</div>}
       <input className="input" type="search" aria-label="Find a club" placeholder="Club, city or owner email" value={q} onChange={(e) => setQ(e.target.value)} />
       <label className="check-row small" style={{ borderTop: 'none' }}><input type="checkbox" checked={tests} onChange={(e) => setTests(e.target.checked)} /> Show the robot’s test club</label>
       <Status error={state.error} loading={state.loading && !state.data} />
@@ -135,8 +142,12 @@ function Clubs({ go }: { go: Go }) {
         <section key={c.id} className="card section" aria-label={c.name}>
           <div className="row" style={{ padding: 0 }}>
             <b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{c.name}</b>
-            {c.isTest ? <span className="pill">Robot test</span> : <span className={`pill${c.verified ? ' pill-ok' : ''}`}>{c.verified ? 'Verified' : 'New'}</span>}
+            {c.isTest ? <span className="pill">Robot test</span>
+              : c.hosting === 'pending' ? <span className="pill pill-warn">Wants to host</span>
+              : c.hosting === 'rejected' ? <span className="pill pill-bad">Not approved</span>
+              : <span className={`pill${c.verified ? ' pill-ok' : ''}`}>{c.verified ? 'Verified' : 'Approved'}</span>}
           </div>
+          {c.hosting !== 'approved' && !c.isTest && <HostingReview c={c} busy={busy} run={run} />}
           <div className="small muted">{[c.city, `${c.members} member${c.members === 1 ? '' : 's'}`, `${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}`, c.lastEvent && `last ${day(c.lastEvent)}`].filter(Boolean).join(' · ')}</div>
           <div className="small" style={{ overflowWrap: 'anywhere' }}>Owner: {c.owners.join(', ') || '–'}</div>
           <div className="meta">
@@ -148,6 +159,35 @@ function Clubs({ go }: { go: Go }) {
         </section>
       ))}
     </>
+  );
+}
+
+/** A club's request to host tournaments: approve, or reject with a reason the organiser sees. */
+function HostingReview({ c, busy, run }: { c: AdminClub; busy: boolean; run: (fn: () => Promise<unknown>, ok: string) => Promise<boolean> }) {
+  const b = eventsBackend();
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState('');
+  return (
+    <div className="section" style={{ gap: 6 }}>
+      {c.hostingPhone ? <div className="small">Phone: <a href={`tel:${c.hostingPhone.replace(/[^\d+]/g, '')}`}>{c.hostingPhone}</a>{c.hostingRequestedAt && <span className="muted"> · asked {day(c.hostingRequestedAt.slice(0, 10))}</span>}</div>
+        : <div className="small muted">Hasn’t sent the request yet (no phone number).</div>}
+      {c.hostingNote && <div className="small" style={{ overflowWrap: 'anywhere' }}>“{c.hostingNote}”</div>}
+      {c.hosting === 'rejected' && c.hostingReason && <div className="small muted">Your note: {c.hostingReason}</div>}
+      {!rejecting ? (
+        <div className="meta">
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.setClubHosting(c.id, true), `${c.name} can now host tournaments`)}>Approve to host</button>
+          {c.hosting === 'pending' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setRejecting(true)}>Reject…</button>}
+        </div>
+      ) : (
+        <>
+          <input className="input" aria-label={`Reason for rejecting ${c.name}`} placeholder="What should they fix?" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
+          <div className="meta">
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={async () => { if (await run(() => b.setClubHosting(c.id, false, reason), `${c.name} was told: ${reason.trim()}`)) setRejecting(false); }}>Reject with this reason</button>
+            <button type="button" className="btn btn-outline" onClick={() => setRejecting(false)}>Cancel</button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -168,7 +208,7 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
             {c.people.map((p, i) => (
               <div key={`${p.name}-${i}`} className="row">
                 <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}{p.email && <span className="small muted" style={{ display: 'block' }}>{p.email}</span>}</span>
-                <span className="pill">{p.helper ? 'Desk helper' : ROLE_LABEL[p.role]}</span>
+                <span className="pill">{p.helper ? 'Desk team' : ROLE_LABEL[p.role]}</span>
               </div>
             ))}
           </section>
@@ -220,7 +260,7 @@ function Tournaments({ go }: { go: Go }) {
             </div>
             <div className="small muted">{t.club}{t.isTest ? ' (robot test)' : ''} · {day(t.startDate)}{t.startTime ? ` · ${t.startTime}` : ''}</div>
             <div className="small">{t.registrations} entr{t.registrations === 1 ? 'y' : 'ies'} · {t.matchesDone}/{t.matches} matches scored{t.listing !== 'none' ? ` · board: ${t.listingStatus === 'approved' ? 'listed' : t.listingStatus === 'pending' ? 'to review' : t.listingStatus === 'rejected' ? 'rejected' : 'off'}` : ''}</div>
-            <div className="small">Event PIN: <b>{t.eventPin ?? 'not set'}</b>{t.helpers.length ? ` · ${t.helpers.length} desk helper${t.helpers.length === 1 ? '' : 's'}` : ''}</div>
+            <div className="small">Event PIN: <b>{t.eventPin ?? 'not set'}</b>{t.helpers.length ? ` · desk team of ${t.helpers.length}` : ''}</div>
             {confirm === t.id
               ? (
                 <div className="meta">
@@ -287,9 +327,9 @@ function Helpers() {
     .sort((x, y) => Number(x.status === 'done') - Number(y.status === 'done') || y.startDate.localeCompare(x.startDate));
   return (
     <>
-      <p className="small muted" style={{ margin: 0 }}>People who signed in at a tournament’s desk with its helper link and event PIN. They can only help with that tournament.</p>
+      <p className="small muted" style={{ margin: 0 }}>People who signed in at a tournament’s desk with its desk link and event PIN. They can only work on that tournament.</p>
       <Status error={state.error} loading={state.loading && !state.data} />
-      {state.data && withHelpers.length === 0 && <p className="small muted" style={{ margin: 0 }}>No desk helpers yet.</p>}
+      {state.data && withHelpers.length === 0 && <p className="small muted" style={{ margin: 0 }}>No desk team yet.</p>}
       {withHelpers.map((t) => (
         <section key={t.id} className="card section" aria-label={`${t.name} helpers`}>
           <div className="row" style={{ padding: 0 }}><b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{t.name}</b><span className="pill">{STATUS[t.status]}</span></div>
