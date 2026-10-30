@@ -231,9 +231,9 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
 // ---------- The events board card on a tournament page ----------
 
 const LISTING_TEXT: Record<string, string> = {
-  none: 'Not on the PICKLEQ events board.',
-  pending: 'Waiting for PICKLEQ to check it. That’s only needed for your club’s first listing.',
-  approved: 'On the PICKLEQ events board.',
+  none: 'Not on the PaddleQ events board.',
+  pending: 'Waiting for PaddleQ to check it. That’s only needed for your club’s first listing.',
+  approved: 'On the PaddleQ events board.',
   rejected: 'Not approved for the board.',
 };
 
@@ -252,7 +252,7 @@ export function ListingCard({ b, t, role, onChanged }: { b: ClubBackend; t: Club
     setBusy(true); setMsg(null);
     try {
       const st = await b.submitListing(t.id, l);
-      setMsg({ ok: true, text: l === 'none' ? 'Taken off the events board' : st === 'approved' ? 'It’s on the events board.' : 'Sent to PICKLEQ to check. It goes on the board once approved.' });
+      setMsg({ ok: true, text: l === 'none' ? 'Taken off the events board' : st === 'approved' ? 'It’s on the events board.' : 'Sent to PaddleQ to check. It goes on the board once approved.' });
       onChanged();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }

@@ -176,7 +176,7 @@ export function ScorePad(p: ScorePadProps) {
       {!manual && p.canScore && !matchOver && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setManual(true)}>Enter final scores instead</button>}
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
       <p className="small muted" style={{ margin: 0 }}>
-        Scoring point by point lets PICKLEQ spot comebacks and lost leads (a {thr}-point lead in games to {fmt.pointsTo}, or game point).
+        Scoring point by point lets PaddleQ spot comebacks and lost leads (a {thr}-point lead in games to {fmt.pointsTo}, or game point).
       </p>
     </>
   );

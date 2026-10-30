@@ -541,7 +541,7 @@ export class ServerBackend implements ClubBackend {
 
   async listingQueue(): Promise<ListingReview[]> {
     const rows = check(await this.sb.rpc('listing_queue')) as Row[] | null;
-    if (!rows) throw new ClubError('Only PICKLEQ admins can review listings');
+    if (!rows) throw new ClubError('Only PaddleQ admins can review listings');
     return rows.map((r) => ({
       id: String(r.id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '').slice(0, 5), city: s(r.city), venue: s(r.venue),
       about: s(r.about), contact: s(r.contact), link: s(r.link), listing: r.listing as Listing, listingStatus: r.listing_status as ListingStatus,

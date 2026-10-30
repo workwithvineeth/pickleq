@@ -65,7 +65,8 @@ export function entryLabel(e: Entry | undefined, players: Map<string, ClubPlayer
 
 export function fmtRating(r: number | undefined): string { return r === undefined ? '–' : r.toFixed(2); }
 
-export function errorText(e: unknown): string { return e instanceof Error ? e.message : 'Something went wrong'; }
+/** The message to show; older server messages still say PICKLEQ, so they read as PaddleQ. */
+export function errorText(e: unknown): string { return e instanceof Error ? e.message.replace(/PICKLEQ/g, 'PaddleQ') : 'Something went wrong'; }
 
 /** Shares a link with the phone's share sheet, or copies it. Returns what happened, for a status message. */
 export async function shareLink(title: string, url: string): Promise<string> {

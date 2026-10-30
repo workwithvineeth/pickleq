@@ -20,7 +20,7 @@ export function page({ title, description, url, target, image }) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="PICKLEQ">
+<meta property="og:site_name" content="PaddleQ">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${esc(url)}">
@@ -35,7 +35,7 @@ ${image ? `<meta property="og:image" content="${esc(image)}">
 <style>body{font-family:system-ui,sans-serif;background:#F3EBDD;color:#2a2420;margin:0;padding:32px 20px}a{color:#2F5D62}</style>
 </head>
 <body>
-<p><a href="${esc(target)}">Open ${esc(title)} in PICKLEQ</a></p>
+<p><a href="${esc(target)}">Open ${esc(title)} in PaddleQ</a></p>
 <script>location.replace(${JSON.stringify(target)});</script>
 </body>
 </html>
@@ -75,7 +75,7 @@ async function main() {
       image: typeof e.poster_url === 'string' && /^https:\/\//.test(e.poster_url) ? e.poster_url : undefined }));
   }
   // Any other missing address: forward event links (/e/<slug>/) to the app; everything else to the app's home.
-  const fallback = page({ title: 'PICKLEQ events', description: 'Pickleball tournaments: enter, follow live scores and results.', url: site, target: site })
+  const fallback = page({ title: 'PaddleQ events', description: 'Pickleball tournaments: enter, follow live scores and results.', url: site, target: site })
     .replace(`<script>location.replace(${JSON.stringify(site)});</script>`, `<script>
 var m = location.pathname.match(/\\/e\\/([A-Za-z0-9_-]{1,40})\\/?$/);
 location.replace(${JSON.stringify(site)} + (m ? '#/event/' + m[1] : ''));

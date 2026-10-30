@@ -77,8 +77,8 @@ export default defineConfig(({ mode }) => {
         includeAssets: [`icons/${icon}-apple-180.png`],
         manifest: {
           id: base,
-          name: isLive ? 'PICKLEQ' : isClubApp ? 'PQ Club' : isClub ? 'PICKLEQ Club' : 'PICKLEQ Preview',
-          short_name: isLive ? 'PICKLEQ' : isClub ? 'PQ Club' : 'PQ Preview',
+          name: isLive ? 'PICKLEQ' : isClubApp ? 'PaddleQ' : isClub ? 'PICKLEQ Club' : 'PICKLEQ Preview',
+          short_name: isLive ? 'PICKLEQ' : isClubApp ? 'PaddleQ' : isClub ? 'PQ Club' : 'PQ Preview',
           description: isClubApp ? 'Run pickleball tournaments: entries, draw, a scorer on every court and live results' : 'Personal pickleball tracker and AI coach',
           start_url: base,
           scope: base,

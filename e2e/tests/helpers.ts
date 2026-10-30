@@ -8,7 +8,7 @@ export const SUPABASE_KEY: string = env.VITE_SUPABASE_KEY;
 
 export const TEST = {
   slug: 'pqe2etest1',
-  club: 'PICKLEQ Test Club (delete me)',
+  club: 'PaddleQ Test Club (delete me)',
   event: 'E2E Test Round Robin',
   match: { finished: 'e2e00000-0000-4000-8000-000000000501', golden: 'e2e00000-0000-4000-8000-000000000503', court2: 'e2e00000-0000-4000-8000-000000000504', offline: 'e2e00000-0000-4000-8000-000000000505' },
 };

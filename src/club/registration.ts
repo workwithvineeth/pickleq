@@ -65,7 +65,7 @@ export function rulesLine(kind: DivisionKind, rules?: DivisionRules): string {
 
 /**
  * A UPI payment link that opens the player's UPI app with the organiser, amount and a note filled in.
- * PICKLEQ never sees or holds the money; the player pays the organiser directly.
+ * PaddleQ never sees or holds the money; the player pays the organiser directly.
  */
 export function upiLink(upiId: string, payee: string, amount: number | undefined, note: string): string {
   const q = new URLSearchParams({ pa: upiId, pn: payee.slice(0, 40), cu: 'INR', tn: note.slice(0, 60) });

@@ -83,7 +83,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
     <main className="screen" aria-labelledby="events-title">
       <Header id="events-title" title="Events" right={<button type="button" className="btn btn-outline" style={{ padding: '8px 12px' }} onClick={() => go('my-entries')}>My entries</button>} />
       {b.kind === 'demo' && clubMode() === 'demo' && <DemoNote b={b} />}
-      <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on PICKLEQ, or contact them for listed events.</p>
+      <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on PaddleQ, or contact them for listed events.</p>
       {state.data?.admin && (
         <button type="button" className="banner-btn" onClick={() => go('admin-listings')}>
           <span>{state.data.pending ? `${state.data.pending} listing${state.data.pending === 1 ? '' : 's'} to review` : 'Review listings'}</span><span>›</span>
@@ -129,7 +129,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       )}
       <section className="card section" aria-label="Organisers">
         <h2 style={{ fontSize: 16 }}>Running a tournament?</h2>
-        <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on PICKLEQ: entries, draw, a scorer on every court and live results.</p>
+        <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on PaddleQ: entries, draw, a scorer on every court and live results.</p>
         <button type="button" className="btn btn-outline" onClick={() => go('events-post')}>Post a tournament</button>
       </section>
     </main>
@@ -178,7 +178,7 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
       {e.listing === 'listed' && (
         <section className="card section" aria-label="How to enter">
           <h2 style={{ fontSize: 16 }}>How to enter</h2>
-          <p className="small muted" style={{ margin: 0 }}>This tournament is listed on PICKLEQ. Enter with the organiser directly.</p>
+          <p className="small muted" style={{ margin: 0 }}>This tournament is listed on PaddleQ. Enter with the organiser directly.</p>
           <div className="meta">
             {e.contact && <a className="btn btn-primary" href={waLink(e.contact)} target="_blank" rel="noreferrer">WhatsApp {e.contact}</a>}
             {e.contact && <a className="btn btn-outline" href={telLink(e.contact)}>Call</a>}
@@ -200,7 +200,7 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
         })}
       </section>
       {e.listing === 'run' && !e.registrationOpen && !e.drawn && e.entryMode === 'registration' && <p className="small muted" style={{ margin: 0 }}>Entries are closed.</p>}
-      <p className="small muted" style={{ margin: 0 }}>Everyone playing must be 18 or over. Entry fees are paid to the organiser, not to PICKLEQ.</p>
+      <p className="small muted" style={{ margin: 0 }}>Everyone playing must be 18 or over. Entry fees are paid to the organiser, not to PaddleQ.</p>
     </main>
   );
 }
@@ -287,7 +287,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
         <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
         <section className="card section">
           <p style={{ margin: 0 }}>Sign in with your email to enter. It takes a minute, and you come straight back here.</p>
-          <p className="small muted" style={{ margin: 0 }}>Signing in lets you see your entry’s status and withdraw if you need to. Your personal PICKLEQ stays on your phone.</p>
+          <p className="small muted" style={{ margin: 0 }}>Signing in lets you see your entry’s status and withdraw if you need to. Your personal PaddleQ stays on your phone.</p>
         </section>
         {found.src.kind === 'server'
           ? <button type="button" className="btn btn-primary" onClick={() => { rememberReturn(`#/event-enter/${encodeURIComponent(id)}`); go('club-signin'); }}>Sign in to enter</button>
@@ -399,9 +399,9 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
       <Header id="post-title" title="Post a tournament" onBack={onBack} />
       <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
         <li><b>List it</b> (free): it shows on the board, and players contact you to enter.</li>
-        <li><b>Run it on PICKLEQ</b>: players enter in the app, you accept entries and make the draw, then score every court live. Your first event is free.</li>
+        <li><b>Run it on PaddleQ</b>: players enter in the app, you accept entries and make the draw, then score every court live. Your first event is free.</li>
       </ul>
-      <p className="small muted" style={{ margin: 0 }}>Your first listing is checked by PICKLEQ before it appears. After that, your club’s listings go up straight away.</p>
+      <p className="small muted" style={{ margin: 0 }}>Your first listing is checked by PaddleQ before it appears. After that, your club’s listings go up straight away.</p>
       <Status error={state.error} loading={state.loading && clubs === null} />
       {!state.loading && clubs === null && (
         b.kind === 'server'
@@ -428,7 +428,7 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
   );
 }
 
-// ---------- PICKLEQ admins: the approval queue ----------
+// ---------- PaddleQ admins: the approval queue ----------
 
 export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
   const b = eventsBackend();
@@ -453,7 +453,7 @@ export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
       <div className="row"><b>{q.name}</b><span className={`pill${q.listingStatus === 'approved' ? ' pill-ok' : q.listingStatus === 'rejected' ? ' pill-warn' : ''}`}>{q.listingStatus === 'pending' ? 'To review' : q.listingStatus === 'approved' ? 'Approved' : 'Rejected'}</span></div>
       {q.posterUrl ? <PosterImage src={q.posterUrl} name={q.name} /> : <div className="small muted">No poster</div>}
       <div className="small">{dayLabel(q.startDate)} · {timeLabel(q.startTime)} · {[q.venue, q.city].filter(Boolean).join(', ')}</div>
-      <div className="small muted">{q.club}{q.verified ? ' (verified)' : ' (new organiser)'}{q.postedBy ? ` · posted by ${q.postedBy}` : ''} · {q.listing === 'run' ? 'Run on PICKLEQ' : 'Listed only'}</div>
+      <div className="small muted">{q.club}{q.verified ? ' (verified)' : ' (new organiser)'}{q.postedBy ? ` · posted by ${q.postedBy}` : ''} · {q.listing === 'run' ? 'Run on PaddleQ' : 'Listed only'}</div>
       {q.divisions.map((d) => <div key={d.name} className="small">• {d.name}: {rulesLine(d.kind, d.rules)}</div>)}
       {q.about && <p className="small" style={{ margin: 0, whiteSpace: 'pre-line' }}>{q.about}</p>}
       {(q.contact || q.link) && <div className="small">Contact: {[q.contact, q.link].filter(Boolean).join(' · ')}</div>}
@@ -482,7 +482,7 @@ export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
       <Header id="admin-title" title="Review listings" onBack={onBack} />
       <DemoNote b={b.kind === 'demo' ? b : null} />
       <Status error={state.error} loading={state.loading && !state.data} />
-      {!state.loading && !state.data && !state.error && <p className="muted">Only PICKLEQ admins can review listings.</p>}
+      {!state.loading && !state.data && !state.error && <p className="muted">Only PaddleQ admins can review listings.</p>}
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {state.data && (
         <>
@@ -492,8 +492,8 @@ export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
           {pending.map(card)}
           {decided.length > 0 && <h2 style={{ fontSize: 18 }}>Decided in the last 30 days</h2>}
           {decided.map(card)}
-          <section className="card section" aria-label="PICKLEQ admins">
-            <h2 style={{ fontSize: 16 }}>PICKLEQ admins</h2>
+          <section className="card section" aria-label="PaddleQ admins">
+            <h2 style={{ fontSize: 16 }}>PaddleQ admins</h2>
             {state.data.admins.map((a) => <div key={a.email} className="small">{a.email}</div>)}
             <input className="input" type="email" aria-label="New admin’s email" placeholder="Their email (they must have signed in once)" value={email} onChange={(e) => setEmail(e.target.value)} />
             <button type="button" className="btn btn-outline" disabled={busy || !email.trim()} onClick={() => run(async () => { await b.addPlatformAdmin(email); setEmail(''); }, `${email} can now review listings`)}>Add admin</button>

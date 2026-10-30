@@ -26,7 +26,7 @@ export interface Club {
 
 export interface Member { userId: string; role: Role; name: string }
 
-/** What a player chose to share from their personal PICKLEQ. Nothing is shared unless switched on. */
+/** What a player chose to share from their personal PaddleQ. Nothing is shared unless switched on. */
 export interface Share { record?: boolean; tags?: boolean; training?: boolean }
 
 export interface ClubPlayer {
@@ -56,7 +56,7 @@ export interface ClubTournament {
   status: TournamentStatus;
   isPublic: boolean;
   publicSlug: string;
-  /** Module 2: where it is, how players enter, and whether it's on the PICKLEQ events board. */
+  /** Module 2: where it is, how players enter, and whether it's on the PaddleQ events board. */
   city?: string;
   venue?: string;
   about?: string;
@@ -81,7 +81,7 @@ export interface ClubTournament {
 
 /** roster: the organiser picks players (Module 1). registration: players sign up, then the organiser draws. */
 export type EntryMode = 'roster' | 'registration';
-/** none: not on the board. listed: on the board only, players contact the organiser. run: run on PICKLEQ. */
+/** none: not on the board. listed: on the board only, players contact the organiser. run: run on PaddleQ. */
 export type Listing = 'none' | 'listed' | 'run';
 export type ListingStatus = 'none' | 'pending' | 'approved' | 'rejected';
 export type DivisionGender = 'open' | 'men' | 'women' | 'mixed';

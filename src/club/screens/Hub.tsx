@@ -18,7 +18,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     if (!b) return null;
     const user = await b.currentUser();
     if (!user) return null;
-    // PQ Club (the club-only app) has no personal history to add club matches to.
+    // PaddleQ (the club-only app) has no personal history to add club matches to.
     const [clubs, pending] = await Promise.all([b.myClubs(), isClubApp() ? [] as NewMatch[] : pendingClubMatches(b).catch(() => [] as NewMatch[])]);
     return { user, clubs, pending };
   }, [b]);
@@ -54,7 +54,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
       {!state.loading && !signedIn && (
         <>
           {isClubApp() ? (
-            <section className="card section" aria-label="About PQ Club">
+            <section className="card section" aria-label="About PaddleQ">
               <h2 style={{ fontSize: 18 }}>Run your club’s tournaments</h2>
               <p className="small" style={{ margin: 0 }}>Entries (or import them from a Google Form), the draw, a scorer on every court with a PIN link, and live results anyone can open.</p>
               <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
@@ -67,7 +67,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               <h2 style={{ fontSize: 18 }}>Play with your club</h2>
               <p className="small" style={{ margin: 0 }}>Run club tournaments with live scoring, and give coaches a view of where each player wins and loses points.</p>
               <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
-                <li>Your personal PICKLEQ stays on this phone. Nothing is shared unless you choose.</li>
+                <li>Your personal PaddleQ stays on this phone. Nothing is shared unless you choose.</li>
                 <li>Club matches you play can be added to your own history.</li>
                 <li>Signing in is only needed for Club mode.</li>
               </ul>
@@ -343,8 +343,8 @@ export function ClubJoin({ code, go, onBack }: { code: string; go: Go; onBack: (
     <main className="screen" aria-labelledby="join-title">
       <Header id="join-title" title="Join a club" onBack={onBack} />
       <section className="card section">
-        <p style={{ margin: 0 }}>You’ve been invited to join a club in PICKLEQ.</p>
-        <p className="small muted" style={{ margin: 0 }}>Joining shares your name and the club matches you play with that club. Your personal PICKLEQ stays private unless you choose to share parts of it.</p>
+        <p style={{ margin: 0 }}>You’ve been invited to join a club in PaddleQ.</p>
+        <p className="small muted" style={{ margin: 0 }}>Joining shares your name and the club matches you play with that club. Your personal PaddleQ stays private unless you choose to share parts of it.</p>
       </section>
       {user.data === null && !user.loading && (server
         ? <button type="button" className="btn btn-primary" onClick={signInFirst}>Sign in to join</button>

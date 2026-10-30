@@ -60,7 +60,7 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
 
   // Upcoming, on the board.
   const night = t({ clubId: demoClubId, name: 'PQ Demo Night', startDate: day(3), startTime: '18:30', publicSlug: 'pq-demo-night', venue: 'PQ Demo Courts',
-    about: 'A made-up evening event for trying PICKLEQ. Round robin pools, golden point.', entryMode: 'registration', registrationOpen: true, entriesClose: day(2),
+    about: 'A made-up evening event for trying PaddleQ. Round robin pools, golden point.', entryMode: 'registration', registrationOpen: true, entriesClose: day(2),
     upiId: 'pqdemo@upi', listing: 'run', listingStatus: 'approved', reviewedAt },
   { tag: 'Under the lights', bg: '#14213D', ink: '#FFFFFF', accent: '#C6F432', motif: 'ball' });
   const social = t({ clubId: friends.id, name: 'PQ Demo Sunday Social', startDate: day(5), startTime: '07:00', publicSlug: 'pq-demo-social', venue: 'Demo Park Courts',
@@ -73,10 +73,10 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
 
   // Waiting for approval (a club's first listings).
   const ladder = t({ clubId: newbie.id, name: 'PQ Demo Ladder Cup', startDate: day(9), startTime: '08:00', publicSlug: 'pq-demo-ladder', venue: 'Demo New Courts',
-    about: 'A made-up ladder event, waiting for PICKLEQ to check it.', entryMode: 'registration', registrationOpen: true, listing: 'run', listingStatus: 'pending' },
+    about: 'A made-up ladder event, waiting for PaddleQ to check it.', entryMode: 'registration', registrationOpen: true, listing: 'run', listingStatus: 'pending' },
   { tag: 'Climb the ladder', bg: '#E8F1E4', ink: '#1E3A1A', accent: '#3E8E41', motif: 'court' });
   const corporate = t({ clubId: newbie.id, name: 'PQ Demo Corporate Cup', startDate: day(14), startTime: '09:00', publicSlug: 'pq-demo-corporate', venue: 'Demo New Courts',
-    about: 'Listed only: company teams contact the organiser. Waiting for PICKLEQ to check it.', contact: '90000 22222', entryMode: 'roster', listing: 'listed', listingStatus: 'pending' },
+    about: 'Listed only: company teams contact the organiser. Waiting for PaddleQ to check it.', contact: '90000 22222', entryMode: 'roster', listing: 'listed', listingStatus: 'pending' },
   { tag: 'Office teams', bg: '#1D2B53', ink: '#F5F7FF', accent: '#7EA6FF', motif: 'trophy' });
 
   const div = (tt: ClubTournament, name: string, kind: Division['kind'], sort: number, rules: Division['rules']): Division =>

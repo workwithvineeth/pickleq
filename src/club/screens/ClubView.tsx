@@ -154,7 +154,7 @@ function Players({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void 
           ))}
         </tbody>
       </table>
-      <p className="small muted" style={{ margin: 0 }}>Ratings are DUPR, entered by the club or the player. PICKLEQ never calculates ratings.</p>
+      <p className="small muted" style={{ margin: 0 }}>Ratings are DUPR, entered by the club or the player. PaddleQ never calculates ratings.</p>
     </section>
   );
 }
@@ -247,7 +247,7 @@ function Members({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void 
         <section className="card section">
           <h2 style={{ fontSize: 18 }}>Invite people</h2>
           <p className="small muted" style={{ margin: 0 }}>Anyone with this link can join as a player. You can make them a coach or admin after.</p>
-          <button type="button" className="btn btn-outline" onClick={async () => setMsg(await shareLink(`Join ${d.club.name} on PICKLEQ`, invite))}>Share invite link</button>
+          <button type="button" className="btn btn-outline" onClick={async () => setMsg(await shareLink(`Join ${d.club.name} on PaddleQ`, invite))}>Share invite link</button>
         </section>
       )}
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
@@ -371,8 +371,8 @@ function SwingList({ title, swings }: { title: string; swings: Swing[] }) {
 
 function SharedSummaryCard({ data, updatedAt }: { data: SummaryData; updatedAt: string }) {
   return (
-    <section className="card section" aria-label="Shared from personal PICKLEQ">
-      <h2 style={{ fontSize: 18 }}>Shared from their personal PICKLEQ</h2>
+    <section className="card section" aria-label="Shared from personal PaddleQ">
+      <h2 style={{ fontSize: 18 }}>Shared from their personal PaddleQ</h2>
       <p className="small muted" style={{ margin: 0 }}>The player chose to share these numbers on {updatedAt.slice(0, 10)}.</p>
       {data.record && <div className="row"><span>All matches</span><span>{data.record.wins}–{data.record.matches - data.record.wins} · close games {data.record.closeWins}–{data.record.closeLosses}</span></div>}
       {data.tags?.slice(0, 4).map((t) => <div key={t.tag} className="row"><span>{t.tag}: needs work</span><span>in {t.inLosses} of {t.losses} losses, {t.inWins} of {t.wins} wins</span></div>)}
@@ -425,7 +425,7 @@ export function Sharing({ playerId, go, onBack }: { playerId: string; go: Go; on
         <>
           <section className="card section">
             <p style={{ margin: 0 }}><b>Always shared with {clubName}:</b> your name, ratings the club entered, and club matches you play.</p>
-            <p className="small muted" style={{ margin: 0 }}>Your personal PICKLEQ (your own matches, notes and coach chats) stays on this phone. Below, you can choose to share a few numbers from it with your coaches.</p>
+            <p className="small muted" style={{ margin: 0 }}>Your personal PaddleQ (your own matches, notes and coach chats) stays on this phone. Below, you can choose to share a few numbers from it with your coaches.</p>
           </section>
           <section className="section" aria-label="Choose what to share">
             {SHARE_ITEMS.map((it) => (

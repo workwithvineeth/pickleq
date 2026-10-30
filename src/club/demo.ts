@@ -489,7 +489,7 @@ export class DemoBackend implements ClubBackend {
   }
 
   // ---------- Module 2: events board, registration, entries inbox, approval ----------
-  // The demo user is also a PICKLEQ admin, so the approval queue can be tried.
+  // The demo user is also a PaddleQ admin, so the approval queue can be tried.
 
   private regs(): Registration[] { return (this.s.registrations ??= []); }
   private tournament(id: string): ClubTournament { const t = this.s.tournaments.find((x) => x.id === id); if (!t) throw new ClubError('Tournament not found'); return t; }
@@ -722,6 +722,6 @@ export class DemoBackend implements ClubBackend {
     this.save();
   }
 
-  async addPlatformAdmin(): Promise<void> { throw new ClubError('In the demo you’re the only PICKLEQ admin. Add admins on the real server.'); }
+  async addPlatformAdmin(): Promise<void> { throw new ClubError('In the demo you’re the only PaddleQ admin. Add admins on the real server.'); }
   async platformAdmins() { return this.s.user ? [{ email: this.s.user.email, addedAt: new Date().toISOString() }] : []; }
 }

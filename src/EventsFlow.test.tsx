@@ -248,7 +248,7 @@ describe('Posting a tournament and approving it', () => {
     await screen.findByRole('heading', { name: 'Robot Mixed Cup' });
     expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('Reason: Add the start time');
     await user.click(screen.getByRole('button', { name: 'Put it on the board' }));
-    expect(await screen.findByText(/Sent to PICKLEQ to check/)).toBeInTheDocument();
+    expect(await screen.findByText(/Sent to PaddleQ to check/)).toBeInTheDocument();
     window.location.hash = '#/admin-listings';
     const again = await screen.findByRole('region', { name: 'Robot Mixed Cup' });
     await user.click(within(again).getByRole('button', { name: 'Approve' }));

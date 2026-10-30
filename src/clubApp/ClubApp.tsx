@@ -14,7 +14,7 @@ const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
   { id: 'club-results', label: 'Results', icon: 'stats' },
 ];
 
-/** Routes that belong to the personal PICKLEQ app: not part of PQ Club, so they open My club instead. */
+/** Routes that belong to the personal PaddleQ app: not part of PaddleQ, so they open My club instead. */
 const PERSONAL: RouteName[] = ['matches', 'train', 'stats', 'coach', 'log', 'backfill', 'edit', 'details', 'match', 'trash', 'settings', 'backup', 'ratings', 'coach-task', 'conversation', 'coach-settings', 'report', 'help', 'privacy', 'tournaments', 'tournament-new', 'tournament-edit', 'tournament', 'clips', 'goals', 'session-new', 'session', 'club-sharing'];
 
 // Opened from a sign-in email (…/?code=…): show the sign-in screen, which finishes it.
@@ -29,14 +29,14 @@ export default function ClubApp() {
   const name: RouteName = personal ? 'club' : route.name;
   // A club's own page counts as My club, so the tabs stay there too.
   const tab = name === 'club-view' ? 'club' : (TABS.map((t) => t.id) as RouteName[]).includes(name) ? (name as ClubTab) : null;
-  // Top-level "back" in PQ Club goes to the events board, never to the personal app.
+  // Top-level "back" in PaddleQ goes to the events board, never to the personal app.
   const clubGo: Go = (n, id, opts) => go(n === 'home' ? 'club' : n, id, opts);
   return (
     <div className="app">
       {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
       {name === 'club-results' && <ClubResultsTab go={clubGo} />}
       {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}
-      {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>PQ Club {appVersion} · build {buildId}</p>}
+      {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>PaddleQ {appVersion} · build {buildId}</p>}
       {tab && (
         <nav className="nav" aria-label="Main">
           {TABS.map((t) => (

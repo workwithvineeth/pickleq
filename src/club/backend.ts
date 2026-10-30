@@ -156,7 +156,7 @@ export interface MyEntry {
   results: boolean;
 }
 
-/** A listing waiting for (or recently given) a PICKLEQ admin's decision. */
+/** A listing waiting for (or recently given) a PaddleQ admin's decision. */
 export interface ListingReview {
   id: string;
   name: string;

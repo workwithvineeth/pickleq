@@ -8,7 +8,7 @@ import '@fontsource/fraunces/600.css';
 import '../styles.css';
 import ClubApp from './ClubApp';
 
-// The PQ Club app: club screens only (no personal Home, Matches, Train, Stats or Coach).
+// The PaddleQ app: club screens only (no personal Home, Matches, Train, Stats or Coach).
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ClubApp />

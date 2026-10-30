@@ -2,12 +2,12 @@ import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 
 /**
- * PQ Club app + importing a Google Form, choosing formats with the time estimate, and making the draw (demo club on the phone).
+ * PaddleQ app + importing a Google Form, choosing formats with the time estimate, and making the draw (demo club on the phone).
  * The sample CSV is shaped like a Google Form export: timestamp and email columns first.
  */
 const CSV = fileURLToPath(new URL('../fixtures/google-form.csv', import.meta.url));
 
-test.describe('PQ Club app', () => {
+test.describe('PaddleQ app', () => {
   test('has its own tabs, and no personal-app tabs', async ({ page }) => {
     await page.goto('./');
     const nav = page.getByRole('navigation', { name: 'Main' });
@@ -42,7 +42,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByRole('group', { name: 'Event 2 type' }).getByRole('button', { name: 'Doubles' }).click();
     await page.getByLabel('Event 2 DUPR cap').fill('3.5');
     await page.getByRole('group', { name: 'Event 2 DUPR cap is for' }).getByRole('button', { name: 'Team average' }).click();
-    await page.getByLabel('Show it on the PICKLEQ events board').uncheck();
+    await page.getByLabel('Show it on the PaddleQ events board').uncheck();
     await page.getByRole('button', { name: 'Create and open entries' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Form Cup' })).toBeVisible();
     await page.getByRole('button', { name: 'Entries inbox and draw' }).click();

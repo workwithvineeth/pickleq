@@ -214,7 +214,7 @@ describe('PQ Demo Club sample club', () => {
   });
 });
 
-describe('club matches into your personal PICKLEQ', () => {
+describe('club matches into your personal PaddleQ', () => {
   const players = new Map<string, ClubPlayer>([
     ['me', { id: 'me', clubId: 'c', name: 'Vineeth', duprDoubles: 3.8, share: {} }],
     ['pa', { id: 'pa', clubId: 'c', name: 'Dev Rao', duprDoubles: 3.6, share: {} }],
