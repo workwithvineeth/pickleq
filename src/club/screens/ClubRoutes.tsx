@@ -1,6 +1,7 @@
 import type { Go, Route } from '../../navigation';
+import { AdminClubView, AdminDashboard, isAdminSection } from './Admin';
 import { ClubView, PlayerView, Sharing } from './ClubView';
-import { AdminListings, EnterEvent, EventPage, EventsBoard, MyEntries, PostEvent } from './Events';
+import { EnterEvent, EventPage, EventsBoard, MyEntries, PostEvent } from './Events';
 import { ClubHub, ClubJoin, ClubNew, ClubSignIn, HelperSignIn } from './Hub';
 import { EntriesInbox } from './Inbox';
 import { CourtScorer, Desk, DuprExport, Entries, ScorerLinks } from './Organiser';
@@ -33,7 +34,10 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'event-enter': return <EnterEvent key={id} id={id} go={go} onBack={back} />;
     case 'my-entries': return <MyEntries go={go} onBack={back} />;
     case 'events-post': return <PostEvent go={go} onBack={back} />;
-    case 'admin-listings': return <AdminListings go={go} onBack={back} />;
+    // Old link to the listings queue: now a section of the admin dashboard.
+    case 'admin-listings': return <AdminDashboard section="listings" go={go} onBack={() => go('events')} />;
+    case 'admin': return <AdminDashboard section={isAdminSection(id) ? id : 'overview'} go={go} onBack={() => go('events')} />;
+    case 'admin-club': return <AdminClubView key={id} id={id} go={go} onBack={back} />;
     case 'club-inbox': return <EntriesInbox key={id} id={id} go={go} onBack={back} />;
     default: return null;
   }

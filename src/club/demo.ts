@@ -1,5 +1,6 @@
 import { newId } from '../db/ids';
-import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { weekStart, weeklyCounts } from './adminStats';
+import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
 import { blobToDataUrl } from './poster';
@@ -724,4 +725,78 @@ export class DemoBackend implements ClubBackend {
 
   async addPlatformAdmin(): Promise<void> { throw new ClubError('In the demo you’re the only PaddleQ admin. Add admins on the real server.'); }
   async platformAdmins() { return this.s.user ? [{ email: this.s.user.email, addedAt: new Date().toISOString() }] : []; }
+
+  // ---------- Admin dashboard: the same answers as the server, from the demo on this phone ----------
+  async adminOverview(): Promise<AdminOverview> {
+    this.me();
+    const today = new Date().toISOString().slice(0, 10);
+    const thisWeek = weekStart(today);
+    const done = this.s.matches.filter((m) => m.status === 'done');
+    const ts = this.s.tournaments;
+    return {
+      clubs: this.s.clubs.length, verifiedClubs: this.s.clubs.filter((c) => c.verified).length,
+      upcoming: ts.filter((t) => t.status !== 'done' && t.startDate > today).length,
+      live: ts.filter((t) => t.status === 'live' && t.startDate <= today).length,
+      finished: ts.filter((t) => t.status === 'done').length,
+      toReview: ts.filter((t) => (t.listing ?? 'none') !== 'none' && t.listingStatus === 'pending').length,
+      entriesWeek: (this.s.registrations ?? []).filter((r) => r.createdAt.slice(0, 10) >= thisWeek).length,
+      matchesWeek: done.filter((m) => m.updatedAt.slice(0, 10) >= thisWeek).length,
+      accounts: 1, accountsWeek: 0,
+      weeks: weeklyCounts(done.map((m) => m.updatedAt), today),
+    };
+  }
+
+  async adminClubs(): Promise<AdminClub[]> {
+    const u = this.me();
+    return this.s.clubs.map((c) => {
+      const ts = this.s.tournaments.filter((t) => t.clubId === c.id);
+      const owners = this.s.members.filter((m) => m.clubId === c.id && m.role === 'owner').map((m) => (m.userId === u.id ? u.email : `${m.name} (demo)`));
+      return {
+        id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, owners,
+        members: this.s.members.filter((m) => m.clubId === c.id).length, tournaments: ts.length,
+        lastEvent: ts.map((t) => t.startDate).sort().pop(),
+      };
+    });
+  }
+
+  async adminClub(id: string): Promise<AdminClubDetail> {
+    const u = this.me();
+    const c = this.club(id);
+    const order: Role[] = ['owner', 'admin', 'coach', 'player'];
+    return {
+      id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false,
+      people: this.s.members.filter((m) => m.clubId === id).sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role))
+        .map((m) => ({ name: m.name, email: m.userId === u.id ? u.email : undefined, role: m.role, helper: false })),
+      tournaments: this.s.tournaments.filter((t) => t.clubId === id).sort((a, b) => b.startDate.localeCompare(a.startDate))
+        .map((t) => ({ id: t.id, name: t.name, startDate: t.startDate, status: t.status })),
+    };
+  }
+
+  async setClubVerified(id: string, verified: boolean) { this.me(); this.club(id).verified = verified; this.save(); }
+
+  async adminTournaments(): Promise<AdminTournament[]> {
+    this.me();
+    return [...this.s.tournaments].sort((a, b) => b.startDate.localeCompare(a.startDate)).map((t) => {
+      const ms = this.s.matches.filter((m) => m.tournamentId === t.id && m.status !== 'void');
+      return {
+        id: t.id, name: t.name, club: this.club(t.clubId).name, clubId: t.clubId, isTest: false, startDate: t.startDate, startTime: t.startTime, status: t.status,
+        listing: t.listing ?? 'none', listingStatus: t.listingStatus ?? 'none', slug: t.publicSlug, results: t.isPublic,
+        registrations: (this.s.registrations ?? []).filter((r) => r.tournamentId === t.id && ['pending', 'accepted', 'waitlist'].includes(r.status)).length,
+        matches: ms.length, matchesDone: ms.filter((m) => m.status === 'done').length, eventPin: this.s.eventPins?.[t.id], helpers: [],
+      };
+    });
+  }
+
+  async adminSetTournamentStatus(id: string, status: 'live' | 'done') {
+    this.me();
+    if (status !== 'live' && status !== 'done') throw new ClubError('Choose live or finished');
+    this.tournament(id).status = status;
+    this.save();
+  }
+
+  async removePlatformAdmin(email: string) {
+    const u = this.me();
+    if (email.trim().toLowerCase() !== u.email.toLowerCase()) throw new ClubError('That email isn’t an admin');
+    throw new ClubError('You can’t remove the last admin');
+  }
 }

@@ -29,6 +29,14 @@ test.describe('Server security (no account)', () => {
       ['robot_reset', {}],
       ['import_entries', { p_tournament: '00000000-0000-0000-0000-000000000000', p_rows: [] }],
       ['person_key', { p: {} }],
+      // The admin dashboard: closed to visitors (and refused to non-admin accounts by the functions themselves).
+      ['admin_overview', {}],
+      ['admin_clubs', {}],
+      ['admin_club', { p_club: '00000000-0000-0000-0000-000000000000' }],
+      ['admin_tournaments', {}],
+      ['admin_set_club_verified', { p_club: '00000000-0000-0000-0000-000000000000', p_verified: true }],
+      ['admin_set_tournament_status', { p_tournament: '00000000-0000-0000-0000-000000000000', p_status: 'live' }],
+      ['remove_platform_admin', { p_email: 'robot@example.com' }],
     ] as const) {
       const r = await rpc(fn, args);
       expect(r.status, fn).toBeGreaterThanOrEqual(400);

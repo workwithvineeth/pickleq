@@ -4,13 +4,13 @@ export type Tab = 'home' | 'matches' | 'events' | 'train' | 'stats' | 'coach';
 export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backup' | 'ratings' | 'goals' | 'session-new' | 'session' | 'match' | 'edit' | 'details' | 'clips' | 'tournaments' | 'tournament-new' | 'tournament' | 'tournament-edit' | 'coach-task' | 'conversation' | 'coach-settings' | 'report' | 'help' | 'privacy'
   | 'club' | 'club-signin' | 'club-new' | 'club-join' | 'club-view' | 'club-player' | 'club-tournament' | 'club-tournament-new' | 'club-score' | 'club-sharing' | 'results'
   | 'club-desk' | 'club-scorers' | 'club-entries' | 'club-dupr' | 'court' | 'helper'
-  | 'event' | 'event-enter' | 'my-entries' | 'admin-listings' | 'events-post' | 'club-inbox'
+  | 'event' | 'event-enter' | 'my-entries' | 'admin-listings' | 'admin' | 'admin-club' | 'events-post' | 'club-inbox'
   | 'club-tournaments' | 'club-results';
 export interface Route { name: RouteName; id?: string }
 
 const simple: RouteName[] = ['club-tournaments', 'club-results', 'my-entries', 'admin-listings', 'events-post', 'club', 'club-signin', 'club-new', 'home', 'train', 'stats', 'coach', 'tournaments', 'tournament-new', 'coach-settings', 'report', 'help', 'privacy', 'backfill', 'settings', 'trash', 'backup', 'ratings', 'goals', 'session-new'];
-const withId: RouteName[] = ['event', 'event-enter', 'club-inbox', 'club-desk', 'club-scorers', 'club-entries', 'club-dupr', 'court', 'helper', 'club-join', 'club-view', 'club-player', 'club-tournament', 'club-tournament-new', 'club-score', 'club-sharing', 'results', 'match', 'edit', 'details', 'session', 'tournament', 'tournament-edit', 'coach-task', 'conversation'];
-const optionalId: RouteName[] = ['events', 'matches', 'clips', 'log'];
+const withId: RouteName[] = ['admin-club', 'event', 'event-enter', 'club-inbox', 'club-desk', 'club-scorers', 'club-entries', 'club-dupr', 'court', 'helper', 'club-join', 'club-view', 'club-player', 'club-tournament', 'club-tournament-new', 'club-score', 'club-sharing', 'results', 'match', 'edit', 'details', 'session', 'tournament', 'tournament-edit', 'coach-task', 'conversation'];
+const optionalId: RouteName[] = ['admin', 'events', 'matches', 'clips', 'log'];
 /** The Events tab only exists in Club builds (until Club mode launches). */
 export const TABS: Tab[] = ['home', 'matches', 'events', 'train', 'stats', 'coach'];
 

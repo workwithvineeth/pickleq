@@ -131,3 +131,49 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await expect(page.getByText(/0 of 6 matches played/)).toBeVisible();
   });
 });
+
+test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
+  test('overview, clubs, reopening a tournament and the last-admin rule; fits a small phone', async ({ page }) => {
+    await page.goto('#/club');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
+    await page.goto('#/events');
+    await page.getByRole('button', { name: /listings to review/ }).click();
+    await expect(page.getByRole('heading', { name: 'Review listings' })).toBeVisible();
+    const sections = page.getByRole('group', { name: 'Admin sections' });
+
+    await sections.getByRole('button', { name: 'Overview' }).click();
+    await expect(page.getByRole('region', { name: 'Matches scored this week' })).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Matches scored per week' }).getByRole('listitem')).toHaveCount(8);
+
+    await sections.getByRole('button', { name: 'Clubs' }).click();
+    const demo = page.getByRole('region', { name: 'PQ Demo Club' });
+    await expect(demo).toContainText('Owner: demo (on this phone)');
+    await demo.getByRole('button', { name: 'People and events' }).click();
+    await expect(page.getByRole('region', { name: 'Tournaments' })).toContainText('PQ Demo Open');
+    await page.getByRole('button', { name: 'Back' }).click();
+
+    await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Events' }).click();
+    const diwali = page.getByRole('region', { name: 'PQ Demo Diwali Doubles' });
+    await diwali.getByRole('button', { name: 'Reopen' }).click();
+    await diwali.getByRole('button', { name: 'Yes, reopen it' }).click();
+    await expect(page.getByText('PQ Demo Diwali Doubles is live again')).toBeVisible();
+    await diwali.getByRole('button', { name: 'Mark finished' }).click();
+    await diwali.getByRole('button', { name: 'Yes, mark it finished' }).click();
+    await expect(page.getByText('PQ Demo Diwali Doubles is finished')).toBeVisible();
+
+    await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Admins' }).click();
+    await page.getByRole('button', { name: 'Remove demo (on this phone)' }).click();
+    await page.getByRole('button', { name: 'Yes, remove' }).click();
+    await expect(page.getByText('You can’t remove the last admin')).toBeVisible();
+
+    // Nothing wider than a 320 px phone.
+    await page.setViewportSize({ width: 320, height: 640 });
+    for (const s of ['Overview', 'Clubs', 'Events', 'Listings', 'Admins', 'Helpers']) {
+      await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: s, exact: true }).click();
+      const wide = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(wide, s).toBeLessThanOrEqual(320);
+    }
+  });
+});

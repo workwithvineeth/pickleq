@@ -288,3 +288,40 @@ describe('Signing in to enter (real server)', () => {
     expect(takeReturn()).toBeNull();
   });
 });
+
+describe('PaddleQ admin dashboard', () => {
+  it('shows the numbers, clubs, tournaments (reopen with a confirm), listings and admins', async () => {
+    const user = userEvent.setup();
+    await openDemo(user);
+    window.location.hash = '#/events';
+    await user.click(await screen.findByRole('button', { name: /2 listings to review/ }));
+    await screen.findByRole('heading', { name: 'Review listings' });
+    const sections = screen.getByRole('group', { name: 'Admin sections' });
+
+    await user.click(within(sections).getByRole('button', { name: 'Overview' }));
+    expect(await screen.findByRole('region', { name: 'Matches scored this week' })).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Matches scored per week' })).getAllByRole('listitem')).toHaveLength(8);
+    expect(screen.getByRole('button', { name: 'Listings to review: 2' })).toBeInTheDocument();
+
+    await user.click(within(sections).getByRole('button', { name: 'Clubs' }));
+    const demo = await screen.findByRole('region', { name: 'PQ Demo Club' });
+    expect(demo).toHaveTextContent('Owner: demo (on this phone)');
+    await user.click(within(demo).getByRole('button', { name: 'People and events' }));
+    expect(await screen.findByRole('heading', { name: 'PQ Demo Club' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Tournaments' })).toHaveTextContent('PQ Demo Open');
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+
+    await user.click(within(await screen.findByRole('group', { name: 'Admin sections' })).getByRole('button', { name: 'Events' }));
+    const diwali = await screen.findByRole('region', { name: 'PQ Demo Diwali Doubles' });
+    expect(diwali).toHaveTextContent('Finished');
+    await user.click(within(diwali).getByRole('button', { name: 'Reopen' }));
+    await user.click(within(diwali).getByRole('button', { name: 'Yes, reopen it' }));
+    expect(await screen.findByText('PQ Demo Diwali Doubles is live again')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('region', { name: 'PQ Demo Diwali Doubles' })).toHaveTextContent('Live'));
+
+    await user.click(within(screen.getByRole('group', { name: 'Admin sections' })).getByRole('button', { name: 'Admins' }));
+    await user.click(await screen.findByRole('button', { name: 'Remove demo (on this phone)' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, remove' }));
+    expect(await screen.findByText('You can’t remove the last admin')).toBeInTheDocument();
+  });
+});

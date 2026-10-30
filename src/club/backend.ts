@@ -217,6 +217,34 @@ export interface EventsBackend {
   reviewListing(id: string, approve: boolean, reason?: string): Promise<void>;
   addPlatformAdmin(email: string): Promise<void>;
   platformAdmins(): Promise<{ email: string; addedAt: string }[]>;
+  /** The admin dashboard (PaddleQ admins only). The robot's test club is left out of the counts. */
+  adminOverview(): Promise<AdminOverview>;
+  adminClubs(): Promise<AdminClub[]>;
+  adminClub(id: string): Promise<AdminClubDetail>;
+  setClubVerified(id: string, verified: boolean): Promise<void>;
+  adminTournaments(): Promise<AdminTournament[]>;
+  /** Reopens a finished tournament ('live') or marks it finished ('done'), for support. */
+  adminSetTournamentStatus(id: string, status: 'live' | 'done'): Promise<void>;
+  /** Removes a PaddleQ admin; never the last one. */
+  removePlatformAdmin(email: string): Promise<void>;
+}
+
+export interface AdminOverview {
+  clubs: number; verifiedClubs: number; upcoming: number; live: number; finished: number; toReview: number;
+  entriesWeek: number; matchesWeek: number; accounts: number; accountsWeek: number;
+  /** Matches scored in each of the last 8 weeks (weeks start Monday), oldest first. */
+  weeks: { week: string; matches: number }[];
+}
+export interface AdminClub { id: string; name: string; city?: string; verified: boolean; isTest: boolean; owners: string[]; members: number; tournaments: number; lastEvent?: string }
+export interface AdminClubDetail {
+  id: string; name: string; city?: string; verified: boolean; isTest: boolean;
+  people: { name: string; email?: string; role: Role; helper: boolean }[];
+  tournaments: { id: string; name: string; startDate: string; status: ClubTournament['status'] }[];
+}
+export interface AdminTournament {
+  id: string; name: string; club: string; clubId: string; isTest: boolean; startDate: string; startTime: string; status: ClubTournament['status'];
+  listing: Listing; listingStatus: ListingStatus; slug: string; results: boolean; registrations: number; matches: number; matchesDone: number;
+  eventPin?: string; helpers: { name: string; addedAt: string }[];
 }
 
 export class ClubError extends Error {}

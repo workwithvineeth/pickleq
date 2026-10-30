@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
-import { ClubError, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
 import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
@@ -560,4 +560,56 @@ export class ServerBackend implements ClubBackend {
     const rows = check(await this.sb.rpc('platform_admin_list')) as Row[] | null;
     return (rows ?? []).map((r) => ({ email: String(r.email), addedAt: String(r.added_at) }));
   }
+
+  // ---------- Admin dashboard (club_mode_15_admin_dashboard) ----------
+  async adminOverview(): Promise<AdminOverview> {
+    const r = answer(check(await this.sb.rpc('admin_overview')));
+    const num = (k: string) => Number(r[k] ?? 0);
+    return {
+      clubs: num('clubs'), verifiedClubs: num('verified_clubs'), upcoming: num('upcoming'), live: num('live'), finished: num('finished'), toReview: num('to_review'),
+      entriesWeek: num('entries_week'), matchesWeek: num('matches_week'), accounts: num('accounts'), accountsWeek: num('accounts_week'),
+      weeks: ((r.weeks as Row[]) ?? []).map((w) => ({ week: String(w.week), matches: Number(w.matches ?? 0) })),
+    };
+  }
+
+  async adminClubs(): Promise<AdminClub[]> {
+    return adminList(check(await this.sb.rpc('admin_clubs'))).map((r) => ({
+      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test,
+      owners: ((r.owners as unknown[]) ?? []).map(String), members: Number(r.members ?? 0), tournaments: Number(r.tournaments ?? 0), lastEvent: s(r.last_event),
+    }));
+  }
+
+  async adminClub(id: string): Promise<AdminClubDetail> {
+    const r = answer(check(await this.sb.rpc('admin_club', { p_club: id })));
+    return {
+      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test,
+      people: ((r.people as Row[]) ?? []).map((p) => ({ name: String(p.name ?? ''), email: s(p.email), role: p.role as Role, helper: !!p.helper })),
+      tournaments: ((r.tournaments as Row[]) ?? []).map((t) => ({ id: String(t.id), name: String(t.name), startDate: String(t.start_date), status: t.status as ClubTournament['status'] })),
+    };
+  }
+
+  async setClubVerified(id: string, verified: boolean) { answer(check(await this.sb.rpc('admin_set_club_verified', { p_club: id, p_verified: verified }))); }
+
+  async adminTournaments(): Promise<AdminTournament[]> {
+    return adminList(check(await this.sb.rpc('admin_tournaments'))).map((r) => ({
+      id: String(r.id), name: String(r.name), club: String(r.club), clubId: String(r.club_id), isTest: !!r.is_test, startDate: String(r.start_date),
+      startTime: String(r.start_time ?? '').slice(0, 5), status: r.status as ClubTournament['status'], listing: (r.listing as Listing) ?? 'none',
+      listingStatus: (r.listing_status as ListingStatus) ?? 'none', slug: String(r.slug ?? ''), results: !!r.results, registrations: Number(r.registrations ?? 0),
+      matches: Number(r.matches ?? 0), matchesDone: Number(r.matches_done ?? 0), eventPin: s(r.event_pin),
+      helpers: ((r.helpers as Row[]) ?? []).map((h) => ({ name: String(h.name ?? ''), addedAt: String(h.added_at ?? '') })),
+    }));
+  }
+
+  async adminSetTournamentStatus(id: string, status: 'live' | 'done') {
+    answer(check(await this.sb.rpc('admin_set_tournament_status', { p_tournament: id, p_status: status })));
+  }
+
+  async removePlatformAdmin(email: string) { answer(check(await this.sb.rpc('remove_platform_admin', { p_email: email }))); }
+}
+
+/** Admin list functions answer an array, or {"error": …} for someone who isn't an admin. */
+function adminList(r: unknown): Row[] {
+  if (Array.isArray(r)) return r as Row[];
+  answer(r);
+  return [];
 }

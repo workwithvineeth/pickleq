@@ -85,8 +85,8 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       {b.kind === 'demo' && clubMode() === 'demo' && <DemoNote b={b} />}
       <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on PaddleQ, or contact them for listed events.</p>
       {state.data?.admin && (
-        <button type="button" className="banner-btn" onClick={() => go('admin-listings')}>
-          <span>{state.data.pending ? `${state.data.pending} listing${state.data.pending === 1 ? '' : 's'} to review` : 'Review listings'}</span><span>›</span>
+        <button type="button" className="banner-btn" onClick={() => go('admin', state.data?.pending ? 'listings' : 'overview')}>
+          <span>{state.data.pending ? `${state.data.pending} listing${state.data.pending === 1 ? '' : 's'} to review` : 'PaddleQ admin'}</span><span>›</span>
         </button>
       )}
       {cities.length > 1 && <Segmented label="City" value={city} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} onChange={setCity} />}
@@ -430,16 +430,12 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
 
 // ---------- PaddleQ admins: the approval queue ----------
 
-export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
+/** The listings section of the admin dashboard (Admin.tsx checks the person is an admin). */
+export function ListingReviews({ go }: { go: Go }) {
   const b = eventsBackend();
-  const state = useLoad(async () => {
-    if (!(await b.isPlatformAdmin())) return null;
-    const [queue, admins] = await Promise.all([b.listingQueue(), b.platformAdmins()]);
-    return { queue, admins };
-  }, [b]);
+  const state = useLoad(async () => ({ queue: await b.listingQueue() }), [b]);
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [rejecting, setRejecting] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   async function run(fn: () => Promise<unknown>, ok: string) {
@@ -478,29 +474,19 @@ export function AdminListings({ go, onBack }: { go: Go; onBack: () => void }) {
     </section>
   );
   return (
-    <main className="screen" aria-labelledby="admin-title">
-      <Header id="admin-title" title="Review listings" onBack={onBack} />
-      <DemoNote b={b.kind === 'demo' ? b : null} />
+    <>
       <Status error={state.error} loading={state.loading && !state.data} />
-      {!state.loading && !state.data && !state.error && <p className="muted">Only PaddleQ admins can review listings.</p>}
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {state.data && (
         <>
           <p className="small muted" style={{ margin: 0 }}>Approving an organiser’s first listing verifies their club, so its later listings go on the board straight away. Check the poster too: it’s shown on the board.</p>
-          <h2 style={{ fontSize: 18 }}>To review ({pending.length})</h2>
+          <h3 style={{ fontSize: 17, margin: 0 }}>To review ({pending.length})</h3>
           {pending.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nothing waiting.</p>}
           {pending.map(card)}
-          {decided.length > 0 && <h2 style={{ fontSize: 18 }}>Decided in the last 30 days</h2>}
+          {decided.length > 0 && <h3 style={{ fontSize: 17, margin: 0 }}>Decided in the last 30 days</h3>}
           {decided.map(card)}
-          <section className="card section" aria-label="PaddleQ admins">
-            <h2 style={{ fontSize: 16 }}>PaddleQ admins</h2>
-            {state.data.admins.map((a) => <div key={a.email} className="small">{a.email}</div>)}
-            <input className="input" type="email" aria-label="New admin’s email" placeholder="Their email (they must have signed in once)" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <button type="button" className="btn btn-outline" disabled={busy || !email.trim()} onClick={() => run(async () => { await b.addPlatformAdmin(email); setEmail(''); }, `${email} can now review listings`)}>Add admin</button>
-          </section>
         </>
       )}
-    </main>
+    </>
   );
 }
-
