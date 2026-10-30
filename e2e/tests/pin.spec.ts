@@ -36,7 +36,7 @@ test.describe('PIN sign-in (helpers and organisers)', () => {
     await page.getByLabel('Email').fill('nobody-robot@example.com');
     await page.getByLabel('Your PIN').fill('4826');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('That email and PIN don’t match');
+    await expect(page.getByRole('alert')).toContainText(/That email and PIN don.t match/);
   });
 
   test('visitors can’t read event PINs or call the PIN checks directly', async () => {
