@@ -3,7 +3,8 @@
 begin;
 create temp table out (step int, result text) on commit drop;
 create temp table ids (k text primary key, v uuid) on commit drop;
-grant all on out, ids to authenticated, anon;
+create temp table me on commit drop as select email from auth.users where id = '81b32feb-1a70-47c3-b0b4-9eb4a81a12dd';
+grant all on out, ids, me to authenticated, anon;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"81b32feb-1a70-47c3-b0b4-9eb4a81a12dd","role":"authenticated"}', true);
 insert into ids select 'club', club_id from public.club_members where user_id = '81b32feb-1a70-47c3-b0b4-9eb4a81a12dd' and role = 'owner' order by joined_at limit 1;
@@ -20,7 +21,7 @@ begin
   insert into out values (1, case when r ? 'matches_week' and r ? 'clubs' and jsonb_array_length(r->'weeks') = 8 then 'overview: counts and 8 weeks of matches' else 'FAIL ' || r::text end);
   r := public.admin_clubs();
   select e into x from jsonb_array_elements(r) e where (e->>'id')::uuid = c;
-  insert into out values (2, case when x is not null and (x->'owners') ? (select email from auth.users where id = '81b32feb-1a70-47c3-b0b4-9eb4a81a12dd') and (x->>'tournaments')::int >= 1
+  insert into out values (2, case when x is not null and (x->'owners') ? (select email from me) and (x->>'tournaments')::int >= 1
     then 'clubs: lists the club with its owner email and tournaments' else 'FAIL ' || coalesce(x::text, 'club missing') end);
   r := public.admin_club(c);
   insert into out values (3, case when exists (select 1 from jsonb_array_elements(r->'people') p where p->>'role' = 'owner') and jsonb_array_length(r->'tournaments') >= 1
@@ -40,7 +41,7 @@ begin
   insert into out values (8, case when r->>'error' like 'That email isn%' then 'admins: unknown email refused' else 'FAIL ' || r::text end);
   select count(*) into n from public.platform_admins;
   if n = 1 then
-    r := public.remove_platform_admin((select email from auth.users where id = '81b32feb-1a70-47c3-b0b4-9eb4a81a12dd'));
+    r := public.remove_platform_admin((select email from me));
     insert into out values (9, case when r->>'error' like 'You can%last admin' then 'admins: the last admin can''t be removed' else 'FAIL ' || r::text end);
   else
     insert into out values (9, 'admins: last-admin rule not tried (' || n || ' admins here)');
