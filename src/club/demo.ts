@@ -133,6 +133,13 @@ export class DemoBackend implements ClubBackend {
   }
   private need(clubId: string, ok: (r: Role | null) => boolean, msg: string) { if (!ok(this.role(clubId))) throw new ClubError(msg); }
   private club(id: string): Club { const c = this.s.clubs.find((x) => x.id === id); if (!c) throw new ClubError('Club not found'); return c; }
+  /** Same as the server (club_mode_19): the owner's phone and note only for the club's owner and admins. */
+  private clubFor(id: string, role: Role | null): Club {
+    const c = this.club(id);
+    if (isAdmin(role)) return c;
+    const { hostingPhone: _p, hostingNote: _n, ...rest } = c;
+    return rest;
+  }
 
   async currentUser() { return this.s.user; }
   async sendCode() { throw new ClubError('The demo signs you in without a code'); }
@@ -172,7 +179,7 @@ export class DemoBackend implements ClubBackend {
     const players = this.s.players.filter((p) => p.clubId === clubId);
     const myPlayerId = players.find((p) => p.userId === u.id)?.id;
     return {
-      club: this.club(clubId), role, myPlayerId,
+      club: this.clubFor(clubId, role), role, myPlayerId,
       members: this.s.members.filter((m) => m.clubId === clubId).map(({ clubId: _c, ...m }) => m),
       players,
       tournaments: this.s.tournaments.filter((t) => t.clubId === clubId).sort((a, b) => b.startDate.localeCompare(a.startDate)),
@@ -256,7 +263,7 @@ export class DemoBackend implements ClubBackend {
     const role = this.role(t.clubId);
     if (!role) throw new ClubError('You are not in this club');
     return {
-      club: this.club(t.clubId), role, tournament: t,
+      club: this.clubFor(t.clubId, role), role, tournament: t,
       divisions: this.s.divisions.filter((d) => d.tournamentId === id).sort((a, b) => a.sort - b.sort),
       entries: this.s.entries.filter((e) => this.s.divisions.some((d) => d.id === e.divisionId && d.tournamentId === id)),
       matches: this.s.matches.filter((m) => m.tournamentId === id),
@@ -295,7 +302,7 @@ export class DemoBackend implements ClubBackend {
     const role = this.role(m.clubId);
     if (!role) throw new ClubError('You are not in this club');
     return {
-      club: this.club(m.clubId), role, match: m, players: this.s.players.filter((p) => p.clubId === m.clubId),
+      club: this.clubFor(m.clubId, role), role, match: m, players: this.s.players.filter((p) => p.clubId === m.clubId),
       tournament: this.s.tournaments.find((t) => t.id === m.tournamentId), divisionName: this.s.divisions.find((d) => d.id === m.divisionId)?.name,
     };
   }

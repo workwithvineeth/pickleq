@@ -143,3 +143,24 @@ describe('Referee PIN and desk access (same rules as the server, club_mode_18)',
     expect((await b.tournamentBundle(t.id)).matches.length).toBe(before);
   });
 });
+
+describe('Owner’s phone (same rule as the server, club_mode_19)', () => {
+  it('only the club’s owner and admins see it; a player who joined doesn’t', async () => {
+    const store = memoryStorage();
+    const b = new DemoBackend(store);
+    const clubId = await b.start('Robot');
+    await b.requestHosting(clubId, '+91 9876501234', 'Two courts').catch(() => undefined);
+    const state = JSON.parse(store.getItem('pq-club-demo-v1') ?? '{}');
+    const club = state.clubs.find((c: { id: string }) => c.id === clubId);
+    club.hostingPhone = '+91 9876501234'; club.hostingNote = 'Two courts';
+    const me = state.user.id;
+    for (const m of state.members) if (m.clubId === clubId && m.userId === me) m.role = 'player';
+    const asPlayer = new DemoBackend(memoryStorage({ 'pq-club-demo-v1': JSON.stringify(state) }));
+    const d = await asPlayer.clubBundle(clubId);
+    expect(d.club.hostingPhone).toBeUndefined();
+    expect(d.club.hostingNote).toBeUndefined();
+    for (const m of state.members) if (m.clubId === clubId && m.userId === me) m.role = 'admin';
+    const asAdmin = new DemoBackend(memoryStorage({ 'pq-club-demo-v1': JSON.stringify(state) }));
+    expect((await asAdmin.clubBundle(clubId)).club.hostingPhone).toBe('+91 9876501234');
+  });
+});

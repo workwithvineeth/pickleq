@@ -77,7 +77,7 @@ test.describe('Referee PIN and desk access (real server)', () => {
   });
 
   test('visitors can’t read PINs or desk links, or call the PIN checks and organiser functions', async () => {
-    for (const table of ['tournament_pins?select=pin', 'tournament_desks?select=pin,token', 'registrations?select=players']) {
+    for (const table of ['tournament_pins?select=pin', 'tournament_desks?select=pin,token', 'registrations?select=players', 'club_contacts?select=phone', 'clubs?select=hosting_phone&hosting_phone=not.is.null']) {
       const r = await rest(table);
       expect(r.status === 200 ? (r.body as unknown[]).length : 0, table).toBe(0);
     }

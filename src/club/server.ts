@@ -356,8 +356,14 @@ export class ServerBackend implements ClubBackend {
     const ps = (check(players) as Row[]).map(toPlayer);
     const profiles = check(await this.sb.from('profiles').select('id, display_name').in('id', ms.map((m) => String(m.user_id)))) as Row[];
     const nameOf = (id: unknown) => String(profiles.find((p) => p.id === id)?.display_name || ps.find((p) => p.userId === id)?.name || 'Member');
+    const c = toClub(check(club) as Row);
+    // The owner's phone and note are only for the club's owner and admins (and PaddleQ admins): club_mode_19.
+    if (me.role === 'owner' || me.role === 'admin') {
+      const k = check(await this.sb.from('club_contacts').select('phone, note').eq('club_id', clubId)) as Row[];
+      if (k[0]) { c.hostingPhone = s(k[0].phone); c.hostingNote = s(k[0].note); }
+    }
     return {
-      club: toClub(check(club) as Row), role: me.role as Role, myPlayerId: ps.find((p) => p.userId === uid)?.id,
+      club: c, role: me.role as Role, myPlayerId: ps.find((p) => p.userId === uid)?.id,
       members: ms.map((m): Member => ({ userId: String(m.user_id), role: m.role as Role, name: nameOf(m.user_id) })),
       players: ps,
       tournaments: (check(tournaments) as Row[]).map(toTournament),
