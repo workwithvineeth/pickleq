@@ -115,7 +115,7 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await expect(page.getByText(/You’re entered in Men’s Doubles 3.5/)).toBeVisible();
 
     await page.goto('#/club');
-    await page.getByRole('button', { name: /PQ Demo Club/ }).click();
+    await page.getByRole('region', { name: 'Your clubs' }).getByRole('button', { name: /PQ Demo Club/ }).click();
     await page.getByRole('button', { name: /PQ Demo Night/ }).click();
     await page.getByRole('button', { name: 'Entries inbox and draw' }).click();
     const robot = page.getByRole('region', { name: 'Robot Player / Robot Partner' });
@@ -140,6 +140,7 @@ test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
     await page.goto('#/events');
     await page.getByRole('button', { name: /listings to review/ }).click();
+    await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Listings' }).click();
     await expect(page.getByRole('heading', { name: 'Review listings' })).toBeVisible();
     const sections = page.getByRole('group', { name: 'Admin sections' });
 
@@ -199,7 +200,7 @@ test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', ()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 
     await page.goto('#/events');
-    await page.getByRole('button', { name: /1 club to approve/ }).click();
+    await page.getByRole('button', { name: /2 clubs to approve/ }).click();
     const req = page.getByRole('region', { name: 'Robot Smash Yard' });
     await expect(req).toContainText('Wants to host');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
@@ -245,5 +246,25 @@ test.describe('Club logos and the new demo events (demo club on the phone)', () 
     await expect(org.getByRole('img', { name: 'PQ Demo Riverside Club logo' })).toBeVisible();
     await page.setViewportSize({ width: 320, height: 640 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  });
+});
+
+test.describe('Admin home in the demo (demo club on the phone)', () => {
+  test('admins see Clubs: a demo tour, a club waiting, and every club with its logo', async ({ page }) => {
+    await page.goto('#/demo');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await page.goto('#/club');
+    await expect(page.getByRole('heading', { name: 'Clubs', exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Clubs' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Demo tour' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /1 club waiting for your approval/ })).toBeVisible();
+    const all = page.getByRole('region', { name: 'All clubs on PaddleQ' });
+    await expect(all.getByRole('img', { name: 'PQ Demo Courtyard Club logo' })).toBeVisible();
+    await expect(all.getByRole('button', { name: /PQ Demo Courtyard Club/ })).toContainText(/wants to host/i);
+    await page.setViewportSize({ width: 320, height: 640 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    await page.getByRole('region', { name: 'Demo tour' }).getByRole('button', { name: /A new club asks to host/ }).click();
+    await expect(page.getByRole('region', { name: 'PQ Demo Courtyard Club' }).getByRole('img', { name: 'PQ Demo Courtyard Club logo' })).toBeVisible();
   });
 });

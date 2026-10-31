@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon, type IconName } from '../components/Icon';
 import { UpdatePrompt } from '../components/UpdatePrompt';
 import ClubRoutes from '../club/screens/ClubRoutes';
+import { eventsBackend } from '../club/index';
 import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
@@ -9,7 +10,7 @@ import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results';
 const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
   { id: 'events', label: 'Events', icon: 'events' },
-  { id: 'club', label: 'My club', icon: 'home' },
+  { id: 'club', label: 'My clubs', icon: 'home' },
   { id: 'club-tournaments', label: 'Tournaments', icon: 'matches' },
   { id: 'club-results', label: 'Results', icon: 'stats' },
 ];
@@ -24,6 +25,9 @@ if (/[?&](code|error_description)=/.test(window.location.search) && !window.loca
 
 export default function ClubApp() {
   const [route, go, back] = useRoute();
+  // PaddleQ admins see every club on this tab, so it's called Clubs for them; organisers see their own, My clubs.
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { let on = true; eventsBackend().isPlatformAdmin().then((a) => { if (on) setAdmin(a); }, () => undefined); return () => { on = false; }; }, [route.name]);
   const personal = route.name === 'home' || PERSONAL.includes(route.name);
   useEffect(() => { if (personal && route.name !== 'home') go('club', undefined, { replace: true }); }, [personal, route.name, go]);
   const name: RouteName = personal ? 'club' : route.name;
@@ -42,7 +46,7 @@ export default function ClubApp() {
           {TABS.map((t) => (
             <button key={t.id} type="button" className="nav-btn" aria-current={tab === t.id ? 'page' : undefined} onClick={() => go(t.id)}>
               <Icon name={t.icon} />
-              <span>{t.label}</span>
+              <span>{t.id === 'club' && admin ? 'Clubs' : t.label}</span>
             </button>
           ))}
         </nav>

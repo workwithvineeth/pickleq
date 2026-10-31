@@ -62,7 +62,7 @@ export class DemoBackend implements ClubBackend {
 
   /** Puts in the current sample events, replacing earlier sample ones. Anything made in the demo by hand stays. */
   private seedEvents(clubId: string) {
-    const oldClubs = new Set(this.s.clubs.filter((c) => c.name === 'PQ Demo Friends Club' || c.name === 'PQ Demo New Club' || c.name === 'PQ Demo Riverside Club').map((c) => c.id));
+    const oldClubs = new Set(this.s.clubs.filter((c) => c.name === 'PQ Demo Friends Club' || c.name === 'PQ Demo New Club' || c.name === 'PQ Demo Riverside Club' || c.name === 'PQ Demo Courtyard Club').map((c) => c.id));
     const oldT = new Set(this.s.tournaments.filter((t) => oldClubs.has(t.clubId) || (/^pq-demo-/.test(t.publicSlug) && t.publicSlug !== 'pq-demo-open')).map((t) => t.id));
     const oldD = new Set(this.s.divisions.filter((d) => oldT.has(d.tournamentId)).map((d) => d.id));
     this.s.clubs = this.s.clubs.filter((c) => !oldClubs.has(c.id));
@@ -756,7 +756,7 @@ export class DemoBackend implements ClubBackend {
       const ts = this.s.tournaments.filter((t) => t.clubId === c.id);
       const owners = this.s.members.filter((m) => m.clubId === c.id && m.role === 'owner').map((m) => (m.userId === u.id ? u.email : `${m.name} (demo)`));
       return {
-        id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, hosting: c.hosting ?? 'approved', hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason, owners,
+        id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, hosting: c.hosting ?? 'approved', logoUrl: c.logoUrl, hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason, owners,
         members: this.s.members.filter((m) => m.clubId === c.id).length, tournaments: ts.length,
         lastEvent: ts.map((t) => t.startDate).sort().pop(),
       };
@@ -768,7 +768,7 @@ export class DemoBackend implements ClubBackend {
     const c = this.club(id);
     const order: Role[] = ['owner', 'admin', 'coach', 'player'];
     return {
-      id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, hosting: c.hosting ?? 'approved', hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason,
+      id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, hosting: c.hosting ?? 'approved', logoUrl: c.logoUrl, hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason,
       people: this.s.members.filter((m) => m.clubId === id).sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role))
         .map((m) => ({ name: m.name, email: m.userId === u.id ? u.email : undefined, role: m.role, helper: false })),
       tournaments: this.s.tournaments.filter((t) => t.clubId === id).sort((a, b) => b.startDate.localeCompare(a.startDate))

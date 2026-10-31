@@ -70,7 +70,8 @@ describe('Events tab (Club builds only)', () => {
     expect(screen.queryByRole('button', { name: 'PQ Demo Sunday Social' })).not.toBeInTheDocument();
 
     // The demo user is a PICKLEQ admin: two listings wait, each with its poster. Approving puts it (and its poster) on the board.
-    await user.click(screen.getByRole('button', { name: /2 listings to review/ }));
+    await user.click(screen.getByRole('button', { name: /1 club to approve · 2 listings to review/ }));
+    await user.click(within(await screen.findByRole('group', { name: 'Admin sections' })).getByRole('button', { name: 'Listings' }));
     await screen.findByRole('heading', { name: 'Review listings' });
     const ladder = screen.getByRole('region', { name: 'PQ Demo Ladder Cup' });
     expect(within(ladder).getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeInTheDocument();
@@ -308,7 +309,7 @@ describe('New clubs need PaddleQ’s approval to host', () => {
     expect(screen.queryByRole('button', { name: 'New tournament' })).not.toBeInTheDocument();
 
     window.location.hash = '#/admin/clubs';
-    expect(await screen.findByText(/1 club waiting for your approval/)).toBeInTheDocument();
+    expect(await screen.findByText(/2 clubs waiting for your approval/)).toBeInTheDocument();
     const req = screen.getByRole('region', { name: 'Smash Yard' });
     expect(req).toHaveTextContent('Wants to host');
     expect(req).toHaveTextContent('Two courts in Baner');
@@ -332,6 +333,7 @@ describe('PaddleQ admin dashboard', () => {
     await openDemo(user);
     window.location.hash = '#/events';
     await user.click(await screen.findByRole('button', { name: /2 listings to review/ }));
+    await user.click(within(await screen.findByRole('group', { name: 'Admin sections' })).getByRole('button', { name: 'Listings' }));
     await screen.findByRole('heading', { name: 'Review listings' });
     const sections = screen.getByRole('group', { name: 'Admin sections' });
 

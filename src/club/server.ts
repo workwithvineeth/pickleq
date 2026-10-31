@@ -626,7 +626,7 @@ export class ServerBackend implements ClubBackend {
 
   async adminClubs(): Promise<AdminClub[]> {
     return adminList(check(await this.sb.rpc('admin_clubs'))).map((r) => ({
-      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, hosting: (String(r.hosting ?? 'approved') as HostingStatus), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
+      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, hosting: (String(r.hosting ?? 'approved') as HostingStatus), logoUrl: s(r.logo_url), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
       owners: ((r.owners as unknown[]) ?? []).map(String), members: Number(r.members ?? 0), tournaments: Number(r.tournaments ?? 0), lastEvent: s(r.last_event),
     }));
   }
@@ -634,7 +634,7 @@ export class ServerBackend implements ClubBackend {
   async adminClub(id: string): Promise<AdminClubDetail> {
     const r = answer(check(await this.sb.rpc('admin_club', { p_club: id })));
     return {
-      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, hosting: (String(r.hosting ?? 'approved') as HostingStatus), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
+      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, hosting: (String(r.hosting ?? 'approved') as HostingStatus), logoUrl: s(r.logo_url), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
       people: ((r.people as Row[]) ?? []).map((p) => ({ name: String(p.name ?? ''), email: s(p.email), role: p.role as Role, helper: !!p.helper })),
       tournaments: ((r.tournaments as Row[]) ?? []).map((t) => ({ id: String(t.id), name: String(t.name), startDate: String(t.start_date), status: t.status as ClubTournament['status'] })),
     };

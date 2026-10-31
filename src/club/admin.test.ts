@@ -96,6 +96,15 @@ describe('Admin dashboard in the demo (same rules as the server)', () => {
     await expect(b.requestHosting(id, '9876543210', '')).rejects.toThrow('already host');
   });
 
+  it('the demo shows the approval workflow: a club waiting with phone and note, and every club has a logo', async () => {
+    const b = new DemoBackend(memoryStorage());
+    await b.start('Robot');
+    const clubs = await b.adminClubs();
+    const yard = clubs.find((c) => c.name === 'PQ Demo Courtyard Club')!;
+    expect(yard).toMatchObject({ hosting: 'pending', hostingPhone: '+91 9000044444' });
+    expect(clubs.every((c) => (c.logoUrl ?? '').startsWith('data:image/svg'))).toBe(true);
+  });
+
   it('never removes the last admin', async () => {
     const b = new DemoBackend(memoryStorage());
     await b.start('Robot');

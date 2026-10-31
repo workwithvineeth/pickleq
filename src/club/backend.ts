@@ -249,9 +249,9 @@ export interface AdminOverview {
   /** Matches scored in each of the last 8 weeks (weeks start Monday), oldest first. */
   weeks: { week: string; matches: number }[];
 }
-export interface AdminClub { id: string; name: string; city?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string; hostingRequestedAt?: string; owners: string[]; members: number; tournaments: number; lastEvent?: string }
+export interface AdminClub { id: string; name: string; city?: string; logoUrl?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string; hostingRequestedAt?: string; owners: string[]; members: number; tournaments: number; lastEvent?: string }
 export interface AdminClubDetail {
-  id: string; name: string; city?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string;  hostingRequestedAt?: string;
+  id: string; name: string; city?: string; logoUrl?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string;  hostingRequestedAt?: string;
   people: { name: string; email?: string; role: Role; helper: boolean }[];
   tournaments: { id: string; name: string; startDate: string; status: ClubTournament['status'] }[];
 }

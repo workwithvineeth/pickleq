@@ -5,6 +5,7 @@ import { trend, weekLabel } from '../adminStats';
 import { eventsBackend } from '../index';
 import { ROLE_LABEL } from '../types';
 import { DemoNote, errorText, Header, Status, useLoad } from './common';
+import { BigLogo } from './Poster';
 import { ListingReviews } from './Events';
 
 export type AdminSection = 'overview' | 'clubs' | 'tournaments' | 'listings' | 'admins' | 'helpers';
@@ -154,8 +155,9 @@ function Clubs({ go }: { go: Go }) {
       {state.data && shown.length === 0 && <p className="small muted" style={{ margin: 0 }}>No clubs match.</p>}
       {shown.map((c) => (
         <section key={c.id} className="card section" aria-label={c.name}>
-          <div className="row" style={{ padding: 0 }}>
-            <b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{c.name}</b>
+          <div className="row" style={{ padding: 0, justifyContent: 'flex-start', gap: 12 }}>
+            <BigLogo src={c.logoUrl} club={c.name} size={56} />
+            <b style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', fontSize: 17 }}>{c.name}</b>
             {c.isTest ? <span className="pill">Robot test</span>
               : c.hosting === 'pending' ? <span className="pill pill-warn">Wants to host</span>
               : c.hosting === 'rejected' ? <span className="pill pill-bad">Not approved</span>
@@ -216,7 +218,13 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
       <Status error={state.error} loading={state.loading && !c} />
       {c && (
         <>
-          <div className="small muted">{[c.city, c.isTest ? 'Robot test club' : c.verified ? 'Verified' : 'Not verified yet'].filter(Boolean).join(' · ')}. Read-only: changes are made by the club.</div>
+          <section className="pq-clubhero" aria-label={`${c.name} club`}>
+            <BigLogo src={c.logoUrl} club={c.name} />
+            <div className="pq-clubhero-name">{c.name}</div>
+            <div className="pq-club-meta" style={{ justifyContent: 'center' }}>{[c.city, c.isTest ? 'Robot test club' : c.verified ? 'Verified' : 'Not verified yet'].filter(Boolean).join(' · ')}
+              {c.hosting === 'approved' ? <span className="pq-badge">Approved</span> : <span className="pq-badge pq-badge-gold">{c.hosting === 'rejected' ? 'NOT APPROVED' : 'WAITING FOR PADDLEQ'}</span>}</div>
+          </section>
+          <div className="small muted">Read-only: changes are made by the club.</div>
           <section className="card section" aria-label="People">
             <h2 style={{ fontSize: 16 }}>People ({c.people.length})</h2>
             {c.people.map((p, i) => (

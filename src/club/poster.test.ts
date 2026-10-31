@@ -90,6 +90,6 @@ describe('Posters', () => {
     expect(names).toContain('My Own Cup');
     expect(names).toContain('PQ Demo Diwali Doubles');
     expect(JSON.parse(memory().getItem('x') ?? 'null')).toBeNull();
-    expect(SAMPLE_EVENTS_VERSION).toBe(4);
+    expect(SAMPLE_EVENTS_VERSION).toBe(5);
   });
 });

@@ -11,7 +11,7 @@ const FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: tr
 const KO: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
 /** Bump when the sample events change, so demos already on a phone get the new set. */
-export const SAMPLE_EVENTS_VERSION = 4;
+export const SAMPLE_EVENTS_VERSION = 5;
 
 export interface SampleEvents {
   clubs: Club[];
@@ -44,6 +44,10 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
     logoUrl: sampleLogo({ initials: 'FC', bg: '#FCE7D6', ink: '#5A2A12', accent: '#D9622B', shape: 'circle' }) };
   const newbie: Club = { id: id(), name: 'PQ Demo New Club', city: 'Hyderabad', inviteCode: 'pqdemo0003', settings: {},
     logoUrl: sampleLogo({ initials: 'NC', bg: '#E8F1E4', ink: '#1E3A1A', accent: '#3E8E41', shape: 'shield' }) };
+  // Waiting for PaddleQ to approve it to host (no tournaments yet): shows the approval workflow in the admin dashboard.
+  const courtyard: Club = { id: id(), name: 'PQ Demo Courtyard Club', city: 'Pune', inviteCode: 'pqdemo0005', settings: {},
+    hosting: 'pending', hostingPhone: '+91 9000044444', hostingNote: 'Two outdoor courts in Baner. We plan a monthly doubles night.',
+    logoUrl: sampleLogo({ initials: 'CC', bg: '#F6E6E8', ink: '#7A1F2B', accent: '#7A1F2B', shape: 'circle' }) };
   const riverside: Club = { id: id(), name: 'PQ Demo Riverside Club', city: 'Bengaluru', inviteCode: 'pqdemo0004', settings: {}, verified: true,
     logoUrl: sampleLogo({ initials: 'RC', bg: '#14304A', ink: '#FFFFFF', accent: '#FF9F43', shape: 'ball' }) };
   const poster = (t: Pick<ClubTournament, 'name' | 'startDate' | 'startTime' | 'venue' | 'city'>, look: Omit<PosterDesign, 'title' | 'date' | 'place'>) =>
@@ -184,7 +188,7 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
 
   const openPoster = samplePoster({ title: 'Demo Open', date: 'Live today', place: 'PQ Demo Courts, Hyderabad', tag: 'Club championship', bg: '#7A1F2B', ink: '#FFF6EC', accent: '#F3C77A', motif: 'court' });
   return {
-    clubs: [friends, newbie, riverside],
+    clubs: [friends, newbie, riverside, courtyard],
     tournaments: [s8, diwali, monsoon, night, social, women, ladder, corporate, smash, seniors, mixer],
     divisions: [s8s, s8d, dd, ms, md, mx, s35, soc, ws, wd, lad, corp, smo, smx, sen, mix],
     entries, matches, registrations, openPoster,

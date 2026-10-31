@@ -61,6 +61,7 @@ do $$
 declare r jsonb; c record;
 begin
   r := public.admin_clubs();
+  if not (r->0 ? 'logo_url') then raise exception 'FAIL: admin club list has no logo_url'; end if;
   if not exists (select 1 from jsonb_array_elements(r) e where e->>'name' = 'Host Club' and e->>'hosting' = 'pending' and e->>'hosting_phone' = '+91 98765 43210') then
     raise exception 'FAIL: admin list doesn''t show the waiting request with its phone';
   end if;
