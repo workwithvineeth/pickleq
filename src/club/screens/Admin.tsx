@@ -93,11 +93,18 @@ function Tile({ label, value, sub, onClick }: { label: string; value: number | s
 function Overview({ go }: { go: Go }) {
   const b = eventsBackend();
   const state = useLoad(() => b.adminOverview(), [b]);
+  const clubs = useLoad(() => b.adminClubs(), [b]);
+  const waiting = (clubs.data ?? []).filter((c) => c.hosting === 'pending' && !c.isTest).length;
   const d = state.data;
   const max = Math.max(1, ...(d?.weeks.map((w) => w.matches) ?? [0]));
   return (
     <>
       <Status error={state.error} loading={state.loading && !d} />
+      {waiting > 0 && (
+        <button type="button" className="banner-btn" onClick={() => go('admin', 'clubs')}>
+          <span>{waiting} club{waiting === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
+        </button>
+      )}
       {d && (
         <>
           <section className="card section" aria-label="Matches scored this week">

@@ -298,13 +298,13 @@ describe('New clubs need PaddleQ’s approval to host', () => {
     await user.type(screen.getByLabelText('Club name'), 'Smash Yard');
     await user.type(screen.getByLabelText('Your name'), 'Robot');
     await user.click(screen.getByRole('button', { name: 'Create club and ask to host' }));
-    expect(await screen.findByText('Add a phone number PaddleQ can call (10 digits)')).toBeInTheDocument();
+    expect(await screen.findByText('Enter the 10-digit India mobile number, without +91')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Phone number'), '98765 43210');
     await user.type(screen.getByLabelText('About your club'), 'Two courts in Baner');
     await user.click(screen.getByRole('button', { name: 'Create club and ask to host' }));
     const card = await screen.findByRole('region', { name: 'Hosting tournaments' });
     expect(card).toHaveTextContent(/waiting for paddleq/i);
-    expect(card).toHaveTextContent('98765 43210');
+    expect(card).toHaveTextContent('+91 9876543210');
     expect(screen.queryByRole('button', { name: 'New tournament' })).not.toBeInTheDocument();
 
     window.location.hash = '#/admin/clubs';

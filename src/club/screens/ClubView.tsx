@@ -10,6 +10,7 @@ import { isClubApp } from '../config';
 import { mySummary } from '../personal';
 import { canHost, isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
 import { ClubHero, LogoPicker } from './Poster';
+import { joinPhone, PhoneField, phoneProblem, splitPhone } from './Phone';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
 
 type Tab = 'events' | 'players' | 'squad' | 'members';
@@ -50,15 +51,17 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
 function HostingRequest({ d, reload }: { d: ClubBundle; reload: () => void }) {
   const b = backend();
   const c = d.club;
-  const [phone, setPhone] = useState(c.hostingPhone ?? '');
+  const [phone, setPhone] = useState(() => splitPhone(c.hostingPhone));
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const waiting = c.hosting === 'pending' && !!c.hostingPhone;
   async function send() {
     if (!b) return;
+    const bad = phoneProblem(phone.country, phone.digits);
+    if (bad) return setMsg(bad);
     setBusy(true); setMsg(null);
-    try { await b.requestHosting(c.id, phone, note); reload(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
+    try { await b.requestHosting(c.id, joinPhone(phone.country, phone.digits), note); reload(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
   }
   return (
     <section className="card section" aria-label="Hosting tournaments">
@@ -87,7 +90,7 @@ function HostingRequest({ d, reload }: { d: ClubBundle; reload: () => void }) {
       {!waiting && (
         <>
           {c.hosting !== 'rejected' && <p className="small muted" style={{ margin: 0 }}>PaddleQ checks every new club before it can host tournaments.</p>}
-          <Field label="Phone number"><input className="input" type="tel" inputMode="tel" aria-label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} /></Field>
+          <PhoneField id="hosting-phone" country={phone.country} digits={phone.digits} onChange={(country, digits) => setPhone({ country, digits })} />
           <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
           {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
           <button type="button" className="btn btn-primary" disabled={busy} onClick={send}>{c.hosting === 'rejected' ? 'Ask again' : 'Ask to host tournaments'}</button>

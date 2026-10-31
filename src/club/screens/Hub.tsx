@@ -7,6 +7,7 @@ import { backend, demoBackend, serverBackend, takeReturn } from '../index';
 import { importClubMatches, pendingClubMatches } from '../personal';
 import { emailOk, MIN_PASSWORD, passwordProblem } from '../authText';
 import { ClubLogo } from './Poster';
+import { joinPhone, PhoneField, phoneProblem } from './Phone';
 import { Arrow, BrandMark, FlowHeader, LandingHero } from './Brand';
 import type { ClubBackend, MyClub } from '../backend';
 import { canHost, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
@@ -568,7 +569,8 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [me, setMe] = useState('');
-  const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState('+91');
+  const [digits, setDigits] = useState('');
   const [note, setNote] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -577,12 +579,13 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
     if (!b) return go('club');
     if (name.trim().length < 2) return setMsg('Give the club a name');
     if (!me.trim()) return setMsg('Add your name, as players will see it');
-    if (phone.replace(/\D/g, '').length < 10) return setMsg('Add a phone number PaddleQ can call (10 digits)');
+    const bad = phoneProblem(country, digits);
+    if (bad) return setMsg(bad);
     setBusy(true);
     try {
       const id = await b.createClub(name, city, me);
       // The club exists now; if the request fails, the club page lets them send it again.
-      await b.requestHosting(id, phone, note).catch(() => undefined);
+      await b.requestHosting(id, joinPhone(country, digits), note).catch(() => undefined);
       go('club-view', id, { replace: true });
     } catch (e) { setMsg(errorText(e)); setBusy(false); }
   }
@@ -592,7 +595,7 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
       <Field label="Club name"><input className="input" aria-label="Club name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
       <Field label="City (optional)"><input className="input" aria-label="City" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} /></Field>
       <Field label="Your name"><input className="input" aria-label="Your name" value={me} onChange={(e) => setMe(e.target.value)} maxLength={60} /></Field>
-      <Field label="Phone number"><input className="input" type="tel" inputMode="tel" autoComplete="tel" aria-label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} /></Field>
+      <PhoneField country={country} digits={digits} onChange={(c, d) => { setCountry(c); setDigits(d); }} />
       <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} placeholder="Where you play, how many courts, tournaments you plan" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
       <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. PaddleQ checks every new club before it can host tournaments; we’ll call or WhatsApp you on this number, usually within a day.</p>
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}

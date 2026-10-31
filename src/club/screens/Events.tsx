@@ -68,8 +68,9 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
     const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
     const pastSeen = new Set(pastReal.map((e) => e.slug));
     const past = [...pastReal, ...pastDemo.filter((e) => !pastSeen.has(e.slug))].sort((x, y) => y.startDate.localeCompare(x.startDate));
-    const queue = admin ? await b.listingQueue().catch(() => []) : [];
-    return { events, past, pending: queue.filter((q) => q.listingStatus === 'pending').length, admin, serverDown };
+    const [queue, clubs] = admin ? await Promise.all([b.listingQueue().catch(() => []), b.adminClubs().catch(() => [])]) : [[], []];
+    const clubsWaiting = clubs.filter((c) => c.hosting === 'pending' && !c.isTest).length;
+    return { events, past, pending: queue.filter((q) => q.listingStatus === 'pending').length, clubsWaiting, admin, serverDown };
   }, [b, robot]);
   const [city, setCity] = useState('all');
   const [kind, setKind] = useState<'all' | 'open'>('all');
@@ -85,8 +86,8 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       {b.kind === 'demo' && clubMode() === 'demo' && <DemoNote b={b} />}
       <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on PaddleQ, or contact them for listed events.</p>
       {state.data?.admin && (
-        <button type="button" className="banner-btn" onClick={() => go('admin', state.data?.pending ? 'listings' : 'overview')}>
-          <span>{state.data.pending ? `${state.data.pending} listing${state.data.pending === 1 ? '' : 's'} to review` : 'PaddleQ admin'}</span><span>›</span>
+        <button type="button" className="banner-btn" onClick={() => go('admin', state.data?.clubsWaiting ? 'clubs' : state.data?.pending ? 'listings' : 'overview')}>
+          <span>{[state.data.clubsWaiting && `${state.data.clubsWaiting} club${state.data.clubsWaiting === 1 ? '' : 's'} to approve`, state.data.pending && `${state.data.pending} listing${state.data.pending === 1 ? '' : 's'} to review`].filter(Boolean).join(' · ') || 'PaddleQ admin'}</span><span>›</span>
         </button>
       )}
       {cities.length > 1 && <Segmented label="City" value={city} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} onChange={setCity} />}

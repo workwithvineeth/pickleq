@@ -188,7 +188,9 @@ test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', ()
     await page.goto('#/club-new');
     await page.getByLabel('Club name').fill('Robot Smash Yard');
     await page.getByLabel('Your name').fill('Robot');
+    await expect(page.getByLabel('Country code')).toHaveValue('+91');
     await page.getByLabel('Phone number').fill('98765 43210');
+    await expect(page.getByLabel('Phone number')).toHaveValue('9876543210');
     await page.getByLabel('About your club').fill('Two courts');
     await page.getByRole('button', { name: 'Create club and ask to host' }).click();
     const card = page.getByRole('region', { name: 'Hosting tournaments' });
@@ -196,7 +198,8 @@ test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', ()
     await expect(page.getByRole('button', { name: 'New tournament' })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 
-    await page.goto('#/admin/clubs');
+    await page.goto('#/events');
+    await page.getByRole('button', { name: /1 club to approve/ }).click();
     const req = page.getByRole('region', { name: 'Robot Smash Yard' });
     await expect(req).toContainText('Wants to host');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
