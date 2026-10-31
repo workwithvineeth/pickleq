@@ -67,7 +67,7 @@ describe('Event PIN and club logo (same rules as the server)', () => {
     const b = new DemoBackend(memoryStorage());
     const id = await b.start('Robot');
     const t = (await b.clubBundle(id)).tournaments.find((x) => x.name === 'PQ Demo Open')!;
-    expect((await b.publicClubLogo(t.publicSlug))?.logoUrl).toBeUndefined();
+    expect((await b.publicClubLogo(t.publicSlug))?.logoUrl).toMatch(/^data:image\/svg/); // the demo club's made-up logo
     const url = await b.setClubLogo(id, new Blob(['logo'], { type: 'image/jpeg' }));
     expect(url).toMatch(/^data:image\/jpeg/);
     expect((await b.clubBundle(id)).club.logoUrl).toBe(url);

@@ -390,3 +390,10 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-progress-now .pq-progress-dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #B8862B; }
 .pq-progress b { display: block; font-size: 15px; }
 .pq-progress span.small { display: block; color: var(--muted); }
+.pq-biglogo { display: block; border-radius: 26px; object-fit: contain; background: #FFFFFF; border: 1px solid var(--border); box-shadow: 0 8px 22px rgba(122, 31, 43, 0.16); flex-shrink: 0; }
+.pq-biglogo-empty { display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-family: var(--font-display); font-weight: 700; border: 2px dashed color-mix(in srgb, var(--accent) 40%, transparent); box-shadow: none; }
+.pq-clubhero { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 24px 20px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.pq-clubhero-name { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.15; overflow-wrap: anywhere; }
+.pq-clubhero .btn { margin-top: 4px; }
+.pq-organiser { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 16px; }
+.pq-organiser-name { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }

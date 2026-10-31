@@ -64,3 +64,20 @@ ${lines.map((l, i) => `<text x="540" y="${980 + i * 96 - (lines.length - 1) * 48
 </svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
+
+export interface LogoDesign { initials: string; bg: string; ink: string; accent: string; shape: 'shield' | 'circle' | 'ball' }
+
+/** A made-up club logo for the demo, as a square SVG picture. */
+export function sampleLogo(d: LogoDesign): string {
+  const badge = d.shape === 'shield'
+    ? `<path d="M256 40l176 56v132c0 112-76 196-176 244C156 424 80 340 80 228V96z" fill="${d.bg}" stroke="${d.accent}" stroke-width="14"/>`
+    : d.shape === 'ball'
+      ? `<circle cx="256" cy="256" r="216" fill="${d.bg}" stroke="${d.accent}" stroke-width="14"/><g fill="${d.accent}" opacity="0.35">${[[150, 150], [362, 150], [120, 300], [392, 300], [256, 420]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="22"/>`).join('')}</g>`
+      : `<circle cx="256" cy="256" r="216" fill="${d.bg}"/><circle cx="256" cy="256" r="186" fill="none" stroke="${d.accent}" stroke-width="10"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<rect width="512" height="512" fill="#FFFFFF"/>
+${badge}
+<text x="256" y="${d.shape === 'shield' ? 300 : 300}" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="${d.initials.length > 2 ? 120 : 150}" fill="${d.ink}">${esc(d.initials)}</text>
+</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}

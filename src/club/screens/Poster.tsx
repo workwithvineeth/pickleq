@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ClubBackend } from '../backend';
 import { shrinkImage } from '../poster';
 import type { ClubTournament } from '../types';
@@ -93,6 +93,61 @@ export function LogoPicker({ b, clubId, club, current, onChanged }: { b: ClubBac
       <input ref={input} type="file" accept="image/*" aria-label="Logo picture" style={{ display: 'none' }} onChange={(e) => void choose(e.target.files?.[0])} />
       <button type="button" className="btn btn-outline" disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Saving the logo…' : url ? 'Change logo' : 'Add a logo'}</button>
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+    </section>
+  );
+}
+
+const initialsOf = (name: string) => name.split(/\s+/).filter((w) => /^[A-Za-z0-9]/.test(w) && !/^(the|pq|demo)$/i.test(w)).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || 'PQ';
+
+/** The club's logo, big and centred, or its initials while it has none. */
+export function BigLogo({ src, club, size = 104 }: { src?: string; club: string; size?: number }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [src]);
+  return src && !broken
+    ? <img src={src} alt={`${club} logo`} className="pq-biglogo" width={size} height={size} style={{ width: size, height: size }} onError={() => setBroken(true)} />
+    : <span className="pq-biglogo pq-biglogo-empty" role="img" aria-label={`${club}: no logo yet`} style={{ width: size, height: size, fontSize: size * 0.34 }}>{initialsOf(club)}</span>;
+}
+
+/** Top of a club's page: the logo in the middle, the name, where, and for its staff a button to add or change the logo. */
+export function ClubHero({ b, clubId, club, city, logoUrl, badge, canEdit, onChanged }: {
+  b: ClubBackend | null; clubId: string; club: string; city?: string; logoUrl?: string; badge?: ReactNode; canEdit: boolean; onChanged?: () => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  async function choose(file: File | undefined) {
+    if (!file || !b) return;
+    setBusy(true); setMsg(null);
+    try {
+      await b.setClubLogo(clubId, await shrinkImage(file, 512, 400_000));
+      setMsg({ ok: true, text: 'Logo saved. It shows on your club, event and results pages.' }); onChanged?.();
+    } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); if (input.current) input.current.value = ''; }
+  }
+  return (
+    <section className="pq-clubhero" aria-label={`${club} club`}>
+      <BigLogo src={logoUrl} club={club} />
+      <div className="pq-clubhero-name">{club}</div>
+      <div className="pq-club-meta" style={{ justifyContent: 'center' }}>{city}{badge}</div>
+      {canEdit && (
+        <>
+          <input ref={input} type="file" accept="image/*" aria-label="Logo picture" style={{ display: 'none' }} onChange={(e) => void choose(e.target.files?.[0])} />
+          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Saving the logo…' : logoUrl ? 'Change logo' : 'Add your club logo'}</button>
+        </>
+      )}
+      {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+    </section>
+  );
+}
+
+/** On an event page: who runs it, with their logo, big enough to recognise. */
+export function OrganiserCard({ club, logoUrl }: { club: string; logoUrl?: string }) {
+  return (
+    <section className="pq-organiser" aria-label="Organised by">
+      <BigLogo src={logoUrl} club={club} size={72} />
+      <div style={{ minWidth: 0 }}>
+        <div className="pq-kicker">ORGANISED BY</div>
+        <div className="pq-organiser-name">{club}</div>
+      </div>
     </section>
   );
 }

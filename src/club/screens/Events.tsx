@@ -7,7 +7,7 @@ import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBac
 import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../registration';
 import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
-import { ClubLogo, PosterImage } from './Poster';
+import { OrganiserCard, PosterImage } from './Poster';
 
 // ---------- Helpers ----------
 
@@ -158,13 +158,10 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
       <Header id="event-title" title={e.name} onBack={onBack} />
       {state.data?.src.kind === 'demo' && <DemoNote b={state.data.src} />}
       <PosterImage src={e.posterUrl} name={e.name} />
+      <OrganiserCard club={e.club} logoUrl={logo.data?.logoUrl} />
       <section className="card section" aria-label="When and where">
         <div style={{ fontWeight: 600 }}>{dayLabel(e.startDate)} · from {timeLabel(e.startTime)}</div>
         {where && <div>{where}</div>}
-        <div className="row" style={{ justifyContent: 'flex-start', gap: 10 }}>
-          <ClubLogo src={logo.data?.logoUrl} club={e.club} size={48} />
-          <div className="small muted">Organised by {e.club}</div>
-        </div>
         <EventBadges e={e} />
         {e.registrationOpen && e.entriesClose && <div className="small">Entries close {dayLabel(e.entriesClose)}</div>}
       </section>

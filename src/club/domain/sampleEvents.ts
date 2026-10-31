@@ -1,6 +1,6 @@
 import type { Format } from '../../domain/types';
 import { drawRows } from '../plan';
-import { samplePoster, type PosterDesign } from '../poster';
+import { sampleLogo, samplePoster, type PosterDesign } from '../poster';
 import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, Entry, Registration } from '../types';
 import { entryRating } from './engine';
 import { isoDay } from './sample';
@@ -11,7 +11,7 @@ const FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: tr
 const KO: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
 /** Bump when the sample events change, so demos already on a phone get the new set. */
-export const SAMPLE_EVENTS_VERSION = 3;
+export const SAMPLE_EVENTS_VERSION = 4;
 
 export interface SampleEvents {
   clubs: Club[];
@@ -22,6 +22,8 @@ export interface SampleEvents {
   registrations: Registration[];
   /** The demo club's own Open (from Module 1) gets a poster too. */
   openPoster: string;
+  /** A made-up logo for the demo club itself. */
+  demoLogo: string;
 }
 
 const fmtDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -32,13 +34,18 @@ const fmtDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('
  * - upcoming, on the board: PQ Demo Night (entries open, some already in), PQ Demo Sunday Social (listed only),
  *   PQ Demo Women's Open (entries open);
  * - waiting for approval, from a new club: PQ Demo Ladder Cup and PQ Demo Corporate Cup;
+ * - from a second city (PQ Demo Riverside Club, Bengaluru): PQ Demo Smash Fest, PQ Demo Seniors Classic (50+), PQ Demo Winter Mixer (listed);
  * - live today: Pickleball Central Season 8 (the demo club's own). Singles started about 80 minutes ago and is mid-pools;
  *   doubles starts in about 2 hours, so the owner can still add or withdraw doubles teams.
  */
 export function buildSampleEvents(demoClubId: string, id: () => string, players: ClubPlayer[], today = new Date()): SampleEvents {
   const day = (n: number) => { const d = new Date(today); d.setDate(d.getDate() + n); return isoDay(d); };
-  const friends: Club = { id: id(), name: 'PQ Demo Friends Club', city: 'Hyderabad', inviteCode: 'pqdemo0002', settings: {}, verified: true };
-  const newbie: Club = { id: id(), name: 'PQ Demo New Club', city: 'Hyderabad', inviteCode: 'pqdemo0003', settings: {} };
+  const friends: Club = { id: id(), name: 'PQ Demo Friends Club', city: 'Hyderabad', inviteCode: 'pqdemo0002', settings: {}, verified: true,
+    logoUrl: sampleLogo({ initials: 'FC', bg: '#FCE7D6', ink: '#5A2A12', accent: '#D9622B', shape: 'circle' }) };
+  const newbie: Club = { id: id(), name: 'PQ Demo New Club', city: 'Hyderabad', inviteCode: 'pqdemo0003', settings: {},
+    logoUrl: sampleLogo({ initials: 'NC', bg: '#E8F1E4', ink: '#1E3A1A', accent: '#3E8E41', shape: 'shield' }) };
+  const riverside: Club = { id: id(), name: 'PQ Demo Riverside Club', city: 'Bengaluru', inviteCode: 'pqdemo0004', settings: {}, verified: true,
+    logoUrl: sampleLogo({ initials: 'RC', bg: '#14304A', ink: '#FFFFFF', accent: '#FF9F43', shape: 'ball' }) };
   const poster = (t: Pick<ClubTournament, 'name' | 'startDate' | 'startTime' | 'venue' | 'city'>, look: Omit<PosterDesign, 'title' | 'date' | 'place'>) =>
     samplePoster({ title: t.name.replace(/^PQ Demo /, ''), date: `${fmtDay(t.startDate)} · ${t.startTime}`, place: [t.venue, t.city].filter(Boolean).join(', '), ...look });
   const base = { courts: 4, slotMinutes: 20, status: 'draft' as const, isPublic: false, city: 'Hyderabad' };
@@ -79,6 +86,20 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
     about: 'Listed only: company teams contact the organiser. Waiting for PaddleQ to check it.', contact: '90000 22222', entryMode: 'roster', listing: 'listed', listingStatus: 'pending' },
   { tag: 'Office teams', bg: '#1D2B53', ink: '#F5F7FF', accent: '#7EA6FF', motif: 'trophy' });
 
+  // Three more on the board, from a second made-up club in another city.
+  const smash = t({ clubId: riverside.id, name: 'PQ Demo Smash Fest', startDate: day(11), startTime: '07:30', publicSlug: 'pq-demo-smash', venue: 'Demo Riverside Courts',
+    city: 'Bengaluru', about: 'A made-up doubles festival: open and mixed, pools then knockouts.', entryMode: 'registration', registrationOpen: true, entriesClose: day(9),
+    upiId: 'pqriverside@upi', listing: 'run', listingStatus: 'approved', reviewedAt },
+  { tag: 'Doubles festival', bg: '#3A1F0B', ink: '#FFF3E6', accent: '#FF9F43', motif: 'ball' });
+  const seniors = t({ clubId: riverside.id, name: 'PQ Demo Seniors Classic', startDate: day(16), startTime: '08:00', publicSlug: 'pq-demo-seniors', venue: 'Demo Riverside Courts',
+    city: 'Bengaluru', about: 'A made-up event for players aged 50 and over.', entryMode: 'registration', registrationOpen: true, entriesClose: day(14),
+    upiId: 'pqriverside@upi', listing: 'run', listingStatus: 'approved', reviewedAt },
+  { tag: 'Fifty and over', bg: '#1F3B2C', ink: '#F6F1E1', accent: '#E8C872', motif: 'trophy' });
+  const mixer = t({ clubId: riverside.id, name: 'PQ Demo Winter Mixer', startDate: day(21), startTime: '17:00', publicSlug: 'pq-demo-mixer', venue: 'Demo Riverside Courts',
+    city: 'Bengaluru', about: 'Listed only: a made-up evening mixer. Message the organiser to enter.', contact: '90000 33333', entryMode: 'roster', listing: 'listed',
+    listingStatus: 'approved', reviewedAt },
+  { tag: 'Evening mixer', bg: '#E6EEF8', ink: '#16243A', accent: '#3A6EA5', motif: 'stars' });
+
   const div = (tt: ClubTournament, name: string, kind: Division['kind'], sort: number, rules: Division['rules']): Division =>
     ({ id: id(), tournamentId: tt.id, clubId: tt.clubId, name, kind, format: FORMAT, koFormat: KO, pools: 1, advance: 0, sort, rules });
   const md = div(night, 'Men’s Doubles 3.5', 'doubles', 0, { gender: 'men', maxDupr: 3.5, cap: 8, fee: 600 });
@@ -91,6 +112,10 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
   const corp = div(corporate, 'Company Doubles', 'doubles', 0, { gender: 'open', fee: 2000 });
   const dd = div(diwali, 'Open Doubles', 'doubles', 0, { gender: 'open', fee: 600 });
   const ms = div(monsoon, 'Open Singles', 'singles', 0, { gender: 'open', fee: 400 });
+  const smo = div(smash, 'Open Doubles', 'doubles', 0, { gender: 'open', cap: 16, fee: 700 });
+  const smx = div(smash, 'Mixed Doubles', 'doubles', 1, { gender: 'mixed', cap: 12, fee: 700 });
+  const sen = div(seniors, 'Seniors Doubles 50+', 'doubles', 0, { gender: 'open', minAge: 50, cap: 12, fee: 600 });
+  const mix = div(mixer, 'Mixer Doubles', 'doubles', 0, { gender: 'mixed', fee: 400 });
 
   // Results for the finished events: drawn from the demo club's (made-up) players and played out.
   const pmap = new Map(players.map((p) => [p.id, p]));
@@ -159,9 +184,10 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
 
   const openPoster = samplePoster({ title: 'Demo Open', date: 'Live today', place: 'PQ Demo Courts, Hyderabad', tag: 'Club championship', bg: '#7A1F2B', ink: '#FFF6EC', accent: '#F3C77A', motif: 'court' });
   return {
-    clubs: [friends, newbie],
-    tournaments: [s8, diwali, monsoon, night, social, women, ladder, corporate],
-    divisions: [s8s, s8d, dd, ms, md, mx, s35, soc, ws, wd, lad, corp],
+    clubs: [friends, newbie, riverside],
+    tournaments: [s8, diwali, monsoon, night, social, women, ladder, corporate, smash, seniors, mixer],
+    divisions: [s8s, s8d, dd, ms, md, mx, s35, soc, ws, wd, lad, corp, smo, smx, sen, mix],
     entries, matches, registrations, openPoster,
+    demoLogo: sampleLogo({ initials: 'PQ', bg: '#7A1F2B', ink: '#F3EBDD', accent: '#F3C77A', shape: 'circle' }),
   };
 }

@@ -9,7 +9,7 @@ import { backend } from '../index';
 import { isClubApp } from '../config';
 import { mySummary } from '../personal';
 import { canHost, isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
-import { ClubLogo, LogoPicker } from './Poster';
+import { ClubHero, LogoPicker } from './Poster';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
 
 type Tab = 'events' | 'players' | 'squad' | 'members';
@@ -31,7 +31,8 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
       <DemoNote b={b} />
       {d && (
         <>
-          {d.club.logoUrl && <ClubLogo src={d.club.logoUrl} club={d.club.name} />}
+          <ClubHero b={b} clubId={d.club.id} club={d.club.name} city={d.club.city} logoUrl={d.club.logoUrl} canEdit={staff && !!b} onChanged={state.reload}
+            badge={canHost(d.club) ? <span className="pq-badge">Approved</span> : <span className="pq-badge pq-badge-gold">{d.club.hosting === 'rejected' ? 'NOT APPROVED' : 'WAITING FOR PADDLEQ'}</span>} />
           {!canHost(d.club) && isAdmin(d.role) && <HostingRequest d={d} reload={state.reload} />}
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}

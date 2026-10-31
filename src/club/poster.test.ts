@@ -51,6 +51,18 @@ describe('Posters', () => {
     expect(ev.tournaments.filter((t) => t.listingStatus === 'pending').map((t) => t.name)).toEqual(['PQ Demo Ladder Cup', 'PQ Demo Corporate Cup']);
   });
 
+  it('three more events from a second club (Bengaluru) are on the board, each with a poster and the club logo', async () => {
+    const b = new DemoBackend(memory());
+    await b.start('Robot');
+    const board = await b.publicEvents();
+    for (const slug of ['pq-demo-smash', 'pq-demo-seniors', 'pq-demo-mixer']) {
+      const e = board.find((x) => x.slug === slug)!;
+      expect(e.club).toBe('PQ Demo Riverside Club');
+      expect(e.posterUrl).toMatch(/^data:image\/svg/);
+      expect((await b.publicClubLogo(slug))?.logoUrl).toMatch(/^data:image\/svg/);
+    }
+  });
+
   it('the demo organiser can change a poster; it shows on the board after approval', async () => {
     const b = new DemoBackend(memory());
     const clubId = await b.start('Robot');
@@ -78,6 +90,6 @@ describe('Posters', () => {
     expect(names).toContain('My Own Cup');
     expect(names).toContain('PQ Demo Diwali Doubles');
     expect(JSON.parse(memory().getItem('x') ?? 'null')).toBeNull();
-    expect(SAMPLE_EVENTS_VERSION).toBe(3);
+    expect(SAMPLE_EVENTS_VERSION).toBe(4);
   });
 });

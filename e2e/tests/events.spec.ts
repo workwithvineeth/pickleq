@@ -225,3 +225,22 @@ test.describe('Sign-in pages (no account needed)', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
 });
+
+test.describe('Club logos and the new demo events (demo club on the phone)', () => {
+  test('a Bengaluru event shows its poster and organiser logo; the club page shows the logo big, with a change button', async ({ page }) => {
+    await page.goto('#/demo');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    const hero = page.getByRole('region', { name: 'PQ Demo Club club' });
+    await expect(hero.getByRole('img', { name: 'PQ Demo Club logo' })).toBeVisible();
+    await expect(hero.getByRole('button', { name: 'Change logo' })).toBeVisible();
+    await page.goto('#/event/pq-demo-smash');
+    await expect(page.getByRole('heading', { name: 'PQ Demo Smash Fest' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Poster for PQ Demo Smash Fest' })).toBeVisible();
+    const org = page.getByRole('region', { name: 'Organised by' });
+    await expect(org).toContainText('PQ Demo Riverside Club');
+    await expect(org.getByRole('img', { name: 'PQ Demo Riverside Club logo' })).toBeVisible();
+    await page.setViewportSize({ width: 320, height: 640 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  });
+});

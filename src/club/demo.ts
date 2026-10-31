@@ -62,7 +62,7 @@ export class DemoBackend implements ClubBackend {
 
   /** Puts in the current sample events, replacing earlier sample ones. Anything made in the demo by hand stays. */
   private seedEvents(clubId: string) {
-    const oldClubs = new Set(this.s.clubs.filter((c) => c.name === 'PQ Demo Friends Club' || c.name === 'PQ Demo New Club').map((c) => c.id));
+    const oldClubs = new Set(this.s.clubs.filter((c) => c.name === 'PQ Demo Friends Club' || c.name === 'PQ Demo New Club' || c.name === 'PQ Demo Riverside Club').map((c) => c.id));
     const oldT = new Set(this.s.tournaments.filter((t) => oldClubs.has(t.clubId) || (/^pq-demo-/.test(t.publicSlug) && t.publicSlug !== 'pq-demo-open')).map((t) => t.id));
     const oldD = new Set(this.s.divisions.filter((d) => oldT.has(d.tournamentId)).map((d) => d.id));
     this.s.clubs = this.s.clubs.filter((c) => !oldClubs.has(c.id));
@@ -80,6 +80,8 @@ export class DemoBackend implements ClubBackend {
     this.s.registrations.push(...ev.registrations);
     const open = this.s.tournaments.find((t) => t.clubId === clubId && t.name === SAMPLE_TOURNAMENT_NAME);
     if (open && !open.posterUrl) open.posterUrl = ev.openPoster;
+    const mine = this.s.clubs.find((c) => c.id === clubId);
+    if (mine && !mine.logoUrl) mine.logoUrl = ev.demoLogo;
     this.s.eventsSeeded = SAMPLE_EVENTS_VERSION;
   }
 
