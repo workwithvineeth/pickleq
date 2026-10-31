@@ -397,3 +397,35 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-clubhero .btn { margin-top: 4px; }
 .pq-organiser { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 16px; }
 .pq-organiser-name { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
+
+/* ---------- PaddleQ brand across the whole club app (paddleq.in only; the personal app keeps its look) ---------- */
+/* Page headers: a maroon band with cream title, like the sign-in and flow screens. */
+.pq-brand .screen > .header:first-child {
+  background: #7A1F2B; color: #F3EBDD; margin: calc(-18px - var(--safe-top)) -16px 4px;
+  padding: calc(16px + var(--safe-top)) 16px 20px; border-radius: 0 0 28px 28px;
+}
+.pq-brand .screen > .header:first-child .screen-title { color: #F3EBDD; }
+.pq-brand .screen > .header:first-child .icon-btn { background: rgba(243, 235, 221, 0.16); color: #F3EBDD; }
+.pq-brand .screen > .header:first-child .btn-outline { color: #F3EBDD; border-color: rgba(243, 235, 221, 0.6); }
+.pq-brand .screen > .header:first-child .pill { background: rgba(243, 235, 221, 0.18); color: #F3EBDD; }
+/* Selected tab / segment: solid maroon. */
+.pq-brand .seg { background: var(--card-2); }
+.pq-brand .seg button[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+/* Buttons: primary solid maroon (already), secondary a firmer maroon outline. */
+.pq-brand .btn-outline { border-width: 1.5px; font-weight: 700; }
+.pq-brand .btn-primary { font-weight: 700; }
+/* Badges (brand guide): LIVE solid maroon; Won / Through / Paid / Approved maroon tint; neutral grey; never green. */
+.pq-brand .pill { border-radius: 999px; padding: 2px 10px; font-weight: 600; }
+.pq-brand .pill-warn { background: var(--accent); color: var(--on-accent); }
+.pq-brand .pill-ok { background: var(--accent-soft); color: var(--accent); }
+/* Admin and attention bars: maroon, not yellow. Gold stays for warnings (demo note, unpaid, golden point). */
+.pq-brand .banner-btn { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+/* Cards and rows: a fine line so they stand off the cream. */
+.pq-brand .card, .pq-brand .match-row { border: 1px solid var(--border); }
+.pq-brand .match-row { box-shadow: 0 1px 0 rgba(122, 31, 43, 0.04); }
+/* Tables: headings in small caps grey, rank numbers maroon. */
+.pq-brand .table th { text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; font-weight: 700; }
+.pq-brand .pool-table td:first-child { color: var(--accent); font-weight: 700; }
+/* Bottom tabs: the current tab gets a maroon tint behind its icon. */
+.pq-brand .nav-btn[aria-current='page'] { color: var(--accent); font-weight: 700; }
+.pq-brand .nav-btn[aria-current='page'] svg { background: var(--accent-soft); border-radius: 999px; padding: 3px 14px; box-sizing: content-box; }
