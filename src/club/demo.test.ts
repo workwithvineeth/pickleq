@@ -74,3 +74,72 @@ describe('Event PIN and club logo (same rules as the server)', () => {
     expect(await b.publicClubLogo(t.publicSlug)).toEqual({ club: 'PQ Demo Club', logoUrl: url });
   });
 });
+
+describe('Referee PIN and desk access (same rules as the server, club_mode_18)', () => {
+  async function setup() {
+    const b = new DemoBackend(memoryStorage());
+    const clubId = await b.start('Robot');
+    const t = (await b.clubBundle(clubId)).tournaments.find((x) => x.name === 'PQ Demo Open');
+    if (!t) throw new Error('no demo tournament');
+    return { b, clubId, t };
+  }
+
+  it('gives each tournament a 4-digit referee PIN and a different 6-digit desk PIN; typed PINs must not be easy or equal', async () => {
+    const { b, t } = await setup();
+    const a = await b.tournamentAccess(t.id);
+    expect(a.refereePin).toMatch(/^\d{4}$/);
+    expect(a.deskPin).toMatch(/^\d{6}$/);
+    expect(a.deskToken.length).toBeGreaterThanOrEqual(30);
+    await expect(b.setDeskPin(t.id, a.refereePin)).rejects.toThrow(/must be different/);
+    await expect(b.setEventPin(t.id, a.deskPin)).rejects.toThrow(/must be different/);
+    await expect(b.setDeskPin(t.id, '123456')).rejects.toThrow(/too easy/);
+    await expect(b.setEventPin(t.id, '1111')).rejects.toThrow(/too easy/);
+    expect(await b.setEventPin(t.id, '4371')).toBe('4371');
+    expect(await b.setDeskPin(t.id, '583920')).toBe('583920');
+  });
+
+  it('the desk opens with the desk PIN only, shows names and ratings only, and locks after 5 wrong PINs', async () => {
+    const { b, t } = await setup();
+    await b.setEventPin(t.id, '4371');
+    await b.setDeskPin(t.id, '583920');
+    const { deskToken } = await b.tournamentAccess(t.id);
+    await expect(b.deskOpen(deskToken, '4371')).rejects.toThrow('Wrong desk PIN');
+    await expect(b.deskOpen('not-a-desk-link', '583920')).rejects.toThrow(/isn’t valid/);
+    const d = await b.deskOpen(deskToken, '583920');
+    expect(d.desk).toBe(true);
+    expect(d.tournament.id).toBe(t.id);
+    expect(d.club.inviteCode).toBe('');
+    expect(d.players.every((p) => p.claimCode === undefined && p.userId === undefined && p.duprId === undefined)).toBe(true);
+    for (let i = 0; i < 5; i++) await expect(b.deskOpen(deskToken, '000000')).rejects.toThrow('Wrong desk PIN');
+    await expect(b.deskOpen(deskToken, '583920')).rejects.toThrow(/Too many wrong PINs/);
+    await b.setDeskPin(t.id, '583920');
+    await expect(b.deskOpen(deskToken, '583920')).resolves.toBeTruthy();
+  });
+
+  it('the desk scores, moves and gives walkovers in its tournament only, and stops when the tournament is finished', async () => {
+    const { b, clubId, t } = await setup();
+    await b.setDeskPin(t.id, '583920');
+    const { deskToken } = await b.tournamentAccess(t.id);
+    const d = await b.deskOpen(deskToken, '583920');
+    const open = d.matches.filter((m) => m.status === 'scheduled');
+    await b.deskPatchMatches(deskToken, '583920', [{ id: open[0].id, patch: { court: 1 } }]);
+    await expect(b.deskPatchMatches(deskToken, '583920', [{ id: open[0].id, patch: { court: 99 } }])).rejects.toThrow(/Choose a court/);
+    await b.deskPatchMatches(deskToken, '583920', [{ id: open[0].id, patch: { status: 'done', winner: 'A', games: [] } }]);
+    const other = (await b.clubBundle(clubId)).matches.find((m) => m.tournamentId !== t.id);
+    if (other) await expect(b.deskSaveScore(deskToken, '583920', other.id, { games: [], status: 'live' })).rejects.toThrow(/isn’t in your tournament/);
+    await expect(b.deskAddPlayer(deskToken, '583920', { name: '  Walk   In ' })).resolves.toMatchObject({ name: 'Walk In' });
+    await b.updateTournament(t.id, { status: 'done' });
+    await expect(b.deskOpen(deskToken, '583920')).rejects.toThrow(/finished/);
+  });
+
+  it('a knockout match drawn twice (two screens at once) is kept once', async () => {
+    const { b, t } = await setup();
+    const d = await b.tournamentBundle(t.id);
+    const ko = d.matches.find((m) => m.stage === 'sf');
+    if (!ko) throw new Error('no semi-final in the demo');
+    const before = (await b.tournamentBundle(t.id)).matches.length;
+    const { updatedAt: _u, ...row } = ko;
+    await b.addMatches([{ ...row, id: 'copy-of-sf' }]);
+    expect((await b.tournamentBundle(t.id)).matches.length).toBe(before);
+  });
+});

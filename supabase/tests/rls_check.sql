@@ -116,9 +116,11 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000a","email":"rls-a@example.test","role":"authenticated"}', true);
 update public.club_matches set tournament_id = (select id from public.tournaments where name = 'A Open'), court = 1, status = 'scheduled', winner = null, games = '[]';
 insert into public.scorer_links (tournament_id, club_id, court, pin)
-  select t.id, t.club_id, 1, '4321' from public.tournaments t where t.name = 'A Open';
+  select t.id, t.club_id, 1, '4721' from public.tournaments t where t.name = 'A Open';
 insert into public.scorer_links (tournament_id, club_id, court, pin)
   select t.id, t.club_id, 2, '1111' from public.tournaments t where t.name = 'A Open';
+-- Every link of a tournament shares the referee PIN (club_mode_13); set it to a known one.
+select public.set_event_pin((select id from public.tournaments where name = 'A Open'), '4721');
 select set_config('pq.tok1', (select token from public.scorer_links where court = 1), true);
 select set_config('pq.tok2', (select token from public.scorer_links where court = 2), true);
 select set_config('pq.match', (select id::text from public.club_matches limit 1), true);
@@ -142,28 +144,28 @@ declare r jsonb; tok text := current_setting('pq.tok1'); mid uuid := current_set
 begin
   -- The PIN checker itself isn't callable.
   begin
-    perform public.scorer_check(tok, '4321');
+    perform public.scorer_check(tok, '4721');
     raise exception 'FAIL: scorer_check is callable directly';
   exception when insufficient_privilege then null; end;
   r := public.scorer_open(tok, '0000');
   if r ->> 'error' <> 'Wrong PIN' then raise exception 'FAIL: wrong PIN accepted: %', r; end if;
-  r := public.scorer_open('not-a-token', '4321');
+  r := public.scorer_open('not-a-token', '4721');
   if r ->> 'error' is null then raise exception 'FAIL: bad token accepted'; end if;
-  r := public.scorer_open(tok, '4321');
+  r := public.scorer_open(tok, '4721');
   if r ? 'error' then raise exception 'FAIL: right PIN refused: %', r; end if;
   if jsonb_array_length(r -> 'matches') <> 1 then raise exception 'FAIL: court 1 should show 1 match'; end if;
   if r::text like '%dupr%' or r::text like '%user_id%' or r::text like '%email%' or r::text like '%"pin"%' then raise exception 'FAIL: scorer view leaks private fields'; end if;
   -- Bad shapes refused; a good score saves.
-  r := public.scorer_save(tok, '4321', mid, '[{"a":"x","b":1}]', 'live', null, null);
+  r := public.scorer_save(tok, '4721', mid, '[{"a":"x","b":1}]', 'live', null, null);
   if r ->> 'error' is null then raise exception 'FAIL: bad score shape accepted'; end if;
-  r := public.scorer_save(tok, '4321', mid, '[{"points":"AAAAAAAAAAA","a":11,"b":0}]', 'done', 'A', current_date);
+  r := public.scorer_save(tok, '4721', mid, '[{"points":"AAAAAAAAAAA","a":11,"b":0}]', 'done', 'A', current_date);
   if not coalesce((r ->> 'ok')::boolean, false) then raise exception 'FAIL: valid score refused: %', r; end if;
   -- Court 2's link can't touch court 1's match.
-  r := public.scorer_save(current_setting('pq.tok2'), '1111', mid, '[]', 'live', null, null);
+  r := public.scorer_save(current_setting('pq.tok2'), '4721', mid, '[]', 'live', null, null);
   if r ->> 'error' is null then raise exception 'FAIL: a court link scored another court'; end if;
   -- 8 wrong PINs lock the link, even for the right PIN.
   for i in 1..8 loop perform public.scorer_open(tok, '9999'); end loop;
-  r := public.scorer_open(tok, '4321');
+  r := public.scorer_open(tok, '4721');
   if r ->> 'error' not like 'Too many wrong PINs%' then raise exception 'FAIL: lockout not applied: %', r; end if;
   -- Signed-out visitors still can't read tables directly.
   begin

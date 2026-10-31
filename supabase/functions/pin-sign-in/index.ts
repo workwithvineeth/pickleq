@@ -1,9 +1,8 @@
-// Sign-in with a PIN instead of an email code. Two kinds:
-//  - helper: a tournament's helper link (its public slug) + the event PIN (the same PIN the court scorers use) + a name.
-//    A new helper account is made and added to the club as a coach for that tournament.
-//  - account: an organiser's email + the personal PIN they set in My club.
-// The PIN checks (with lockouts) are in the database (helper_pin_check, pin_login_check). After a good PIN this makes a
-// one-off sign-in token with the admin API; no email is sent. The app swaps the token for a session (verifyOtp).
+// Sign-in with a PIN instead of an email code: an organiser's email + the personal PIN they set in My club.
+// The PIN check (with lockouts) is in the database (pin_login_check). After a good PIN this makes a one-off sign-in token with
+// the admin API; no email is sent. The app swaps the token for a session (verifyOtp).
+// The old desk sign-in (helper link + event PIN → a new coach account) was switched off on 31 Oct 2026: the desk now has its own
+// link and desk PIN and needs no account (club_mode_18_desk_access).
 // Deployed with verify_jwt off: callers aren't signed in yet.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -30,19 +29,8 @@ Deno.serve(async (req) => {
 
   try {
     let email: string;
-    let extra: Record<string, unknown> = {};
     if (body.mode === 'helper') {
-      const name = String(body.name ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
-      if (name.length < 2) return reply({ error: 'Add your name, so the organiser knows who you are' });
-      const { data: chk, error } = await admin.rpc('helper_pin_check', { p_slug: String(body.slug ?? ''), p_pin: pin });
-      if (error) throw error;
-      if (chk?.error) return reply({ error: chk.error });
-      email = `pq-helper-${crypto.randomUUID()}@example.com`;
-      const { data: made, error: ue } = await admin.auth.admin.createUser({ email, email_confirm: true, user_metadata: { helper: true, name } });
-      if (ue || !made.user) throw ue ?? new Error('no user');
-      const { error: je } = await admin.rpc('helper_join', { p_tournament: chk.tournament_id, p_user: made.user.id, p_name: name });
-      if (je) throw je;
-      extra = { tournament_id: chk.tournament_id, club_id: chk.club_id, tournament: chk.name };
+      return reply({ error: 'The desk now has its own link and desk PIN. Ask the organiser for the desk link.' });
     } else if (body.mode === 'account') {
       const { data: chk, error } = await admin.rpc('pin_login_check', { p_email: String(body.email ?? ''), p_pin: pin });
       if (error) throw error;
@@ -53,7 +41,7 @@ Deno.serve(async (req) => {
     }
     const { data: link, error: le } = await admin.auth.admin.generateLink({ type: 'magiclink', email });
     if (le || !link?.properties?.hashed_token) throw le ?? new Error('no token');
-    return reply({ token_hash: link.properties.hashed_token, ...extra });
+    return reply({ token_hash: link.properties.hashed_token });
   } catch (e) {
     console.error('pin-sign-in failed', e instanceof Error ? e.message : e);
     return reply({ error: 'Sign-in didn’t work just now. Try again in a moment.' }, 500);

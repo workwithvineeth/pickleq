@@ -171,7 +171,7 @@ test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
 
     // Nothing wider than a 320 px phone.
     await page.setViewportSize({ width: 320, height: 640 });
-    for (const s of ['Overview', 'Clubs', 'Events', 'Listings', 'Admins', 'Desk team']) {
+    for (const s of ['Overview', 'Clubs', 'Events', 'Listings', 'Admins', 'Desk access']) {
       await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: s, exact: true }).click();
       const wide = await page.evaluate(() => document.documentElement.scrollWidth);
       expect(wide, s).toBeLessThanOrEqual(320);

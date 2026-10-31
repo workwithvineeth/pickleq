@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
-import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
 import { authMessage, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
@@ -164,8 +164,8 @@ export class ServerBackend implements ClubBackend {
     if (r.error) throw new ClubError(String(r.error));
     if (error || !r.token_hash) throw new ClubError('Sign-in didn’t work just now. Check your internet and try again.');
     check(await this.sb.auth.verifyOtp({ token_hash: String(r.token_hash), type: 'magiclink' }));
-    if (a.mode === 'account') check(await this.sb.rpc('claim_pending'));
-    return { tournamentId: s(r.tournament_id) };
+    check(await this.sb.rpc('claim_pending'));
+    return {};
   }
 
   async passwordSignIn(email: string, password: string) {
@@ -228,6 +228,77 @@ export class ServerBackend implements ClubBackend {
     if (pin !== undefined && !/^\d{4,6}$/.test(pin)) throw new ClubError('A PIN is 4 to 6 digits');
     return String(check(await this.sb.rpc('set_event_pin', { p_tournament: tournamentId, p_pin: pin ?? null })));
   }
+
+  async tournamentAccess(tournamentId: string): Promise<TournamentAccess> {
+    const r = answer(check(await this.sb.rpc('tournament_access', { p_tournament: tournamentId })));
+    return { refereePin: String(r.referee_pin), deskPin: String(r.desk_pin), deskToken: String(r.desk_token) };
+  }
+
+  async setDeskPin(tournamentId: string, pin?: string) {
+    if (pin !== undefined && !/^\d{4,6}$/.test(pin)) throw new ClubError('A PIN is 4 to 6 digits');
+    return String(check(await this.sb.rpc('set_desk_pin', { p_tournament: tournamentId, p_pin: pin ?? null })));
+  }
+
+  async newDeskLink(tournamentId: string) { return String(check(await this.sb.rpc('new_desk_link', { p_tournament: tournamentId }))); }
+
+  // ---------- The desk: its own link and desk PIN, no account ----------
+
+  async deskLabel(token: string): Promise<DeskLabel | null> {
+    const r = check(await this.sb.rpc('desk_label', { p_token: token })) as Row | null;
+    return r ? { club: String(r.club), logoUrl: s(r.logo_url), tournament: String(r.tournament) } : null;
+  }
+
+  async deskOpen(token: string, pin: string): Promise<TournamentBundle> {
+    const r = answer(check(await this.sb.rpc('desk_open', { p_token: token, p_pin: pin })));
+    const c = r.club as Row;
+    return {
+      club: { id: String(c.id), name: String(c.name), city: s(c.city), inviteCode: '', settings: (c.settings as Club['settings']) ?? {}, logoUrl: s(c.logo_url) },
+      role: 'coach', desk: true, tournament: toTournament(r.tournament as Row),
+      divisions: ((r.divisions as Row[]) ?? []).map(toDivision), entries: ((r.entries as Row[]) ?? []).map(toEntry),
+      matches: ((r.matches as Row[]) ?? []).map(toMatch), players: ((r.players as Row[]) ?? []).map(toPlayer),
+    };
+  }
+
+  async deskSaveScore(token: string, pin: string, matchId: string, patch: ScorePatch) {
+    answer(check(await this.sb.rpc('desk_save_score', { p_token: token, p_pin: pin, p_match: matchId, p_games: patch.games, p_status: patch.status, p_winner: patch.winner ?? null, p_played_on: patch.playedOn ?? null })));
+  }
+
+  async deskPatchMatches(token: string, pin: string, changes: { id: string; patch: MatchPatch }[]) {
+    const rows = changes.map(({ id, patch }) => {
+      const p: Row = {};
+      if (patch.status !== undefined) p.status = patch.status;
+      if (patch.winner !== undefined) p.winner = patch.winner;
+      if (patch.games !== undefined) p.games = patch.games;
+      if (patch.court !== undefined) p.court = patch.court;
+      if (patch.slot !== undefined) p.slot = patch.slot;
+      if (patch.sideA !== undefined) p.side_a = patch.sideA;
+      if (patch.sideB !== undefined) p.side_b = patch.sideB;
+      return { id, patch: p };
+    });
+    if (rows.length) answer(check(await this.sb.rpc('desk_patch_matches', { p_token: token, p_pin: pin, p_changes: rows })));
+  }
+
+  async deskAddEntry(token: string, pin: string, e: Entry) {
+    answer(check(await this.sb.rpc('desk_add_entry', { p_token: token, p_pin: pin, p_entry: { id: e.id, division_id: e.divisionId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null } })));
+  }
+
+  async deskUpdateEntry(token: string, pin: string, id: string, patch: EntryPatch) {
+    const p: Row = {};
+    if (patch.playerIds) p.player_ids = patch.playerIds;
+    if (patch.status) p.status = patch.status;
+    if (patch.pool !== undefined) p.pool = patch.pool;
+    answer(check(await this.sb.rpc('desk_update_entry', { p_token: token, p_pin: pin, p_entry: id, p_patch: p })));
+  }
+
+  async deskAddMatches(token: string, pin: string, rows: NewMatchRow[]) {
+    if (rows.length) answer(check(await this.sb.rpc('desk_add_matches', { p_token: token, p_pin: pin, p_rows: rows.map(fromMatch) })));
+  }
+
+  async deskAddPlayer(token: string, pin: string, p: { name: string; dupr?: number }) {
+    return toPlayer(answer(check(await this.sb.rpc('desk_add_player', { p_token: token, p_pin: pin, p_name: p.name, p_dupr: p.dupr ?? null }))));
+  }
+
+  async deskStart(token: string, pin: string) { answer(check(await this.sb.rpc('desk_start', { p_token: token, p_pin: pin }))); }
 
   async setClubLogo(clubId: string, image: Blob) {
     const path = `${clubId}/logo.jpg`;
@@ -650,7 +721,7 @@ export class ServerBackend implements ClubBackend {
       startTime: String(r.start_time ?? '').slice(0, 5), status: r.status as ClubTournament['status'], listing: (r.listing as Listing) ?? 'none',
       listingStatus: (r.listing_status as ListingStatus) ?? 'none', slug: String(r.slug ?? ''), results: !!r.results, registrations: Number(r.registrations ?? 0),
       matches: Number(r.matches ?? 0), matchesDone: Number(r.matches_done ?? 0), eventPin: s(r.event_pin),
-      helpers: ((r.helpers as Row[]) ?? []).map((h) => ({ name: String(h.name ?? ''), addedAt: String(h.added_at ?? '') })),
+      deskPin: s(r.desk_pin), deskToken: s(r.desk_token), deskUsedAt: s(r.desk_used_at),
     }));
   }
 

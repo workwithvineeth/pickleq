@@ -6,10 +6,11 @@ import { clubServerConfig, isClubApp, setClubMode } from '../config';
 import { backend, demoBackend, serverBackend, takeReturn } from '../index';
 import { importClubMatches, pendingClubMatches } from '../personal';
 import { emailOk, MIN_PASSWORD, passwordProblem } from '../authText';
-import { BigLogo, ClubLogo } from './Poster';
+import { BigLogo } from './Poster';
 import { joinPhone, PhoneField, phoneProblem } from './Phone';
 import { Arrow, BrandMark, FlowHeader, LandingHero } from './Brand';
-import type { AdminClub, ClubBackend, MyClub } from '../backend';
+import type { AdminClub, ClubBackend, MyClub, TournamentAccess } from '../backend';
+import { PinPair } from './Access';
 import { canHost, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
 import { appLink, DemoNote, errorText, Header, RoleBadge, shareLink, Status, useLoad } from './common';
 
@@ -70,7 +71,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               <h2 style={{ fontSize: 18 }}>Run your club’s tournaments</h2>
               <p className="small" style={{ margin: 0 }}>Entries (or import them from a Google Form), the draw, a scorer on every court with a PIN link, and live results anyone can open.</p>
               <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
-                <li>Organisers sign in with email and password. Referees and the desk team use the event PIN the organiser gives them. Players don’t need an account.</li>
+                <li>Organisers sign in with email and password. Referees use their court link and the referee PIN; the desk team uses the desk link and its own desk PIN. Players don’t need an account.</li>
                 <li>Joining a club? Open the invite link the club sent you, or paste it below.</li>
               </ul>
             </section>
@@ -130,7 +131,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               </button>
             ))}
           </section>
-          {signedIn.next && <NextTournament n={signedIn.next} go={go} />}
+          {signedIn.next && b && <NextTournament n={signedIn.next} go={go} b={b} />}
           {signedIn.admin && <AllClubs all={signedIn.all} mine={new Set(signedIn.clubs.map((c) => c.club.id))} go={go} />}
           {b?.kind === 'server' && <button type="button" className="btn btn-outline pq-big" onClick={() => go('club-new')}>Create a club</button>}
           {b?.kind === 'server' && <MyPasswordCard />}
@@ -174,7 +175,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
 
 const initials = (name: string) => name.split(/\s+/).filter((w) => /^[A-Za-z0-9]/.test(w) && !/^the$/i.test(w)).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || 'PQ';
 
-interface NextT { t: ClubTournament; club: string; pin: string | null }
+interface NextT { t: ClubTournament; club: string; access: TournamentAccess | null }
 
 /** The next tournament (live first, then the soonest not finished) across the clubs I run. */
 async function nextTournament(b: ClubBackend, clubs: MyClub[]): Promise<NextT | null> {
@@ -183,7 +184,7 @@ async function nextTournament(b: ClubBackend, clubs: MyClub[]): Promise<NextT | 
   const all = bundles.flatMap((d) => (d ? d.tournaments.filter((t) => t.status !== 'done').map((t) => ({ t, club: d.club.name })) : []));
   all.sort((x, y) => (x.t.status === 'live' ? 0 : 1) - (y.t.status === 'live' ? 0 : 1) || x.t.startDate.localeCompare(y.t.startDate));
   if (!all[0]) return null;
-  return { ...all[0], pin: await b.eventPin(all[0].t.id).catch(() => null) };
+  return { ...all[0], access: await b.tournamentAccess(all[0].t.id).catch(() => null) };
 }
 
 /** Admin home: every club on PaddleQ with its logo and approval state. Own clubs open their page; others the admin view. */
@@ -217,7 +218,7 @@ function DemoTour({ go, clubId }: { go: Go; clubId?: string }) {
     { title: '3 · The organiser’s dashboard', text: 'Their club page: logo, tournaments, players and members.', to: () => (clubId ? go('club-view', clubId) : go('club')) },
     { title: '4 · Tournaments on the Events page', text: 'Posters and club logos; players enter in the app.', to: () => go('events') },
     { title: '5 · Listings waiting for review', text: 'A club’s first tournament is checked by you before it goes on the board.', to: () => go('admin', 'listings') },
-    { title: '6 · The admin overview', text: 'Matches scored, clubs, tournaments and helpers at a glance.', to: () => go('admin', 'overview') },
+    { title: '6 · The admin overview', text: 'Matches scored, clubs and tournaments at a glance.', to: () => go('admin', 'overview') },
   ];
   return (
     <section className="card section" aria-label="Demo tour">
@@ -234,9 +235,10 @@ function DemoTour({ go, clubId }: { go: Go; clubId?: string }) {
 }
 
 /** The maroon card on My club: the next tournament, with the desk, entries, referee links and results one tap away. */
-function NextTournament({ n, go }: { n: NextT; go: Go }) {
+function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
   const { t } = n;
   const [msg, setMsg] = useState<string | null>(null);
+  const [pins, setPins] = useState(n.access);
   const when = new Date(`${t.startDate}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
   const icon = (d: string) => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
   return (
@@ -256,7 +258,7 @@ function NextTournament({ n, go }: { n: NextT; go: Go }) {
         <button type="button" className="pq-next-btn" onClick={async () => setMsg(await shareLink(`${t.name}: live results`, appLink(`#/results/${t.publicSlug}`)))}>{icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13')}Share results</button>
       </div>
       {msg && <div role="status" className="small" style={{ color: '#F3EBDD' }}>{msg}</div>}
-      {n.pin && <div className="pq-next-pin"><span>Event PIN for referees and desk</span><b aria-label={`Event PIN ${n.pin}`}>{n.pin}</b></div>}
+      {pins && <PinPair b={b} tournamentId={t.id} access={pins} onChanged={(p) => setPins({ ...pins, ...p })} light />}
     </section>
   );
 }
@@ -535,51 +537,6 @@ function MoreWays({ go }: { go: Go }) {
         </section>
       )}
     </div>
-  );
-}
-
-/** The tournament's desk team: the organiser shares the desk link (#/helper/<slug>) and the event PIN (the same PIN
- * the referees use). The page carries the club's name and logo: "<Club> Desk". */
-export function HelperSignIn({ slug, go }: { slug: string; go: Go }) {
-  const b = serverBackend();
-  const info = useLoad(async () => (b ? b.publicClubLogo(slug).catch(() => null) : null), [b, slug]);
-  const [name, setName] = useState(() => { try { return localStorage.getItem('pq-helper-name') ?? ''; } catch { return ''; } });
-  const [pin, setPin] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  async function signIn() {
-    if (name.trim().length < 2) return setMsg('Add your name, so the organiser knows who you are');
-    if (!/^\d{4,6}$/.test(pin)) return setMsg('Enter the event PIN');
-    setBusy(true); setMsg(null);
-    try {
-      try { localStorage.setItem('pq-helper-name', name.trim()); } catch { /* private mode */ }
-      const r = await b?.pinSignIn?.({ mode: 'helper', slug, name: name.trim(), pin });
-      setClubMode('server');
-      if (r?.tournamentId) go('club-tournament', r.tournamentId, { replace: true }); else go('club', undefined, { replace: true });
-    } catch (e) { setMsg(errorText(e)); setPin(''); } finally { setBusy(false); }
-  }
-  const club = info.data?.club;
-  return (
-    <main className="screen" aria-labelledby="helper-title">
-      <Header id="helper-title" title={club ? `${club} Desk` : 'Tournament desk'} />
-      <section className="card section" aria-label="Desk sign-in">
-        <div className="row" style={{ justifyContent: 'flex-start', gap: 10 }}>
-          <ClubLogo src={info.data?.logoUrl} club={club ?? 'Club'} size={48} />
-          <div className="small muted">{club ? `Run by ${club} on PaddleQ` : 'On PaddleQ'}</div>
-        </div>
-        <p className="small" style={{ margin: 0 }}>For the desk team: type your name and the event PIN the organiser gave you (the same PIN the referees use). You’ll get the desk, entries and scores for this tournament.</p>
-        {!b && <div role="alert" className="msg msg-bad">The club server isn’t set up in this version.</div>}
-        <Field label="Your name">
-          <input className="input" aria-label="Your name" autoComplete="name" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
-        </Field>
-        <Field label="Event PIN">
-          <input className="input" type="password" inputMode="numeric" aria-label="Event PIN" maxLength={6} value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') void signIn(); }} />
-        </Field>
-        {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
-        <button type="button" className="btn btn-primary" disabled={busy || !b} onClick={signIn}>{busy ? 'Signing in…' : 'Sign in to the desk'}</button>
-      </section>
-    </main>
   );
 }
 

@@ -25,7 +25,14 @@ export interface TournamentBundle {
   entries: Entry[];
   matches: ClubMatch[];
   players: ClubPlayer[];
+  /** Opened with the desk link and desk PIN (no account): desk view, scores, moves, walkovers, late entries only. */
+  desk?: boolean;
 }
+
+/** The two PINs of a tournament and its desk link. Organisers and PaddleQ admins only. */
+export interface TournamentAccess { refereePin: string; deskPin: string; deskToken: string }
+/** What the desk sign-in page shows before the PIN: names only. */
+export interface DeskLabel { club: string; logoUrl?: string; tournament: string }
 
 /** Everything about one of your clubs needed to add its matches to your personal history. */
 export interface MyClubMatches { club: Club; playerId: string; players: ClubPlayer[]; tournaments: ClubTournament[]; matches: ClubMatch[] }
@@ -45,7 +52,7 @@ export interface PublicTournament {
 /** One match with what the scoring screen needs. */
 export interface MatchBundle { club: Club; role: Role; match: ClubMatch; players: ClubPlayer[]; tournament?: ClubTournament; divisionName?: string }
 
-export type PinSignIn = { mode: 'account'; email: string; pin: string } | { mode: 'helper'; slug: string; name: string; pin: string };
+export type PinSignIn = { mode: 'account'; email: string; pin: string };
 
 export interface ScorePatch { games: ClubMatch['games']; status: ClubMatch['status']; winner?: 'A' | 'B'; playedOn?: string }
 
@@ -59,8 +66,7 @@ export interface ClubBackend extends EventsBackend {
   currentUser(): Promise<ClubUser | null>;
   sendCode(email: string): Promise<void>;
   verifyCode(email: string, code: string): Promise<void>;
-  /** Signs in with a PIN: an organiser's email + personal PIN, or a helper link's slug + the event PIN + a name.
-   * Helpers come back with the tournament they help with. Club server only. */
+  /** Signs in with an organiser's email + personal PIN. Club server only. */
   pinSignIn?(a: PinSignIn): Promise<{ tournamentId?: string }>;
   /** Accounts with a password (organisers and admins). New accounts confirm their email with a 6-digit code;
    * "forgot password" also works by code. Club server only. */
@@ -75,10 +81,29 @@ export interface ClubBackend extends EventsBackend {
   /** Whether the signed-in person has set a personal sign-in PIN, and setting it. Club server only. */
   hasMyPin?(): Promise<boolean>;
   setMyPin?(pin: string): Promise<void>;
-  /** The tournament's event PIN: every court's scorer link uses it, and desk helpers sign in with it. Staff only. */
+  /** The tournament's referee PIN: every court's referee link uses it. It never opens the desk. Staff only. */
   eventPin(tournamentId: string): Promise<string | null>;
-  /** A new event PIN (random when none is given) for every link of the tournament. Returns it. */
+  /** Sets the referee PIN (random when none is given) for every court link of the tournament. Returns it.
+   * 4 to 6 digits, not easy to guess, never the desk PIN. Organisers and PaddleQ admins. */
   setEventPin(tournamentId: string, pin?: string): Promise<string>;
+  /** Both PINs and the desk link. Organisers and PaddleQ admins. */
+  tournamentAccess(tournamentId: string): Promise<TournamentAccess>;
+  /** Sets the desk PIN (random 6 digits when none is given): never the referee PIN. Returns it. */
+  setDeskPin(tournamentId: string, pin?: string): Promise<string>;
+  /** A new desk link; the old one stops working. Returns the new token. */
+  newDeskLink(tournamentId: string): Promise<string>;
+  /** Public: the club and tournament names for a desk link's sign-in page, or null for an unknown link. */
+  deskLabel(token: string): Promise<DeskLabel | null>;
+  /** The desk, with its link and desk PIN (no account): this one tournament, names and ratings only, never phone numbers. */
+  deskOpen(token: string, pin: string): Promise<TournamentBundle>;
+  deskSaveScore(token: string, pin: string, matchId: string, patch: ScorePatch): Promise<void>;
+  deskPatchMatches(token: string, pin: string, changes: { id: string; patch: MatchPatch }[]): Promise<void>;
+  deskAddEntry(token: string, pin: string, entry: Entry): Promise<void>;
+  deskUpdateEntry(token: string, pin: string, id: string, patch: EntryPatch): Promise<void>;
+  deskAddMatches(token: string, pin: string, rows: NewMatchRow[]): Promise<void>;
+  deskAddPlayer(token: string, pin: string, p: { name: string; dupr?: number }): Promise<ClubPlayer>;
+  /** Starts a tournament that hasn't started (the desk can't finish or reopen one). */
+  deskStart(token: string, pin: string): Promise<void>;
   /** Sets the club's logo (an image the app has already shrunk). Returns its address. Coaches and admins. */
   setClubLogo(clubId: string, image: Blob): Promise<string>;
   /** Public: the club name and logo for a tournament's public link. */
@@ -258,7 +283,7 @@ export interface AdminClubDetail {
 export interface AdminTournament {
   id: string; name: string; club: string; clubId: string; isTest: boolean; startDate: string; startTime: string; status: ClubTournament['status'];
   listing: Listing; listingStatus: ListingStatus; slug: string; results: boolean; registrations: number; matches: number; matchesDone: number;
-  eventPin?: string; helpers: { name: string; addedAt: string }[];
+  eventPin?: string; deskPin?: string; deskToken?: string; deskUsedAt?: string;
 }
 
 export class ClubError extends Error {}

@@ -380,6 +380,16 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-next-btn.pq-solid { background: #F3EBDD; color: #7A1F2B; border-color: #F3EBDD; }
 .pq-next-pin { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(243, 235, 221, 0.2); font-size: 14px; color: #EAD8D2; }
 .pq-next-pin b { font-family: var(--font-display); font-size: 22px; letter-spacing: 4px; color: #F3EBDD; }
+.pq-pin { font-family: var(--font-display); font-size: 24px; letter-spacing: 4px; color: var(--accent); }
+.pq-pin-edit { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.pq-pins { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--border); }
+.pq-pins-light { border-top-color: rgba(243, 235, 221, 0.2); color: #EAD8D2; }
+.pq-pin-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; font-size: 14px; }
+.pq-pin-row b { font-family: var(--font-display); font-size: 20px; letter-spacing: 3px; color: var(--accent); }
+.pq-pins-light .pq-pin-row b { color: #F3EBDD; }
+.pq-pin-new { min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.pq-pin-new-light { border-color: rgba(243, 235, 221, 0.6); color: #F3EBDD; }
+.pq-pin-new:disabled { opacity: 0.6; }
 .pq-kicker { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.8px; color: var(--muted); }
 .pq-wait { border-radius: 16px; background: var(--warn-bg); color: var(--warn-fg); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .pq-progress { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }

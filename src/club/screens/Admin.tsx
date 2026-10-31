@@ -1,21 +1,22 @@
 import { useState } from 'react';
 import type { Go } from '../../navigation';
-import type { AdminClub, AdminTournament } from '../backend';
+import type { AdminClub, AdminTournament, ClubBackend } from '../backend';
 import { trend, weekLabel } from '../adminStats';
 import { eventsBackend } from '../index';
 import { ROLE_LABEL } from '../types';
 import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
+import { deskLink, PinPair } from './Access';
 import { BigLogo } from './Poster';
 import { ListingReviews } from './Events';
 
-export type AdminSection = 'overview' | 'clubs' | 'tournaments' | 'listings' | 'admins' | 'helpers';
+export type AdminSection = 'overview' | 'clubs' | 'tournaments' | 'listings' | 'admins' | 'desk';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'overview', label: 'Overview', title: 'Overview' },
   { id: 'clubs', label: 'Clubs', title: 'Clubs' },
   { id: 'tournaments', label: 'Events', title: 'Tournaments' },
   { id: 'listings', label: 'Listings', title: 'Review listings' },
   { id: 'admins', label: 'Admins', title: 'PaddleQ admins' },
-  { id: 'helpers', label: 'Desk team', title: 'Desk team' },
+  { id: 'desk', label: 'Desk access', title: 'Desk access' },
 ];
 export const isAdminSection = (s: string | undefined): s is AdminSection => SECTIONS.some((x) => x.id === s);
 
@@ -35,7 +36,7 @@ function useAction(reload: () => void) {
   return { busy, run, note };
 }
 
-/** The PaddleQ admin dashboard: numbers, every club and tournament, listings, admins and helpers. */
+/** The PaddleQ admin dashboard: numbers, every club and tournament, listings, admins and desk access. */
 export function AdminDashboard({ section, go, onBack }: { section: AdminSection; go: Go; onBack: () => void }) {
   const b = eventsBackend();
   const allowed = useLoad(() => b.isPlatformAdmin(), [b]);
@@ -71,7 +72,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           {section === 'tournaments' && <Tournaments go={go} />}
           {section === 'listings' && <ListingReviews go={go} />}
           {section === 'admins' && <Admins />}
-          {section === 'helpers' && <Helpers />}
+          {section === 'desk' && <DeskAccessList />}
         </>
       )}
     </main>
@@ -230,7 +231,7 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
             {c.people.map((p, i) => (
               <div key={`${p.name}-${i}`} className="row">
                 <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}{p.email && <span className="small muted" style={{ display: 'block' }}>{p.email}</span>}</span>
-                <span className="pill">{p.helper ? 'Desk team' : ROLE_LABEL[p.role]}</span>
+                <span className="pill">{p.helper ? 'Old desk account (no access)' : ROLE_LABEL[p.role]}</span>
               </div>
             ))}
           </section>
@@ -282,7 +283,7 @@ function Tournaments({ go }: { go: Go }) {
             </div>
             <div className="small muted">{t.club}{t.isTest ? ' (robot test)' : ''} · {day(t.startDate)}{t.startTime ? ` · ${t.startTime}` : ''}</div>
             <div className="small">{t.registrations} entr{t.registrations === 1 ? 'y' : 'ies'} · {t.matchesDone}/{t.matches} matches scored{t.listing !== 'none' ? ` · board: ${t.listingStatus === 'approved' ? 'listed' : t.listingStatus === 'pending' ? 'to review' : t.listingStatus === 'rejected' ? 'rejected' : 'off'}` : ''}</div>
-            <div className="small">Event PIN: <b>{t.eventPin ?? 'not set'}</b>{t.helpers.length ? ` · desk team of ${t.helpers.length}` : ''}</div>
+            {t.status !== 'done' && <AdminPins b={b} t={t} />}
             {confirm === t.id
               ? (
                 <div className="meta">
@@ -295,6 +296,7 @@ function Tournaments({ go }: { go: Go }) {
               : (
                 <div className="meta">
                   {t.status !== 'draft' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setConfirm(t.id)}>{t.status === 'done' ? 'Reopen' : 'Mark finished'}</button>}
+                  {t.status !== 'done' && t.deskToken && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: desk`, deskLink(t.deskToken as string)), 'Desk link shared or copied: send it to the desk team (with the desk PIN)')}>Share desk link</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('results', t.slug)}>Results</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: schedule, scores and results`, appLink(`#/results/${t.slug}`)), 'Results link shared or copied: send it to the players')}>Share results</button>}
                   {t.listing !== 'none' && t.listingStatus === 'approved' && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('event', t.slug)}>Event page</button>}
@@ -343,21 +345,32 @@ function Admins() {
   );
 }
 
-function Helpers() {
+/** Both PINs of a tournament, each with New PIN (PaddleQ admins can change them for support). */
+function AdminPins({ b, t }: { b: ClubBackend; t: AdminTournament }) {
+  const [pins, setPins] = useState({ refereePin: t.eventPin ?? '', deskPin: t.deskPin ?? '' });
+  if (!pins.refereePin || !pins.deskPin) return <div className="small muted">PINs are made when the tournament is opened.</div>;
+  return <PinPair b={b} tournamentId={t.id} access={pins} onChanged={setPins} />;
+}
+
+/** Desk access across tournaments that aren't finished: the desk PIN and when the desk link was last used. */
+function DeskAccessList() {
   const b = eventsBackend();
   const state = useLoad(() => b.adminTournaments(), [b]);
-  const withHelpers = (state.data ?? []).filter((t) => t.helpers.length > 0)
-    .sort((x, y) => Number(x.status === 'done') - Number(y.status === 'done') || y.startDate.localeCompare(x.startDate));
+  const [msg, setMsg] = useState<string | null>(null);
+  const open = (state.data ?? []).filter((t) => t.status !== 'done' && !t.isTest)
+    .sort((x, y) => Number(x.status !== 'live') - Number(y.status !== 'live') || x.startDate.localeCompare(y.startDate));
   return (
     <>
-      <p className="small muted" style={{ margin: 0 }}>People who signed in at a tournament’s desk with its desk link and event PIN. They can only work on that tournament.</p>
+      <p className="small muted" style={{ margin: 0 }}>Each tournament’s desk has its own link and desk PIN (never the referee PIN). It opens only that tournament’s desk, never players’ phone numbers, and stops when the tournament is finished.</p>
       <Status error={state.error} loading={state.loading && !state.data} />
-      {state.data && withHelpers.length === 0 && <p className="small muted" style={{ margin: 0 }}>No desk team yet.</p>}
-      {withHelpers.map((t) => (
-        <section key={t.id} className="card section" aria-label={`${t.name} helpers`}>
-          <div className="row" style={{ padding: 0 }}><b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{t.name}</b><span className="pill">{STATUS[t.status]}</span></div>
-          <div className="small muted">{t.club} · {day(t.startDate)} · Event PIN {t.eventPin ?? 'not set'}</div>
-          {t.helpers.map((h, i) => <div key={`${h.name}-${i}`} className="small">• {h.name} <span className="muted">(joined {day(h.addedAt)})</span></div>)}
+      {msg && <div role="status" className="msg msg-ok">{msg}</div>}
+      {state.data && open.length === 0 && <p className="small muted" style={{ margin: 0 }}>No tournaments coming up.</p>}
+      {open.map((t) => (
+        <section key={t.id} className="card section" aria-label={`${t.name} desk access`}>
+          <div className="row" style={{ padding: 0 }}><b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{t.name}</b><span className={`pill${t.status === 'live' ? ' pill-warn' : ''}`}>{STATUS[t.status]}</span></div>
+          <div className="small muted">{t.club} · {day(t.startDate)} · desk link {t.deskUsedAt ? `last used ${new Date(t.deskUsedAt).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : 'not used yet'}</div>
+          <AdminPins b={b} t={t} />
+          {t.deskToken && <button type="button" className="btn btn-outline" onClick={async () => setMsg(await shareLink(`${t.name}: desk`, deskLink(t.deskToken as string)))}>Share desk link</button>}
         </section>
       ))}
     </>

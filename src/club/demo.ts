@@ -1,8 +1,9 @@
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
-import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
+import { pinProblem, randomPin as randomPinOf } from './pins';
 import { blobToDataUrl } from './poster';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
@@ -20,8 +21,10 @@ interface DemoState {
   matches: ClubMatch[];
   summaries: (SharedSummary & { clubId: string })[];
   scorerLinks?: (ScorerLink & { failed: number; lockedUntil?: number })[];
-  /** One PIN per tournament for every scorer link (and, on the server, desk helpers). */
+  /** One referee PIN per tournament for every court link. */
   eventPins?: Record<string, string>;
+  /** Each tournament's desk link and desk PIN (never the referee PIN). */
+  desks?: Record<string, { token: string; pin: string; failed: number; lockedUntil?: number }>;
   /** Module 2 (added later, so older demos don't have them yet). */
   registrations?: Registration[];
   /** Version 1 was a boolean; later sample sets bump SAMPLE_EVENTS_VERSION. */
@@ -31,8 +34,11 @@ interface DemoState {
 const KEY = 'pq-club-demo-v1';
 const empty = (): DemoState => ({ v: 1, user: null, clubs: [], members: [], players: [], tournaments: [], divisions: [], entries: [], matches: [], summaries: [], scorerLinks: [] });
 const randomToken = () => (newId() + newId()).replace(/-/g, '').slice(0, 40);
-const randomPin = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+const randomPin = () => randomPinOf(4);
 const SCORE_SHAPE = /^[AB]*$/;
+/** Same shape check as the server: at most 5 games, each 0–99, point order as A/B letters. */
+const badGames = (games: ClubMatch['games']) => !Array.isArray(games) || games.length > 5
+  || games.some((g) => !Number.isInteger(g.a) || !Number.isInteger(g.b) || g.a < 0 || g.b < 0 || g.a > 99 || g.b > 99 || (g.points ?? '').length > 250 || !SCORE_SHAPE.test(g.points ?? ''));
 
 /** Demos made before 29 Oct 2026 used a name a real business has. Rename it in place so nothing else changes. */
 function renameLegacyDemo(s: DemoState): DemoState {
@@ -268,9 +274,19 @@ export class DemoBackend implements ClubBackend {
 
   async addMatches(rows: NewMatchRow[]) {
     for (const r of rows) this.need(r.clubId, isStaff, 'Only coaches and admins can add matches');
-    const now = new Date().toISOString();
-    this.s.matches.push(...rows.map((r) => ({ ...r, updatedAt: now })));
+    this.pushMatches(rows);
     this.save();
+  }
+
+  /** Same as the server: a knockout match already drawn (same event, stage and bracket position, not cancelled) isn't added twice. */
+  private pushMatches(rows: NewMatchRow[]) {
+    const now = new Date().toISOString();
+    for (const r of rows) {
+      const ko = r.stage !== 'pool' && r.stage !== 'friendly' && r.divisionId && r.bracketPos !== undefined && r.status !== 'void';
+      if (ko && this.s.matches.some((m) => m.divisionId === r.divisionId && m.stage === r.stage && m.bracketPos === r.bracketPos && m.status !== 'void')) continue;
+      if (this.s.matches.some((m) => m.id === r.id)) continue;
+      this.s.matches.push({ ...r, updatedAt: now });
+    }
   }
 
   async matchBundle(matchId: string): Promise<MatchBundle> {
@@ -374,12 +390,202 @@ export class DemoBackend implements ClubBackend {
 
   async setEventPin(tournamentId: string, pin?: string) {
     const t = this.tournament(tournamentId);
-    this.need(t.clubId, isStaff, 'Only the club’s coaches and admins can change the PIN');
-    if (pin !== undefined && !/^\d{4,6}$/.test(pin)) throw new ClubError('A PIN is 4 to 6 digits');
-    const p = pin ?? randomPin();
+    this.canRun(t, 'Only the club’s organisers can change the referee PIN');
+    const desk = this.deskOf(tournamentId).pin;
+    if (pin !== undefined) { const bad = pinProblem(pin, desk, 'referee'); if (bad) throw new ClubError(bad); }
+    const p = pin ?? randomPinOf(4, desk);
     this.applyPin(tournamentId, p);
     this.save();
     return p;
+  }
+
+  /** Organisers (staff of the club) and PaddleQ admins. In the demo, whoever is signed in is a PaddleQ admin. */
+  private canRun(t: ClubTournament, msg: string) {
+    if (!isStaff(this.role(t.clubId)) && !this.s.user) throw new ClubError(msg);
+  }
+
+  private deskOf(tournamentId: string) {
+    const desks = (this.s.desks ??= {});
+    if (!desks[tournamentId]) desks[tournamentId] = { token: randomToken(), pin: randomPinOf(6, this.s.eventPins?.[tournamentId]), failed: 0 };
+    return desks[tournamentId];
+  }
+
+  async tournamentAccess(tournamentId: string): Promise<TournamentAccess> {
+    const t = this.tournament(tournamentId);
+    this.canRun(t, 'Only the club’s organisers can see the PINs');
+    const refereePin = this.pinOf(tournamentId);
+    const d = this.deskOf(tournamentId);
+    this.save();
+    return { refereePin, deskPin: d.pin, deskToken: d.token };
+  }
+
+  async setDeskPin(tournamentId: string, pin?: string) {
+    const t = this.tournament(tournamentId);
+    this.canRun(t, 'Only the club’s organisers can change the desk PIN');
+    const ref = this.pinOf(tournamentId);
+    if (pin !== undefined) { const bad = pinProblem(pin, ref, 'desk'); if (bad) throw new ClubError(bad); }
+    Object.assign(this.deskOf(tournamentId), { pin: pin ?? randomPinOf(6, ref), failed: 0, lockedUntil: undefined });
+    this.save();
+    return this.deskOf(tournamentId).pin;
+  }
+
+  async newDeskLink(tournamentId: string) {
+    const t = this.tournament(tournamentId);
+    this.canRun(t, 'Only the club’s organisers can change the desk link');
+    Object.assign(this.deskOf(tournamentId), { token: randomToken(), failed: 0, lockedUntil: undefined });
+    this.save();
+    return this.deskOf(tournamentId).token;
+  }
+
+  // ---------- The desk: its own link and desk PIN, this one tournament only ----------
+
+  private deskByToken(token: string) {
+    const hit = Object.entries(this.s.desks ?? {}).find(([, d]) => d.token === token);
+    return hit ? { tid: hit[0], d: hit[1] } : null;
+  }
+
+  async deskLabel(token: string): Promise<DeskLabel | null> {
+    const hit = this.deskByToken(token);
+    const t = hit && this.s.tournaments.find((x) => x.id === hit.tid);
+    const c = t && this.s.clubs.find((x) => x.id === t.clubId);
+    return t && c ? { club: c.name, logoUrl: c.logoUrl, tournament: t.name } : null;
+  }
+
+  /** Same rules as the server: unknown link, finished tournament, lockout on every 5th wrong PIN (2, 4, 8 … up to 30 minutes). */
+  private checkDesk(token: string, pin: string): ClubTournament {
+    const hit = this.deskByToken(token);
+    if (!hit) throw new ClubError('This desk link isn’t valid. Ask the organiser for the desk link again.');
+    const t = this.tournament(hit.tid);
+    if (t.status === 'done') throw new ClubError('This tournament is finished, so the desk link no longer works.');
+    const d = hit.d;
+    if (d.lockedUntil && d.lockedUntil > Date.now()) throw new ClubError('Too many wrong PINs. Wait a few minutes, then try again.');
+    if (pin !== d.pin) {
+      d.failed += 1;
+      if (d.failed % 5 === 0) d.lockedUntil = Date.now() + Math.min(30, 2 ** (d.failed / 5)) * 60_000;
+      this.save();
+      throw new ClubError('Wrong desk PIN');
+    }
+    if (d.failed || d.lockedUntil) { d.failed = 0; d.lockedUntil = undefined; this.save(); }
+    return t;
+  }
+
+  async deskOpen(token: string, pin: string): Promise<TournamentBundle> {
+    const t = this.checkDesk(token, pin);
+    const c = this.club(t.clubId);
+    return {
+      club: { id: c.id, name: c.name, city: c.city, inviteCode: '', settings: c.settings.thresholds ? { thresholds: c.settings.thresholds } : {}, logoUrl: c.logoUrl },
+      role: 'coach', desk: true, tournament: t,
+      divisions: this.s.divisions.filter((d) => d.tournamentId === t.id).sort((a, b) => a.sort - b.sort),
+      entries: this.s.entries.filter((e) => this.s.divisions.some((d) => d.id === e.divisionId && d.tournamentId === t.id)),
+      matches: this.s.matches.filter((m) => m.tournamentId === t.id),
+      players: this.s.players.filter((p) => p.clubId === t.clubId)
+        .map((p) => ({ id: p.id, clubId: p.clubId, name: p.name, duprSingles: p.duprSingles, duprDoubles: p.duprDoubles, share: {}, sample: p.sample }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  }
+
+  private deskMatch(t: ClubTournament, matchId: string): ClubMatch {
+    const m = this.s.matches.find((x) => x.id === matchId);
+    if (!m || m.tournamentId !== t.id) throw new ClubError('This match isn’t in your tournament.');
+    return m;
+  }
+
+  /** One or two of the club's players, all different; null if not. */
+  private deskPeople(clubId: string, ids: string[]): string[] | null {
+    if (ids.length < 1 || ids.length > 2 || new Set(ids).size !== ids.length) return null;
+    return ids.every((id) => this.s.players.some((p) => p.id === id && p.clubId === clubId)) ? ids : null;
+  }
+
+  async deskSaveScore(token: string, pin: string, matchId: string, patch: ScorePatch) {
+    const t = this.checkDesk(token, pin);
+    const m = this.deskMatch(t, matchId);
+    if (m.status === 'void') throw new ClubError('This match was cancelled.');
+    if (m.status === 'done' && patch.status === 'live') throw new ClubError('This match is already finished.');
+    if (patch.status !== 'live' && patch.status !== 'done') throw new ClubError('Unknown match status');
+    if (patch.status === 'done' && patch.winner !== 'A' && patch.winner !== 'B') throw new ClubError('A finished match needs a winner');
+    if (badGames(patch.games)) throw new ClubError('Scores aren’t in the right shape');
+    Object.assign(m, { games: patch.games, status: patch.status, winner: patch.status === 'done' ? patch.winner : undefined, playedOn: patch.playedOn ?? m.playedOn, updatedAt: new Date().toISOString() });
+    this.save();
+  }
+
+  async deskPatchMatches(token: string, pin: string, changes: { id: string; patch: MatchPatch }[]) {
+    const t = this.checkDesk(token, pin);
+    // Check everything first: all or nothing, like the server.
+    for (const { id, patch } of changes) {
+      const m = this.deskMatch(t, id);
+      if (patch.status !== undefined && !['scheduled', 'live', 'done', 'void'].includes(patch.status)) throw new ClubError('Unknown match status');
+      if (patch.winner !== undefined && patch.winner !== null && patch.winner !== 'A' && patch.winner !== 'B') throw new ClubError('The winner is A or B');
+      if (patch.games !== undefined && badGames(patch.games)) throw new ClubError('Scores aren’t in the right shape');
+      if (patch.court !== undefined && (!Number.isInteger(patch.court) || patch.court < 1 || patch.court > Math.max(t.courts, 1))) throw new ClubError(`Choose a court from 1 to ${t.courts}`);
+      if (patch.slot !== undefined && (!Number.isInteger(patch.slot) || patch.slot < 0 || patch.slot > 2000)) throw new ClubError('That time slot isn’t valid');
+      const sa = patch.sideA !== undefined ? this.deskPeople(t.clubId, patch.sideA) : m.sideA;
+      const sb = patch.sideB !== undefined ? this.deskPeople(t.clubId, patch.sideB) : m.sideB;
+      if (!sa || !sb) throw new ClubError('Choose players from the club');
+      if (sa.some((p) => sb.includes(p))) throw new ClubError('A player can’t be on both sides');
+    }
+    const now = new Date().toISOString();
+    for (const { id, patch } of changes) {
+      const m = this.deskMatch(t, id);
+      const { winner, ...rest } = patch;
+      Object.assign(m, rest, { updatedAt: now });
+      if (winner !== undefined) m.winner = winner ?? undefined;
+    }
+    this.save();
+  }
+
+  async deskAddEntry(token: string, pin: string, entry: Entry) {
+    const t = this.checkDesk(token, pin);
+    const d = this.s.divisions.find((x) => x.id === entry.divisionId);
+    if (!d || d.tournamentId !== t.id) throw new ClubError('That event isn’t in your tournament.');
+    const need = d.kind === 'doubles' ? 2 : 1;
+    const ids = this.deskPeople(t.clubId, entry.playerIds);
+    if (!ids || ids.length !== need) throw new ClubError(`Choose ${need === 2 ? 'two players' : 'one player'} from the club`);
+    if (this.s.entries.some((e) => e.divisionId === d.id && e.status !== 'withdrawn' && e.playerIds.some((p) => ids.includes(p)))) throw new ClubError('That player is already in this event');
+    this.s.entries.push({ ...entry, clubId: t.clubId, status: 'active' });
+    this.save();
+  }
+
+  async deskUpdateEntry(token: string, pin: string, id: string, patch: EntryPatch) {
+    const t = this.checkDesk(token, pin);
+    const e = this.s.entries.find((x) => x.id === id);
+    const d = e && this.s.divisions.find((x) => x.id === e.divisionId);
+    if (!e || !d || d.tournamentId !== t.id) throw new ClubError('That entry isn’t in your tournament.');
+    if (patch.status !== undefined && patch.status !== 'active' && patch.status !== 'withdrawn') throw new ClubError('Unknown entry status');
+    if (patch.playerIds && (!this.deskPeople(t.clubId, patch.playerIds) || patch.playerIds.length !== e.playerIds.length)) throw new ClubError('Choose players from the club');
+    if (patch.pool !== undefined && (!Number.isInteger(patch.pool) || patch.pool < 1 || patch.pool > 16)) throw new ClubError('That pool isn’t valid');
+    Object.assign(e, patch);
+    this.save();
+  }
+
+  async deskAddMatches(token: string, pin: string, rows: NewMatchRow[]) {
+    const t = this.checkDesk(token, pin);
+    for (const r of rows) {
+      const d = this.s.divisions.find((x) => x.id === r.divisionId);
+      if (!d || d.tournamentId !== t.id) throw new ClubError('That event isn’t in your tournament.');
+      if (!['pool', 'r32', 'r16', 'qf', 'sf', 'final'].includes(r.stage)) throw new ClubError('Unknown stage');
+      if (!['scheduled', 'done', 'void'].includes(r.status)) throw new ClubError('Unknown match status');
+      if (badGames(r.games)) throw new ClubError('Scores aren’t in the right shape');
+      for (const e of [r.entryA, r.entryB]) if (e && !this.s.entries.some((x) => x.id === e && x.divisionId === d.id)) throw new ClubError('That entry isn’t in this event.');
+      if ((r.sideA.length && !this.deskPeople(t.clubId, r.sideA)) || (r.sideB.length && !this.deskPeople(t.clubId, r.sideB))) throw new ClubError('Choose players from the club');
+    }
+    this.pushMatches(rows.map((r) => ({ ...r, clubId: t.clubId, tournamentId: t.id })));
+    this.save();
+  }
+
+  async deskAddPlayer(token: string, pin: string, p: { name: string; dupr?: number }) {
+    const t = this.checkDesk(token, pin);
+    const name = p.name.trim().replace(/\s+/g, ' ').slice(0, 60);
+    if (!name) throw new ClubError('Enter their name');
+    if (p.dupr !== undefined && (!Number.isFinite(p.dupr) || p.dupr < 1 || p.dupr > 8)) throw new ClubError('DUPR is a number between 1 and 8, or leave it empty');
+    const player: ClubPlayer = { id: newId(), clubId: t.clubId, name, duprSingles: p.dupr, duprDoubles: p.dupr, share: {}, sample: false };
+    this.s.players.push(player);
+    this.save();
+    return { id: player.id, clubId: player.clubId, name, duprSingles: p.dupr, duprDoubles: p.dupr, share: {}, sample: false };
+  }
+
+  async deskStart(token: string, pin: string) {
+    const t = this.checkDesk(token, pin);
+    if (t.status === 'draft') { t.status = 'live'; this.save(); }
   }
 
   async setClubLogo(clubId: string, image: Blob) {
@@ -801,7 +1007,7 @@ export class DemoBackend implements ClubBackend {
         id: t.id, name: t.name, club: this.club(t.clubId).name, clubId: t.clubId, isTest: false, startDate: t.startDate, startTime: t.startTime, status: t.status,
         listing: t.listing ?? 'none', listingStatus: t.listingStatus ?? 'none', slug: t.publicSlug, results: t.isPublic,
         registrations: (this.s.registrations ?? []).filter((r) => r.tournamentId === t.id && ['pending', 'accepted', 'waitlist'].includes(r.status)).length,
-        matches: ms.length, matchesDone: ms.filter((m) => m.status === 'done').length, eventPin: this.s.eventPins?.[t.id], helpers: [],
+        matches: ms.length, matchesDone: ms.filter((m) => m.status === 'done').length, eventPin: this.s.eventPins?.[t.id], deskPin: this.s.desks?.[t.id]?.pin, deskToken: this.s.desks?.[t.id]?.token,
       };
     });
   }

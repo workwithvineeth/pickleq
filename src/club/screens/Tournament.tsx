@@ -199,7 +199,7 @@ function EntryPicker({ d, players, pmap, onChange, label }: { d: DivDraft; playe
   );
 }
 
-type View = 'schedule' | 'pools' | 'knockouts';
+export type View = 'schedule' | 'pools' | 'knockouts';
 
 export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
   const b = backend();
@@ -250,7 +250,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       )}
       {staff && confirmDone && t.status === 'live' && (
         <section className="card section" aria-label="Finish the tournament">
-          <p className="small" style={{ margin: 0 }}>Mark it as finished? Referee links and desk sign-in stop working. You can reopen it later if needed.</p>
+          <p className="small" style={{ margin: 0 }}>Mark it as finished? The referee links and the desk link stop working. You can reopen it later if needed.</p>
           <div className="meta">
             <button type="button" className="btn btn-primary" onClick={() => { setConfirmDone(false); void set({ status: 'done' }, 'Marked as finished'); }}>Yes, mark as finished</button>
             <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(false)}>Cancel</button>

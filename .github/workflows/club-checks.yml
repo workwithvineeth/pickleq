@@ -31,7 +31,8 @@ jobs:
       - name: App checks
         id: app
         continue-on-error: true
-        run: npm run -s check 2>&1 | tee app.txt
+        shell: bash
+        run: set -o pipefail; npm run -s check 2>&1 | tee app.txt
       - uses: supabase/setup-cli@v1
         with:
           version: latest
@@ -44,7 +45,8 @@ jobs:
       - name: Database checks
         id: db
         continue-on-error: true
-        run: bash scripts/db-tests.sh 2>&1 | tee db.txt
+        shell: bash
+        run: set -o pipefail; bash scripts/db-tests.sh 2>&1 | tee db.txt
       - name: Summary
         if: always()
         env:

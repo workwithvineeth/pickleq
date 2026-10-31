@@ -1,4 +1,4 @@
--- Event PIN, personal sign-in PIN and club logo rules (club_mode_13_pin_sign_in_logo). Acts as the owner's account
+-- Referee (event) PIN, personal sign-in PIN and club logo rules (club_mode_13_pin_sign_in_logo; desk access moved in club_mode_18). Acts as the owner's account
 -- (Vineeth, owner of Pickleyard), then as a visitor, then as the server (like the pin-sign-in edge function). Rolls
 -- back and needs no confirmation in the connector. Expected: no row says FAIL.
 begin;
@@ -75,19 +75,11 @@ declare
   e text := (select email from auth.users where id = '81b32feb-1a70-47c3-b0b4-9eb4a81a12dd');
   r jsonb; i int;
 begin
-  r := public.helper_pin_check(s, '0000');
-  insert into out values (17, case when r->>'error' = 'Wrong PIN' then 'helper: wrong PIN refused' else 'FAIL ' || r::text end);
+  -- The old desk sign-in (helper link + event PIN → a coach account) is switched off (club_mode_18): it points to the desk link.
   r := public.helper_pin_check(s, '4371');
-  insert into out values (18, case when (r->>'tournament_id')::uuid = t then 'helper: event PIN accepted' else 'FAIL ' || r::text end);
-  for i in 1..5 loop r := public.helper_pin_check(s, '0000'); end loop;
-  r := public.helper_pin_check(s, '4371');
-  insert into out values (19, case when r->>'error' like 'Too many wrong PINs%' then 'helper: locked after 5 wrong PINs' else 'FAIL no lockout ' || r::text end);
-  perform public.set_event_pin(t, '4371');
-  r := public.helper_pin_check('no-such-slug', '4371');
-  insert into out values (20, case when r->>'error' like 'This helper link isn%' then 'helper: unknown link refused' else 'FAIL ' || r::text end);
-  update public.tournaments set status = 'done' where id = t;
-  r := public.helper_pin_check(s, '4371');
-  insert into out values (21, case when r->>'error' like 'This tournament is finished%' then 'helper: finished tournament refused' else 'FAIL ' || r::text end);
+  insert into out values (17, case when r->>'error' like 'The desk now has its own link%' then 'old helper sign-in refused before any account is made' else 'FAIL ' || r::text end);
+  begin perform public.helper_join(t, '81b32feb-1a70-47c3-b0b4-9eb4a81a12dd', 'x'); insert into out values (18, 'FAIL helper_join still makes coaches');
+  exception when others then insert into out values (18, 'helper_join no longer makes anyone a coach'); end;
   r := public.pin_login_check(e, '4826');
   insert into out values (22, case when r->>'email' = e then 'organiser: email + PIN accepted' else 'FAIL ' || r::text end);
   r := public.pin_login_check(e, '9999');

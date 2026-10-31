@@ -224,7 +224,7 @@ describe('Club mode', () => {
     await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
     await screen.findByText('Made an any-court link');
     const link = demoState().scorerLinks.find((l: { court?: number }) => !l.court);
-    expect(screen.getAllByText(`PIN ${link.pin}`).length).toBeGreaterThan(0);
+    expect(await screen.findByLabelText(`Referee PIN ${link.pin}`)).toBeInTheDocument();
 
     window.location.hash = `#/court/${link.token}`;
     const pin = await screen.findByLabelText('PIN');
@@ -263,7 +263,7 @@ describe('Club mode', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/isn’t valid/);
   });
 
-  it('one event PIN: every court link shares it, New PIN changes them all, and the helper link is offered', async () => {
+  it('referee PIN: every court link shares it; the organiser sets their own (not easy, not the desk PIN) or makes a new one', async () => {
     const user = userEvent.setup();
     await openEvent(user);
     await user.click(screen.getByRole('button', { name: 'Referee links' }));
@@ -274,16 +274,103 @@ describe('Club mode', () => {
     const pins = new Set(demoState().scorerLinks.map((l: { pin: string }) => l.pin));
     expect(pins.size).toBe(1);
     const [first] = [...pins] as string[];
-    const card = screen.getByRole('region', { name: 'Event PIN' });
-    expect(within(card).getByLabelText(`Event PIN ${first}`)).toBeInTheDocument();
-    expect(within(card).getByRole('button', { name: 'Share desk link' })).toBeInTheDocument();
+    const card = screen.getByRole('region', { name: 'Referee PIN' });
+    expect(within(card).getByLabelText(`Referee PIN ${first}`)).toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: 'Share desk link' })).not.toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: 'New PIN' }));
-    await screen.findByText(/New event PIN for every link/);
+    await screen.findByText(/New referee PIN on every court link/);
     const after = new Set(demoState().scorerLinks.map((l: { pin: string }) => l.pin));
     expect(after.size).toBe(1);
     const [next] = [...after] as string[];
-    expect(await within(card).findByLabelText(`Event PIN ${next}`)).toBeInTheDocument();
-    expect(screen.getAllByText(`PIN ${next}`)).toHaveLength(7);
+    expect(next).not.toBe(first);
+    expect(await within(card).findByLabelText(`Referee PIN ${next}`)).toBeInTheDocument();
+    // Set my own: an easy one and the desk PIN are refused; a good one goes on every link.
+    const desk = screen.getByRole('region', { name: 'Desk access' });
+    const deskPin = Object.values(demoState().desks as Record<string, { pin: string }>)[0].pin;
+    expect(within(desk).getByLabelText(`Desk PIN ${deskPin}`)).toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'Set my own' }));
+    await user.type(within(card).getByLabelText('Your referee PIN'), '1234');
+    await user.click(within(card).getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/too easy to guess/);
+    await user.clear(within(card).getByLabelText('Your referee PIN'));
+    await user.type(within(card).getByLabelText('Your referee PIN'), deskPin);
+    await user.click(within(card).getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The referee PIN must be different from the desk PIN');
+    await user.clear(within(card).getByLabelText('Your referee PIN'));
+    await user.type(within(card).getByLabelText('Your referee PIN'), '4826');
+    await user.click(within(card).getByRole('button', { name: 'Save' }));
+    await screen.findByText(/Referee PIN saved on every court link/);
+    expect(new Set(demoState().scorerLinks.map((l: { pin: string }) => l.pin))).toEqual(new Set(['4826']));
+    expect(await within(card).findByLabelText('Referee PIN 4826')).toBeInTheDocument();
+  });
+
+  it('desk access: its own 6-digit PIN (never the referee PIN), New PIN, Share desk link, new desk link with a check', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Referee links' }));
+    const desk = await screen.findByRole('region', { name: 'Desk access' });
+    const state = () => Object.values(demoState().desks as Record<string, { pin: string; token: string }>)[0];
+    const first = state();
+    expect(first.pin).toMatch(/^\d{6}$/);
+    expect(await within(desk).findByLabelText(`Desk PIN ${first.pin}`)).toBeInTheDocument();
+    expect(within(desk).getByRole('button', { name: 'Share desk link' })).toBeInTheDocument();
+    expect(within(desk).getByText(/No players’ phone numbers/)).toBeInTheDocument();
+    await user.click(within(desk).getByRole('button', { name: 'New PIN' }));
+    await screen.findByText('New desk PIN. Tell your desk team.');
+    expect(state().pin).not.toBe(first.pin);
+    await user.click(within(desk).getByRole('button', { name: /Make a new desk link/ }));
+    await user.click(within(desk).getByRole('button', { name: 'Make a new desk link' }));
+    await screen.findByText('New desk link made. The old one no longer works.');
+    expect(state().token).not.toBe(first.token);
+  });
+
+  it('the desk link: desk PIN only (the referee PIN is refused), this tournament only, walkover and entries, and it stops when finished', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    await user.click(screen.getByRole('button', { name: 'Referee links' }));
+    await screen.findByRole('region', { name: 'Desk access' });
+    const { token, pin } = Object.values(demoState().desks as Record<string, { pin: string; token: string }>)[0];
+    const referee = demoState().eventPins ? Object.values(demoState().eventPins as Record<string, string>)[0] : '0000';
+    window.location.hash = `#/desk/${token}`;
+    expect(await screen.findByRole('heading', { name: 'PQ Demo Club Desk' })).toBeInTheDocument();
+    expect(screen.getByText('PQ Demo Open')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Desk PIN'), referee);
+    await user.click(screen.getByRole('button', { name: 'Open the desk' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong desk PIN');
+    await user.type(screen.getByLabelText('Desk PIN'), pin);
+    await user.click(screen.getByRole('button', { name: 'Open the desk' }));
+    expect(await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Referee links' })).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\+91|98\d{8}|@/);
+    // A walkover from the desk is saved through the desk link.
+    const before = demoState().matches.filter((m: { status: string }) => m.status === 'done').length;
+    await user.click(screen.getAllByRole('button', { name: 'Walkover…' })[0]);
+    await user.click(within(screen.getByRole('region', { name: 'Walkover or retired' })).getAllByRole('button', { name: /go through$/ })[0]);
+    await screen.findByText(/win by walkover|the other side retired/);
+    expect(demoState().matches.filter((m: { status: string }) => m.status === 'done').length).toBe(before + 1);
+    // Entries page inside the desk link.
+    await user.click(screen.getByRole('button', { name: 'Entries' }));
+    expect(await screen.findByRole('heading', { name: 'Entries' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Late entry' })).toBeInTheDocument();
+    expect(window.location.hash).toBe(`#/desk/${token}~entries`);
+    window.history.back();
+    expect(await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' })).toBeInTheDocument();
+    // The organiser marks it finished: the desk link stops.
+    const tid = demoState().tournaments.find((t: { name: string }) => t.name === 'PQ Demo Open').id;
+    await demoBackend().updateTournament(tid, { status: 'done' });
+    localStorage.removeItem(`pq-desk-pin-${token}`);
+    window.location.hash = '#/events';
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'PQ Demo Open · Desk' })).not.toBeInTheDocument());
+    window.location.hash = `#/desk/${token}`;
+    await user.type(await screen.findByLabelText('Desk PIN'), pin);
+    await user.click(screen.getByRole('button', { name: 'Open the desk' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('This tournament is finished, so the desk link no longer works.');
+  });
+
+  it('an old desk link (#/helper/…) explains that the desk has a new link', async () => {
+    window.location.hash = '#/helper/abc123';
+    render(<App />);
+    expect(await screen.findByText('The desk now has its own link and its own desk PIN.')).toBeInTheDocument();
   });
 
   it('a tournament marked finished by mistake can be reopened (with a check before finishing)', async () => {

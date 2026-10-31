@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { newId } from '../../db/db';
 import type { Go } from '../../navigation';
 import type { ClubBackend, ScorePatch } from '../backend';
-import { backend } from '../index';
 import { knockoutMatchesToAdd } from '../plan';
 import { isStaff, STAGE_LABEL } from '../types';
 import { DemoNote, Header, names, Status, useLoad } from './common';
+import { useClubBackend, useDesk } from './deskContext';
 import { readUnsent, ScorePad, writeUnsent } from './ScorePad';
 
 /** Sends any scores saved while the phone had no connection (signed-in scorers). */
@@ -13,16 +13,17 @@ export async function flushUnsentScores(b: ClubBackend): Promise<number> {
   const all = readUnsent();
   let sent = 0;
   for (const [id, patch] of Object.entries(all)) {
-    if (id.startsWith('link:')) continue;
+    if (id.startsWith('link:') || id.startsWith('desk:')) continue;
     try { await b.saveScore(id, patch); delete all[id]; sent++; } catch { break; }
   }
   writeUnsent(all);
   return sent;
 }
 
-/** Scoring a match as a signed-in coach or admin. */
+/** Scoring a match as a signed-in organiser, or at the desk (desk link and desk PIN). */
 export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBack: () => void }) {
-  const b = backend();
+  const b = useClubBackend();
+  const desk = useDesk();
   const state = useLoad(async () => { if (!b) throw new Error('Open Club mode first'); return b.matchBundle(matchId); }, [b, matchId]);
   const d = state.data;
   const players = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
@@ -44,10 +45,10 @@ export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBa
       <Header id="score-title" title={title || 'Score'} onBack={onBack} />
       <DemoNote b={b} />
       {m.court && <p className="small" style={{ margin: 0, fontWeight: 600 }}>Court {m.court}</p>}
-      {!isStaff(d.role) && <div role="alert" className="msg msg-bad">Only coaches and admins can score matches.</div>}
+      {!isStaff(d.role) && <div role="alert" className="msg msg-bad">Only the club’s organisers and the desk can score matches.</div>}
       <ScorePad
         key={m.id}
-        matchKey={m.id}
+        matchKey={desk ? `desk:${desk.token}:${m.id}` : m.id}
         initialGames={m.games}
         format={m.format}
         nameA={names(m.sideA, players)}

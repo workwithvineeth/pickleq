@@ -11,6 +11,46 @@ async function openDemoEvent(page: Page) {
 }
 
 test.describe('Organiser screens (demo club)', () => {
+  test('referee PIN and desk access: both PINs, set my own, and the desk link opens only with the desk PIN', async ({ page }) => {
+    await openDemoEvent(page);
+    await page.getByRole('button', { name: 'Referee links' }).click();
+    const ref = page.getByRole('region', { name: 'Referee PIN' });
+    const desk = page.getByRole('region', { name: 'Desk access' });
+    await expect(ref.getByLabel(/^Referee PIN \d{4}$/)).toBeVisible();
+    await expect(desk.getByLabel(/^Desk PIN \d{6}$/)).toBeVisible();
+    await ref.getByRole('button', { name: 'Set my own' }).click();
+    await ref.getByLabel('Your referee PIN').fill('1234');
+    await ref.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('alert')).toContainText('too easy to guess');
+    await ref.getByLabel('Your referee PIN').fill('4826');
+    await ref.getByRole('button', { name: 'Save' }).click();
+    await expect(ref.getByLabel('Referee PIN 4826')).toBeVisible();
+    for (const w of [390, 320]) {
+      await page.setViewportSize({ width: w, height: 760 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `Referee links at ${w}`).toBeLessThanOrEqual(w);
+    }
+    const { token, pin } = await page.evaluate(() => {
+      const s = JSON.parse(localStorage.getItem('pq-club-demo-v1') ?? '{}');
+      const t = s.tournaments.find((x: { name: string }) => x.name === 'PQ Demo Open');
+      return s.desks[t.id] as { token: string; pin: string };
+    });
+    await page.goto(`#/desk/${token}`);
+    await expect(page.getByRole('heading', { name: 'PQ Demo Club Desk' })).toBeVisible();
+    await page.getByLabel('Desk PIN').fill('4826');
+    await page.getByRole('button', { name: 'Open the desk' }).click();
+    await expect(page.getByRole('alert')).toHaveText('Wrong desk PIN');
+    await page.getByLabel('Desk PIN').fill(pin);
+    await page.getByRole('button', { name: 'Open the desk' }).click();
+    await expect(page.getByRole('heading', { name: 'PQ Demo Open · Desk' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Referee links' })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), 'desk at 320').toBeLessThanOrEqual(320);
+    await page.getByRole('button', { name: 'Walkover…' }).first().click();
+    await page.getByRole('region', { name: 'Walkover or retired' }).getByRole('button', { name: /go through$/ }).first().click();
+    await expect(page.getByText(/win by walkover|the other side retired/)).toBeVisible();
+    await page.getByRole('button', { name: 'Leave the desk on this phone' }).click();
+    await expect(page.getByLabel('Desk PIN')).toBeVisible();
+  });
+
   test('desk view: court board, up next, and entering a final score', async ({ page }) => {
     await openDemoEvent(page);
     await page.getByRole('button', { name: 'Desk view' }).click();

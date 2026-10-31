@@ -13,7 +13,7 @@ export const TEST = {
   match: { finished: 'e2e00000-0000-4000-8000-000000000501', golden: 'e2e00000-0000-4000-8000-000000000503', court2: 'e2e00000-0000-4000-8000-000000000504', offline: 'e2e00000-0000-4000-8000-000000000505' },
 };
 
-export interface Sandbox { slug: string; links: { court1: { token: string; pin: string }; court2: { token: string; pin: string }; lockout: { token: string; pin: string } } }
+export interface Sandbox { slug: string; links: { court1: { token: string; pin: string }; court2: { token: string; pin: string }; lockout: { token: string; pin: string } }; desk: { token: string; pin: string } }
 
 /** True when running on GitHub with permission to reset the server sandbox. */
 export const canUseServer = !!process.env.ACTIONS_ID_TOKEN_REQUEST_URL;

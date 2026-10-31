@@ -112,5 +112,5 @@ export default function App() {
 }
 
 function isClubRoute(name: string): boolean {
-  return name.startsWith('club') || name.startsWith('event') || ['results', 'court', 'helper', 'my-entries', 'admin-listings', 'admin', 'admin-club'].includes(name);
+  return name.startsWith('club') || name.startsWith('event') || ['results', 'court', 'helper', 'desk', 'my-entries', 'admin-listings', 'admin', 'admin-club'].includes(name);
 }
