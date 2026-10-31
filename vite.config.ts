@@ -12,7 +12,8 @@ import { VitePWA } from 'vite-plugin-pwa';
  */
 export function cspFor(clubServer?: string): string {
   // Club mode talks to its own server (and its live-update socket) only on the Club test site.
-  const club = clubServer ? ` ${clubServer} ${clubServer.replace(/^https:/, 'wss:')}` : '';
+  // …and, when an organiser picks a password, HaveIBeenPwned's range API (only 5 hash characters are sent).
+  const club = clubServer ? ` ${clubServer} ${clubServer.replace(/^https:/, 'wss:')} https://api.pwnedpasswords.com` : '';
   return [
     "default-src 'self'",
     "script-src 'self' https://www.youtube.com https://s.ytimg.com",

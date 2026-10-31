@@ -11,6 +11,27 @@ export function passwordProblem(p: string): string | null {
   return null;
 }
 
+/**
+ * Has this password appeared in a known data leak? Uses HaveIBeenPwned's free Pwned Passwords range API (the same service Supabase
+ * Pro uses): only the first 5 characters of the password's SHA-1 hash leave the phone, never the password. If the check can't run
+ * (offline, blocked), it says no, so nobody is stuck.
+ */
+export async function passwordLeaked(p: string, fetcher: typeof fetch = fetch): Promise<boolean> {
+  try {
+    const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(p));
+    const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => ctrl?.abort(), 4000);
+    const res = await fetcher(`https://api.pwnedpasswords.com/range/${hex.slice(0, 5)}`, { headers: { 'Add-Padding': 'true' }, signal: ctrl?.signal });
+    clearTimeout(timer);
+    if (!res.ok) return false;
+    const rest = hex.slice(5);
+    return (await res.text()).split('\n').some((line) => { const [suffix, count] = line.trim().split(':'); return suffix === rest && Number(count) > 0; });
+  } catch { return false; }
+}
+
+export const LEAKED_PASSWORD = 'This password has appeared in a data leak, so it’s easy for others to guess. Choose a different one.';
+
 export function emailOk(e: string): boolean { return /^\S+@\S+\.\S+$/.test(e.trim()); }
 
 /** Turns the sign-in server's messages into what a person can act on. */

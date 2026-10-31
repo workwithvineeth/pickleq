@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/db';
 import type { Format } from '../domain/types';
 import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
-import { authMessage, passwordProblem } from './authText';
+import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
 import type { Club, ClubMatch, HostingStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
@@ -176,6 +176,7 @@ export class ServerBackend implements ClubBackend {
   async signUp(email: string, password: string) {
     const bad = passwordProblem(password);
     if (bad) throw new ClubError(bad);
+    if (await passwordLeaked(password)) throw new ClubError(LEAKED_PASSWORD);
     const back = `${window.location.origin}${window.location.pathname}`;
     const data = auth(await this.sb.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: back } }));
     // An email that already has an account comes back with no identities (Supabase hides that it exists).
@@ -201,6 +202,7 @@ export class ServerBackend implements ClubBackend {
   async resetPassword(email: string, code: string, password: string) {
     const bad = passwordProblem(password);
     if (bad) throw new ClubError(bad);
+    if (await passwordLeaked(password)) throw new ClubError(LEAKED_PASSWORD);
     auth(await this.sb.auth.verifyOtp({ email: email.trim(), token: code.replace(/\s/g, ''), type: 'recovery' }));
     auth(await this.sb.auth.updateUser({ password }));
     check(await this.sb.rpc('claim_pending'));
@@ -209,6 +211,7 @@ export class ServerBackend implements ClubBackend {
   async setMyPassword(password: string) {
     const bad = passwordProblem(password);
     if (bad) throw new ClubError(bad);
+    if (await passwordLeaked(password)) throw new ClubError(LEAKED_PASSWORD);
     auth(await this.sb.auth.updateUser({ password }));
   }
 
