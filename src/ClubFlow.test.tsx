@@ -348,6 +348,12 @@ describe('Club mode', () => {
     await user.click(within(screen.getByRole('region', { name: 'Walkover or retired' })).getAllByRole('button', { name: /go through$/ })[0]);
     await screen.findByText(/win by walkover|the other side retired/);
     expect(demoState().matches.filter((m: { status: string }) => m.status === 'done').length).toBe(before + 1);
+    // "Call to court": a ready message for the players' group (copied when the phone can't share).
+    const writes: string[] = [];
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (x: string) => { writes.push(x); } }, configurable: true });
+    await user.click(screen.getAllByRole('button', { name: /^Call .* to court \d+$/ })[0]);
+    await screen.findByText(/Message copied/);
+    expect(writes[0]).toMatch(/^PQ Demo Open · Court \d+: .+ v .+ Please come to court \d+ now\.$/);
     // Entries page inside the desk link.
     await user.click(screen.getByRole('button', { name: 'Entries' }));
     expect(await screen.findByRole('heading', { name: 'Entries' })).toBeInTheDocument();

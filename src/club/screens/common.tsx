@@ -69,6 +69,14 @@ export function fmtRating(r: number | undefined): string { return r === undefine
 export function errorText(e: unknown): string { return e instanceof Error ? e.message.replace(/PICKLEQ/g, 'PaddleQ') : 'Something went wrong'; }
 
 /** Shares a link with the phone's share sheet, or copies it. Returns what happened, for a status message. */
+/** Shares a short message (e.g. to the players' WhatsApp group), or copies it when the phone can't share. */
+export async function shareText(text: string): Promise<string> {
+  try {
+    if (navigator.share) { await navigator.share({ text }); return 'Shared'; }
+  } catch { /* cancelled or not allowed: fall back to copy */ }
+  try { await navigator.clipboard.writeText(text); return 'Message copied: paste it in the players’ group'; } catch { return text; }
+}
+
 export async function shareLink(title: string, url: string): Promise<string> {
   try {
     if (navigator.share) { await navigator.share({ title, url }); return 'Shared'; }

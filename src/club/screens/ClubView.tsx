@@ -7,7 +7,6 @@ import { biggest, type Swing, playerClubStats, playerFlags, playerMatches, sideO
 import { matchResult } from '../domain/engine';
 import { backend } from '../index';
 import { isClubApp } from '../config';
-import { mySummary } from '../personal';
 import { canHost, isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
 import { ClubHero, LogoPicker } from './Poster';
 import { joinPhone, PhoneField, phoneProblem, splitPhone } from './Phone';
@@ -463,6 +462,8 @@ export function Sharing({ playerId, go, onBack }: { playerId: string; go: Go; on
   const [msg, setMsg] = useState<string | null>(null);
   const share = choice ?? state.data?.p.share ?? {};
   const any = !!(share.record || share.tags || share.training);
+  // The personal app's data is loaded only when sharing from it (never needed in PaddleQ itself).
+  const mySummary = async (x: Share) => (await import('../personal')).mySummary(x);
   async function showPreview(next: Share) { setChoice(next); setPreview(await mySummary(next)); }
   async function send() {
     if (!b) return;

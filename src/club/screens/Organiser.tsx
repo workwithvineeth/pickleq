@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
-import { newId } from '../../db/db';
+import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
 import type { ClubBackend, TournamentBundle } from '../backend';
 import { matchResult, poolLetter, slotTime } from '../domain/engine';
@@ -8,7 +8,7 @@ import { duprCheck, duprCsv } from '../dupr';
 import { publicSources } from '../index';
 import { courtBoard, enteredPlayers, knockoutMatchesToAdd, nextMatchToCall, planLateEntry, planReplacePlayer, planWithdraw, upNext } from '../plan';
 import { isStaff, STAGE_LABEL, type ClubGame, type ClubMatch, type ClubPlayer, type Entry, type ScorerLink, type ScorerView } from '../types';
-import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
+import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, shareText, Status, useLoad } from './common';
 import { formatRule, ManualScores, ScorePad } from './ScorePad';
 import { AccessCards } from './Access';
 import { useClubBackend, useDesk } from './deskContext';
@@ -333,6 +333,8 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
                         <button type="button" className="btn btn-primary" onClick={() => go('club-score', m.id)}>Score</button>
                         <button type="button" className="btn btn-outline" onClick={() => setEntering(m.id)}>Enter result</button>
                         <button type="button" className="btn btn-outline" onClick={() => setWalkover(m.id)}>Walkover…</button>
+                        <button type="button" className="btn btn-outline" aria-label={`Call ${who(m)} to court ${court}`}
+                          onClick={async () => setMsg(await shareText(`${t.name} · Court ${court}: ${names(m.sideA, pmap)} v ${names(m.sideB, pmap)} (${matchLabel(m, d)}). Please come to court ${court} now.`))}>Call to court</button>
                       </div>}
                 </>
               )}

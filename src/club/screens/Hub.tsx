@@ -4,7 +4,6 @@ import type { NewMatch } from '../../db/matches';
 import type { Go } from '../../navigation';
 import { clubMode, clubServerConfig, isClubApp, setClubMode } from '../config';
 import { backend, demoBackend, serverBackend, takeReturn } from '../index';
-import { importClubMatches, pendingClubMatches } from '../personal';
 import { emailOk, MIN_PASSWORD, passwordProblem } from '../authText';
 import { BigLogo } from './Poster';
 import { joinPhone, PhoneField, phoneProblem } from './Phone';
@@ -27,7 +26,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     const user = await b.currentUser();
     if (!user) return null;
     // PaddleQ (the club-only app) has no personal history to add club matches to.
-    const [clubs, pending] = await Promise.all([b.myClubs(), isClubApp() ? [] as NewMatch[] : pendingClubMatches(b).catch(() => [] as NewMatch[])]);
+    const [clubs, pending] = await Promise.all([b.myClubs(), isClubApp() ? [] as NewMatch[] : import('../personal').then((m) => m.pendingClubMatches(b)).catch(() => [] as NewMatch[])]);
     const next = isClubApp() ? await nextTournament(b, clubs).catch(() => null) : null;
     // PaddleQ admins: this page is "Clubs", with every club on PaddleQ (logos, approval state) under their own.
     const admin = isClubApp() ? await b.isPlatformAdmin().catch(() => false) : false;
@@ -48,7 +47,8 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
   }
   async function addPending(list: NewMatch[]) {
-    const n = await importClubMatches(list);
+    // The personal app's database is loaded only in the personal app's Club mode, never in PaddleQ.
+    const n = await (await import('../personal')).importClubMatches(list);
     setMsg(`Added ${n} club ${n === 1 ? 'match' : 'matches'} to your history.`);
     state.reload();
   }

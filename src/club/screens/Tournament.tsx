@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
-import { newId } from '../../db/db';
+import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, formatFor, matchResult, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';

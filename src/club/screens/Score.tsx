@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { newId } from '../../db/db';
+import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
 import type { ClubBackend, ScorePatch } from '../backend';
 import { knockoutMatchesToAdd } from '../plan';
