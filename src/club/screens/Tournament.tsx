@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/db';
 import type { Go } from '../../navigation';
-import type { PublicTournament, TournamentBundle } from '../backend';
+import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, formatFor, matchResult, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, type NewDivisionInput } from '../plan';
@@ -12,6 +12,8 @@ import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
+import { friendlyDate, friendlyTime } from '../dates';
+import { preflight, type PreflightItem } from '../preflight';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -239,31 +241,16 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       <DemoNote b={b} />
       {!staff && <PosterImage src={t.posterUrl} name={t.name} />}
       <ClubLogo src={d.club.logoUrl} club={d.club.name} />
-      <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {t.startDate} · from {t.startTime} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
-      {staff && (
-        <div className="meta">
-          {t.status === 'draft' && <button type="button" className="btn btn-primary" onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
-          {t.status === 'live' && !confirmDone && <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(true)}>Mark as finished</button>}
-          {t.status === 'done' && <button type="button" className="btn btn-outline" onClick={() => set({ status: 'live' }, 'Reopened: the tournament is live again')}>Reopen tournament</button>}
-          <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: !t.isPublic }, t.isPublic ? 'Results link turned off' : 'Results link is on')}>{t.isPublic ? 'Turn off results link' : 'Turn on results link'}</button>
-        </div>
-      )}
-      {staff && confirmDone && t.status === 'live' && (
-        <section className="card section" aria-label="Finish the tournament">
-          <p className="small" style={{ margin: 0 }}>Mark it as finished? The referee links and the desk link stop working. You can reopen it later if needed.</p>
-          <div className="meta">
-            <button type="button" className="btn btn-primary" onClick={() => { setConfirmDone(false); void set({ status: 'done' }, 'Marked as finished'); }}>Yes, mark as finished</button>
-            <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(false)}>Cancel</button>
-          </div>
-        </section>
-      )}
+      <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {friendlyDate(t.startDate)} · from {friendlyTime(t.startTime)} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
+      {staff && b && t.status !== 'done' && <Preflight b={b} d={d} go={go} />}
       {staff && (
         <nav className="meta" aria-label="Run the tournament">
-          {t.entryMode === 'registration' && <button type="button" className="btn btn-primary" onClick={() => go('club-inbox', t.id)}>{t.drawnAt ? 'Entries inbox' : 'Entries inbox and draw'}</button>}
-          <button type="button" className="btn btn-outline" onClick={() => go('club-desk', t.id)}>Desk view</button>
+          {t.status === 'draft' && <button type="button" className="btn btn-primary" onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
+          <button type="button" className={`btn ${t.status === 'draft' ? 'btn-outline' : 'btn-primary'}`} onClick={() => go('club-desk', t.id)}>Desk view</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>
-          <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>Entries</button>
-          <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>
+          {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>{t.drawnAt ? 'Entries inbox' : 'Entries inbox and draw'}</button>}
+          <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>{t.entryMode === 'registration' ? 'Entries on the day' : 'Entries'}</button>
+          {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>}
         </nav>
       )}
       {staff && b && <ListingCard b={b} t={t} role={d.role} onChanged={state.reload} />}
@@ -273,11 +260,74 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           <span>Share the results link (no login needed)</span><span>›</span>
         </button>
       )}
+      {staff && !t.isPublic && <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: true }, 'Results link is on')}>Turn on the results link</button>}
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
       {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
       <Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} />
       <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />
+      {staff && (
+        <section className="card section" aria-label="When it’s over">
+          <h2 style={{ fontSize: 16 }}>When it’s over</h2>
+          {t.status === 'live' && !confirmDone && <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(true)}>Mark as finished</button>}
+          {t.status === 'live' && confirmDone && (
+            <section className="section" aria-label="Finish the tournament">
+              <p className="small" style={{ margin: 0 }}>Mark it as finished? The referee links and the desk link stop working. You can reopen it later if needed.</p>
+              <div className="meta">
+                <button type="button" className="btn btn-primary" onClick={() => { setConfirmDone(false); void set({ status: 'done' }, 'Marked as finished'); }}>Yes, mark as finished</button>
+                <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(false)}>Cancel</button>
+              </div>
+            </section>
+          )}
+          {t.status === 'done' && <button type="button" className="btn btn-outline" onClick={() => set({ status: 'live' }, 'Reopened: the tournament is live again')}>Reopen tournament</button>}
+          {t.status === 'draft' && <p className="small muted" style={{ margin: 0 }}>Start the tournament first; you can mark it finished after the final.</p>}
+          {t.isPublic && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => set({ isPublic: false }, 'Results link turned off')}>Turn off the results link</button>}
+        </section>
+      )}
     </main>
+  );
+}
+
+/** "Ready for the day?": entries, draw, referee links, PINs and finish time, each with a way to fix it. */
+function Preflight({ b, d, go }: { b: ClubBackend; d: TournamentBundle; go: Go }) {
+  const t = d.tournament;
+  const extra = useLoad(async () => {
+    const [links, access, regs] = await Promise.all([
+      b.scorerLinks(t.id).catch(() => []),
+      b.tournamentAccess(t.id).catch(() => null),
+      t.entryMode === 'registration' && !t.drawnAt ? b.registrations(t.id).catch(() => []) : Promise.resolve([]),
+    ]);
+    const accepted: Record<string, number> = {};
+    for (const r of regs) if (r.status === 'accepted') accepted[r.divisionId] = (accepted[r.divisionId] ?? 0) + 1;
+    return { linkCourts: links.filter((l) => !l.revoked).map((l) => l.court ?? 0), pins: !!access?.refereePin && !!access?.deskPin, accepted };
+  }, [b, t.id, t.drawnAt]);
+  const [open, setOpen] = useState(false);
+  if (!extra.data) return null;
+  const items = preflight({ t, divisions: d.divisions, entries: d.entries, matches: d.matches, ...extra.data });
+  const done = items.filter((x) => x.ok).length;
+  const all = done === items.length;
+  const fix = (x: PreflightItem) => x.fix && (
+    <button type="button" className="link-btn" onClick={() => go(x.fix === 'inbox' ? 'club-inbox' : x.fix === 'links' ? 'club-scorers' : 'club-entries', t.id)}>
+      {x.fix === 'inbox' ? 'Open the entries inbox' : x.fix === 'links' ? 'Open referee links' : 'Open entries'}
+    </button>
+  );
+  return (
+    <section className={`card section pq-preflight${all ? ' pq-preflight-ok' : ''}`} aria-label="Ready for the day?">
+      <div className="row">
+        <h2 style={{ fontSize: 16 }}>{all ? 'Ready for the day ✓' : 'Ready for the day?'}</h2>
+        <span className={all ? 'pq-badge' : 'pq-badge pq-badge-gold'}>{done} of {items.length} done</span>
+      </div>
+      {(!all || open) && (
+        <ul className="pq-checks">
+          {items.map((x) => (
+            <li key={x.key} className={x.ok ? 'ok' : 'todo'}>
+              <span className="pq-check-mark" aria-hidden="true">{x.ok ? '✓' : '!'}</span>
+              <span className="pq-check-text"><span className="sr-only">{x.ok ? 'Done: ' : 'To do: '}</span>{x.text}{!x.ok && fix(x)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {all && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide the checks' : 'Show the checks'}</button>}
+    </section>
   );
 }
 
@@ -486,7 +536,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
       {d && division && (
         <>
           <ClubLogo src={logo.data?.logoUrl} club={d.club} />
-          <p className="small muted" style={{ margin: 0 }}>{d.club} · {d.startDate}{d.status === 'live' ? ' · Live, updates every 20 seconds' : d.status === 'done' ? ' · Finished' : ''}</p>
+          <p className="small muted" style={{ margin: 0 }}>{d.club} · {friendlyDate(d.startDate)}{d.status === 'live' ? ' · Live, updates every 20 seconds' : d.status === 'done' ? ' · Finished' : ''}</p>
           <MyMatches d={d} />
           {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
           <Segmented label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />

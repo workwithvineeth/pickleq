@@ -11,9 +11,26 @@ async function openDemoEvent(page: Page) {
 }
 
 test.describe('Organiser screens (demo club)', () => {
+  test('tournament page: ready-for-the-day check first, Mark as finished last, friendly dates, fits 320 px', async ({ page }) => {
+    await openDemoEvent(page);
+    const check = page.getByRole('region', { name: 'Ready for the day?' });
+    await expect(check).toBeVisible();
+    await expect(check.getByText(/No referee links yet/)).toBeVisible();
+    const run = page.getByRole('navigation', { name: 'Run the tournament' });
+    await expect(run.getByRole('button').first()).toHaveText('Desk view');
+    await expect(page.getByRole('region', { name: 'When it’s over' }).getByRole('button', { name: 'Mark as finished' })).toBeVisible();
+    expect(await page.locator('main').innerText()).not.toMatch(/\b20\d\d-\d\d-\d\d\b/);
+    for (const w of [390, 320]) {
+      await page.setViewportSize({ width: w, height: 760 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `tournament page at ${w}`).toBeLessThanOrEqual(w);
+    }
+    await check.getByRole('button', { name: 'Open referee links' }).click();
+    await expect(page.getByRole('heading', { name: 'Referee links' })).toBeVisible();
+  });
+
   test('referee PIN and desk access: both PINs, set my own, and the desk link opens only with the desk PIN', async ({ page }) => {
     await openDemoEvent(page);
-    await page.getByRole('button', { name: 'Referee links' }).click();
+    await page.getByRole('button', { name: 'Referee links', exact: true }).click();
     const ref = page.getByRole('region', { name: 'Referee PIN' });
     const desk = page.getByRole('region', { name: 'Desk access' });
     await expect(ref.getByLabel(/^Referee PIN \d{4}$/)).toBeVisible();

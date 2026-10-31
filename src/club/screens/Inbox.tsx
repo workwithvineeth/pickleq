@@ -11,6 +11,7 @@ import { eventShareLink, PersonFields } from './Events';
 import { PosterPicker } from './Poster';
 import { ImportEntries } from './Import';
 import { DayEstimateBox, divisionToDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
+import { friendlyDate, friendlyDateTime } from '../dates';
 
 type Filter = 'waiting' | 'accepted' | 'waitlist' | 'out' | 'all';
 const FILTERS: { value: Filter; label: string }[] = [
@@ -87,7 +88,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
               {p.duprId && <span className="muted">ID {p.duprId}</span>}
             </div>
           ))}
-          <div className="small muted">{r.source === 'offline' ? 'Added by organiser' : 'Entered online'} · {new Date(r.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · {PAYMENT_LABEL[r.payment]}{r.paymentRef ? ` (ref ${r.paymentRef})` : ''}</div>
+          <div className="small muted">{r.source === 'offline' ? 'Added by organiser' : 'Entered online'} · {friendlyDateTime(r.createdAt)} · {PAYMENT_LABEL[r.payment]}{r.paymentRef ? ` (ref ${r.paymentRef})` : ''}</div>
           {r.note && <div className="small">Note to player: {r.note}</div>}
           {r.entryId && <div className="small muted">In the draw</div>}
           {!r.entryId && editing !== r.id && rejecting !== r.id && (
@@ -267,7 +268,7 @@ export function ListingCard({ b, t, role, onChanged }: { b: ClubBackend; t: Club
         ? <PosterPicker b={b} t={t} current={t.posterUrl} onChanged={onChanged} />
         : null}
       <p className="small muted" style={{ margin: 0 }}>{LISTING_TEXT[status]}{status === 'rejected' && t.rejectReason ? ` Reason: ${t.rejectReason}. Fix it and post again.` : ''}</p>
-      <div className="small">{[t.venue, t.city].filter(Boolean).join(', ') || 'No venue yet'}{t.entriesClose ? ` · entries close ${t.entriesClose}` : ''}{t.upiId ? ` · UPI ${t.upiId}` : ''}</div>
+      <div className="small">{[t.venue, t.city].filter(Boolean).join(', ') || 'No venue yet'}{t.entriesClose ? ` · entries close ${friendlyDate(t.entriesClose)}` : ''}{t.upiId ? ` · UPI ${t.upiId}` : ''}</div>
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {!editing && admin && (
         <div className="meta">

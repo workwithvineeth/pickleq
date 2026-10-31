@@ -13,6 +13,7 @@ import type { AdminClub, ClubBackend, MyClub, TournamentAccess } from '../backen
 import { PinPair } from './Access';
 import { canHost, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
 import { appLink, DemoNote, errorText, Header, RoleBadge, shareLink, Status, useLoad } from './common';
+import { friendlyTime, relativeDate } from '../dates';
 
 const PENDING_JOIN = 'pq-club-pending-join';
 // localStorage, not sessionStorage: the email's sign-in link opens in a new tab.
@@ -239,7 +240,7 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
   const { t } = n;
   const [msg, setMsg] = useState<string | null>(null);
   const [pins, setPins] = useState(n.access);
-  const when = new Date(`${t.startDate}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  const when = relativeDate(t.startDate);
   const icon = (d: string) => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
   return (
     <section className="pq-next" aria-label="Next tournament">
@@ -249,7 +250,7 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
       </div>
       <div>
         <h2>{t.name}</h2>
-        <div className="pq-next-meta">{when}{t.startTime ? ` · ${t.startTime.slice(0, 5)}` : ''} · {t.courts} court{t.courts === 1 ? '' : 's'}</div>
+        <div className="pq-next-meta">{when}{t.startTime ? ` · ${friendlyTime(t.startTime)}` : ''} · {t.courts} court{t.courts === 1 ? '' : 's'}</div>
       </div>
       <div className="pq-next-actions">
         <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-desk', t.id)}>{icon('M3 4h18v12H3zM8 20h8M12 16v4')}Desk</button>

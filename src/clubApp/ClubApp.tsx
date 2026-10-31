@@ -37,6 +37,8 @@ export default function ClubApp() {
   const clubGo: Go = (n, id, opts) => go(n === 'home' ? 'club' : n, id, opts);
   return (
     <div className="app pq-brand">
+      {/* At the top of the page, never floating over the sign-in form or the main buttons; no "works offline" popup. */}
+      <UpdatePrompt offlineNotice={false} inline />
       {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
       {name === 'club-results' && <ClubResultsTab go={clubGo} />}
       {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}
@@ -51,7 +53,6 @@ export default function ClubApp() {
           ))}
         </nav>
       )}
-      <UpdatePrompt />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import type { Go } from '../navigation';
 import type { ClubTournament } from '../club/types';
 import { backend, eventsBackend } from '../club/index';
 import { DemoNote, Header, RoleBadge, Status, useLoad } from '../club/screens/common';
+import { friendlyDate, friendlyTime } from '../club/dates';
 
 const STATUS_TEXT: Record<ClubTournament['status'], string> = { draft: 'Not started', live: 'Live', done: 'Finished' };
 
@@ -36,7 +37,7 @@ export function ClubTournamentsTab({ go }: { go: Go }) {
             <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span>
-                <span className="small muted">{t.startDate} · {t.startTime} · {STATUS_TEXT[t.status]}</span>
+                <span className="small muted">{friendlyDate(t.startDate)} · {friendlyTime(t.startTime)} · {STATUS_TEXT[t.status]}</span>
               </span>
               <span aria-hidden="true">›</span>
             </button>
@@ -60,7 +61,7 @@ export function ClubResultsTab({ go }: { go: Go }) {
     <button key={e.slug} type="button" className="match-row" onClick={() => go('results', e.slug)} aria-label={`${e.name} results`}>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontWeight: 600 }}>{e.name}</span>
-        <span className="small muted">{e.club} · {e.startDate}</span>
+        <span className="small muted">{e.club} · {friendlyDate(e.startDate)}</span>
       </span>
       {live ? <span className="pill pill-warn">Live</span> : <span aria-hidden="true">›</span>}
     </button>

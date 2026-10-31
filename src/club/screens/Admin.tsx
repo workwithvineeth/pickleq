@@ -8,6 +8,7 @@ import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from
 import { deskLink, PinPair } from './Access';
 import { BigLogo } from './Poster';
 import { ListingReviews } from './Events';
+import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 
 export type AdminSection = 'overview' | 'clubs' | 'tournaments' | 'listings' | 'admins' | 'desk';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
@@ -21,7 +22,7 @@ const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
 export const isAdminSection = (s: string | undefined): s is AdminSection => SECTIONS.some((x) => x.id === s);
 
 const STATUS: Record<AdminTournament['status'], string> = { draft: 'Not started', live: 'Live', done: 'Finished' };
-const day = (iso?: string) => (iso ? new Date(`${iso.slice(0, 10)}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '–');
+const day = (iso?: string) => friendlyDate(iso);
 
 type Msg = { ok: boolean; text: string } | null;
 /** Runs an admin action with a busy flag and a message; reloads on success. */
@@ -281,7 +282,7 @@ function Tournaments({ go }: { go: Go }) {
               <b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{t.name}</b>
               <span className={`pill${t.status === 'live' ? ' pill-warn' : t.status === 'done' ? ' pill-ok' : ''}`}>{STATUS[t.status]}</span>
             </div>
-            <div className="small muted">{t.club}{t.isTest ? ' (robot test)' : ''} · {day(t.startDate)}{t.startTime ? ` · ${t.startTime}` : ''}</div>
+            <div className="small muted">{t.club}{t.isTest ? ' (robot test)' : ''} · {day(t.startDate)}{t.startTime ? ` · ${friendlyTime(t.startTime)}` : ''}</div>
             <div className="small">{t.registrations} entr{t.registrations === 1 ? 'y' : 'ies'} · {t.matchesDone}/{t.matches} matches scored{t.listing !== 'none' ? ` · board: ${t.listingStatus === 'approved' ? 'listed' : t.listingStatus === 'pending' ? 'to review' : t.listingStatus === 'rejected' ? 'rejected' : 'off'}` : ''}</div>
             {t.status !== 'done' && <AdminPins b={b} t={t} />}
             {confirm === t.id
@@ -368,7 +369,7 @@ function DeskAccessList() {
       {open.map((t) => (
         <section key={t.id} className="card section" aria-label={`${t.name} desk access`}>
           <div className="row" style={{ padding: 0 }}><b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{t.name}</b><span className={`pill${t.status === 'live' ? ' pill-warn' : ''}`}>{STATUS[t.status]}</span></div>
-          <div className="small muted">{t.club} · {day(t.startDate)} · desk link {t.deskUsedAt ? `last used ${new Date(t.deskUsedAt).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : 'not used yet'}</div>
+          <div className="small muted">{t.club} · {day(t.startDate)} · desk link {t.deskUsedAt ? `last used ${friendlyDateTime(t.deskUsedAt)}` : 'not used yet'}</div>
           <AdminPins b={b} t={t} />
           {t.deskToken && <button type="button" className="btn btn-outline" onClick={async () => setMsg(await shareLink(`${t.name}: desk`, deskLink(t.deskToken as string)))}>Share desk link</button>}
         </section>

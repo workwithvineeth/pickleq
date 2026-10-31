@@ -8,14 +8,12 @@ import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../regis
 import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { OrganiserCard, PosterImage } from './Poster';
+import { friendlyDate, friendlyTime } from '../dates';
 
 // ---------- Helpers ----------
 
-const dayLabel = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-const timeLabel = (hhmm: string) => {
-  const [h, m] = hhmm.split(':').map(Number);
-  return new Date(2000, 0, 1, h, m).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
-};
+const dayLabel = (iso: string) => friendlyDate(iso);
+const timeLabel = (hhmm: string) => friendlyTime(hhmm);
 /** Link to an event that previews nicely in WhatsApp (a small page with the event's title), then opens the app. */
 export function eventShareLink(slug: string): string {
   return `${window.location.origin}${window.location.pathname}e/${encodeURIComponent(slug)}/`;

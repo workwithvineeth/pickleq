@@ -12,6 +12,7 @@ import { canHost, isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, typ
 import { ClubHero, LogoPicker } from './Poster';
 import { joinPhone, PhoneField, phoneProblem, splitPhone } from './Phone';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
+import { friendlyDate } from '../dates';
 
 type Tab = 'events' | 'players' | 'squad' | 'members';
 
@@ -131,7 +132,7 @@ function Events({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void }
         {d.tournaments.length === 0 && <p className="small muted">No tournaments yet.</p>}
         {d.tournaments.map((t) => (
           <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>
-            <span style={{ flex: 1 }}><span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span><span className="small muted">{t.startDate} · {t.courts} courts</span></span>
+            <span style={{ flex: 1 }}><span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span><span className="small muted">{friendlyDate(t.startDate)} · {t.courts} courts</span></span>
             <span className={`pill${t.status === 'live' ? ' pill-warn' : t.status === 'done' ? ' pill-ok' : ''}`}>{t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Draft'}</span>
           </button>
         ))}
@@ -402,7 +403,7 @@ export function PlayerView({ playerId, go, onBack }: { playerId: string; go: Go;
                   <span className={`result ${won ? 'result-w' : 'result-l'}`}>{won ? 'W' : 'L'}</span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: 'block' }}>vs {names(side === 'A' ? m.sideB : m.sideA, map)}</span>
-                    <span className="small muted">{m.playedOn} · {STAGE_LABEL[m.stage]} · {scoreLine({ outcome: 'played', games: m.games.map((g) => ({ you: side === 'A' ? g.a : g.b, them: side === 'A' ? g.b : g.a, momentum: 'neither' })) })}</span>
+                    <span className="small muted">{friendlyDate(m.playedOn)} · {STAGE_LABEL[m.stage]} · {scoreLine({ outcome: 'played', games: m.games.map((g) => ({ you: side === 'A' ? g.a : g.b, them: side === 'A' ? g.b : g.a, momentum: 'neither' })) })}</span>
                   </span>
                 </div>
               );

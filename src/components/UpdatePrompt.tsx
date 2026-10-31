@@ -1,7 +1,11 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
-/** Shows "Update ready" when a new version has downloaded; nothing changes until the user taps. */
-export function UpdatePrompt() {
+/**
+ * Shows "Update ready" when a new version has downloaded; nothing changes until the user taps.
+ * `offlineNotice` (default on) also says once that the app works offline. `inline` puts the prompt in the page flow at the top
+ * instead of floating, so it never covers a form or a button (the PaddleQ club app uses both: no offline notice, inline).
+ */
+export function UpdatePrompt({ offlineNotice = true, inline = false }: { offlineNotice?: boolean; inline?: boolean } = {}) {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
@@ -19,7 +23,7 @@ export function UpdatePrompt() {
 
   if (needRefresh) {
     return (
-      <div className="toast" role="status">
+      <div className={inline ? 'toast toast-inline' : 'toast'} role="status">
         <span>A new version of {import.meta.env.VITE_CLUB_APP === "on" ? "PaddleQ" : "PICKLEQ"} is ready.</span>
         <span style={{ display: 'flex', gap: 6 }}>
           <button type="button" className="toast-dismiss" onClick={() => setNeedRefresh(false)}>Later</button>
@@ -32,7 +36,7 @@ export function UpdatePrompt() {
       </div>
     );
   }
-  if (offlineReady) {
+  if (offlineReady && offlineNotice) {
     return (
       <div className="toast" role="status">
         <span>{import.meta.env.VITE_CLUB_APP === "on" ? "PaddleQ" : "PICKLEQ"} now works offline.</span>

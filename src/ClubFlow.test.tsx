@@ -373,6 +373,26 @@ describe('Club mode', () => {
     expect(await screen.findByText('The desk now has its own link and its own desk PIN.')).toBeInTheDocument();
   });
 
+  it('tournament page: ready-for-the-day check, Desk / Referee links / Entries first, Mark as finished last, friendly dates', async () => {
+    const user = userEvent.setup();
+    await openEvent(user);
+    const check = await screen.findByRole('region', { name: 'Ready for the day?' });
+    expect(within(check).getByText(/No referee links yet/)).toBeInTheDocument();
+    expect(within(check).getByText(/Draw made: \d+ matches/)).toBeInTheDocument();
+    const run = screen.getByRole('navigation', { name: 'Run the tournament' });
+    const names = within(run).getAllByRole('button').map((b) => b.textContent);
+    expect(names.slice(0, 3)).toEqual(['Desk view', 'Referee links', 'Entries']);
+    expect(within(run).queryByRole('button', { name: 'Mark as finished' })).not.toBeInTheDocument();
+    const end = screen.getByRole('region', { name: 'When it’s over' });
+    expect(within(end).getByRole('button', { name: 'Mark as finished' })).toBeInTheDocument();
+    // The last thing on the page.
+    const all = screen.getAllByRole('button');
+    expect(all.indexOf(within(end).getByRole('button', { name: 'Mark as finished' }))).toBeGreaterThan(all.indexOf(within(run).getByRole('button', { name: 'Desk view' })));
+    expect(document.body.textContent).not.toMatch(/\b20\d\d-\d\d-\d\d\b/);
+    await user.click(within(check).getByRole('button', { name: 'Open referee links' }));
+    expect(await screen.findByRole('heading', { name: 'Referee links' })).toBeInTheDocument();
+  });
+
   it('a tournament marked finished by mistake can be reopened (with a check before finishing)', async () => {
     const user = userEvent.setup();
     await openEvent(user);
