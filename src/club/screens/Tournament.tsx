@@ -392,6 +392,66 @@ function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; 
     : <div className="match-row">{body}</div>;
 }
 
+const MY_NAME = 'pq-my-name';
+
+/** A player's own matches across every event of the tournament, matched on the name they type (no account).
+ * The next one is shown first with court and time; played ones show the score. */
+export function myMatchesFor(d: PublicTournament, query: string) {
+  const q = query.trim().toLowerCase();
+  if (q.length < 3) return [];
+  const mine = new Map(d.entries.filter((e) => e.names.some((n) => n.toLowerCase().includes(q))).map((e) => [e.id, e]));
+  const name = (id?: string) => (id ? d.entries.find((e) => e.id === id)?.names.join(' / ') ?? 'To be decided' : 'To be decided');
+  const order: Record<string, number> = { live: 0, scheduled: 1, done: 2, void: 3 };
+  return d.matches
+    .filter((m) => (m.entryA && mine.has(m.entryA)) || (m.entryB && mine.has(m.entryB)))
+    .map((m) => {
+      const meA = !!m.entryA && mine.has(m.entryA);
+      const dv = d.divisions.find((x) => x.id === m.divisionId);
+      return {
+        id: m.id, status: m.status, slot: m.slot ?? 999, court: m.court,
+        time: m.slot !== undefined ? slotTime(d.startTime, m.slot, d.slotMinutes) : undefined,
+        me: name(meA ? m.entryA : m.entryB), opponent: name(meA ? m.entryB : m.entryA),
+        event: `${dv?.name ?? ''} · ${m.stage === 'pool' ? `Pool ${poolLetter(m.pool ?? 0)}` : STAGE_LABEL[m.stage]}`,
+        score: m.games.filter((g) => g.a + g.b > 0).map((g) => (meA ? `${g.a}–${g.b}` : `${g.b}–${g.a}`)).join(', '),
+        won: m.winner ? (m.winner === 'A') === meA : undefined,
+      };
+    })
+    .sort((x, y) => (order[x.status] ?? 9) - (order[y.status] ?? 9) || x.slot - y.slot);
+}
+
+function MyMatches({ d }: { d: PublicTournament }) {
+  const [q, setQ] = useState(() => { try { return localStorage.getItem(MY_NAME) ?? ''; } catch { return ''; } });
+  const list = myMatchesFor(d, q);
+  const next = list.find((m) => m.status === 'live' || m.status === 'scheduled');
+  function change(v: string) { setQ(v); try { localStorage.setItem(MY_NAME, v); } catch { /* private mode */ } }
+  return (
+    <section className="card section" aria-label="My matches">
+      <h2 style={{ fontSize: 18 }}>My matches</h2>
+      <input className="input" aria-label="Your name" placeholder="Type your name to see your matches" value={q} onChange={(e) => change(e.target.value)} autoComplete="name" />
+      {q.trim().length >= 3 && list.length === 0 && <p className="small muted" style={{ margin: 0 }}>No matches for “{q.trim()}” yet. Check the spelling, or ask the desk.</p>}
+      {next && (
+        <div className="pq-next" style={{ padding: 16, gap: 6 }} aria-label="Your next match" role="group">
+          <span className="pq-next-kicker">{next.status === 'live' ? 'ON COURT NOW' : 'YOUR NEXT MATCH'}</span>
+          <b style={{ fontSize: 20, color: '#F3EBDD' }}>{next.court ? `Court ${next.court}` : 'Court to be called'}{next.time ? ` · ${next.time}` : ''}</b>
+          <span className="pq-next-meta">vs {next.opponent}</span>
+          <span className="pq-next-meta">{next.event}</span>
+        </div>
+      )}
+      {list.filter((m) => m !== next).map((m) => (
+        <div key={m.id} className="match-row">
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontWeight: 600 }}>vs {m.opponent}</span>
+            <span className="small muted">{m.event}{m.court ? ` · Court ${m.court}` : ''}{m.time && m.status !== 'done' ? ` · ${m.time}` : ''}</span>
+          </span>
+          <span className="small" style={{ textAlign: 'right' }}>
+            {m.status === 'done' ? <><span className={`pill${m.won ? ' pill-ok' : ''}`}>{m.won ? 'Won' : 'Lost'}</span> {m.score}</> : m.status === 'live' ? <span className="pill pill-warn">Live {m.score}</span> : <span className="pill">To play</span>}
+          </span>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 /** Public results: no login, names and scores only. Refreshes every 20 seconds while the tournament is live. */
 export function Results({ slug, onBack }: { slug: string; onBack: () => void }) {
   const [tick, setTick] = useState(0);
@@ -427,6 +487,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
         <>
           <ClubLogo src={logo.data?.logoUrl} club={d.club} />
           <p className="small muted" style={{ margin: 0 }}>{d.club} · {d.startDate}{d.status === 'live' ? ' · Live, updates every 20 seconds' : d.status === 'done' ? ' · Finished' : ''}</p>
+          <MyMatches d={d} />
           {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
           <Segmented label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
           <DivisionBody

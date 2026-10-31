@@ -268,3 +268,21 @@ test.describe('Admin home in the demo (demo club on the phone)', () => {
     await expect(page.getByRole('region', { name: 'PQ Demo Courtyard Club' }).getByRole('img', { name: 'PQ Demo Courtyard Club logo' })).toBeVisible();
   });
 });
+
+test.describe('My matches on the results link (demo club on the phone)', () => {
+  test('a player types their name and sees their next match with court and time; fits a small phone', async ({ page }) => {
+    await page.goto('#/demo');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await page.goto('#/results/pq-demo-central-s8');
+    const mine = page.getByRole('region', { name: 'My matches' });
+    await mine.getByLabel('Your name').fill('zzzq');
+    await expect(mine).toContainText('No matches for');
+    const first = (await page.getByRole('table').first().getByRole('row').nth(1).getByRole('cell').nth(1).innerText()).split('\n')[0].split(' / ')[0].trim();
+    await mine.getByLabel('Your name').fill(first);
+    await expect(mine.getByText(/^vs /).first()).toBeVisible();
+    await expect(mine).not.toContainText('No matches for');
+    await page.setViewportSize({ width: 320, height: 640 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  });
+});

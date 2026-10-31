@@ -4,7 +4,7 @@ import type { AdminClub, AdminTournament } from '../backend';
 import { trend, weekLabel } from '../adminStats';
 import { eventsBackend } from '../index';
 import { ROLE_LABEL } from '../types';
-import { DemoNote, errorText, Header, Status, useLoad } from './common';
+import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { BigLogo } from './Poster';
 import { ListingReviews } from './Events';
 
@@ -296,6 +296,7 @@ function Tournaments({ go }: { go: Go }) {
                 <div className="meta">
                   {t.status !== 'draft' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setConfirm(t.id)}>{t.status === 'done' ? 'Reopen' : 'Mark finished'}</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('results', t.slug)}>Results</button>}
+                  {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: schedule, scores and results`, appLink(`#/results/${t.slug}`)), 'Results link shared or copied: send it to the players')}>Share results</button>}
                   {t.listing !== 'none' && t.listingStatus === 'approved' && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('event', t.slug)}>Event page</button>}
                 </div>
               )}
