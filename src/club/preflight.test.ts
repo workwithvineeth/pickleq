@@ -20,7 +20,7 @@ describe('organiser pre-flight check', () => {
     const r = preflight({ ...base, accepted: { Singles: 16, Doubles: 16 } });
     const finish = r.find((x) => x.key === 'finish');
     expect(finish?.ok).toBe(false);
-    expect(finish?.text).toMatch(/240 matches; the last one ends about .* the next day\. Choose a faster format/);
+    expect(finish?.text).toMatch(/The last match ends about .* the next day\. That's late: choose a faster format \(pools with knockouts\) at the draw\./);
   });
 
   it('pools of 4 with top 2 to the knockouts finish the same evening', () => {

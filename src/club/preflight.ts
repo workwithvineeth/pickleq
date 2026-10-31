@@ -62,7 +62,7 @@ export function preflight(x: PreflightInput): PreflightItem[] {
     const est = estimateDay(events, t.courts, t.slotMinutes, t.startTime);
     const latest = x.latest ?? 22 * 60;
     const late = est.endMinutes > latest;
-    out.push({ key: 'finish', ok: !late, text: `${est.matches} matches; the last one ends about ${clockText(est.endMinutes)}${late ? '. Choose a faster format (pools with knockouts) before the draw.' : ''}` });
+    out.push({ key: 'finish', ok: !late, text: `The last match ends about ${clockText(est.endMinutes)}${late ? `. That's late: choose a faster format (pools with knockouts)${drawn ? '' : ' at the draw'}.` : ''}` });
   } else {
     out.push({ key: 'finish', ok: false, text: 'Finish time: shown once there are entries' });
   }
