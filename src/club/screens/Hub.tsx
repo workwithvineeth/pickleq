@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Field } from '../../components/Controls';
 import type { NewMatch } from '../../db/matches';
 import type { Go } from '../../navigation';
-import { clubServerConfig, isClubApp, setClubMode } from '../config';
+import { clubMode, clubServerConfig, isClubApp, setClubMode } from '../config';
 import { backend, demoBackend, serverBackend, takeReturn } from '../index';
 import { importClubMatches, pendingClubMatches } from '../personal';
 import { emailOk, MIN_PASSWORD, passwordProblem } from '../authText';
@@ -265,10 +265,38 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
 }
 
 /** The demo club on this phone (opened from the admin dashboard): made-up players, nothing sent anywhere. */
+/**
+ * The demo is for PaddleQ admins (Vineeth's decision, 31 Oct 2026): Admin → Overview → Open the demo club. Anyone else opening
+ * #/demo is told so. It's a product choice, not a security line: the demo only ever lives on the phone that opens it. The test robot
+ * (and local test builds with no club server) may open it; the robot sets a switch in the phone's storage.
+ */
+async function demoAllowed(): Promise<boolean> {
+  const s = serverBackend();
+  if (!s || !isClubApp()) return true;
+  try { if (localStorage.getItem('pq-demo-robot') === '1') return true; } catch { /* private mode */ }
+  if (clubMode() === 'demo' && (await demoBackend().currentUser())) return true;
+  return s.isPlatformAdmin().catch(() => false);
+}
+
 export function DemoStart({ go, onBack }: { go: Go; onBack: () => void }) {
+  const allowed = useLoad(demoAllowed, []);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  if (allowed.data === false) {
+    return (
+      <main className="screen" aria-labelledby="demo-title">
+        <Header id="demo-title" title="Demo club" onBack={onBack} />
+        <section className="card section" aria-label="Demo club">
+          <p style={{ margin: 0 }}>The demo club is for PaddleQ admins.</p>
+          <p className="small muted" style={{ margin: 0 }}>Running a tournament? Sign in and create your club; PaddleQ will help you set up your first event.</p>
+          <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in</button>
+          <button type="button" className="btn btn-outline" onClick={() => go('events')}>See events</button>
+        </section>
+      </main>
+    );
+  }
+  if (!allowed.data) return <main className="screen" aria-labelledby="demo-title"><Header id="demo-title" title="Demo club" onBack={onBack} /><Status error={allowed.error} loading /></main>;
   async function start() {
     setBusy(true);
     try { const id = await demoBackend().start(name || 'You'); setClubMode('demo'); go('club-view', id); }

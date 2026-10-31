@@ -228,6 +228,22 @@ test.describe('Sign-in pages (no account needed)', () => {
     await expect(page.getByRole('heading', { name: 'PaddleQ admin' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
+
+  test('the demo is for PaddleQ admins: a visitor opening #/demo is told so', async ({ page }) => {
+    await page.goto('#/events');
+    await page.evaluate(() => localStorage.removeItem('pq-demo-robot'));
+    await page.goto('#/demo');
+    await expect(page.getByText('The demo club is for PaddleQ admins.')).toBeVisible();
+    await expect(page.getByLabel('Your name in the demo')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+  });
+
+  test('no "works offline" popup covers the sign-in form', async ({ page }) => {
+    await page.goto('#/club-signin');
+    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByText(/now works offline/)).toHaveCount(0);
+    await expect(page.locator('.toast:not(.toast-inline)')).toHaveCount(0);
+  });
 });
 
 test.describe('Club logos and the new demo events (demo club on the phone)', () => {

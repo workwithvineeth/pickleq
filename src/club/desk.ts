@@ -47,7 +47,7 @@ export async function openDesk(token: string, pin: string): Promise<{ src: ClubB
       first ??= e;
       // An unknown link (or no connection to the server) moves on to the next place; a wrong PIN, lockout or finished
       // tournament is the answer.
-      if (!/isn’t valid|No connection/.test(e instanceof Error ? e.message : String(e))) throw e;
+      if (!/isn['’]t valid|No connection/.test(e instanceof Error ? e.message : String(e))) throw e;
     }
   }
   throw first;

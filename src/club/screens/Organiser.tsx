@@ -125,7 +125,7 @@ async function openLink(token: string, pin: string): Promise<{ src: ClubBackend;
     catch (e) {
       first ??= e;
       // Only an unknown link moves on to the next place; a wrong PIN or lockout is the answer.
-      if (!/isn’t valid/.test(errorText(e))) throw e;
+      if (!/isn['’]t valid/.test(errorText(e))) throw e;
     }
   }
   throw first;
