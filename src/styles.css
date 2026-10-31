@@ -451,3 +451,30 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-checks li.todo .pq-check-mark { background: var(--warn-bg); color: var(--warn-fg); }
 .pq-check-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; overflow-wrap: anywhere; }
 .pq-check-text .link-btn { min-height: 44px; padding: 0; }
+
+/* ---------- PaddleQ design audit (31 Oct 2026): brand colours and tap targets, club app only ---------- */
+/* Brand: no leftover green. "Good" states (saved, Won, Paid, Through) are maroon tints; W is a solid maroon chip, L stays grey. */
+.pq-brand { --win-bg: #F6E6E8; --win-fg: #7A1F2B; }
+@media (prefers-color-scheme: dark) { .pq-brand { --win-bg: #4A2A2F; --win-fg: #E7AAB2; } }
+.pq-brand .result-w { background: var(--accent); color: var(--on-accent); }
+/* Errors use the brand's error red (field errors only), brighter than maroon so they never look like branding. */
+.pq-brand .msg-bad { color: #C0392B; }
+@media (prefers-color-scheme: dark) { .pq-brand .msg-bad { color: #F2B8B5; } }
+/* Every tap target at least 44 px. */
+.pq-brand .seg button { min-height: 44px; }
+.pq-brand .chip { min-height: 44px; min-width: 44px; }
+.pq-brand .link-btn, .pq-brand .pq-text-link { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; }
+.pq-brand input[type='search'] { -webkit-appearance: none; appearance: none; min-height: 44px; }
+.pq-brand a[href^='tel:'], .pq-brand a[href^='mailto:'] { display: inline-flex; align-items: center; min-height: 44px; }
+.pq-brand .check-row { min-height: 44px; align-items: center; }
+/* Live scorer (brand guide): team A maroon with cream numerals, team B cream with maroon numerals; gold strip for golden and game point. */
+.pq-brand .score-tap-a { background: #7A1F2B; border-color: #7A1F2B; color: #F3EBDD; }
+.pq-brand .score-tap-a .big, .pq-brand .score-tap-a .muted { color: #F3EBDD; }
+.pq-brand .score-tap-a:active { background: #5E1621; }
+.pq-brand .score-tap-b { background: #F3EBDD; border-color: #7A1F2B; color: #7A1F2B; }
+.pq-brand .score-tap-b .big { color: #7A1F2B; }
+.pq-brand .score-tap-b .muted { color: #6B4E45; }
+.pq-brand .score-tap-b:active { background: #EADFD0; }
+.pq-brand .golden-banner { background: #B8862B; color: #2A1E06; }
+.pq-brand .pq-gamepoint { background: #F5E3C4; color: #6B4A12; border-left: 4px solid #B8862B; border-radius: 8px; padding: 6px 10px; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .pq-brand .pq-gamepoint { background: #4A3A1C; color: #F0D49B; } }
