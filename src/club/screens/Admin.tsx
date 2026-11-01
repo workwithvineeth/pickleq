@@ -8,6 +8,7 @@ import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from
 import { deskLink, PinPair } from './Access';
 import { BigLogo } from './Poster';
 import { ApprovalQueue } from './Approvals';
+import { resultsDuprLink } from './ResultsDupr';
 import { TestimonialsAdmin } from './Testimonials';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 
@@ -274,6 +275,7 @@ function Tournaments({ go }: { go: Go }) {
                   {t.status !== 'draft' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setConfirm(t.id)}>{t.status === 'done' ? 'Reopen' : 'Mark finished'}</button>}
                   {t.status !== 'done' && t.deskToken && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: desk`, deskLink(t.deskToken as string)), 'Desk link shared or copied: send it to the desk team (with the desk PIN)')}>Share desk link</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('results', t.slug)}>Results</button>}
+                  {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: results by group. Please add the missing DUPR ratings`, resultsDuprLink(t.id)), 'Results link shared or copied: the organiser opens it signed in, adds missing DUPR ratings and can download it')}>Share results</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: schedule, scores and results`, appLink(`#/results/${t.slug}`)), 'Results link shared or copied: send it to the players')}>Share results</button>}
                   {t.listing !== 'none' && t.listingStatus === 'approved' && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('event', t.slug)}>Event page</button>}
                 </div>

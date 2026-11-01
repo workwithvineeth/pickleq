@@ -478,3 +478,5 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-brand .golden-banner { background: #B8862B; color: #2A1E06; }
 .pq-brand .pq-gamepoint { background: #F5E3C4; color: #6B4A12; border-left: 4px solid #B8862B; border-radius: 8px; padding: 6px 10px; font-weight: 700; }
 @media (prefers-color-scheme: dark) { .pq-brand .pq-gamepoint { background: #4A3A1C; color: #F0D49B; } }
+
+@media print { .no-print, nav { display: none !important; } .pq-hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

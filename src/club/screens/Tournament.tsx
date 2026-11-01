@@ -265,6 +265,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>{t.drawnAt ? 'Entries inbox' : 'Entries inbox and draw'}</button>}
           <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>{t.entryMode === 'registration' ? 'Entries on the day' : 'Entries'}</button>
           {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>}
+          {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-results-dupr', t.id)}>Results and DUPR</button>}
         </nav>
       )}
       {staff && b && <ListingCard b={b} t={t} role={d.role} onChanged={state.reload} />}
