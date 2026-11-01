@@ -357,17 +357,20 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<
     const pools = [...new Set(entries.map((e) => e.pool ?? 1))].sort((a, b) => a - b);
     const poolMatches = matches.filter((m) => m.stage === 'pool');
     const q = (division.extra ?? 0) > 0 ? poolQualifiers(division, entries, poolMatches) : null;
-    const bestIds = new Set(q ? q.runnersUp.slice(0, q.extra).map((r) => r.entryId) : []);
+    // "Through" only once a pool's matches are all played; before that the table is just the current order.
+    const poolDone = (p: number) => { const ms = poolMatches.filter((m) => (m.pool ?? 1) === p && m.status !== 'void'); return ms.length > 0 && ms.every((m) => m.status === 'done'); };
+    const allDone = poolMatches.length > 0 && poolMatches.every((m) => m.status === 'done' || m.status === 'void');
+    const bestIds = new Set(q && allDone ? q.runnersUp.slice(0, q.extra).map((r) => r.entryId) : []);
     return (
       <section className="section" aria-label="Pools">
         {pools.map((p) => {
           const ids = entries.filter((e) => (e.pool ?? 1) === p).map((e) => e.id);
-          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={(id) => label(emap.get(id))} />;
+          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => poolDone(p) && r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={(id) => label(emap.get(id))} />;
         })}
         {q && q.runnersUp.length > 0 && (
           <div className="card section">
             <h3 style={{ fontSize: 16 }}>Best {division.advance === 1 ? 'runners-up' : `${division.advance + 1}-placed`} ({q.extra} go through)</h3>
-            <PoolTable title={`Best ${division.advance === 1 ? 'runners-up' : 'next-placed'}`} bare rows={q.runnersUp.map((r, i) => ({ ...r, rank: i + 1 }))} through={(r) => r.rank <= q.extra} label={(id) => `${label(emap.get(id))} (${poolLetter(emap.get(id)?.pool)})`} />
+            <PoolTable title={`Best ${division.advance === 1 ? 'runners-up' : 'next-placed'}`} bare rows={q.runnersUp.map((r, i) => ({ ...r, rank: i + 1 }))} through={(r) => allDone && r.rank <= q.extra} label={(id) => `${label(emap.get(id))} (${poolLetter(emap.get(id)?.pool)})`} />
             <p className="small muted" style={{ margin: 0 }}>{RUNNERS_UP_TEXT}</p>
           </div>
         )}
