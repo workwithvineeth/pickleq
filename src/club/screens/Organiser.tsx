@@ -143,6 +143,9 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   // One shared link for every referee: each picks their court once on this phone.
   const pickKey = `pq-court-pick:${token}`;
   const [pick, setPickState] = useState<number | null>(() => { try { const v = Number(localStorage.getItem(pickKey)); return v > 0 ? v : null; } catch { return null; } });
+  const evKey = `pq-court-event:${token}`;
+  const [ev, setEvState] = useState<string>(() => { try { return localStorage.getItem(evKey) ?? ''; } catch { return ''; } });
+  const setEv = (v: string) => { setEvState(v); try { if (v) localStorage.setItem(evKey, v); else localStorage.removeItem(evKey); } catch { /* private mode */ } };
   const setPick = (c: number | null) => { setPickState(c); try { if (c) localStorage.setItem(pickKey, String(c)); else localStorage.removeItem(pickKey); } catch { /* private mode */ } };
   const setPin = (p: string) => { setPinState(p); try { if (p) sessionStorage.setItem(pinKey(token), p); else sessionStorage.removeItem(pinKey(token)); } catch { /* private mode */ } };
 
@@ -219,7 +222,10 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
 
   const anyCourt = !view.court;
   const courts = Array.from({ length: Math.max(1, t.courts ?? 1) }, (_, i) => i + 1);
-  const mine = anyCourt && pick ? view.matches.filter((m) => m.court === pick) : view.matches;
+  const onCourt = anyCourt && pick ? view.matches.filter((m) => m.court === pick) : view.matches;
+  const events = [...new Set(onCourt.map((m) => m.division).filter((x): x is string => !!x))];
+  const evNow = events.includes(ev) ? ev : '';
+  const mine = evNow ? onCourt.filter((m) => m.division === evNow) : onCourt;
   const live = mine.filter((m) => m.status === 'live');
   const waiting = mine.filter((m) => m.status === 'scheduled');
   const done = mine.filter((m) => m.status === 'done').reverse();
@@ -249,6 +255,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
       <Header id="court-title" title={anyCourt && pick ? `Court ${pick}` : title} onBack={onBack} />
       <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}{t.status === 'draft' ? ' · not started yet' : ''}</p>
       {anyCourt && pick && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setPick(null)}>Change court</button>}
+      {events.length > 1 && <Segmented label="Which event are you refereeing?" value={evNow} options={[{ value: '', label: 'All' }, ...events.map((x) => ({ value: x, label: /double/i.test(x) ? 'Doubles' : /single/i.test(x) ? 'Singles' : x }))]} onChange={setEv} />}
       {err && <div role="status" className="msg msg-bad">{err}</div>}
       {live.length > 0 && <section className="section" aria-label="Playing now"><div className="label">Playing now</div>{live.map((m) => row(m, 'Continue'))}</section>}
       <section className="section" aria-label="Up next">

@@ -542,10 +542,11 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
         <>
           <ClubLogo src={logo.data?.logoUrl} club={d.club} />
           <p className="small muted" style={{ margin: 0 }}>{d.club} · {friendlyDate(d.startDate)}{d.status === 'live' ? ' · Live, updates every 20 seconds' : d.status === 'done' ? ' · Finished' : ''}</p>
+          <OnCourtNow d={d} />
           <MyMatches d={d} />
           {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
           <Segmented label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
-          <DivisionBody
+          {view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody
             d={{
               divisions: d.divisions.map((x) => ({ ...x, tournamentId: '', clubId: '', sort: 0 })),
               entries: d.entries.map((e) => ({ ...e, clubId: '', playerIds: e.names })),
@@ -556,10 +557,81 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
               tournament: { startTime: d.startTime, slotMinutes: d.slotMinutes },
             }}
             divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.join(' / ') : 'To be decided')}
-          />
+          />}
           <p className="small muted" style={{ margin: 0 }}>Live scores by <a href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>PaddleQ</a> · run your club’s tournament at paddleq.in</p>
         </>
       )}
     </main>
   );
 }
+
+/** Public results: what's on each court right now, with the live score. */
+function OnCourtNow({ d }: { d: PublicTournament }) {
+  if (d.status !== 'live') return null;
+  const names = new Map(d.entries.map((e) => [e.id, e.names.join(' / ')]));
+  const divs = new Map(d.divisions.map((x) => [x.id, x]));
+  const courts = [...new Set(d.matches.map((m) => m.court).filter((c): c is number => !!c))].sort((a, b) => a - b);
+  if (!courts.length) return null;
+  return (
+    <section className="card section" aria-label="On court now">
+      <h2 style={{ fontSize: 18, margin: 0 }}>On court now</h2>
+      {courts.map((c) => {
+        const m = d.matches.find((x) => x.court === c && x.status === 'live');
+        const dv = m ? divs.get(m.divisionId ?? '') : undefined;
+        const g = m?.games[m.games.length - 1];
+        return (
+          <div key={c} className="match-row" aria-label={`Court ${c}`}>
+            <span style={{ fontWeight: 700, minWidth: 64 }}>Court {c}</span>
+            {m ? (
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block' }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
+                <span style={{ display: 'block' }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
+                <span className="small muted">{[dv?.kind === 'doubles' ? 'Doubles' : 'Singles', m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].join(' · ')}</span>
+              </span>
+            ) : <span className="small muted" style={{ flex: 1 }}>Waiting for the next match</span>}
+            {m && <span className="pill pill-warn" style={{ fontSize: 16 }}>{g ? `${g.a}–${g.b}` : 'Live'}</span>}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+/** Public results, Matches tab: each group's matches together (live first, then to play, then played), then the knockouts. */
+function GroupedMatches({ d, divisionId }: { d: PublicTournament; divisionId: string }) {
+  const names = new Map(d.entries.map((e) => [e.id, e.names.join(' / ')]));
+  const ms = d.matches.filter((m) => m.divisionId === divisionId && m.status !== 'void');
+  const order = (m: (typeof ms)[number]) => (m.status === 'live' ? 0 : m.status === 'scheduled' ? 1 : 2);
+  const sort = (a: (typeof ms)[number], b: (typeof ms)[number]) => order(a) - order(b) || (a.slot ?? 0) - (b.slot ?? 0);
+  const pools = [...new Set(ms.filter((m) => m.stage === 'pool').map((m) => m.pool ?? 1))].sort((a, b) => a - b);
+  const stages = KNOCKOUT_ORDER.filter((st) => ms.some((m) => m.stage === st));
+  const row = (m: (typeof ms)[number]) => {
+    const score = m.games.map((g) => `${g.a}–${g.b}`).join(', ');
+    return (
+      <div key={m.id} className="match-row">
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontWeight: m.winner === 'A' ? 700 : 400 }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
+          <span style={{ display: 'block', fontWeight: m.winner === 'B' ? 700 : 400 }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
+          {m.court ? <span className="small muted">Court {m.court}</span> : null}
+        </span>
+        {m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : m.status === 'done' ? <span className="small" style={{ fontWeight: 600 }}>{score || 'Walkover'}</span> : <span className="pill">To play</span>}
+      </div>
+    );
+  };
+  const block = (title: string, list: typeof ms) => {
+    const done = list.filter((m) => m.status === 'done').length;
+    return (
+      <section key={title} className="card section" aria-label={title}>
+        <h3 style={{ fontSize: 16, margin: 0 }}>{title} <span className="small muted" style={{ fontWeight: 400 }}>· {done} of {list.length} played</span></h3>
+        {[...list].sort(sort).map(row)}
+      </section>
+    );
+  };
+  return (
+    <>
+      {pools.map((p) => block(`Pool ${poolLetter(p)}`, ms.filter((m) => m.stage === 'pool' && (m.pool ?? 1) === p)))}
+      {stages.map((st) => block(ROUND_LABEL[st as KnockoutStage], ms.filter((m) => m.stage === st)))}
+    </>
+  );
+}
+const KNOCKOUT_ORDER = ['r32', 'r16', 'qf', 'sf', 'final'] as const;
