@@ -230,8 +230,12 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   const evNow = events.includes(ev) ? ev : '';
   // A group can be run on any court: once the referee picks a group, show all of that group's matches, whichever court they were planned for.
   const groups = evNow ? [...new Set(view.matches.filter((m) => m.division === evNow && m.stage === 'pool').map((m) => String(m.pool ?? 1)))].sort() : [];
-  const grpNow = groups.includes(grp) ? grp : '';
-  const mine = evNow && grpNow ? view.matches.filter((m) => m.division === evNow && m.stage === 'pool' && String(m.pool ?? 1) === grpNow)
+  const hasKo = !!evNow && view.matches.some((m) => m.division === evNow && m.stage !== 'pool');
+  const grpOptions = [...groups, ...(hasKo ? ['ko'] : [])];
+  // With an event chosen, the referee always works from a group (or the knockouts); the first one is chosen until they pick.
+  const grpNow = grpOptions.includes(grp) ? grp : (grpOptions[0] ?? '');
+  const mine = evNow && grpNow === 'ko' ? view.matches.filter((m) => m.division === evNow && m.stage !== 'pool')
+    : evNow && grpNow ? view.matches.filter((m) => m.division === evNow && m.stage === 'pool' && String(m.pool ?? 1) === grpNow)
     : evNow ? onCourt.filter((m) => m.division === evNow) : onCourt;
   const live = mine.filter((m) => m.status === 'live');
   const waiting = mine.filter((m) => m.status === 'scheduled');
@@ -263,7 +267,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
       <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}{t.status === 'draft' ? ' · not started yet' : ''}</p>
       {anyCourt && pick && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setPick(null)}>Change court</button>}
       {events.length > 1 && <Segmented label="Which event are you refereeing?" value={evNow} options={[{ value: '', label: 'All' }, ...events.map((x) => ({ value: x, label: /double/i.test(x) ? 'Doubles' : /single/i.test(x) ? 'Singles' : x }))]} onChange={(v) => { setEv(v); setGrp(''); }} />}
-      {groups.length > 1 && <Segmented label="Which group?" value={grpNow} options={[{ value: '', label: anyCourt && pick ? `Court ${pick}` : 'All' }, ...groups.map((g) => ({ value: g, label: `Group ${poolLetter(Number(g))}` }))]} onChange={setGrp} />}
+      {grpOptions.length > 1 && <Segmented label="Which group?" value={grpNow} options={grpOptions.map((g) => ({ value: g, label: g === 'ko' ? 'Knockouts' : `Group ${poolLetter(Number(g))}` }))} onChange={setGrp} />}
       {err && <div role="status" className="msg msg-bad">{err}</div>}
       {live.length > 0 && <section className="section" aria-label="Playing now"><div className="label">Playing now</div>{live.map((m) => row(m, 'Continue'))}</section>}
       <section className="section" aria-label="Up next">
