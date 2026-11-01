@@ -1,7 +1,8 @@
 import CSV from '../../e2e/fixtures/google-form.csv?raw';
+import SPLIT from '../../e2e/fixtures/google-form-split.csv?raw';
 import { describe, expect, it } from 'vitest';
 import { DemoBackend } from './demo';
-import { buildImport, guessMapping, importSummary, parseTable } from './importSheet';
+import { buildImport, guessColumns, guessMapping, importSummary, parseTable } from './importSheet';
 import type { Division } from './types';
 
 const F = { pointsTo: 11 as const, bestOf: 1 as const, scoring: 'sideout' as const, golden: true };
@@ -10,6 +11,25 @@ const divs = [div('Singles', 'singles'), div('Doubles', 'doubles', true)];
 const settings = { singles: 'Singles', doubles: 'Doubles', adults: true, status: 'accepted' as const, payment: 'unpaid' as const };
 
 describe('Google Form import', () => {
+  it('reads a form with separate singles and doubles questions (PLAYER 1 / PLAYER 2, "phone 2", "phone 3")', () => {
+    const rows = parseTable(SPLIT);
+    const { map, alt } = guessColumns(rows[0]);
+    expect(map).toMatchObject({ kind: 1, name: 2, duprId: 3, dupr: 4, phone: 5, partnerName: 10, partnerPhone: 11, partnerDuprId: 12, partnerDupr: 13, paid: 14 });
+    expect(alt).toMatchObject({ name: 6, phone: 7, duprId: 8, dupr: 9, paid: 15 });
+    const out = buildImport(rows, map, divs, settings, [], alt);
+    const by = (row: number) => out.find((r) => r.row === row)!;
+    expect(by(2)).toMatchObject({ divisionId: 'Singles', payment: 'paid', players: [{ name: 'Robot Arjun', phone: '9848000001', duprId: 'RBT001', dupr: 3.2 }] });
+    expect(by(2).problem).toBeUndefined();
+    expect(by(3).problem).toBeUndefined(); // 3.683 + 3.262: team average under 3.5
+    expect(by(3)).toMatchObject({ divisionId: 'Doubles', payment: 'paid', players: [{ name: 'Robot Arjun', phone: '9848000002', dupr: 3.683 }, { name: 'Robot Bhavna', phone: '98480 00003', duprId: 'RBT002' }] });
+    expect(by(4)).toMatchObject({ payment: 'paid' }); // a UTR number in the payment column
+    expect(by(5).problem).toMatch(/average|cap/); // 3.9 + 3.4 is over the team average
+    expect(by(5).payment).toBe('unpaid');
+  });
+  it('a plain form still maps a later DUPR column to the player, not the partner', () => {
+    const { map } = guessColumns(['Name', 'Phone', 'Partner name', 'Partner phone', 'DUPR']);
+    expect(map).toMatchObject({ name: 0, phone: 1, partnerName: 2, partnerPhone: 3, dupr: 4 });
+  });
   it('parses CSV with quotes, and tab-separated rows pasted from Sheets', () => {
     const rows = parseTable(CSV);
     expect(rows).toHaveLength(10);

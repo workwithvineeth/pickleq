@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import type { ClubBackend, ImportResult } from '../backend';
-import { buildImport, FIELD_LABEL, FIELDS, guessMapping, importSummary, parseTable, type Field as SheetField, type ImportSettings, type Mapping } from '../importSheet';
+import { buildImport, FIELD_LABEL, FIELDS, guessColumns, guessMapping, importSummary, parseTable, type Field as SheetField, type ImportSettings, type Mapping } from '../importSheet';
 import type { ClubTournament, Division, Registration } from '../types';
 import { errorText } from './common';
 
@@ -21,7 +21,9 @@ export function ImportEntries({ b, t, divisions, regs, onDone, onClose }: { b: C
   const rows = useMemo(() => parseTable(text), [text]);
   const header = rows[0] ?? [];
   const mapping = map ?? (header.length ? guessMapping(header) : null);
-  const preview = useMemo(() => (mapping && rows.length > 1 ? buildImport(rows, mapping, divisions, s, regs) : []), [rows, mapping, divisions, s, regs]);
+  // A second set of columns (e.g. the form's doubles questions) fills a row's empty cells.
+  const alt = useMemo(() => (header.length ? guessColumns(header).alt : {}), [header]);
+  const preview = useMemo(() => (mapping && rows.length > 1 ? buildImport(rows, mapping, divisions, s, regs, alt) : []), [rows, mapping, divisions, s, regs, alt]);
   const sum = importSummary(preview);
   const noAges = mapping ? mapping.age === -1 : true;
 

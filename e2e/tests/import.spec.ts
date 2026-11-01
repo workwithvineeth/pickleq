@@ -6,6 +6,7 @@ import { expect, test } from '@playwright/test';
  * The sample CSV is shaped like a Google Form export: timestamp and email columns first.
  */
 const CSV = fileURLToPath(new URL('../fixtures/google-form.csv', import.meta.url));
+const SPLIT = fileURLToPath(new URL('../fixtures/google-form-split.csv', import.meta.url));
 
 test.describe('PaddleQ app', () => {
   test('has its own tabs, and no personal-app tabs', async ({ page }) => {
@@ -31,6 +32,39 @@ test.describe('PaddleQ app', () => {
 });
 
 test.describe('Google Form import to draw (demo club on the phone)', () => {
+  test('imports a form with separate singles and doubles questions (PLAYER 1 / PLAYER 2), amounts count as paid', async ({ page }) => {
+    await page.goto('#/demo');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Tournaments' }).click();
+    await page.getByRole('button', { name: 'New tournament at PQ Demo Club' }).click();
+    await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
+    await page.getByLabel('Tournament name').fill('Robot Split Form Cup');
+    await page.getByLabel('City').fill('Hyderabad');
+    await page.getByLabel('Venue').fill('Robot Courts');
+    await page.getByLabel('Event 1 name').fill('Singles 3.5');
+    await page.getByLabel('Event 1 DUPR cap').fill('3.5');
+    await page.getByRole('button', { name: 'Add another event' }).click();
+    await page.getByLabel('Event 2 name').fill('Doubles 3.5');
+    await page.getByRole('group', { name: 'Event 2 type' }).getByRole('button', { name: 'Doubles' }).click();
+    await page.getByLabel('Event 2 DUPR cap').fill('3.5');
+    await page.getByRole('group', { name: 'Event 2 DUPR cap is for' }).getByRole('button', { name: 'Team average' }).click();
+    await page.getByLabel('Show it on the PaddleQ events board').uncheck();
+    await page.getByRole('button', { name: 'Create and open entries' }).click();
+    await expect(page.getByRole('heading', { name: 'Robot Split Form Cup' })).toBeVisible();
+    await page.getByRole('button', { name: 'Entries inbox and draw' }).click();
+    await page.getByRole('button', { name: 'Import entries' }).click();
+    const imp = page.getByRole('region', { name: 'Import entries' });
+    await imp.getByLabel('Choose CSV file').setInputFiles(SPLIT);
+    await imp.getByLabel('Every player is 18 or over (the sheet has no ages)').check();
+    const preview = imp.getByRole('region', { name: 'Import preview' });
+    await expect(preview.getByText(/Row 5 .*(cap|average)/)).toBeVisible();
+    await expect(preview.getByText(/No player name/)).toHaveCount(0);
+    await imp.getByRole('button', { name: 'Import 3 entries' }).click();
+    await expect(imp.getByRole('status')).toContainText('Imported 3 entries');
+  });
+
   test('imports the sheet once, flags problems, re-import adds nobody, then a knockout draw with a time estimate', async ({ page }) => {
     await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');

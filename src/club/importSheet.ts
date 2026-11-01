@@ -39,21 +39,35 @@ const isIdCol = (h: string) => /\bid\b|dupr\s*(id|number|no\b)|player\s*id/.test
 
 /** Guesses which column holds what, from the headings. Timestamp and email columns are ignored. */
 export function guessMapping(header: string[]): Mapping {
+  return guessColumns(header).map;
+}
+
+/**
+ * The full guess: the main column for each field, plus a second column for the same field when the form asks for it
+ * twice. Google Forms often has one set of questions for singles and another for doubles ("FULL NAME" then
+ * "PLAYER 1 (YOU) FULL NAME", "WhatsApp / phone" then "WhatsApp / phone 2"); a row uses the second column when its
+ * main one is empty. Numbered repeats ("phone 3") that follow a partner heading belong to the partner.
+ */
+export function guessColumns(header: string[]): { map: Mapping; alt: Partial<Mapping> } {
   const m = Object.fromEntries(FIELDS.map((f) => [f, -1])) as Mapping;
-  const take = (f: Field, i: number) => { if (m[f] === -1) m[f] = i; };
+  const alt: Partial<Mapping> = {};
+  const take = (f: Field, i: number) => { if (m[f] === -1) m[f] = i; else if (alt[f] === undefined) alt[f] = i; };
+  let side: 'player' | 'partner' = 'player';
   header.forEach((raw, i) => {
-    const h = raw.toLowerCase();
+    const h = raw.toLowerCase().replace(/\s+/g, ' ').trim();
     if (/time\s*stamp|^email|e-mail|email address/.test(h)) return;
-    const partner = isPartner(h);
+    if (isPartner(h)) side = 'partner';
+    else if (/player\s*(1|one)\b|\(you\)|\byour?\b/.test(h)) side = 'player';
+    const partner = isPartner(h) || (side === 'partner' && /\s[2-9]$/.test(h));
     if (/singles|doubles|are you playing|category|event|format/.test(h) && !/name|phone|dupr/.test(h)) return take('kind', i);
     if (/dupr|rating/.test(h)) return take(isIdCol(h) ? (partner ? 'partnerDuprId' : 'duprId') : (partner ? 'partnerDupr' : 'dupr'), i);
     if (/phone|mobile|whats\s*app|contact\s*(no|number)|\bcell\b/.test(h)) return take(partner ? 'partnerPhone' : 'phone', i);
     if (/gender|\bsex\b/.test(h)) return take(partner ? 'partnerGender' : 'gender', i);
     if (/\bage\b|years old/.test(h)) return take(partner ? 'partnerAge' : 'age', i);
-    if (/paid|payment|transaction|utr/.test(h)) return take('paid', i);
+    if (/paid|paym?e?n?t|transaction|utr|amount|\bfee/.test(h)) return take('paid', i);
     if (/name/.test(h)) return take(partner ? 'partnerName' : 'name', i);
   });
-  return m;
+  return { map: m, alt };
 }
 
 export interface ImportSettings {
@@ -85,15 +99,17 @@ const gender = (v: string): PlayerGender | '' => {
   return x ? 'x' : '';
 };
 const num = (v: string) => { const m = v.replace(',', '.').match(/\d+(\.\d+)?/); return m ? Number(m[0]) : undefined; };
-const phone = (v: string) => v.replace(/[^\d+ -]/g, '').trim();
+// Sheets saved from Excel can turn phone numbers into "9876543210.0".
+const phone = (v: string) => v.replace(/\.0+$/, '').replace(/[^\d+ -]/g, '').trim();
 
 /**
  * Turns sheet rows into entries for the chosen events, flagging problems: no event, missing partner, rule breaks
  * (DUPR cap, gender, age), the same phone twice in the sheet, and people already entered (skipped).
  */
-export function buildImport(rows: string[][], map: Mapping, divisions: Division[], s: ImportSettings, existing: Registration[]): ImportRow[] {
+export function buildImport(rows: string[][], map: Mapping, divisions: Division[], s: ImportSettings, existing: Registration[], alt: Partial<Mapping> = {}): ImportRow[] {
   const body = rows.slice(1);
-  const cell = (r: string[], f: Field) => (map[f] >= 0 ? (r[map[f]] ?? '').trim() : '');
+  const one = (r: string[], i: number | undefined) => (i !== undefined && i >= 0 ? (r[i] ?? '').trim() : '');
+  const cell = (r: string[], f: Field) => one(r, map[f]) || one(r, alt[f]);
   const seen = new Map<string, number>();
   for (const x of existing) for (const p of x.players) seen.set(`${x.divisionId}|${personKey(p)}`, -1);
   return body.map((r, i): ImportRow => {
@@ -117,7 +133,9 @@ export function buildImport(rows: string[][], map: Mapping, divisions: Division[
     const players = [person('')];
     if (isDoubles || div?.kind === 'doubles') players.push(person('partner'));
     const paidCell = cell(r, 'paid').toLowerCase();
-    const payment: ImportSettings['payment'] = map.paid >= 0 && /^(y|yes|paid|done|✓|true)/.test(paidCell) ? 'paid' : s.payment;
+    // "Yes", an amount ("699"), a UTR number or a screenshot link all mean paid; "no", "0" or blank don't.
+    const paidSays = /^(y|yes|paid|done|✓|true)/.test(paidCell) || (/\d|https?:/.test(paidCell) && !/^(n|no|not|unpaid|pending|0+(\.0+)?)$/.test(paidCell));
+    const payment: ImportSettings['payment'] = map.paid >= 0 && paidSays ? 'paid' : s.payment;
     const base = { row, divisionId, players, payment };
     if (!div) return { ...base, problem: kind ? `No event chosen for “${cell(r, 'kind')}”` : 'Says neither singles nor doubles' };
     if (!players[0].name) return { ...base, problem: 'No player name' };
