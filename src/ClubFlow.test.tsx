@@ -199,7 +199,8 @@ describe('Club mode', () => {
     await openDemo(user);
     window.location.hash = '#/results/pq-demo-open';
     await screen.findByRole('heading', { name: 'PQ Demo Open' });
-    expect(screen.getByText('Scored with PaddleQ.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /PaddleQ: live scores/ })).toHaveAttribute('href', 'https://paddleq.in/');
+    expect(screen.getByText(/run your club’s tournament at paddleq.in/)).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Pool A' })).toBeInTheDocument();
     expect(screen.queryByText(/DUPR/)).not.toBeInTheDocument();
   });
