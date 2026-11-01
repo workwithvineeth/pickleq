@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TestimonialsCard } from './Testimonials';
 import { Field, Segmented } from '../../components/Controls';
 import { scoreLine } from '../../domain/scoring';
 import type { Go } from '../../navigation';
@@ -7,7 +8,7 @@ import { biggest, type Swing, playerClubStats, playerFlags, playerMatches, sideO
 import { matchResult } from '../domain/engine';
 import { backend } from '../index';
 import { isClubApp } from '../config';
-import { canHost, isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
+import { canHost, isAdmin, isApproved, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
 import { ClubHero, LogoPicker } from './Poster';
 import { joinPhone, PhoneField, phoneProblem, splitPhone } from './Phone';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
@@ -33,10 +34,11 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
       {d && (
         <>
           <ClubHero b={b} clubId={d.club.id} club={d.club.name} city={d.club.city} logoUrl={d.club.logoUrl} canEdit={staff && !!b} onChanged={state.reload}
-            badge={canHost(d.club) ? <span className="pq-badge">Approved</span> : <span className="pq-badge pq-badge-gold">{d.club.hosting === 'rejected' ? 'NOT APPROVED' : 'WAITING FOR PADDLEQ'}</span>} />
+            badge={d.club.trusted ? <span className="pq-badge">Trusted</span> : undefined} />
           {!canHost(d.club) && isAdmin(d.role) && <HostingRequest d={d} reload={state.reload} />}
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
+          {tab === 'events' && isAdmin(d.role) && b && <TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} />}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
           {tab === 'squad' && staff && <Squad d={d} go={go} />}
           {tab === 'members' && staff && b && <LogoPicker b={b} clubId={d.club.id} club={d.club.name} current={d.club.logoUrl} onChanged={state.reload} />}
@@ -132,7 +134,8 @@ function Events({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void }
         {d.tournaments.map((t) => (
           <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>
             <span style={{ flex: 1 }}><span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span><span className="small muted">{friendlyDate(t.startDate)} · {t.courts} courts</span></span>
-            <span className={`pill${t.status === 'live' ? ' pill-warn' : t.status === 'done' ? ' pill-ok' : ''}`}>{t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Draft'}</span>
+            {staff && !isApproved(t) ? <span className="pill">{t.approval === 'submitted' ? 'Waiting for PaddleQ' : t.approval === 'rejected' ? 'Not approved' : 'Needs approval'}</span>
+              : <span className={`pill${t.status === 'live' ? ' pill-warn' : t.status === 'done' ? ' pill-ok' : ''}`}>{t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Draft'}</span>}
           </button>
         ))}
       </section>

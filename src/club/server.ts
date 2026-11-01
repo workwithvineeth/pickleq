@@ -1,11 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
-import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
 import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
-import type { Club, ClubMatch, HostingStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { Approval, Club, ClubMatch, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import { isApproved, NOT_APPROVED, PICK_NEEDS_TRUST } from './types';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
@@ -13,7 +14,7 @@ const s = (v: unknown) => (v === null || v === undefined ? undefined : String(v)
 const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
 
 const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {}, logoUrl: s(r.logo_url),
-  hosting: (s(r.hosting) as Club['hosting']) ?? undefined, hostingReason: s(r.hosting_reason), hostingPhone: s(r.hosting_phone) });
+  hosting: (s(r.hosting) as Club['hosting']) ?? undefined, hostingReason: s(r.hosting_reason), hostingPhone: s(r.hosting_phone), trusted: !!r.trusted });
 const toPlayer = (r: Row): ClubPlayer => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), duprSingles: n(r.dupr_singles), duprDoubles: n(r.dupr_doubles),
   duprId: s(r.dupr_id), userId: s(r.user_id), claimCode: s(r.claim_code), share: (r.share as Share) ?? {}, sample: !!r.sample,
@@ -24,6 +25,11 @@ const toTournament = (r: Row): ClubTournament => ({
   city: s(r.city), venue: s(r.venue), about: s(r.about), contact: s(r.contact), link: s(r.link), entryMode: r.entry_mode === 'registration' ? 'registration' : 'roster',
   registrationOpen: !!r.registration_open, entriesClose: s(r.entries_close), upiId: s(r.upi_id), listing: (r.listing as Listing) ?? 'none',
   listingStatus: (r.listing_status as ListingStatus) ?? 'none', rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), drawnAt: s(r.drawn_at), posterUrl: s(r.poster_url),
+  approval: (s(r.approval) as Approval) ?? 'approved', approvalReason: s(r.approval_reason), approvalRequestedAt: s(r.approval_requested_at), approvalExpected: n(r.approval_expected),
+});
+const toTestimonial = (r: Row): Testimonial => ({
+  id: String(r.id), clubId: String(r.club_id), club: s(r.club), rating: Number(r.rating), quote: String(r.quote ?? ''), personName: String(r.person_name ?? ''),
+  personRole: String(r.person_role ?? ''), photoPath: s(r.photo_path), status: r.status as TestimonialStatus, featured: !!r.featured, createdAt: String(r.created_at),
 });
 const toRules = (r: Row): DivisionRules => ({ maxDupr: n(r.max_dupr), ...(r.dupr_cap === 'average' ? { duprCap: 'average' as const } : {}), gender: (r.gender as DivisionRules['gender']) ?? 'open', minAge: n(r.min_age), cap: n(r.cap), fee: n(r.fee) });
 const fromRules = (r?: DivisionRules): Row => ({ max_dupr: r?.maxDupr ?? null, dupr_cap: r?.duprCap === 'average' ? 'average' : 'each', gender: r?.gender ?? 'open', min_age: r?.minAge ?? null, cap: r?.cap ?? null, fee: r?.fee ?? null });
@@ -404,6 +410,11 @@ export class ServerBackend implements ClubBackend {
     const ps = (check(await this.sb.from('club_players').select('*').eq('club_id', input.clubId)) as Row[]).map(toPlayer);
     const rows = buildTournamentRows(input, new Map(ps.map((p) => [p.id, p])), newId);
     const t = rows.tournament;
+    // Picking the players makes the draw at once, which needs approval: only trusted clubs can do that in one step.
+    if (rows.matches.length) {
+      const club = check(await this.sb.from('clubs').select('trusted, is_test').eq('id', input.clubId).single()) as Row;
+      if (!club.trusted && !club.is_test) throw new ClubError(PICK_NEEDS_TRUST);
+    }
     check(await this.sb.from('tournaments').insert({
       id: t.id, club_id: t.clubId, name: t.name, start_date: t.startDate, start_time: t.startTime, courts: t.courts, slot_minutes: t.slotMinutes, status: t.status, is_public: t.isPublic, public_slug: t.publicSlug,
       city: t.city || null, venue: t.venue || null, about: t.about || null, contact: t.contact || null, link: t.link || null, entry_mode: mode,
@@ -657,6 +668,7 @@ export class ServerBackend implements ClubBackend {
   async applyDraw(tournamentId: string, plan: DrawPlan) {
     const t = toTournament(check(await this.sb.from('tournaments').select('*').eq('id', tournamentId).single()) as Row);
     if (t.drawnAt) throw new ClubError('The draw is already made');
+    if (!isApproved(t)) throw new ClubError(NOT_APPROVED);
     check(await this.sb.from('club_players').insert(plan.players.map((p) => ({ id: p.id, club_id: p.clubId, name: p.name, dupr_singles: p.duprSingles ?? null, dupr_doubles: p.duprDoubles ?? null, dupr_id: p.duprId ?? null }))));
     if (plan.timing) check(await this.sb.from('tournaments').update({ courts: plan.timing.courts, slot_minutes: plan.timing.slotMinutes, start_time: plan.timing.startTime }).eq('id', tournamentId));
     for (const d of plan.divisions) check(await this.sb.from('divisions').update({ pools: d.pools, advance: d.advance, format: formatJson(d) }).eq('id', d.id));
@@ -706,7 +718,7 @@ export class ServerBackend implements ClubBackend {
 
   async adminClubs(): Promise<AdminClub[]> {
     return adminList(check(await this.sb.rpc('admin_clubs'))).map((r) => ({
-      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, hosting: (String(r.hosting ?? 'approved') as HostingStatus), logoUrl: s(r.logo_url), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
+      id: String(r.id), name: String(r.name), city: s(r.city), verified: !!r.verified, isTest: !!r.is_test, trusted: !!r.trusted, hosting: (String(r.hosting ?? 'approved') as HostingStatus), logoUrl: s(r.logo_url), hostingPhone: s(r.hosting_phone), hostingNote: s(r.hosting_note), hostingReason: s(r.hosting_reason), hostingRequestedAt: s(r.hosting_requested_at),
       owners: ((r.owners as unknown[]) ?? []).map(String), members: Number(r.members ?? 0), tournaments: Number(r.tournaments ?? 0), lastEvent: s(r.last_event),
     }));
   }
@@ -723,6 +735,60 @@ export class ServerBackend implements ClubBackend {
   async setClubHosting(id: string, approve: boolean, reason?: string) { answer(check(await this.sb.rpc('admin_set_club_hosting', { p_club: id, p_approve: approve, p_reason: reason ?? null }))); }
   async requestHosting(clubId: string, phone: string, note: string) { answer(check(await this.sb.rpc('request_hosting', { p_club: clubId, p_phone: phone, p_note: note }))); }
   async setClubVerified(id: string, verified: boolean) { answer(check(await this.sb.rpc('admin_set_club_verified', { p_club: id, p_verified: verified }))); }
+
+  // ---------- Tournament approval ----------
+  async submitTournament(id: string, expectedPlayers?: number): Promise<Approval> {
+    const r = answer(check(await this.sb.rpc('submit_tournament', { p_tournament: id, p_expected: expectedPlayers ?? null })));
+    return r.status as Approval;
+  }
+  async approvalQueue(): Promise<ApprovalRequest[]> {
+    return adminList(check(await this.sb.rpc('approval_queue'))).map((r) => ({
+      id: String(r.id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '').slice(0, 5), city: s(r.city), venue: s(r.venue),
+      club: String(r.club), clubId: String(r.club_id), trusted: !!r.trusted, upiId: s(r.upi_id), entryMode: r.entry_mode === 'registration' ? 'registration' : 'roster',
+      listing: (r.listing as Listing) ?? 'none', approval: r.approval as Approval, reason: s(r.reason), expected: n(r.expected), requestedAt: s(r.requested_at),
+      decidedAt: s(r.decided_at), courts: Number(r.courts ?? 0), entries: Number(r.entries ?? 0), mine: !!r.mine,
+      divisions: ((r.divisions as Row[]) ?? []).map((d) => ({ name: String(d.name), kind: d.kind as Division['kind'], fee: n(d.fee), cap: n(d.cap) })),
+    }));
+  }
+  async decideTournament(id: string, approve: boolean, reason?: string) {
+    answer(check(await this.sb.rpc('admin_decide_tournament', { p_tournament: id, p_approve: approve, p_reason: reason ?? null })));
+  }
+  async setClubTrusted(id: string, trusted: boolean) { answer(check(await this.sb.rpc('admin_set_club_trusted', { p_club: id, p_trusted: trusted }))); }
+
+  // ---------- Testimonials ----------
+  private async withPhotoUrls(list: Testimonial[]): Promise<Testimonial[]> {
+    const paths = list.map((t) => t.photoPath).filter((p): p is string => !!p);
+    if (!paths.length) return list;
+    const { data } = await this.sb.storage.from('testimonials').createSignedUrls(paths, 3600);
+    const urls = new Map<string, string>((data ?? []).filter((d) => d.signedUrl && d.path).map((d) => [String(d.path), String(d.signedUrl)]));
+    return list.map((t): Testimonial => (t.photoPath ? { ...t, photoUrl: urls.get(t.photoPath) } : t));
+  }
+  async clubTestimonials(clubId: string): Promise<Testimonial[]> {
+    const rows = check(await this.sb.from('club_testimonials').select('*').eq('club_id', clubId).neq('status', 'withdrawn').order('created_at', { ascending: false })) as Row[];
+    return this.withPhotoUrls(rows.map(toTestimonial));
+  }
+  async submitTestimonial(input: NewTestimonial) {
+    let path: string | null = null;
+    if (input.photo) {
+      path = `${input.clubId}/${newId()}.jpg`;
+      const up = await this.sb.storage.from('testimonials').upload(path, input.photo, { contentType: 'image/jpeg' });
+      if (up.error) throw new ClubError(/row-level|policy|Unauthorized|403/i.test(up.error.message) ? 'Only the club’s owner and admins can add a photo' : `The photo didn’t upload: ${up.error.message}`);
+    }
+    try {
+      answer(check(await this.sb.rpc('submit_testimonial', { p_club: input.clubId, p_rating: input.rating, p_quote: input.quote, p_name: input.personName, p_role: input.personRole, p_photo: path, p_consent: input.consent })));
+    } catch (e) {
+      if (path) await this.sb.storage.from('testimonials').remove([path]).catch(() => undefined);
+      throw e;
+    }
+  }
+  async withdrawTestimonial(id: string) {
+    const r = answer(check(await this.sb.rpc('withdraw_testimonial', { p_id: id })));
+    if (r.photo) await this.sb.storage.from('testimonials').remove([String(r.photo)]).catch(() => undefined);
+  }
+  async adminTestimonials(): Promise<Testimonial[]> { return this.withPhotoUrls(adminList(check(await this.sb.rpc('admin_testimonials'))).map(toTestimonial)); }
+  async setTestimonial(id: string, status: 'approved' | 'hidden', featured: boolean) {
+    answer(check(await this.sb.rpc('admin_set_testimonial', { p_id: id, p_status: status, p_featured: featured })));
+  }
 
   async adminTournaments(): Promise<AdminTournament[]> {
     return adminList(check(await this.sb.rpc('admin_tournaments'))).map((r) => ({

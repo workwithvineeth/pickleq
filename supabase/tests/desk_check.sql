@@ -27,7 +27,7 @@ insert into ids values ('club', public.create_club('Desk Club', 'Pune', 'Olga'))
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000e3');
 insert into ids values ('club_x', public.create_club('Other Club', 'Goa', 'Xavi'));
 reset role;
-update public.clubs set hosting = 'approved' where id in (select v from ids);
+update public.clubs set hosting = 'approved', trusted = true where id in (select v from ids);
 -- P joins O's club as a player; H is an old desk-team account (a coach, as the old sign-in made them).
 insert into public.club_members (club_id, user_id, role) values
   (pg_temp.id('club'), '00000000-0000-4000-8000-0000000000e2', 'player'),

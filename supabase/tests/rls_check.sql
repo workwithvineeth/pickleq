@@ -18,7 +18,7 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000
 insert into ids values ('club_a', public.create_club('Club A', 'Testville', 'Alice'));
 -- PaddleQ approves the test club, so it can host (club_mode_16).
 reset role;
-update public.clubs set hosting = 'approved' where id in (select v from ids);
+update public.clubs set hosting = 'approved', trusted = true where id in (select v from ids);
 set local role authenticated;
 insert into public.club_players (club_id, name) select v, 'Pat' from ids where k = 'club_a';
 insert into public.tournaments (club_id, name, start_date, is_public) select v, 'A Open', current_date, true from ids where k = 'club_a';

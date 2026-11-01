@@ -67,7 +67,8 @@ begin
   if jsonb_array_length(public.listing_queue()) < 1 then raise exception 'FAIL: the platform admin can''t see the queue'; end if;
   r := public.review_listing((select v from ids where k = 't'), false, '');
   if r ->> 'error' is null then raise exception 'FAIL: rejected without a reason'; end if;
-  r := public.review_listing((select v from ids where k = 't'), true, null);
+  -- Since club_mode_22 the listing goes on the board when PaddleQ approves the tournament.
+  r := public.admin_decide_tournament((select v from ids where k = 't'), true, null);
   if r ->> 'ok' is null then raise exception 'FAIL: approve failed: %', r; end if;
   if public.public_events(false)::text not like '%Reg Open%' then raise exception 'FAIL: the approved listing isn''t on the board'; end if;
 end $$;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DemoBackend } from './demo';
-import { checkDivisionSetup } from './plan';
+import { checkDivisionSetup, type NewDivisionInput } from './plan';
+import type { Format } from '../domain/types';
 import { drawProblem, entryProblem, inboxCounts, planDraw, rulesLine, upiLink } from './registration';
 import type { EntryPerson } from './types';
 
@@ -85,11 +86,11 @@ describe('Registration flow (demo backend, same rules as the server)', () => {
     expect(names).toContain('PQ Demo Night');
     expect(names).toContain('PQ Demo Sunday Social');
     expect(names).not.toContain('PQ Demo Ladder Cup');
-    const queue = await b.listingQueue();
+    const queue = await b.approvalQueue();
     const ladder = queue.find((q) => q.name === 'PQ Demo Ladder Cup');
-    expect(ladder?.listingStatus).toBe('pending');
-    await expect(b.reviewListing(ladder!.id, false, '')).rejects.toThrow('Give the organiser a reason');
-    await b.reviewListing(ladder!.id, true);
+    expect(ladder?.approval).toBe('submitted');
+    await expect(b.decideTournament(ladder!.id, false, '')).rejects.toThrow('Give the club a reason');
+    await b.decideTournament(ladder!.id, true);
     expect((await b.publicEvents()).map((e) => e.name)).toContain('PQ Demo Ladder Cup');
   });
 
@@ -138,18 +139,26 @@ describe('Registration flow (demo backend, same rules as the server)', () => {
     expect(again).toBe('The draw is already made');
   });
 
-  it('posting to the board: unverified clubs wait for approval, verified ones go straight on', async () => {
+  it('posting to the board: a club that isn’t trusted waits for the tournament’s approval; a trusted one goes straight on', async () => {
     const { b, clubId } = await setup();
-    const id = await b.createTournament({ clubId, name: 'Robot Cup', startDate: '2099-01-01', startTime: '08:00', courts: 2, slotMinutes: 20, entryMode: 'registration', divisions: [{ name: 'Open', kind: 'singles', format: { pointsTo: 11, bestOf: 1, scoring: 'sideout' }, koFormat: { pointsTo: 11, bestOf: 1, scoring: 'sideout' }, pools: 1, advance: 0, entries: [] }] });
-    await expect(b.submitListing(id, 'run')).rejects.toThrow('Add the city and venue first');
-    await b.updateTournamentDetails(id, { city: 'Hyderabad', venue: 'Robot Courts' });
+    const f: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout' };
+    const div: NewDivisionInput = { name: 'Open', kind: 'singles', format: f, koFormat: f, pools: 1, advance: 0, entries: [] };
+    // PQ Demo Club is trusted: straight on.
+    const mine = await b.createTournament({ clubId, name: 'Robot Cup', startDate: '2099-01-01', startTime: '08:00', courts: 2, slotMinutes: 20, entryMode: 'registration', divisions: [div] });
+    await expect(b.submitListing(mine, 'run')).rejects.toThrow('Add the city and venue first');
+    await b.updateTournamentDetails(mine, { city: 'Hyderabad', venue: 'Robot Courts' });
+    expect(await b.submitListing(mine, 'run')).toBe('approved');
+    expect(await b.publicEvent((await b.tournamentBundle(mine)).tournament.publicSlug)).not.toBeNull();
+    // A new club: pending until PaddleQ approves the tournament (rejecting needs a reason the club sees).
+    const other = await b.createClub('Robot Yard', 'Pune', 'Robot');
+    const id = await b.createTournament({ clubId: other, name: 'Yard Cup', startDate: '2099-01-01', startTime: '08:00', courts: 2, slotMinutes: 20, entryMode: 'registration', divisions: [div], details: { city: 'Pune', venue: 'Yard' } });
     expect(await b.submitListing(id, 'run')).toBe('pending');
-    const q = (await b.listingQueue()).find((x) => x.name === 'Robot Cup')!;
-    await b.reviewListing(q.id, false, 'Add the entry fee');
-    expect((await b.listingQueue()).find((x) => x.name === 'Robot Cup')?.rejectReason).toBe('Add the entry fee');
-    expect(await b.submitListing(id, 'run')).toBe('pending');
-    await b.reviewListing(q.id, true);
-    expect(await b.submitListing(id, 'run')).toBe('approved'); // the club is verified now
+    expect(await b.submitTournament(id, 16)).toBe('submitted');
+    await b.decideTournament(id, false, 'Add the entry fee');
+    expect((await b.tournamentBundle(id)).tournament).toMatchObject({ approval: 'rejected', approvalReason: 'Add the entry fee' });
+    expect(await b.submitTournament(id)).toBe('submitted');
+    await b.decideTournament(id, true);
+    expect((await b.tournamentBundle(id)).tournament.listingStatus).toBe('approved');
     expect(await b.publicEvent((await b.tournamentBundle(id)).tournament.publicSlug)).not.toBeNull();
   });
 });

@@ -87,10 +87,10 @@ test.describe('Board with posters (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'PQ Demo Diwali Doubles results' }).click();
     await expect(page.getByRole('table', { name: 'Pool A' })).toBeVisible();
     await page.goto('#/admin-listings');
-    const ladder = page.getByRole('region', { name: 'PQ Demo Ladder Cup' });
-    await expect(ladder.getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tournament approvals' })).toBeVisible();
+    const ladder = page.getByRole('region', { name: 'PQ Demo Ladder Cup approval' });
     await ladder.getByRole('button', { name: 'Approve' }).click();
-    await expect(page.getByText('PQ Demo Ladder Cup is on the board. PQ Demo New Club is now verified.')).toBeVisible();
+    await expect(page.getByText('PQ Demo Ladder Cup is approved. PQ Demo New Club can now make the draw and share links.')).toBeVisible();
     await page.goto('#/events');
     await expect(page.getByRole('button', { name: 'PQ Demo Ladder Cup', exact: true }).getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeVisible();
   });
@@ -139,9 +139,8 @@ test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
     await page.goto('#/events');
-    await page.getByRole('button', { name: /listings to review/ }).click();
-    await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Listings' }).click();
-    await expect(page.getByRole('heading', { name: 'Review listings' })).toBeVisible();
+    await page.getByRole('button', { name: /tournaments to approve/ }).click();
+    await expect(page.getByRole('heading', { name: 'Tournament approvals' })).toBeVisible();
     const sections = page.getByRole('group', { name: 'Admin sections' });
 
     await sections.getByRole('button', { name: 'Overview' }).click();
@@ -171,7 +170,7 @@ test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
 
     // Nothing wider than a 320 px phone.
     await page.setViewportSize({ width: 320, height: 640 });
-    for (const s of ['Overview', 'Clubs', 'Events', 'Listings', 'Admins', 'Desk access']) {
+    for (const s of ['Overview', 'Approvals', 'Clubs', 'Events', 'Testimonials', 'Admins', 'Desk access']) {
       await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: s, exact: true }).click();
       const wide = await page.evaluate(() => document.documentElement.scrollWidth);
       expect(wide, s).toBeLessThanOrEqual(320);
@@ -179,8 +178,8 @@ test.describe('PaddleQ admin dashboard (demo club on the phone)', () => {
   });
 });
 
-test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', () => {
-  test('a new club asks to host, can’t post until approved, then can; fits a small phone', async ({ page }) => {
+test.describe('Create freely, go live with approval (demo club on the phone)', () => {
+  test('a new club sets up a tournament and submits it; the admin rejects with a reason, then approves; trust switch; fits a small phone', async ({ page }) => {
     await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
@@ -191,23 +190,97 @@ test.describe('New clubs wait for PaddleQ approval (demo club on the phone)', ()
     await page.getByLabel('Your name').fill('Robot');
     await expect(page.getByLabel('Country code')).toHaveValue('+91');
     await page.getByLabel('Phone number').fill('98765 43210');
-    await expect(page.getByLabel('Phone number')).toHaveValue('9876543210');
-    await page.getByLabel('About your club').fill('Two courts');
-    await page.getByRole('button', { name: 'Create club and ask to host' }).click();
-    const card = page.getByRole('region', { name: 'Hosting tournaments' });
-    await expect(card).toContainText(/waiting for paddleq/i);
-    await expect(page.getByRole('button', { name: 'New tournament' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Create club' }).click();
+    await page.getByRole('button', { name: 'New tournament' }).click();
+    await expect(page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'I pick them' })).toHaveCount(0);
+    await page.getByLabel('Tournament name').fill('Robot Yard Open');
+    await page.getByLabel('City').fill('Pune');
+    await page.getByLabel('Venue').fill('Yard Courts');
+    await page.getByLabel('Your UPI ID').fill('yard@bank');
+    await page.getByRole('button', { name: 'Create and open entries' }).click();
+    await expect(page.getByRole('heading', { name: 'Robot Yard Open' })).toBeVisible();
+    const card = page.getByRole('region', { name: 'PaddleQ approval' });
+    await expect(card).toContainText('Submit at least 24 hours before your event.');
+    await expect(page.getByRole('button', { name: 'Referee links' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Desk view' })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    await card.getByLabel('Expected players').fill('20');
+    await card.getByRole('button', { name: 'Submit for approval' }).click();
+    await expect(page.getByRole('region', { name: 'PaddleQ approval' })).toContainText('Waiting for PaddleQ');
+    const tournamentUrl = page.url();
+
+    await page.goto('#/admin/approvals');
+    const req = page.getByRole('region', { name: 'Robot Yard Open approval' });
+    await expect(req).toContainText('yard@bank');
+    await expect(req).toContainText('about 20 expected');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    await req.getByRole('button', { name: 'Reject…' }).click();
+    await req.getByLabel('Reason for rejecting').fill('Add the start time');
+    await req.getByRole('button', { name: 'Reject with this reason' }).click();
+    await expect(page.getByText('Robot Yard Open: the club was told why')).toBeVisible();
+
+    await page.goto(tournamentUrl);
+    const back = page.getByRole('region', { name: 'PaddleQ approval' });
+    await expect(back).toContainText('PaddleQ’s note: Add the start time');
+    await back.getByRole('button', { name: 'Submit again' }).click();
+    await expect(page.getByRole('region', { name: 'PaddleQ approval' })).toContainText('Waiting for PaddleQ');
+
+    await page.goto('#/admin/approvals');
+    await page.getByRole('region', { name: 'Robot Yard Open approval' }).getByRole('button', { name: 'Approve' }).click();
+    await expect(page.getByText(/Robot Yard Open is approved/)).toBeVisible();
+    await page.goto(tournamentUrl);
+    await expect(page.getByRole('button', { name: 'Referee links', exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'PaddleQ approval' })).toHaveCount(0);
+
+    await page.goto('#/admin/clubs');
+    const sw = page.getByRole('switch', { name: 'Trusted club: Robot Smash Yard' });
+    await expect(sw).toHaveAttribute('aria-checked', 'false');
+    await sw.click();
+    await expect(page.getByText('Robot Smash Yard is trusted: its tournaments skip approval')).toBeVisible();
+    await page.getByRole('switch', { name: 'Trusted club: Robot Smash Yard' }).click();
+    await expect(page.getByText(/Robot Smash Yard is no longer trusted/)).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  });
+});
+
+test.describe('Club testimonials (demo club on the phone)', () => {
+  test('the club shares one (tick box required), the admin approves and features it, the club withdraws; fits a small phone', async ({ page }) => {
+    await page.goto('#/demo');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
+    await page.setViewportSize({ width: 320, height: 640 });
+    const card = page.getByRole('region', { name: 'Share your experience' });
+    await card.getByRole('button', { name: '5 stars' }).click();
+    await card.getByLabel('Your words').fill('Our referees picked it up in five minutes. Players loved the live results.');
+    await card.getByLabel('Your name').fill('Robot Owner');
+    await card.getByLabel('Role').fill('Owner, PQ Demo Club');
+    await card.getByRole('button', { name: 'Send to PaddleQ' }).click();
+    await expect(card.getByRole('status')).toContainText('Tick the box');
+    await card.getByLabel('PaddleQ may use this on its website and social media').check();
+    await card.getByRole('button', { name: 'Send to PaddleQ' }).click();
+    await expect(card.getByText('Thank you! PaddleQ will check it soon.')).toBeVisible();
+    await expect(card.getByRole('region', { name: 'Testimonial from Robot Owner' })).toContainText('Pending');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    const clubUrl = page.url();
+
+    await page.goto('#/admin/testimonials');
+    const t = page.getByRole('region', { name: 'Testimonial from PQ Demo Club' });
+    await expect(t).toContainText('Our referees picked it up');
+    await expect(t).not.toContainText('@');
+    await t.getByRole('button', { name: 'Approve' }).click();
+    await expect(page.getByText('Approved', { exact: true }).first()).toBeVisible();
+    await page.getByRole('region', { name: 'Testimonial from PQ Demo Club' }).getByRole('button', { name: '☆ Feature' }).click();
+    await expect(page.getByRole('region', { name: 'Testimonial from PQ Demo Club' })).toContainText('★ Featured');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 
-    await page.goto('#/events');
-    await page.getByRole('button', { name: /2 clubs to approve/ }).click();
-    const req = page.getByRole('region', { name: 'Robot Smash Yard' });
-    await expect(req).toContainText('Wants to host');
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-    await req.getByRole('button', { name: 'Approve to host' }).click();
-    await expect(page.getByText('Robot Smash Yard can now host tournaments')).toBeVisible();
-    await req.getByRole('button', { name: 'People and events' }).click();
-    await expect(page.getByRole('heading', { name: 'Robot Smash Yard' })).toBeVisible();
+    await page.goto(clubUrl);
+    const mine = page.getByRole('region', { name: 'Testimonial from Robot Owner' });
+    await expect(mine).toContainText('Approved · ★ Featured');
+    await mine.getByRole('button', { name: 'Withdraw' }).click();
+    await mine.getByRole('button', { name: 'Yes, withdraw it' }).click();
+    await expect(page.getByText('Withdrawn. PaddleQ won’t use it.')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Testimonial from Robot Owner' })).toHaveCount(0);
   });
 });
 
@@ -266,7 +339,7 @@ test.describe('Club logos and the new demo events (demo club on the phone)', () 
 });
 
 test.describe('Admin home in the demo (demo club on the phone)', () => {
-  test('admins see Clubs: a demo tour, a club waiting, and every club with its logo', async ({ page }) => {
+  test('admins see Clubs: a demo tour, tournaments waiting, and every club with its logo', async ({ page }) => {
     await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
@@ -274,14 +347,14 @@ test.describe('Admin home in the demo (demo club on the phone)', () => {
     await expect(page.getByRole('heading', { name: 'Clubs', exact: true })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Clubs' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Demo tour' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /1 club waiting for your approval/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /3 tournaments waiting for your approval/ })).toBeVisible();
     const all = page.getByRole('region', { name: 'All clubs on PaddleQ' });
     await expect(all.getByRole('img', { name: 'PQ Demo Courtyard Club logo' })).toBeVisible();
-    await expect(all.getByRole('button', { name: /PQ Demo Courtyard Club/ })).toContainText(/wants to host/i);
+    await expect(all.getByRole('button', { name: /PQ Demo Club/ }).first()).toContainText(/trusted/i);
     await page.setViewportSize({ width: 320, height: 640 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-    await page.getByRole('region', { name: 'Demo tour' }).getByRole('button', { name: /A new club asks to host/ }).click();
-    await expect(page.getByRole('region', { name: 'PQ Demo Courtyard Club' }).getByRole('img', { name: 'PQ Demo Courtyard Club logo' })).toBeVisible();
+    await page.getByRole('region', { name: 'Demo tour' }).getByRole('button', { name: /A club submits a tournament/ }).click();
+    await expect(page.getByRole('region', { name: 'PQ Demo Courtyard Doubles Night approval' })).toBeVisible();
   });
 });
 

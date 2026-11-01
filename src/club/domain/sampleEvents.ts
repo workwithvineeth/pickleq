@@ -11,7 +11,7 @@ const FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: tr
 const KO: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
 /** Bump when the sample events change, so demos already on a phone get the new set. */
-export const SAMPLE_EVENTS_VERSION = 5;
+export const SAMPLE_EVENTS_VERSION = 6;
 
 export interface SampleEvents {
   clubs: Club[];
@@ -44,9 +44,8 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
     logoUrl: sampleLogo({ initials: 'FC', bg: '#FCE7D6', ink: '#5A2A12', accent: '#D9622B', shape: 'circle' }) };
   const newbie: Club = { id: id(), name: 'PQ Demo New Club', city: 'Hyderabad', inviteCode: 'pqdemo0003', settings: {},
     logoUrl: sampleLogo({ initials: 'NC', bg: '#E8F1E4', ink: '#1E3A1A', accent: '#3E8E41', shape: 'shield' }) };
-  // Waiting for PaddleQ to approve it to host (no tournaments yet): shows the approval workflow in the admin dashboard.
-  const courtyard: Club = { id: id(), name: 'PQ Demo Courtyard Club', city: 'Pune', inviteCode: 'pqdemo0005', settings: {},
-    hosting: 'pending', hostingPhone: '+91 9000044444', hostingNote: 'Two outdoor courts in Baner. We plan a monthly doubles night.',
+  // A new club whose first tournament waits for PaddleQ's approval: shows Admin → Approvals in the demo.
+  const courtyard: Club = { id: id(), name: 'PQ Demo Courtyard Club', city: 'Pune', inviteCode: 'pqdemo0005', settings: {}, trusted: false, hostingPhone: '+91 9000044444', hostingNote: 'Two outdoor courts in Baner. We plan a monthly doubles night.',
     logoUrl: sampleLogo({ initials: 'CC', bg: '#F6E6E8', ink: '#7A1F2B', accent: '#7A1F2B', shape: 'circle' }) };
   const riverside: Club = { id: id(), name: 'PQ Demo Riverside Club', city: 'Bengaluru', inviteCode: 'pqdemo0004', settings: {}, verified: true,
     logoUrl: sampleLogo({ initials: 'RC', bg: '#14304A', ink: '#FFFFFF', accent: '#FF9F43', shape: 'ball' }) };
@@ -82,12 +81,13 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
     listing: 'run', listingStatus: 'approved', reviewedAt },
   { tag: 'Women’s open', bg: '#5B1A3A', ink: '#FFEFF6', accent: '#FF8FC0', motif: 'stars' });
 
-  // Waiting for approval (a club's first listings).
+  // Waiting for PaddleQ's approval (a new club's first tournaments): they show in Admin → Approvals.
+  const asked = new Date(today.getTime() - 5 * 3600_000).toISOString();
   const ladder = t({ clubId: newbie.id, name: 'PQ Demo Ladder Cup', startDate: day(9), startTime: '08:00', publicSlug: 'pq-demo-ladder', venue: 'Demo New Courts',
-    about: 'A made-up ladder event, waiting for PaddleQ to check it.', entryMode: 'registration', registrationOpen: true, listing: 'run', listingStatus: 'pending' },
+    about: 'A made-up ladder event, waiting for PaddleQ to check it.', entryMode: 'registration', registrationOpen: true, listing: 'run', listingStatus: 'pending', approval: 'submitted', approvalRequestedAt: asked, upiId: 'ladder@demo' },
   { tag: 'Climb the ladder', bg: '#E8F1E4', ink: '#1E3A1A', accent: '#3E8E41', motif: 'court' });
   const corporate = t({ clubId: newbie.id, name: 'PQ Demo Corporate Cup', startDate: day(14), startTime: '09:00', publicSlug: 'pq-demo-corporate', venue: 'Demo New Courts',
-    about: 'Listed only: company teams contact the organiser. Waiting for PaddleQ to check it.', contact: '90000 22222', entryMode: 'roster', listing: 'listed', listingStatus: 'pending' },
+    about: 'Listed only: company teams contact the organiser. Waiting for PaddleQ to check it.', contact: '90000 22222', entryMode: 'roster', listing: 'listed', listingStatus: 'pending', approval: 'submitted', approvalRequestedAt: asked },
   { tag: 'Office teams', bg: '#1D2B53', ink: '#F5F7FF', accent: '#7EA6FF', motif: 'trophy' });
 
   // Three more on the board, from a second made-up club in another city.
@@ -103,6 +103,10 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
     city: 'Bengaluru', about: 'Listed only: a made-up evening mixer. Message the organiser to enter.', contact: '90000 33333', entryMode: 'roster', listing: 'listed',
     listingStatus: 'approved', reviewedAt },
   { tag: 'Evening mixer', bg: '#E6EEF8', ink: '#16243A', accent: '#3A6EA5', motif: 'stars' });
+  const courtNight = t({ clubId: courtyard.id, name: 'PQ Demo Courtyard Doubles Night', startDate: day(10), startTime: '18:00', publicSlug: 'pq-demo-courtyard', venue: 'Demo Courtyard Courts, Baner',
+    city: 'Pune', about: 'A made-up monthly doubles night, waiting for PaddleQ’s approval.', entryMode: 'registration', registrationOpen: true, upiId: 'courtyard@demo', listing: 'run',
+    listingStatus: 'pending', courts: 2, approval: 'submitted', approvalExpected: 24, approvalRequestedAt: new Date(today.getTime() - 2 * 3600_000).toISOString() },
+  { tag: 'Doubles night', bg: '#F6E6E8', ink: '#7A1F2B', accent: '#7A1F2B', motif: 'paddles' });
 
   const div = (tt: ClubTournament, name: string, kind: Division['kind'], sort: number, rules: Division['rules']): Division =>
     ({ id: id(), tournamentId: tt.id, clubId: tt.clubId, name, kind, format: FORMAT, koFormat: KO, pools: 1, advance: 0, sort, rules });
@@ -120,6 +124,7 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
   const smx = div(smash, 'Mixed Doubles', 'doubles', 1, { gender: 'mixed', cap: 12, fee: 700 });
   const sen = div(seniors, 'Seniors Doubles 50+', 'doubles', 0, { gender: 'open', minAge: 50, cap: 12, fee: 600 });
   const mix = div(mixer, 'Mixer Doubles', 'doubles', 0, { gender: 'mixed', fee: 400 });
+  const cnd = div(courtNight, 'Open Doubles', 'doubles', 0, { gender: 'open', fee: 600, cap: 12 });
 
   // Results for the finished events: drawn from the demo club's (made-up) players and played out.
   const pmap = new Map(players.map((p) => [p.id, p]));
@@ -189,8 +194,8 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
   const openPoster = samplePoster({ title: 'Demo Open', date: 'Live today', place: 'PQ Demo Courts, Hyderabad', tag: 'Club championship', bg: '#7A1F2B', ink: '#FFF6EC', accent: '#F3C77A', motif: 'court' });
   return {
     clubs: [friends, newbie, riverside, courtyard],
-    tournaments: [s8, diwali, monsoon, night, social, women, ladder, corporate, smash, seniors, mixer],
-    divisions: [s8s, s8d, dd, ms, md, mx, s35, soc, ws, wd, lad, corp, smo, smx, sen, mix],
+    tournaments: [s8, diwali, monsoon, night, social, women, ladder, corporate, smash, seniors, mixer, courtNight],
+    divisions: [s8s, s8d, dd, ms, md, mx, s35, soc, ws, wd, lad, corp, smo, smx, sen, mix, cnd],
     entries, matches, registrations, openPoster,
     demoLogo: sampleLogo({ initials: 'PQ', bg: '#7A1F2B', ink: '#F3EBDD', accent: '#F3C77A', shape: 'circle' }),
   };
