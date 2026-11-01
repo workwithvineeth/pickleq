@@ -140,6 +140,10 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  // One shared link for every referee: each picks their court once on this phone.
+  const pickKey = `pq-court-pick:${token}`;
+  const [pick, setPickState] = useState<number | null>(() => { try { const v = Number(localStorage.getItem(pickKey)); return v > 0 ? v : null; } catch { return null; } });
+  const setPick = (c: number | null) => { setPickState(c); try { if (c) localStorage.setItem(pickKey, String(c)); else localStorage.removeItem(pickKey); } catch { /* private mode */ } };
   const setPin = (p: string) => { setPinState(p); try { if (p) sessionStorage.setItem(pinKey(token), p); else sessionStorage.removeItem(pinKey(token)); } catch { /* private mode */ } };
 
   useEffect(() => {
@@ -213,23 +217,38 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
     );
   }
 
-  const live = view.matches.filter((m) => m.status === 'live');
-  const waiting = view.matches.filter((m) => m.status === 'scheduled');
-  const done = view.matches.filter((m) => m.status === 'done').reverse();
+  const anyCourt = !view.court;
+  const courts = Array.from({ length: Math.max(1, t.courts ?? 1) }, (_, i) => i + 1);
+  const mine = anyCourt && pick ? view.matches.filter((m) => m.court === pick) : view.matches;
+  const live = mine.filter((m) => m.status === 'live');
+  const waiting = mine.filter((m) => m.status === 'scheduled');
+  const done = mine.filter((m) => m.status === 'done').reverse();
+  if (anyCourt && !pick) {
+    return (
+      <main className="screen" aria-labelledby="court-title">
+        <Header id="court-title" title="Which court are you on?" onBack={onBack} />
+        <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}</p>
+        <section className="section" aria-label="Choose your court">
+          {courts.map((c) => <button key={c} type="button" className="btn btn-primary pq-big" onClick={() => setPick(c)}>Court {c}</button>)}
+        </section>
+      </main>
+    );
+  }
   const row = (m: ScorerView['matches'][number], cta: string) => (
     <button key={m.id} type="button" className="match-row" aria-label={`${cta}: ${m.namesA.join(' / ')} against ${m.namesB.join(' / ')}`} onClick={() => setOpen(m.id)}>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block' }}>{m.namesA.join(' / ')}</span>
         <span style={{ display: 'block' }}>{m.namesB.join(' / ')}</span>
-        <span className="small muted">{[m.slot !== undefined ? slotTime(t.startTime, m.slot, t.slotMinutes) : '', !view.court && m.court ? `Court ${m.court}` : '', m.division, m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].filter(Boolean).join(' · ')}</span>
+        <span className="small muted">{[m.slot !== undefined ? slotTime(t.startTime, m.slot, t.slotMinutes) : '', !view.court && !pick && m.court ? `Court ${m.court}` : '', m.division, m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].filter(Boolean).join(' · ')}</span>
       </span>
       <span className="small" style={{ textAlign: 'right' }}>{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : ''} <span className={m.status === 'live' ? 'pill pill-warn' : 'pill'}>{cta}</span></span>
     </button>
   );
   return (
     <main className="screen" aria-labelledby="court-title">
-      <Header id="court-title" title={title} onBack={onBack} />
+      <Header id="court-title" title={anyCourt && pick ? `Court ${pick}` : title} onBack={onBack} />
       <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}{t.status === 'draft' ? ' · not started yet' : ''}</p>
+      {anyCourt && pick && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setPick(null)}>Change court</button>}
       {err && <div role="status" className="msg msg-bad">{err}</div>}
       {live.length > 0 && <section className="section" aria-label="Playing now"><div className="label">Playing now</div>{live.map((m) => row(m, 'Continue'))}</section>}
       <section className="section" aria-label="Up next">

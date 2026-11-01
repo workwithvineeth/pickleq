@@ -234,6 +234,8 @@ describe('Club mode', () => {
     await user.clear(pin);
     await user.type(pin, link.pin);
     await user.click(screen.getByRole('button', { name: 'Start scoring' }));
+    // The any-court link asks which court this referee is on.
+    if (!link.court) { await screen.findByRole('heading', { name: 'Which court are you on?' }); await user.click(screen.getByRole('button', { name: 'Court 1' })); }
     await screen.findByText('Up next');
     expect(screen.queryByText(/DUPR|@/)).not.toBeInTheDocument();
     await user.click(screen.getAllByRole('button', { name: /^Score: / })[0]);
