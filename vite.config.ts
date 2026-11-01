@@ -94,6 +94,9 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          // PaddleQ (club app): a new version takes over on its own, so players and referees get it on their next open
+          // without tapping Update. The personal app keeps asking first.
+          ...(isClubApp ? { skipWaiting: true, clientsClaim: true } : {}),
           globPatterns: ['**/*.{js,css,html,woff2,png,svg}'],
           globIgnores: ['icons/*.svg', ...otherIcons.map((x) => `icons/${x}-*`)],
           // The live app sits at /pickleq/; never let it answer for the separate Preview app below it.
