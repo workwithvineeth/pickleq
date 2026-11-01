@@ -24,11 +24,17 @@ begin
   insert into out values (4, 'poster_url set by organiser rows (expect 1): ' || n);
   begin update public.tournaments set poster_url = 'javascript:alert(1)' where id = t; insert into out values (5, 'FAIL bad url allowed');
   exception when check_violation then insert into out values (5, 'non-https poster url refused'); end;
+  -- The storage API uploads with RETURNING, which needs a SELECT policy (the real server refused every logo before 0017).
+  declare x uuid; begin
+    insert into storage.objects (bucket_id, name, owner_id) values ('posters', c::text || '/logo.jpg', '81b32feb-1a70-47c3-b0b4-9eb4a81a12dd') returning id into x;
+    insert into out values (7, 'logo upload as the storage API does it (insert … returning): ok');
+  exception when insufficient_privilege then insert into out values (7, 'FAIL logo upload with returning refused'); end;
 end $$;
 set local role anon;
 do $$ begin
   begin insert into storage.objects (bucket_id, name) values ('posters', 'x/y.jpg'); insert into out values (6, 'FAIL visitor upload allowed');
   exception when insufficient_privilege then insert into out values (6, 'visitor upload refused'); end;
+  insert into out select 8, case when count(*) = 0 then 'visitor sees no poster objects' else 'FAIL visitor can list poster objects' end from storage.objects where bucket_id = 'posters';
 end $$;
 reset role;
 select step, result from out order by step;
