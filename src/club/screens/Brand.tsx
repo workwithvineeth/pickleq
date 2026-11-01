@@ -33,6 +33,21 @@ export function LandingHero() {
   );
 }
 
+/** The same welcome on a public results page: PaddleQ's brand for players and spectators, linking to paddleq.in. */
+export function ResultsHero() {
+  return (
+    <a href="https://paddleq.in/" className="pq-hero pq-hero-results" aria-label="PaddleQ: live scores. Run your club’s tournament at paddleq.in" style={{ textDecoration: 'none' }}>
+      <span aria-hidden="true" className="pq-court" />
+      <span aria-hidden="true" className="pq-court-mid" />
+      <span aria-hidden="true" className="pq-court-line" />
+      <BrandMark size={84} />
+      <span className="pq-wordmark" style={{ display: 'block' }}>PaddleQ</span>
+      <span className="pq-caption" style={{ display: 'block' }}>{CAPTION}</span>
+      <span className="pq-live-chip" style={{ display: 'inline-block', marginTop: 10, padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(243,235,221,.5)', color: '#F3EBDD', fontSize: 13, fontWeight: 600, letterSpacing: '.04em' }}>● LIVE SCORES</span>
+    </a>
+  );
+}
+
 /** Compact maroon header for the sign-up and code screens, with an optional 1–2–3 progress strip. */
 export function FlowHeader({ title, sub, onBack, step }: { title: string; sub?: ReactNode; onBack?: () => void; step?: 1 | 2 | 3 }) {
   const steps = ['Account', 'Email code', 'Your club'];

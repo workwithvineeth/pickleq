@@ -1,3 +1,4 @@
+import { ResultsHero } from './Brand';
 import { useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
@@ -533,6 +534,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
   const division = d?.divisions.find((x) => x.id === div) ?? d?.divisions[0];
   return (
     <main className="screen" aria-labelledby="results-title">
+      <ResultsHero />
       <Header id="results-title" title={d?.name ?? 'Results'} onBack={onBack} />
       <Status error={state.error} loading={state.loading && !d} />
       {!state.loading && !d && !state.error && <p className="muted">These results aren’t available. The link may be turned off.</p>}
@@ -555,7 +557,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
             }}
             divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.join(' / ') : 'To be decided')}
           />
-          <p className="small muted" style={{ margin: 0 }}>Scored with PaddleQ.</p>
+          <p className="small muted" style={{ margin: 0 }}>Live scores by <a href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>PaddleQ</a> · run your club’s tournament at paddleq.in</p>
         </>
       )}
     </main>
