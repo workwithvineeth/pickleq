@@ -41,6 +41,17 @@ describe('password rules and messages', () => {
 });
 
 describe('Sign in with a password', () => {
+  it('reports a failed confirmation resend instead of claiming an email was sent', async () => {
+    const user = userEvent.setup();
+    fake.passwordSignIn.mockRejectedValue(new ClubError(authMessage('Email not confirmed')));
+    fake.resendConfirm.mockRejectedValue(new ClubError('Email service unavailable'));
+    render(<ClubSignIn go={vi.fn()} onBack={() => {}} />);
+    await user.type(screen.getByLabelText('Email'), 'organiser@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password99');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Email service unavailable');
+    expect(screen.queryByText(/emailed you a new/)).not.toBeInTheDocument();
+  });
   it('signs in, and says so plainly when the password is wrong', async () => {
     const go = vi.fn();
     const user = userEvent.setup();

@@ -390,7 +390,7 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
   const signIn = () => { if (!needEmail()) return; if (!password) return setMsg({ ok: false, text: 'Enter your password' });
     void run(async () => {
       try { await b?.passwordSignIn?.(email, password); }
-      catch (e) { if (/confirm your email/i.test(errorText(e))) { await b?.resendConfirm?.(email).catch(() => undefined); to('confirm', 'We’ve emailed you a new 6-digit code. Enter it below.'); return; } throw e; }
+      catch (e) { if (/confirm your email/i.test(errorText(e))) { await b?.resendConfirm?.(email); to('confirm', 'We’ve emailed you a new 6-digit code. Enter it below.'); return; } throw e; }
       await signedIn();
     }); };
   const signUp = () => { if (!needEmail() || !newPasswordOk()) return;

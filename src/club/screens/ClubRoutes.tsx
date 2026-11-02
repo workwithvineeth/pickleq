@@ -1,5 +1,6 @@
 import type { Go, Route } from '../../navigation';
 import { AdminClubView, AdminDashboard, isAdminSection } from './Admin';
+import { ResultsDupr } from './ResultsDupr';
 import { ClubView, PlayerView, Sharing } from './ClubView';
 import { EnterEvent, EventPage, EventsBoard, MyEntries, PostEvent } from './Events';
 import { DeskApp, OldDeskLink } from './DeskApp';
@@ -28,6 +29,7 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'club-desk': return <Desk key={id} id={id} go={go} onBack={back} />;
     case 'club-scorers': return <ScorerLinks key={id} id={id} go={go} onBack={back} />;
     case 'club-entries': return <Entries key={id} id={id} go={go} onBack={back} />;
+    case 'club-results-dupr': return <ResultsDupr key={id} id={id} go={go} onBack={back} />;
     case 'club-dupr': return <DuprExport key={id} id={id} go={go} onBack={back} />;
     case 'court': return <CourtScorer key={id} token={id} onBack={() => go('home')} />;
     case 'helper': return <OldDeskLink go={go} />;

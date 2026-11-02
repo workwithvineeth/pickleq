@@ -257,6 +257,8 @@ export class DemoBackend implements ClubBackend {
     return rows.tournament.id;
   }
 
+  async resultsBundle(id: string): Promise<TournamentBundle> { return this.tournamentBundle(id); }
+
   async tournamentBundle(id: string): Promise<TournamentBundle> {
     const t = this.s.tournaments.find((x) => x.id === id);
     if (!t) throw new ClubError('Tournament not found');

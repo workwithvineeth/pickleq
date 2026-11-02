@@ -124,6 +124,8 @@ export interface ClubBackend extends EventsBackend {
   leaveClub(clubId: string): Promise<void>;
   createTournament(input: NewTournamentInput): Promise<string>;
   tournamentBundle(id: string): Promise<TournamentBundle>;
+  /** Results-only projection. Platform admins may read other clubs; no additional write permission. */
+  resultsBundle(id: string): Promise<TournamentBundle>;
   updateTournament(id: string, patch: Partial<Pick<ClubTournament, 'status' | 'isPublic'>>): Promise<void>;
   addMatches(rows: NewMatchRow[]): Promise<void>;
   matchBundle(matchId: string): Promise<MatchBundle>;

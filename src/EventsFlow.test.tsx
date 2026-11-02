@@ -364,3 +364,20 @@ describe('PaddleQ admin dashboard', () => {
     expect(await screen.findByText('You can’t remove the last admin')).toBeInTheDocument();
   });
 });
+
+describe('Results and DUPR (organiser)', () => {
+  it('shows groups with DUPR boxes; the organiser saves a missing rating', async () => {
+    const user = userEvent.setup();
+    await openDemo(user);
+    const clubId = window.location.hash.split('/')[2];
+    const { demoBackend } = await import('./club');
+    const t = (await demoBackend().clubBundle(clubId)).tournaments.find((x) => x.name === 'PQ Demo Diwali Doubles')!;
+    window.location.hash = `#/club-results-dupr/${t.id}`;
+    await screen.findByRole('heading', { name: 'Results and DUPR' });
+    expect(await screen.findByRole('button', { name: 'Download results (CSV)' })).toBeInTheDocument();
+    const box = (await screen.findAllByLabelText(/DUPR doubles rating/))[0] as HTMLInputElement;
+    await user.clear(box); await user.type(box, '3.45');
+    await user.click(screen.getByRole('button', { name: 'Save DUPR details' }));
+    expect(await screen.findByText('Saved. PaddleQ can see the new DUPR details now.')).toBeInTheDocument();
+  });
+});

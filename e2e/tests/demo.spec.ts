@@ -1,5 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// Local demo checks must not depend on the production server's availability.
+test.beforeEach(async ({ page, baseURL }) => {
+  if (!baseURL || !['127.0.0.1', 'localhost'].includes(new URL(baseURL).hostname)) return;
+  await page.route('https://*.supabase.co/**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    return route.fulfill({ json: path.endsWith('/desk_open') ? { error: 'This desk link isn’t valid.' } : path.endsWith('/desk_label') ? null : false });
+  });
+});
+
 /** The demo club runs on the phone, so this checks the organiser screens (desk and entries) without an account. */
 async function openDemoEvent(page: Page) {
   await page.goto('#/demo');

@@ -8,6 +8,7 @@ import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from
 import { deskLink, PinPair } from './Access';
 import { BigLogo } from './Poster';
 import { ListingReviews } from './Events';
+import { resultsDuprLink } from './ResultsDupr';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 
 export type AdminSection = 'overview' | 'clubs' | 'tournaments' | 'listings' | 'admins' | 'desk';
@@ -299,7 +300,9 @@ function Tournaments({ go }: { go: Go }) {
                   {t.status !== 'draft' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setConfirm(t.id)}>{t.status === 'done' ? 'Reopen' : 'Mark finished'}</button>}
                   {t.status !== 'done' && t.deskToken && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: desk`, deskLink(t.deskToken as string)), 'Desk link shared or copied: send it to the desk team (with the desk PIN)')}>Share desk link</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('results', t.slug)}>Results</button>}
-                  {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: schedule, scores and results`, appLink(`#/results/${t.slug}`)), 'Results link shared or copied: send it to the players')}>Share results</button>}
+                  <button type="button" className="btn btn-outline" onClick={() => go('club-results-dupr', t.id)}>View Results &amp; DUPR</button>
+                  <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: results and DUPR details`, resultsDuprLink(t.id)), 'Organiser results link shared or copied. The organiser must sign in with access to this club.')}>Share Results with Organiser</button>
+                  {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: schedule, scores and results`, appLink(`#/results/${t.slug}`)), 'Public results link shared or copied: send it to the players')}>Share public results</button>}
                   {t.listing !== 'none' && t.listingStatus === 'approved' && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('event', t.slug)}>Event page</button>}
                 </div>
               )}

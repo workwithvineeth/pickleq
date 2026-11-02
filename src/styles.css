@@ -478,3 +478,11 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-brand .golden-banner { background: #B8862B; color: #2A1E06; }
 .pq-brand .pq-gamepoint { background: #F5E3C4; color: #6B4A12; border-left: 4px solid #B8862B; border-radius: 8px; padding: 6px 10px; font-weight: 700; }
 @media (prefers-color-scheme: dark) { .pq-brand .pq-gamepoint { background: #4A3A1C; color: #F0D49B; } }
+
+@media print { .pq-brand .no-print, .pq-brand nav { display: none !important; } .pq-brand .pq-hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+.pq-result-player { display: flex; flex-direction: column; gap: 3px; overflow-wrap: anywhere; min-width: 0; margin: 6px 0; }
+.pq-result-missing { color: var(--accent); font-weight: 600; }
+.pq-result-match { padding: 10px 0; border-top: 1px solid var(--border); break-inside: avoid; }
+.pq-results-table { width: 100%; table-layout: fixed; font-size: 13px; }
+.pq-results-table th:first-child { width: 61%; text-align: left; }
+.pq-results-table td:first-child { text-align: left; }

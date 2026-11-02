@@ -390,7 +390,8 @@ export class ServerBackend implements ClubBackend {
       if (v && !/^[A-Za-z0-9-]{3,20}$/.test(v)) throw new ClubError('A DUPR ID is letters and numbers only');
       row.dupr_id = v;
     }
-    check(await this.sb.from('club_players').update(row).eq('id', id));
+    const changed = check(await this.sb.from('club_players').update(row).eq('id', id).select('id')) as Row[];
+    if (!changed.length) throw new ClubError('You can’t change this player. No details were saved for them.');
   }
 
   async setRole(clubId: string, userId: string, role: Role) { check(await this.sb.rpc('set_member_role', { cid: clubId, member: userId, new_role: role })); }
@@ -413,6 +414,17 @@ export class ServerBackend implements ClubBackend {
     if (rows.entries.length) check(await this.sb.from('entries').insert(rows.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));
     if (rows.matches.length) check(await this.sb.from('club_matches').insert(rows.matches.map(fromMatch)));
     return t.id;
+  }
+
+  async resultsBundle(id: string): Promise<TournamentBundle> {
+    const r = answer(check(await this.sb.rpc('tournament_results_bundle', { p_tournament: id })));
+    const c = r.club as Row;
+    return {
+      club: { id: String(c.id), name: String(c.name), city: s(c.city), inviteCode: '', settings: {}, logoUrl: s(c.logo_url) },
+      role: r.role as Role, tournament: toTournament(r.tournament as Row),
+      divisions: ((r.divisions as Row[]) ?? []).map(toDivision), entries: ((r.entries as Row[]) ?? []).map(toEntry),
+      matches: ((r.matches as Row[]) ?? []).map(toMatch), players: ((r.players as Row[]) ?? []).map(toPlayer),
+    };
   }
 
   async tournamentBundle(id: string): Promise<TournamentBundle> {
