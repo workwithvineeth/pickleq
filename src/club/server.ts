@@ -438,6 +438,10 @@ export class ServerBackend implements ClubBackend {
     };
   }
 
+  async adminUpdateTournamentDupr(tournamentId: string, playerId: string, patch: { duprSingles?: number; duprDoubles?: number; duprId?: string }) {
+    answer(check(await this.sb.rpc('admin_update_tournament_dupr', { p_tournament: tournamentId, p_player: playerId, p_patch: patch })));
+  }
+
   async tournamentBundle(id: string): Promise<TournamentBundle> {
     const uid = await this.uid();
     const t = toTournament(check(await this.sb.from('tournaments').select('*').eq('id', id).single()) as Row);

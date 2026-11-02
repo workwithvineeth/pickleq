@@ -126,6 +126,8 @@ export interface ClubBackend extends EventsBackend {
   tournamentBundle(id: string): Promise<TournamentBundle>;
   /** Results-only projection. Platform admins may read other clubs; no additional write permission. */
   resultsBundle(id: string): Promise<TournamentBundle>;
+  /** Platform-admin-only DUPR edits, restricted to participants of this tournament. */
+  adminUpdateTournamentDupr(tournamentId: string, playerId: string, patch: { duprSingles?: number; duprDoubles?: number; duprId?: string }): Promise<void>;
   updateTournament(id: string, patch: Partial<Pick<ClubTournament, 'status' | 'isPublic'>>): Promise<void>;
   addMatches(rows: NewMatchRow[]): Promise<void>;
   matchBundle(matchId: string): Promise<MatchBundle>;

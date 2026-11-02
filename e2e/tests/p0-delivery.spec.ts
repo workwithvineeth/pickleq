@@ -10,8 +10,13 @@ test('normal dashboard and Results tab lead to the organiser results page', asyn
   await page.getByRole('button', { name: 'Admin dashboard', exact: true }).click();
   await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Results & DUPR', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tournament results & DUPR', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'View Results & DUPR', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Add / edit DUPR', exact: true }).first().click();
   await expect(page.getByRole('heading', { name: 'Results and DUPR', exact: true })).toBeVisible();
+  const rating = page.getByLabel(/DUPR singles rating/).first();
+  await rating.fill('3.45');
+  await page.getByRole('button', { name: 'Save DUPR details', exact: true }).click();
+  await expect(page.getByText('Saved. PaddleQ can see the new DUPR details now.')).toBeVisible();
+  await page.reload(); await expect(page.getByLabel(/DUPR singles rating/).first()).toHaveValue('3.45');
   await page.goto('#/club-results');
   const results = page.getByRole('region', { name: 'Organiser results and DUPR', exact: true });
   await results.getByRole('button', { name: /Results & DUPR/ }).first().click();

@@ -265,6 +265,25 @@ export class DemoBackend implements ClubBackend {
 
   async resultsBundle(id: string): Promise<TournamentBundle> { return this.tournamentBundle(id); }
 
+  async adminUpdateTournamentDupr(tournamentId: string, playerId: string, patch: { duprSingles?: number; duprDoubles?: number; duprId?: string }) {
+    this.me();
+    const t = this.s.tournaments.find((x) => x.id === tournamentId);
+    const p = this.s.players.find((x) => x.id === playerId && x.clubId === t?.clubId);
+    const kinds = this.s.divisions.filter((d) => d.tournamentId === tournamentId && (
+      this.s.entries.some((e) => e.divisionId === d.id && e.playerIds.includes(playerId)) ||
+      this.s.matches.some((m) => m.tournamentId === tournamentId && m.divisionId === d.id && [...m.sideA, ...m.sideB].includes(playerId))
+    )).map((d) => d.kind);
+    if (!p || !kinds.length) throw new ClubError('Player not found in this tournament');
+    if (Object.keys(patch).some((k) => !['duprSingles', 'duprDoubles', 'duprId'].includes(k)) || !Object.keys(patch).length) throw new ClubError('Only DUPR details can be changed');
+    for (const [key, kind] of [['duprSingles', 'singles'], ['duprDoubles', 'doubles']] as const) {
+      const value = patch[key];
+      if (value !== undefined && (!kinds.includes(kind) || !Number.isFinite(value) || value < 1 || value > 8)) throw new ClubError('Enter a rating from 1 to 8 for a format this player entered');
+    }
+    if (patch.duprId !== undefined && !/^[A-Za-z0-9-]{3,20}$/.test(patch.duprId.trim())) throw new ClubError('A DUPR ID is 3 to 20 letters or numbers');
+    Object.assign(p, patch, patch.duprId === undefined ? {} : { duprId: patch.duprId.trim().toUpperCase() });
+    this.save();
+  }
+
   async tournamentBundle(id: string): Promise<TournamentBundle> {
     const t = this.s.tournaments.find((x) => x.id === id);
     if (!t) throw new ClubError('Tournament not found');

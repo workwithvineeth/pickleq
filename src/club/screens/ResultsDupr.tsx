@@ -16,11 +16,12 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   const state = useLoad(async () => {
     const demo = clubMode() === 'demo' ? backend() : null;
     if (demo?.kind === 'demo') {
-      try { return { bundle: await demo.resultsBundle(id), source: demo }; } catch { /* Real shared link while demo was open. */ }
+      try { return { bundle: await demo.resultsBundle(id), source: demo, admin: await demo.isPlatformAdmin() }; } catch { /* Real shared link while demo was open. */ }
     }
     const server = serverBackend();
     if (!server || !(await server.currentUser())) return null;
-    return { bundle: await server.resultsBundle(id), source: server };
+    const [bundle, admin] = await Promise.all([server.resultsBundle(id), server.isPlatformAdmin()]);
+    return { bundle, source: server, admin };
   }, [id]);
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [busy, setBusy] = useState(false);
@@ -34,7 +35,8 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   </main>;
   const data = d;
   const champions = resultsChampions(data);
-  const staff = isStaff(data.role);
+  const admin = state.data?.admin === true;
+  const staff = isStaff(data.role) || admin;
   const dirty = Object.keys(edits).length > 0;
   const pmap = new Map(data.players.map((p) => [p.id, p]));
   const missing = new Set<string>();
@@ -55,11 +57,13 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     let saved = 0;
     try {
       for (const [pid, e] of Object.entries(edits)) {
-        await b.updatePlayer(pid, {
+        const patch = {
           ...(e.singles !== undefined ? { duprSingles: Math.round(Number(e.singles) * 1000) / 1000 } : {}),
           ...(e.doubles !== undefined ? { duprDoubles: Math.round(Number(e.doubles) * 1000) / 1000 } : {}),
           ...(e.id !== undefined ? { duprId: e.id.trim().toUpperCase() } : {}),
-        });
+        };
+        if (admin) await b.adminUpdateTournamentDupr(id, pid, patch);
+        else await b.updatePlayer(pid, patch);
         saved++;
       }
       setEdits({}); state.reload(); setMsg({ ok: true, text: 'Saved. PaddleQ can see the new DUPR details now.' });
@@ -119,7 +123,8 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       {staff && <button className="btn btn-outline" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
       <button className="link-btn" onClick={onBack}>Back</button>
     </div>
-    <p className="small muted no-print">{staff ? 'Organiser: fill in the highlighted boxes, then save your DUPR details. Saved details are available to your authorised club organisers.' : 'Results and saved DUPR details. Editing is available only to authorised club organisers.'} These stored ratings have not been synchronised or verified with DUPR.</p>
+    <p className="small muted no-print">{staff ? `${admin ? 'Admin' : 'Organiser'}: add or edit the ratings and IDs in the boxes below each group, then choose Save DUPR details. Saved details are available to authorised club organisers and PaddleQ admins.` : 'Results and saved DUPR details. Editing is available only to authorised club organisers and PaddleQ admins.'} These stored ratings have not been synchronised or verified with DUPR.</p>
+    {staff && <p className="small muted no-print">Changes update this club’s player ratings wherever they appear. Ratings are stored to two decimal places.</p>}
     {dirty && <p role="status" className="small no-print">Save your edits before exporting. Exports use saved details.</p>}
     {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
     <section className="card section" aria-label="Champions"><h3>Champions</h3><div className="pq-results-champions">

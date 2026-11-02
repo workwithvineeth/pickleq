@@ -4,6 +4,14 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc: fake.rpc, 
 const { ServerBackend } = await import('./server');
 beforeEach(() => vi.clearAllMocks());
 describe('server results projection and saving', () => {
+  it('sends admin DUPR changes to the scoped RPC and reports denials', async () => {
+    const b = new ServerBackend('https://fixture.supabase.co', 'fixture');
+    fake.rpc.mockResolvedValue({ error: null, data: { ok: true } });
+    await b.adminUpdateTournamentDupr('event', 'player', { duprSingles: 3.45 });
+    expect(fake.rpc).toHaveBeenCalledWith('admin_update_tournament_dupr', { p_tournament: 'event', p_player: 'player', p_patch: { duprSingles: 3.45 } });
+    fake.rpc.mockResolvedValue({ error: null, data: { error: 'Only PaddleQ admins can do this' } });
+    await expect(b.adminUpdateTournamentDupr('event', 'player', { duprId: 'ABC123' })).rejects.toThrow('Only PaddleQ admins');
+  });
   it('maps a platform-admin projection as read only without private fields', async () => {
     fake.rpc.mockResolvedValue({ error: null, data: {
       role: 'player', club: { id: 'club', name: 'Fixture Club' },

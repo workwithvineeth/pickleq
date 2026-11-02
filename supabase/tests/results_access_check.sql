@@ -9,6 +9,7 @@ insert into auth.users(id,email) values
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"ab000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 insert into result_ids values ('club',public.create_club('Results Fixture','Test City','Organiser'));
+insert into result_ids values ('other',public.create_club('Other Results Fixture','Test City','Organiser'));
 reset role;
 update public.clubs set hosting='approved' where id=(select v from result_ids where k='club');
 insert into public.club_members(club_id,user_id,role) select v,'ab000000-0000-4000-8000-000000000002','player' from result_ids where k='club';
@@ -20,6 +21,10 @@ insert into public.club_players(id,club_id,name,dupr_singles,dupr_doubles,dupr_i
  select 'ab000000-0000-4000-8000-000000000012',v,'Fixture Player',3.25,4.1,'ABC123' from result_ids where k='club';
 insert into public.entries(id,division_id,club_id,player_ids,pool)
  select 'ab000000-0000-4000-8000-000000000013','ab000000-0000-4000-8000-000000000011',v,array['ab000000-0000-4000-8000-000000000012'::uuid],1 from result_ids where k='club';
+insert into public.club_players(id,club_id,name)
+ select 'ab000000-0000-4000-8000-000000000014',v,'Not Entered' from result_ids where k='club';
+insert into public.club_players(id,club_id,name)
+ select 'ab000000-0000-4000-8000-000000000015',v,'Other Club Player' from result_ids where k='other';
 insert into public.club_matches(club_id,tournament_id,division_id,stage,format,updated_by)
  select v,'ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000011','final',
  '{"pointsTo":11,"bestOf":1,"scoring":"sideout","golden":true}', 'ab000000-0000-4000-8000-000000000001' from result_ids where k='club';
@@ -38,6 +43,19 @@ do $$ declare r jsonb; n int; begin
  if r ? 'error' or r->>'role'<>'player' then raise exception 'FAIL platform admin read-only access'; end if;
  update public.club_players set dupr_singles=7 where id='ab000000-0000-4000-8000-000000000012'; get diagnostics n=row_count;
  if n<>0 then raise exception 'FAIL platform admin gained write access'; end if;
+ r:=public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"duprSingles":3.45,"duprId":"new123"}');
+ if r ? 'error' then raise exception 'FAIL scoped admin save: %',r; end if;
+ r:=public.tournament_results_bundle('ab000000-0000-4000-8000-000000000010');
+ if (r->'players'->0->>'dupr_singles')::numeric <> 3.45 or r->'players'->0->>'dupr_id'<>'NEW123'
+   or (r->'players'->0->>'dupr_doubles')::numeric <> 4.1 then raise exception 'FAIL scoped admin save persistence'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000014','{"duprSingles":3}') ? 'error') then raise exception 'FAIL nonparticipant save'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000015','{"duprId":"ABC123"}') ? 'error') then raise exception 'FAIL other club save'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000099','ab000000-0000-4000-8000-000000000012','{"duprId":"ABC123"}') ? 'error') then raise exception 'FAIL unknown tournament'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"name":"Changed"}') ? 'error') then raise exception 'FAIL unrelated field'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"duprDoubles":3}') ? 'error') then raise exception 'FAIL wrong format'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"duprSingles":9}') ? 'error') then raise exception 'FAIL invalid rating'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"duprSingles":null}') ? 'error') then raise exception 'FAIL null rating'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"duprId":"bad ID"}') ? 'error') then raise exception 'FAIL invalid ID'; end if;
 end $$;
 select set_config('request.jwt.claims','{"sub":"ab000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 do $$ declare r jsonb; n int; begin
@@ -45,13 +63,16 @@ do $$ declare r jsonb; n int; begin
  if r ? 'error' or r->>'role'<>'player' then raise exception 'FAIL player read access'; end if;
  update public.club_players set dupr_singles=7 where id='ab000000-0000-4000-8000-000000000012'; get diagnostics n=row_count;
  if n<>0 then raise exception 'FAIL player write access'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"duprSingles":3}') ? 'error') then raise exception 'FAIL ordinary player admin save'; end if;
 end $$;
 select set_config('request.jwt.claims','{"sub":"ab000000-0000-4000-8000-000000000003","role":"authenticated"}',true);
 do $$ begin
  if not (public.tournament_results_bundle('ab000000-0000-4000-8000-000000000010') ? 'error') then raise exception 'FAIL outsider access'; end if;
+ if not (public.admin_update_tournament_dupr('ab000000-0000-4000-8000-000000000010','ab000000-0000-4000-8000-000000000012','{"duprSingles":3}') ? 'error') then raise exception 'FAIL outsider admin save'; end if;
 end $$;
 reset role;
 do $$ begin
  if has_function_privilege('anon','public.tournament_results_bundle(uuid)','execute') then raise exception 'FAIL anonymous execute'; end if;
+ if has_function_privilege('anon','public.admin_update_tournament_dupr(uuid,uuid,jsonb)','execute') then raise exception 'FAIL anonymous admin save'; end if;
 end $$;
 rollback;
