@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DemoBackend } from './demo';
 import type { Format } from '../domain/types';
 import type { NewTournamentInput } from './plan';
-import { isApproved, PICK_NEEDS_TRUST } from './types';
+import { hasContactDetails, isApproved, PICK_NEEDS_TRUST } from './types';
 
 function memoryStorage(): Storage {
   const m = new Map<string, string>();
@@ -93,5 +93,47 @@ describe('Create freely, go live with approval (demo backend, same rules as the 
     const later = await b.createTournament(reg(clubId, 'Later Cup'));
     expect((await b.tournamentBundle(later)).tournament.approval).toBe('draft');
     expect((await b.adminClubs()).find((c) => c.id === clubId)?.trusted).toBe(false);
+  });
+});
+
+describe('Club testimonials (demo backend, same rules as the server)', () => {
+  it('needs the permission tick, a 1–5 rating, at most 400 characters and no phones or emails', async () => {
+    const { b, clubId } = await newClub();
+    const base = { clubId, rating: 5, quote: 'PaddleQ ran our whole event without a hitch.', personName: 'Robot', personRole: 'Owner, Robot Yard', consent: true };
+    await expect(b.submitTestimonial({ ...base, consent: false })).rejects.toThrow('Tick the box');
+    await expect(b.submitTestimonial({ ...base, rating: 0 })).rejects.toThrow('rating from 1 to 5');
+    await expect(b.submitTestimonial({ ...base, quote: 'x'.repeat(401) })).rejects.toThrow('400 characters');
+    await expect(b.submitTestimonial({ ...base, quote: 'Call 98765 43210 for details, great app!' })).rejects.toThrow('phone numbers and email');
+    await expect(b.submitTestimonial({ ...base, personRole: 'robot@yard.in' })).rejects.toThrow('phone numbers and email');
+    await b.submitTestimonial(base);
+    const mine = await b.clubTestimonials(clubId);
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ status: 'pending', featured: false, rating: 5 });
+  });
+
+  it('PaddleQ approves, features and hides; the club sees the status, only its own, and can withdraw', async () => {
+    const { b, clubId, demoClub } = await newClub();
+    await b.submitTestimonial({ clubId, rating: 4, quote: 'Easy for our referees on the day.', personName: 'Robot', personRole: 'Owner', consent: true });
+    await b.submitTestimonial({ clubId: demoClub, rating: 5, quote: 'The demo club loves the live results.', personName: 'Demo', personRole: 'Admin', consent: true });
+    expect((await b.clubTestimonials(clubId)).map((t) => t.quote)).toEqual(['Easy for our referees on the day.']);
+    const all = await b.adminTestimonials();
+    expect(all.map((t) => t.club).sort()).toEqual(['PQ Demo Club', 'Robot Yard']);
+    const t = all.find((x) => x.club === 'Robot Yard')!;
+    await expect(b.setTestimonial(t.id, 'hidden', true)).rejects.toThrow('Only an approved');
+    await b.setTestimonial(t.id, 'approved', true);
+    expect((await b.clubTestimonials(clubId))[0]).toMatchObject({ status: 'approved', featured: true });
+    await b.setTestimonial(t.id, 'hidden', false);
+    expect((await b.clubTestimonials(clubId))[0]).toMatchObject({ status: 'hidden', featured: false });
+    await b.withdrawTestimonial(t.id);
+    expect(await b.clubTestimonials(clubId)).toHaveLength(0);
+    expect((await b.adminTestimonials()).some((x) => x.id === t.id)).toBe(false);
+    await expect(b.setTestimonial(t.id, 'approved', false)).rejects.toThrow('withdrawn');
+  });
+
+  it('spots phone numbers and emails like the server does', () => {
+    expect(hasContactDetails('ring 98765 43210')).toBe(true);
+    expect(hasContactDetails('+91 (987) 654-3210')).toBe(true);
+    expect(hasContactDetails('mail me at a.b@club.in')).toBe(true);
+    expect(hasContactDetails('Rated 5 stars by 40 players in 2026')).toBe(false);
   });
 });

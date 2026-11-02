@@ -1,3 +1,4 @@
+import { TestimonialsAdmin } from './Testimonials';
 import { useState } from 'react';
 import type { Go } from '../../navigation';
 import type { AdminTournament, ClubBackend } from '../backend';
@@ -11,12 +12,14 @@ import { resultsDuprLink } from './ResultsDupr';
 import { ApprovalQueue } from './Approvals';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 
-export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'admins' | 'desk';
+export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'results' | 'testimonials' | 'admins' | 'desk';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'overview', label: 'Overview', title: 'Overview' },
   { id: 'approvals', label: 'Approvals', title: 'Tournament approvals' },
   { id: 'clubs', label: 'Clubs', title: 'Clubs' },
   { id: 'tournaments', label: 'Events', title: 'Tournaments' },
+  { id: 'results', label: 'Results & DUPR', title: 'Tournament results & DUPR' },
+  { id: 'testimonials', label: 'Testimonials', title: 'Testimonials' },
   { id: 'admins', label: 'Admins', title: 'PaddleQ admins' },
   { id: 'desk', label: 'Desk access', title: 'Desk access' },
 ];
@@ -74,7 +77,9 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           )}
           {section === 'clubs' && <Clubs go={go} />}
           {section === 'tournaments' && <Tournaments go={go} />}
+          {section === 'results' && <Tournaments go={go} resultsOnly />}
           {section === 'approvals' && <ApprovalQueue b={b} go={go} />}
+          {section === 'testimonials' && <TestimonialsAdmin b={b} />}
           {section === 'admins' && <Admins />}
           {section === 'desk' && <DeskAccessList />}
         </>
@@ -129,7 +134,7 @@ function Overview({ go }: { go: Go }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
             <Tile label="Live now" value={d.live} onClick={() => go('admin', 'tournaments')} />
             <Tile label="Coming up" value={d.upcoming} onClick={() => go('admin', 'tournaments')} />
-            <Tile label="Finished" value={d.finished} />
+            <Tile label="Results & DUPR" value={d.finished} sub="Finished tournaments" onClick={() => go('admin', 'results')} />
             <Tile label="To approve" value={waiting} onClick={() => go('admin', 'approvals')} />
             <Tile label="Clubs" value={d.clubs} sub={`${d.verifiedClubs} verified`} onClick={() => go('admin', 'clubs')} />
             <Tile label="Entries this week" value={d.entriesWeek} />
@@ -223,7 +228,7 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
   );
 }
 
-function Tournaments({ go }: { go: Go }) {
+function Tournaments({ go, resultsOnly = false }: { go: Go; resultsOnly?: boolean }) {
   const b = eventsBackend();
   const state = useLoad(() => b.adminTournaments(), [b]);
   const { busy, run, note } = useAction(state.reload);
@@ -233,6 +238,7 @@ function Tournaments({ go }: { go: Go }) {
   const [confirm, setConfirm] = useState<string | null>(null);
   const today = new Date().toISOString().slice(0, 10);
   const shown = (state.data ?? []).filter((t) => (tests || !t.isTest)
+    && (!resultsOnly || t.matchesDone > 0 || t.status === 'done')
     && (show === 'all' || (show === 'live' && t.status === 'live') || (show === 'done' && t.status === 'done') || (show === 'upcoming' && t.status !== 'done' && t.startDate > today))
     && `${t.name} ${t.club}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (

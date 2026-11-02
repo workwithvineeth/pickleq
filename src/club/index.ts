@@ -1,5 +1,5 @@
 import type { ClubBackend } from './backend';
-import { clubMode, clubServerConfig } from './config';
+import { clubMode, clubServerConfig, isClubApp } from './config';
 import { DemoBackend } from './demo';
 import { ServerBackend } from './server';
 
@@ -23,6 +23,8 @@ export function backend(): ClubBackend | null {
   const m = clubMode();
   if (m === 'demo') return demoBackend();
   if (m === 'server') return serverBackend();
+  // A standalone club app can restore a valid Supabase session without an old mode flag.
+  if (isClubApp()) return serverBackend();
   return null;
 }
 

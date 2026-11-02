@@ -1,6 +1,6 @@
 import type { NewMatchRow, NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
-import type { Approval, Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { Approval, Club, ClubMatch, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 export interface ClubUser { id: string; email: string }
 export interface MyClub { club: Club; role: Role; myPlayerId?: string }
@@ -279,7 +279,19 @@ export interface EventsBackend {
   /** The trusted switch (PaddleQ admins only). */
   setClubTrusted(id: string, trusted: boolean): Promise<void>;
 
+  // ---------- Testimonials ----------
+  /** The club's own testimonials (owner and admins), newest first. */
+  clubTestimonials(clubId: string): Promise<Testimonial[]>;
+  submitTestimonial(input: NewTestimonial): Promise<void>;
+  /** The club takes it back: the words and photo are removed. */
+  withdrawTestimonial(id: string): Promise<void>;
+  /** PaddleQ admins: every club's (not withdrawn). */
+  adminTestimonials(): Promise<Testimonial[]>;
+  setTestimonial(id: string, status: Exclude<TestimonialStatus, 'pending' | 'withdrawn'>, featured: boolean): Promise<void>;
+
 }
+
+export interface NewTestimonial { clubId: string; rating: number; quote: string; personName: string; personRole: string; consent: boolean; photo?: Blob }
 
 /** A tournament waiting for (or recently given) PaddleQ's approval. */
 export interface ApprovalRequest {

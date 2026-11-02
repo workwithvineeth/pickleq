@@ -107,6 +107,10 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
             <span className="pq-tile"><BrandMark size={30} /></span>
           </div>
           {msg && <div role="status" className="msg msg-ok">{msg}</div>}
+          <div className="meta" aria-label="Dashboard shortcuts">
+            {signedIn.admin && <button type="button" className="btn btn-primary" onClick={() => go('admin', 'overview')}>Admin dashboard</button>}
+            <button type="button" className="btn btn-outline" onClick={() => signedIn.admin ? go('admin', 'results') : go('club-results')}>Results &amp; DUPR</button>
+          </div>
           {b?.kind === 'demo' && <DemoTour go={go} clubId={signedIn.clubs[0]?.club.id} />}
           {signedIn.admin && signedIn.toApprove > 0 && (
             <button type="button" className="banner-btn" onClick={() => go('admin', 'approvals')}>

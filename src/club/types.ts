@@ -108,6 +108,30 @@ export const APPROVAL_NOTE = 'Submit at least 24 hours before your event.';
 export const PICK_NEEDS_TRUST = 'Picking the players makes the draw straight away, which needs PaddleQ’s approval. Choose “They register”, add your players as entries, submit the tournament, then make the draw once it’s approved.';
 export const NOT_APPROVED = 'PaddleQ hasn’t approved this tournament yet. Submit it for approval first.';
 
+/** A club's testimonial about PaddleQ. No phone numbers or emails. */
+export type TestimonialStatus = 'pending' | 'approved' | 'hidden' | 'withdrawn';
+export interface Testimonial {
+  id: string;
+  clubId: string;
+  club?: string;
+  rating: number;
+  quote: string;
+  personName: string;
+  personRole: string;
+  /** Where the photo is stored (private), and an address to show it for a while. */
+  photoPath?: string;
+  photoUrl?: string;
+  status: TestimonialStatus;
+  featured: boolean;
+  createdAt: string;
+}
+export const TESTIMONIAL_MAX = 400;
+export const TESTIMONIAL_CONSENT = 'PaddleQ may use this on its website and social media';
+export const TESTIMONIAL_STATUS_LABEL: Record<TestimonialStatus, string> = { pending: 'Pending', approved: 'Approved', hidden: 'Hidden', withdrawn: 'Withdrawn' };
+/** True when the text looks like it has an email address or a phone number (7+ digits), like the server's check. */
+export const hasContactDetails = (text: string) => /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text) || /\d{7,}/.test(text.replace(/[\s().+-]/g, ''));
+
+
 /** roster: the organiser picks players (Module 1). registration: players sign up, then the organiser draws. */
 export type EntryMode = 'roster' | 'registration';
 /** none: not on the board. listed: on the board only, players contact the organiser. run: run on PaddleQ. */

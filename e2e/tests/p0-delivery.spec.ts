@@ -1,6 +1,23 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+test('normal dashboard and Results tab lead to the organiser results page', async ({ page }) => {
+  await page.route('https://*.supabase.co/**', (route) => route.fulfill({ json: false }));
+  await page.goto('#/demo');
+  await page.getByLabel('Your name in the demo').fill('Fixture Admin');
+  await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+  await page.goto('#/club');
+  await page.getByRole('button', { name: 'Admin dashboard', exact: true }).click();
+  await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Results & DUPR', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Tournament results & DUPR', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'View Results & DUPR', exact: true }).first().click();
+  await expect(page.getByRole('heading', { name: 'Results and DUPR', exact: true })).toBeVisible();
+  await page.goto('#/club-results');
+  const results = page.getByRole('region', { name: 'Organiser results and DUPR', exact: true });
+  await results.getByRole('button', { name: /Results & DUPR/ }).first().click();
+  await expect(page.getByRole('heading', { name: 'Results and DUPR', exact: true })).toBeVisible();
+});
+
 test('organiser results: saved ratings under names, knockout scores, CSV/PDF, phone widths', async ({ page }, info) => {
   // This test never contacts production services.
   await page.route('https://*.supabase.co/**', (route) => route.fulfill({ json: [] }));

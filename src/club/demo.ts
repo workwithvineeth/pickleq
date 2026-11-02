@@ -1,13 +1,13 @@
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
-import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
 import { pinProblem, randomPin as randomPinOf } from './pins';
 import { blobToDataUrl } from './poster';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
-import { isAdmin, isApproved, isStaff, NOT_APPROVED, PICK_NEEDS_TRUST, type Approval, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
+import { hasContactDetails, TESTIMONIAL_MAX, type Testimonial, type TestimonialStatus, isAdmin, isApproved, isStaff, NOT_APPROVED, PICK_NEEDS_TRUST, type Approval, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
 interface DemoState {
   v: 1;
@@ -27,6 +27,7 @@ interface DemoState {
   desks?: Record<string, { token: string; pin: string; failed: number; lockedUntil?: number }>;
   /** Module 2 (added later, so older demos don't have them yet). */
   registrations?: Registration[];
+  testimonials?: Testimonial[];
   /** Version 1 was a boolean; later sample sets bump SAMPLE_EVENTS_VERSION. */
   eventsSeeded?: boolean | number;
 }
@@ -1083,6 +1084,55 @@ export class DemoBackend implements ClubBackend {
         if ((t.listing ?? 'none') !== 'none') t.listingStatus = 'approved';
       }
     }
+    this.save();
+  }
+
+  // ---------- Testimonials ----------
+  private testimonials(): Testimonial[] { return (this.s.testimonials ??= []); }
+
+  async clubTestimonials(clubId: string): Promise<Testimonial[]> {
+    this.need(clubId, isAdmin, 'Only the club’s owner and admins can see testimonials');
+    return this.testimonials().filter((t) => t.clubId === clubId && t.status !== 'withdrawn').sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((t) => ({ ...t, photoUrl: t.photoPath }));
+  }
+
+  async submitTestimonial(input: NewTestimonial) {
+    this.need(input.clubId, isAdmin, 'Only the club’s owner and admins can share a testimonial');
+    const quote = input.quote.trim(); const name = input.personName.trim(); const role = input.personRole.trim();
+    if (!input.consent) throw new ClubError('Tick the box to let PaddleQ use it');
+    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) throw new ClubError('Pick a rating from 1 to 5');
+    if (quote.length < 10) throw new ClubError('Write a few words (at least 10 characters)');
+    if (quote.length > TESTIMONIAL_MAX) throw new ClubError('Keep it to 400 characters');
+    if (name.length < 2 || role.length < 2) throw new ClubError('Add your name and role');
+    if (hasContactDetails(quote) || hasContactDetails(name) || hasContactDetails(role)) throw new ClubError('Please leave out phone numbers and email addresses');
+    if (this.testimonials().filter((t) => t.clubId === input.clubId && t.status === 'pending').length >= 5) throw new ClubError('You already have 5 waiting for PaddleQ. Withdraw one first.');
+    if (input.photo && input.photo.size > 1_000_000) throw new ClubError('That photo is too big');
+    const photo = input.photo ? await blobToDataUrl(input.photo) : undefined;
+    this.testimonials().push({ id: newId(), clubId: input.clubId, rating: input.rating, quote, personName: name.slice(0, 80), personRole: role.slice(0, 80), photoPath: photo, status: 'pending', featured: false, createdAt: new Date().toISOString() });
+    this.save();
+  }
+
+  async withdrawTestimonial(id: string) {
+    const t = this.testimonials().find((x) => x.id === id);
+    if (!t) throw new ClubError('Testimonial not found');
+    this.need(t.clubId, isAdmin, 'Testimonial not found');
+    Object.assign(t, { status: 'withdrawn' as TestimonialStatus, featured: false, quote: '', photoPath: undefined });
+    this.save();
+  }
+
+  async adminTestimonials(): Promise<Testimonial[]> {
+    this.me();
+    return this.testimonials().filter((t) => t.status !== 'withdrawn')
+      .sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending') || Number(b.featured) - Number(a.featured) || b.createdAt.localeCompare(a.createdAt))
+      .map((t) => ({ ...t, club: this.club(t.clubId).name, photoUrl: t.photoPath }));
+  }
+
+  async setTestimonial(id: string, status: 'approved' | 'hidden', featured: boolean) {
+    this.me();
+    const t = this.testimonials().find((x) => x.id === id);
+    if (!t || t.status === 'withdrawn') throw new ClubError('Testimonial not found (the club may have withdrawn it)');
+    if (featured && status !== 'approved') throw new ClubError('Only an approved testimonial can be featured');
+    t.status = status; t.featured = featured;
     this.save();
   }
 

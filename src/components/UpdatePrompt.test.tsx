@@ -1,11 +1,20 @@
-import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { pwaMockState } from '../test/pwaRegisterMock';
 import { UpdatePrompt } from './UpdatePrompt';
 
-afterEach(() => { pwaMockState.needRefresh = false; pwaMockState.offlineReady = false; });
+afterEach(() => { pwaMockState.needRefresh = false; pwaMockState.offlineReady = false; vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 describe('UpdatePrompt', () => {
+  it('offers an explicit update after a club worker activates without reloading unsaved work', () => {
+    vi.stubEnv('VITE_CLUB_APP', 'on');
+    const worker = new EventTarget();
+    vi.stubGlobal('navigator', { serviceWorker: worker });
+    render(<UpdatePrompt offlineNotice={false} inline />);
+    expect(screen.queryByRole('button', { name: 'Update' })).not.toBeInTheDocument();
+    act(() => { worker.dispatchEvent(new Event('controllerchange')); });
+    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+  });
   it('the personal app still says once that it works offline (unchanged)', () => {
     pwaMockState.offlineReady = true;
     render(<UpdatePrompt />);

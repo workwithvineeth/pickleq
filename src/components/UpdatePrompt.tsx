@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 /**
@@ -16,10 +17,21 @@ export function UpdatePrompt({ offlineNotice = true, inline = false }: { offline
     onRegisteredSW(_url, reg) {
       if (!reg) return;
       const check = () => { if (navigator.onLine !== false) void reg.update().catch(() => {}); };
+      if (import.meta.env.VITE_CLUB_APP === 'on') check();
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
       window.setInterval(check, 30 * 60 * 1000);
     },
   });
+
+  useEffect(() => {
+    if (import.meta.env.VITE_CLUB_APP !== 'on' || !('serviceWorker' in navigator)) return;
+    const worker = navigator.serviceWorker;
+    // Club workers activate immediately. Keep the open page's update button visible even after activation.
+    // Let the organiser choose when to reload so scoring and unsaved edits are preserved.
+    const ready = () => setNeedRefresh(true);
+    worker.addEventListener('controllerchange', ready);
+    return () => worker.removeEventListener('controllerchange', ready);
+  }, [setNeedRefresh]);
 
   if (needRefresh) {
     return (

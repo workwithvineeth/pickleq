@@ -51,6 +51,14 @@ export function ClubTournamentsTab({ go }: { go: Go }) {
 
 /** Results tab: tournaments live now and finished in the last 30 days, with their public results. */
 export function ClubResultsTab({ go }: { go: Go }) {
+  const b = eventsBackend();
+  const organised = useLoad(async () => {
+    if (!(await b.currentUser())) return null;
+    if (await b.isPlatformAdmin()) return (await b.adminTournaments()).filter((t) => !t.isTest && (t.matchesDone > 0 || t.status === 'done')).map((t) => ({ id: t.id, name: t.name, club: t.club, startDate: t.startDate }));
+    const clubs = await b.myClubs();
+    const bundles = await Promise.all(clubs.map((c) => b.clubBundle(c.club.id)));
+    return bundles.flatMap((x) => x.tournaments.filter((t) => t.status !== 'draft').map((t) => ({ id: t.id, name: t.name, club: x.club.name, startDate: t.startDate }))).sort((x, y) => y.startDate.localeCompare(x.startDate));
+  }, [b]);
   const state = useLoad(async () => {
     const eb = eventsBackend();
     const [events, recent] = await Promise.all([eb.publicEvents().catch(() => []), eb.recentResults().catch(() => [])]);
@@ -69,6 +77,14 @@ export function ClubResultsTab({ go }: { go: Go }) {
   return (
     <main className="screen" aria-labelledby="cr-title">
       <Header id="cr-title" title="Results" />
+      <Status error={organised.error} loading={organised.loading && !organised.data} />
+      {organised.data && <section className="section" aria-label="Organiser results and DUPR">
+        <h2 style={{ fontSize: 18 }}>Results &amp; DUPR</h2>
+        {organised.data.length === 0 && <p className="small muted">Your tournaments will appear here once they start.</p>}
+        {organised.data.map((t) => <button key={t.id} type="button" className="match-row" onClick={() => go('club-results-dupr', t.id)} aria-label={`${t.name} Results & DUPR`}>
+          <span style={{ flex: 1, minWidth: 0 }}><b style={{ display: 'block' }}>{t.name}</b><span className="small muted">{t.club} · {friendlyDate(t.startDate)} · Results &amp; DUPR</span></span><span aria-hidden="true">›</span>
+        </button>)}
+      </section>}
       <Status error={state.error} loading={state.loading && !d} />
       {d && <>
         <section className="section" aria-label="Live now"><div className="label">Live now</div>{d.live.length ? d.live.map((e) => row(e, true)) : <p className="small muted" style={{ margin: 0 }}>Nothing live right now.</p>}</section>
