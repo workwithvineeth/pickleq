@@ -48,7 +48,7 @@ describe('Posters', () => {
     const firstDoubles = Math.min(...dm.map((m) => m.slot ?? 99));
     expect((firstDoubles - 4) * s8.slotMinutes).toBe(120); // 10:00 demo time: singles started 80 min ago (slot 4 now)
     expect(ev.entries.filter((e) => e.divisionId === dbl.id).every((e) => new Set(e.playerIds).size === 2)).toBe(true);
-    expect(ev.tournaments.filter((t) => t.listingStatus === 'pending').map((t) => t.name)).toEqual(['PQ Demo Ladder Cup', 'PQ Demo Corporate Cup']);
+    expect(ev.tournaments.filter((t) => t.approval === 'submitted').map((t) => t.name)).toEqual(['PQ Demo Ladder Cup', 'PQ Demo Corporate Cup', 'PQ Demo Courtyard Doubles Night']);
   });
 
   it('three more events from a second club (Bengaluru) are on the board, each with a poster and the club logo', async () => {
@@ -70,11 +70,10 @@ describe('Posters', () => {
     const url = await b.setPoster(t, new Blob([new Uint8Array([255, 216, 255, 224])], { type: 'image/jpeg' }));
     expect(url.startsWith('data:image/jpeg')).toBe(true);
     expect((await b.publicEvent('pq-demo-night'))?.posterUrl).toBe(url);
-    const corp = (await b.listingQueue()).find((q) => q.name === 'PQ Demo Corporate Cup')!;
-    expect(corp.posterUrl).toMatch(/^data:image\/svg/);
+    const corp = (await b.approvalQueue()).find((q) => q.name === 'PQ Demo Corporate Cup')!;
     expect((await b.publicEvents()).some((e) => e.name === 'PQ Demo Corporate Cup')).toBe(false);
-    await b.reviewListing(corp.id, true);
-    expect((await b.publicEvents()).find((e) => e.name === 'PQ Demo Corporate Cup')?.posterUrl).toBe(corp.posterUrl);
+    await b.decideTournament(corp.id, true);
+    expect((await b.publicEvents()).find((e) => e.name === 'PQ Demo Corporate Cup')?.posterUrl).toMatch(/^data:image\/svg/);
   });
 
   it('a demo made with the first sample set gets the new one, without duplicates, keeping what you made', async () => {
@@ -90,6 +89,6 @@ describe('Posters', () => {
     expect(names).toContain('My Own Cup');
     expect(names).toContain('PQ Demo Diwali Doubles');
     expect(JSON.parse(memory().getItem('x') ?? 'null')).toBeNull();
-    expect(SAMPLE_EVENTS_VERSION).toBe(5);
+    expect(SAMPLE_EVENTS_VERSION).toBe(6);
   });
 });

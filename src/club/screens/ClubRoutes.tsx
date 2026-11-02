@@ -1,5 +1,5 @@
 import type { Go, Route } from '../../navigation';
-import { AdminClubView, AdminDashboard, isAdminSection } from './Admin';
+import { AdminClubView, AdminDashboard, adminSectionOf } from './Admin';
 import { ResultsDupr } from './ResultsDupr';
 import { ClubView, PlayerView, Sharing } from './ClubView';
 import { EnterEvent, EventPage, EventsBoard, MyEntries, PostEvent } from './Events';
@@ -41,8 +41,8 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'my-entries': return <MyEntries go={go} onBack={back} />;
     case 'events-post': return <PostEvent go={go} onBack={back} />;
     // Old link to the listings queue: now a section of the admin dashboard.
-    case 'admin-listings': return <AdminDashboard section="listings" go={go} onBack={() => go('events')} />;
-    case 'admin': return <AdminDashboard section={isAdminSection(id) ? id : 'overview'} go={go} onBack={() => go('events')} />;
+    case 'admin-listings': return <AdminDashboard section="approvals" go={go} onBack={() => go('events')} />;
+    case 'admin': return <AdminDashboard section={adminSectionOf(id) ?? 'overview'} go={go} onBack={() => go('events')} />;
     case 'admin-club': return <AdminClubView key={id} id={id} go={go} onBack={back} />;
     case 'club-inbox': return <EntriesInbox key={id} id={id} go={go} onBack={back} />;
     default: return null;

@@ -10,7 +10,7 @@ import { joinPhone, PhoneField, phoneProblem } from './Phone';
 import { Arrow, BrandMark, FlowHeader, LandingHero } from './Brand';
 import type { AdminClub, ClubBackend, MyClub, TournamentAccess } from '../backend';
 import { PinPair } from './Access';
-import { canHost, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
+import { isApproved, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
 import { appLink, DemoNote, errorText, Header, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyTime, relativeDate } from '../dates';
 
@@ -31,7 +31,8 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     // PaddleQ admins: this page is "Clubs", with every club on PaddleQ (logos, approval state) under their own.
     const admin = isClubApp() ? await b.isPlatformAdmin().catch(() => false) : false;
     const all = admin ? (await b.adminClubs().catch(() => [] as AdminClub[])).filter((c) => !c.isTest) : [];
-    return { user, clubs, pending, next, admin, all };
+    const toApprove = admin ? (await b.approvalQueue().catch(() => [])).filter((q) => q.approval === 'submitted').length : 0;
+    return { user, clubs, pending, next, admin, all, toApprove };
   }, [b]);
   const [msg, setMsg] = useState<string | null>(null);
   const [demoName, setDemoName] = useState('');
@@ -107,15 +108,15 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           </div>
           {msg && <div role="status" className="msg msg-ok">{msg}</div>}
           {b?.kind === 'demo' && <DemoTour go={go} clubId={signedIn.clubs[0]?.club.id} />}
-          {signedIn.admin && signedIn.all.some((c) => c.hosting === 'pending') && (
-            <button type="button" className="banner-btn" onClick={() => go('admin', 'clubs')}>
-              <span>{signedIn.all.filter((c) => c.hosting === 'pending').length} club{signedIn.all.filter((c) => c.hosting === 'pending').length === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
+          {signedIn.admin && signedIn.toApprove > 0 && (
+            <button type="button" className="banner-btn" onClick={() => go('admin', 'approvals')}>
+              <span>{signedIn.toApprove} tournament{signedIn.toApprove === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
             </button>
           )}
           {signedIn.admin && <h2 className="pq-kicker">YOUR CLUBS</h2>}
           <section className="section" aria-label="Your clubs" style={{ gap: 10 }}>
             {signedIn.clubs.length === 0 && (
-              <div className="pq-info"><span>You’re not in a club yet. Create your club and ask PaddleQ to host tournaments, or open the invite link your club sent you.</span></div>
+              <div className="pq-info"><span>You’re not in a club yet. Create your club and set up a tournament (PaddleQ approves it before it goes live), or open the invite link your club sent you.</span></div>
             )}
             {signedIn.clubs.map(({ club, role }) => (
               <button key={club.id} type="button" className="pq-club" onClick={() => go('club-view', club.id)}>
@@ -124,8 +125,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
                   <b style={{ fontSize: 17, overflowWrap: 'anywhere' }}>{club.name}</b>
                   <span className="pq-club-meta">
                     {[club.city, ROLE_LABEL[role]].filter(Boolean).join(' · ')}
-                    {canHost(club) ? <span className="pq-badge">Approved</span>
-                      : <span className="pq-badge pq-badge-gold">{club.hosting === 'rejected' ? 'NOT APPROVED' : 'WAITING FOR PADDLEQ'}</span>}
+                    {club.trusted && <span className="pq-badge">Trusted</span>}
                   </span>
                 </span>
                 <span aria-hidden="true" style={{ color: 'var(--accent)', fontSize: 22 }}>›</span>
@@ -200,7 +200,7 @@ function AllClubs({ all, mine, go }: { all: AdminClub[]; mine: Set<string>; go: 
             <b style={{ fontSize: 16, overflowWrap: 'anywhere' }}>{c.name}</b>
             <span className="pq-club-meta">
               {[c.city, `${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}`].filter(Boolean).join(' · ')}
-              {c.hosting === 'approved' ? <span className="pq-badge">Approved</span> : <span className="pq-badge pq-badge-gold">{c.hosting === 'rejected' ? 'NOT APPROVED' : 'WANTS TO HOST'}</span>}
+              {c.trusted && <span className="pq-badge">Trusted</span>}
             </span>
             <span className="small muted" style={{ overflowWrap: 'anywhere' }}>{c.owners.join(', ') || 'No owner email'}</span>
           </span>
@@ -214,12 +214,11 @@ function AllClubs({ all, mine, go }: { all: AdminClub[]; mine: Set<string>; go: 
 /** In the demo (opened by an admin): a short tour of the club workflow and each dashboard, all with made-up data. */
 function DemoTour({ go, clubId }: { go: Go; clubId?: string }) {
   const steps: { title: string; text: string; to: () => void }[] = [
-    { title: '1 · A new club asks to host', text: 'PQ Demo Courtyard Club has sent its request with a phone number and a note.', to: () => go('admin', 'clubs') },
-    { title: '2 · You approve it (admin)', text: 'Admin → Clubs: Approve to host, or Reject with a reason the club sees.', to: () => go('admin', 'clubs') },
+    { title: '1 · A club submits a tournament', text: 'PQ Demo Courtyard Club set up its doubles night and sent it for approval.', to: () => go('admin', 'approvals') },
+    { title: '2 · You approve it (admin)', text: 'Admin → Approvals: Approve, or Reject with a reason the club sees. Trusted clubs skip this.', to: () => go('admin', 'approvals') },
     { title: '3 · The organiser’s dashboard', text: 'Their club page: logo, tournaments, players and members.', to: () => (clubId ? go('club-view', clubId) : go('club')) },
     { title: '4 · Tournaments on the Events page', text: 'Posters and club logos; players enter in the app.', to: () => go('events') },
-    { title: '5 · Listings waiting for review', text: 'A club’s first tournament is checked by you before it goes on the board.', to: () => go('admin', 'listings') },
-    { title: '6 · The admin overview', text: 'Matches scored, clubs and tournaments at a glance.', to: () => go('admin', 'overview') },
+    { title: '5 · The admin overview', text: 'Matches scored, clubs and tournaments at a glance.', to: () => go('admin', 'overview') },
   ];
   return (
     <section className="card section" aria-label="Demo tour">
@@ -253,13 +252,14 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
         <div className="pq-next-meta">{when}{t.startTime ? ` · ${friendlyTime(t.startTime)}` : ''} · {t.courts} court{t.courts === 1 ? '' : 's'}</div>
       </div>
       <div className="pq-next-actions">
-        <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-desk', t.id)}>{icon('M3 4h18v12H3zM8 20h8M12 16v4')}Desk</button>
+        {!isApproved(t) && <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-tournament', t.id)}>{t.approval === 'submitted' ? 'Waiting for PaddleQ' : 'Submit for approval'}</button>}
+        {isApproved(t) && <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-desk', t.id)}>{icon('M3 4h18v12H3zM8 20h8M12 16v4')}Desk</button>}
         <button type="button" className="pq-next-btn" onClick={() => go('club-inbox', t.id)}>{icon('M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M17 11h5M19.5 8.5v5')}Entries</button>
-        <button type="button" className="pq-next-btn" onClick={() => go('club-scorers', t.id)}>{icon('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7')}Referee links</button>
-        <button type="button" className="pq-next-btn" onClick={async () => setMsg(await shareLink(`${t.name}: live results`, appLink(`#/results/${t.publicSlug}`)))}>{icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13')}Share results</button>
+        {isApproved(t) && <button type="button" className="pq-next-btn" onClick={() => go('club-scorers', t.id)}>{icon('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7')}Referee links</button>}
+        {isApproved(t) && <button type="button" className="pq-next-btn" onClick={async () => setMsg(await shareLink(`${t.name}: live results`, appLink(`#/results/${t.publicSlug}`)))}>{icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13')}Share results</button>}
       </div>
       {msg && <div role="status" className="small" style={{ color: '#F3EBDD' }}>{msg}</div>}
-      {pins && <PinPair b={b} tournamentId={t.id} access={pins} onChanged={(p) => setPins({ ...pins, ...p })} light />}
+      {pins && isApproved(t) && <PinPair b={b} tournamentId={t.id} access={pins} onChanged={(p) => setPins({ ...pins, ...p })} light />}
     </section>
   );
 }
@@ -501,7 +501,7 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
           {primary('Create account', 'Creating…', signUp)}
           <div className="pq-info">
             <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
-            <span>We email you a 6-digit code to confirm it’s really you. Then add your club: PaddleQ checks every new club before it hosts tournaments, usually within a day.</span>
+            <span>We email you a 6-digit code to confirm it’s really you. Then create your club and prepare a tournament. PaddleQ approves each tournament before it goes live; trusted clubs skip that step.</span>
           </div>
           <p className="pq-note">Already have an account? {textLink('Sign in', back)}</p>
         </>
@@ -641,9 +641,9 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
       <Field label="Your name"><input className="input" aria-label="Your name" value={me} onChange={(e) => setMe(e.target.value)} maxLength={60} /></Field>
       <PhoneField country={country} digits={digits} onChange={(c, d) => { setCountry(c); setDigits(d); }} />
       <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} placeholder="Where you play, how many courts, tournaments you plan" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
-      <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. PaddleQ checks every new club before it can host tournaments; we’ll call or WhatsApp you on this number, usually within a day.</p>
+      <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. Set up tournaments straight away; PaddleQ approves each one before it goes live, and may call or WhatsApp you on this number.</p>
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
-      <button type="button" className="btn btn-primary" disabled={busy} onClick={create}>Create club and ask to host</button>
+      <button type="button" className="btn btn-primary" disabled={busy} onClick={create}>Create club</button>
     </main>
   );
 }

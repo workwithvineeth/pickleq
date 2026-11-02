@@ -1,13 +1,13 @@
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
-import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
 import { pinProblem, randomPin as randomPinOf } from './pins';
 import { blobToDataUrl } from './poster';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
-import { canHost, isAdmin, isStaff, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
+import { isAdmin, isApproved, isStaff, NOT_APPROVED, PICK_NEEDS_TRUST, type Approval, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
 interface DemoState {
   v: 1;
@@ -61,6 +61,8 @@ export class DemoBackend implements ClubBackend {
     this.s = this.load();
     // Demos started before the events board existed get its sample events too.
     const club = this.s.user ? this.s.clubs.find((c) => c.name === SAMPLE_CLUB_NAME) : undefined;
+    // PQ Demo Club is trusted (like The Pickle Club on the server), so its tournaments skip approval.
+    if (club && club.trusted === undefined) { club.trusted = true; this.save(); }
     if (club && this.seededVersion() < SAMPLE_EVENTS_VERSION) { this.seedEvents(club.id); this.save(); }
   }
 
@@ -106,6 +108,7 @@ export class DemoBackend implements ClubBackend {
     let club = this.s.clubs.find((c) => c.name === SAMPLE_CLUB_NAME);
     if (!club) {
       const d = buildSampleClub(this.s.user.id, name.trim() || 'You');
+      d.club.trusted = true;
       club = d.club;
       this.s.clubs.push(d.club);
       this.s.members.push(...d.members.map((m) => ({ ...m, clubId: d.club.id })));
@@ -157,7 +160,7 @@ export class DemoBackend implements ClubBackend {
   async createClub(name: string, city: string, myName: string) {
     const u = this.me();
     if (name.trim().length < 2) throw new ClubError('Give the club a name');
-    const club: Club = { id: newId(), name: name.trim(), city: city.trim() || undefined, inviteCode: newId().replace(/-/g, '').slice(0, 10), settings: {}, hosting: 'pending' };
+    const club: Club = { id: newId(), name: name.trim(), city: city.trim() || undefined, inviteCode: newId().replace(/-/g, '').slice(0, 10), settings: {}, trusted: false };
     this.s.clubs.push(club);
     this.s.members.push({ clubId: club.id, userId: u.id, role: 'owner', name: myName.trim() || 'Me' });
     this.s.players.push({ id: newId(), clubId: club.id, name: myName.trim() || 'Me', userId: u.id, share: {} });
@@ -242,12 +245,14 @@ export class DemoBackend implements ClubBackend {
 
   async createTournament(input: NewTournamentInput) {
     this.need(input.clubId, isStaff, 'Only coaches and admins can create tournaments');
-    // Same rule as the server: an unapproved club can't host, unless a platform admin adds it (the demo's user is one).
-    if (!canHost(this.club(input.clubId)) && !(await this.isPlatformAdmin())) throw new ClubError('PaddleQ hasn’t approved this club to host tournaments yet. Send the request from the club page; we’ll reply soon.');
     if (input.name.trim().length < 2) throw new ClubError('Give the tournament a name');
     for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : input.entryMode ?? 'roster'); if (e) throw new ClubError(e); }
     const players = new Map(this.s.players.filter((p) => p.clubId === input.clubId).map((p) => [p.id, p]));
     const rows = buildTournamentRows(input, players, newId);
+    const trusted = this.trusted(input.clubId);
+    // Same rule as the server: picking the players makes the draw at once, which needs PaddleQ's approval.
+    if (!trusted && rows.matches.length) throw new ClubError(PICK_NEEDS_TRUST);
+    rows.tournament.approval = trusted ? 'approved' : 'draft';
     const now = new Date().toISOString();
     this.s.tournaments.push(rows.tournament);
     this.s.divisions.push(...rows.divisions);
@@ -289,6 +294,7 @@ export class DemoBackend implements ClubBackend {
 
   /** Same as the server: a knockout match already drawn (same event, stage and bracket position, not cancelled) isn't added twice. */
   private pushMatches(rows: NewMatchRow[]) {
+    for (const r of rows) if (r.tournamentId) this.mustBeApproved(r.tournamentId);
     const now = new Date().toISOString();
     for (const r of rows) {
       const ko = r.stage !== 'pool' && r.stage !== 'friendly' && r.divisionId && r.bracketPos !== undefined && r.status !== 'void';
@@ -297,6 +303,14 @@ export class DemoBackend implements ClubBackend {
       this.s.matches.push({ ...r, updatedAt: now });
     }
   }
+
+  /** A trusted club's tournaments skip approval. PQ Demo Club (the sample) counts as trusted, like The Pickle Club on the server. */
+  private trusted(clubId: string): boolean { const c = this.club(clubId); return c.trusted ?? c.name === SAMPLE_CLUB_NAME; }
+  private approvedId(tournamentId: string | undefined): boolean {
+    const t = tournamentId ? this.s.tournaments.find((x) => x.id === tournamentId) : undefined;
+    return !t || isApproved(t);
+  }
+  private mustBeApproved(tournamentId: string | undefined) { if (!this.approvedId(tournamentId)) throw new ClubError(NOT_APPROVED); }
 
   async matchBundle(matchId: string): Promise<MatchBundle> {
     const m = this.s.matches.find((x) => x.id === matchId);
@@ -313,6 +327,7 @@ export class DemoBackend implements ClubBackend {
     const m = this.s.matches.find((x) => x.id === matchId);
     if (!m) throw new ClubError('Match not found');
     this.need(m.clubId, isStaff, 'Only coaches and admins can score matches');
+    this.mustBeApproved(m.tournamentId);
     Object.assign(m, patch, { winner: patch.winner, updatedAt: new Date().toISOString() });
     this.save();
   }
@@ -320,6 +335,7 @@ export class DemoBackend implements ClubBackend {
   async patchMatches(changes: { id: string; patch: MatchPatch }[]) {
     for (const { id } of changes) {
       const m = this.s.matches.find((x) => x.id === id);
+      this.mustBeApproved(m?.tournamentId);
       if (!m) throw new ClubError('Match not found');
       this.need(m.clubId, isStaff, 'Only coaches and admins can change matches');
     }
@@ -466,6 +482,7 @@ export class DemoBackend implements ClubBackend {
     if (!hit) throw new ClubError('This desk link isn’t valid. Ask the organiser for the desk link again.');
     const t = this.tournament(hit.tid);
     if (t.status === 'done') throw new ClubError('This tournament is finished, so the desk link no longer works.');
+    if (!isApproved(t)) throw new ClubError('PaddleQ hasn’t approved this tournament yet, so the desk link doesn’t work yet.');
     const d = hit.d;
     if (d.lockedUntil && d.lockedUntil > Date.now()) throw new ClubError('Too many wrong PINs. Wait a few minutes, then try again.');
     if (pin !== d.pin) {
@@ -619,6 +636,7 @@ export class DemoBackend implements ClubBackend {
     if (!l || l.revoked) throw new ClubError('This referee link isn’t valid. Ask the organiser for a new one.');
     const t = this.s.tournaments.find((x) => x.id === l.tournamentId);
     if (!t || t.status === 'done') throw new ClubError('This event has finished, so the referee link no longer works.');
+    if (!isApproved(t)) throw new ClubError('PaddleQ hasn’t approved this tournament yet, so referee links don’t work yet.');
     if (l.lockedUntil && l.lockedUntil > Date.now()) throw new ClubError('Too many wrong PINs. Try again in 15 minutes, or ask the organiser.');
     if (pin !== l.pin) {
       l.failed += 1;
@@ -682,7 +700,7 @@ export class DemoBackend implements ClubBackend {
   }
 
   async publicTournament(slug: string): Promise<PublicTournament | null> {
-    const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.isPublic);
+    const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.isPublic && isApproved(x));
     if (!t) return null;
     const names = new Map(this.s.players.map((p) => [p.id, p.name]));
     const divs = this.s.divisions.filter((d) => d.tournamentId === t.id).sort((a, b) => a.sort - b.sort);
@@ -730,9 +748,9 @@ export class DemoBackend implements ClubBackend {
     this.need(t.clubId, isAdmin, 'Only club admins can post to the events board');
     if (listing !== 'none' && (!t.city || !t.venue)) throw new ClubError('Add the city and venue first');
     if (listing === 'listed' && !t.contact && !t.link) throw new ClubError('Add a contact number or a link so players can enter');
-    const verified = !!this.club(t.clubId).verified;
+    // The listing goes on the board when PaddleQ approves the tournament.
     t.listing = listing;
-    t.listingStatus = listing === 'none' ? 'none' : verified ? 'approved' : 'pending';
+    t.listingStatus = listing === 'none' ? 'none' : isApproved(t) ? 'approved' : 'pending';
     t.rejectReason = undefined;
     this.save();
     return t.listingStatus;
@@ -776,7 +794,7 @@ export class DemoBackend implements ClubBackend {
   }
 
   async publicEvent(slug: string): Promise<PublicEvent | null> {
-    const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.listingStatus !== 'rejected'
+    const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.listingStatus !== 'rejected' && isApproved(x)
       && (((x.listing ?? 'none') !== 'none' && x.listingStatus === 'approved') || x.entryMode === 'registration'));
     return t ? this.eventOf(t, true) : null;
   }
@@ -791,6 +809,7 @@ export class DemoBackend implements ClubBackend {
     const d = this.s.divisions.find((x) => x.id === divisionId);
     if (!d) throw new ClubError('That event doesn’t exist');
     const t = this.tournament(d.tournamentId);
+    if (!isApproved(t)) throw new ClubError('This tournament isn’t taking entries yet.');
     if (!this.eventOf(t, false).registrationOpen) throw new ClubError('Entries for this tournament are closed');
     const problem = entryProblem(d.kind, d.rules, players, true);
     if (problem) throw new ClubError(problem);
@@ -898,6 +917,7 @@ export class DemoBackend implements ClubBackend {
     const t = this.tournament(tournamentId);
     this.need(t.clubId, isStaff, 'Only coaches and admins can make the draw');
     if (t.drawnAt) throw new ClubError('The draw is already made');
+    if (!isApproved(t)) throw new ClubError(NOT_APPROVED);
     const now = new Date().toISOString();
     this.s.players.push(...plan.players);
     if (plan.timing) Object.assign(t, plan.timing);
@@ -935,7 +955,7 @@ export class DemoBackend implements ClubBackend {
     this.me();
     const t = this.tournament(id);
     if (!approve && (reason ?? '').trim().length < 3) throw new ClubError('Give the organiser a reason');
-    t.listingStatus = approve ? 'approved' : 'rejected';
+    t.listingStatus = approve && isApproved(t) ? 'approved' : approve ? 'pending' : 'rejected';
     t.rejectReason = approve ? undefined : reason?.trim();
     t.reviewedAt = new Date().toISOString();
     if (approve) this.club(t.clubId).verified = true;
@@ -971,7 +991,7 @@ export class DemoBackend implements ClubBackend {
       const ts = this.s.tournaments.filter((t) => t.clubId === c.id);
       const owners = this.s.members.filter((m) => m.clubId === c.id && m.role === 'owner').map((m) => (m.userId === u.id ? u.email : `${m.name} (demo)`));
       return {
-        id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, hosting: c.hosting ?? 'approved', logoUrl: c.logoUrl, hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason, owners,
+        id: c.id, name: c.name, city: c.city, verified: !!c.verified, isTest: false, trusted: this.trusted(c.id), hosting: c.hosting ?? 'approved', logoUrl: c.logoUrl, hostingPhone: c.hostingPhone, hostingNote: c.hostingNote, hostingReason: c.hostingReason, owners,
         members: this.s.members.filter((m) => m.clubId === c.id).length, tournaments: ts.length,
         lastEvent: ts.map((t) => t.startDate).sort().pop(),
       };
@@ -999,14 +1019,72 @@ export class DemoBackend implements ClubBackend {
     this.save();
   }
   async requestHosting(clubId: string, phone: string, note: string) {
-    this.need(clubId, isAdmin, 'Only the club’s owner and admins can ask to host tournaments');
+    this.need(clubId, isAdmin, 'Only the club’s owner and admins can add the club’s contact number');
     const c = this.club(clubId);
-    if (canHost(c)) throw new ClubError('This club can already host tournaments');
     if (phone.replace(/\D/g, '').length < 10) throw new ClubError('Add a phone number PaddleQ can call (10 digits)');
-    c.hosting = 'pending'; c.hostingPhone = phone.trim().slice(0, 20); c.hostingNote = note.trim().slice(0, 500) || undefined; c.hostingReason = undefined;
+    c.hostingPhone = phone.trim().slice(0, 20); c.hostingNote = note.trim().slice(0, 500) || undefined; c.hostingReason = undefined;
     this.save();
   }
   async setClubVerified(id: string, verified: boolean) { this.me(); this.club(id).verified = verified; this.save(); }
+
+  // ---------- Tournament approval: the same rules as the server ----------
+  async submitTournament(id: string, expectedPlayers?: number): Promise<Approval> {
+    const t = this.tournament(id);
+    this.need(t.clubId, isStaff, 'Only the club’s organisers can submit this tournament');
+    if (isApproved(t)) return 'approved';
+    if (t.status === 'done') throw new ClubError('This tournament is finished');
+    if (!this.s.divisions.some((d) => d.tournamentId === id)) throw new ClubError('Add at least one event first');
+    if (expectedPlayers !== undefined && (!Number.isInteger(expectedPlayers) || expectedPlayers < 0 || expectedPlayers > 2000)) throw new ClubError('Expected players should be between 0 and 2000');
+    const trusted = this.trusted(t.clubId);
+    t.approval = trusted ? 'approved' : 'submitted';
+    t.approvalReason = undefined; t.approvalRequestedAt = new Date().toISOString();
+    if (expectedPlayers !== undefined) t.approvalExpected = expectedPlayers;
+    if (trusted && (t.listing ?? 'none') !== 'none') t.listingStatus = 'approved';
+    this.save();
+    return t.approval;
+  }
+
+  async approvalQueue(): Promise<ApprovalRequest[]> {
+    this.me();
+    const month = Date.now() - 30 * 86400_000;
+    return this.s.tournaments.filter((t) => t.approval === 'submitted' || (t.approvalRequestedAt && t.approval && t.approval !== 'draft' && Date.parse(t.approvalRequestedAt) > month))
+      .sort((a, b) => Number(b.approval === 'submitted') - Number(a.approval === 'submitted') || (b.approvalRequestedAt ?? '').localeCompare(a.approvalRequestedAt ?? ''))
+      .map((t) => {
+        const c = this.club(t.clubId);
+        return {
+          id: t.id, name: t.name, startDate: t.startDate, startTime: t.startTime, city: t.city, venue: t.venue, club: c.name, clubId: c.id, trusted: this.trusted(c.id),
+          upiId: t.upiId, entryMode: t.entryMode ?? 'roster', listing: t.listing ?? 'none', approval: t.approval ?? 'approved', reason: t.approvalReason,
+          expected: t.approvalExpected, requestedAt: t.approvalRequestedAt, courts: t.courts, mine: false,
+          entries: this.regs().filter((r) => r.tournamentId === t.id && (r.status === 'pending' || r.status === 'accepted')).length,
+          divisions: this.s.divisions.filter((d) => d.tournamentId === t.id).sort((a, b) => a.sort - b.sort).map((d) => ({ name: d.name, kind: d.kind, fee: d.rules?.fee, cap: d.rules?.cap })),
+        };
+      });
+  }
+
+  /** In the demo you organise every club, so the server's "not your own club" rule is left out here (the SQL check covers it). */
+  async decideTournament(id: string, approve: boolean, reason?: string) {
+    this.me();
+    const t = this.tournament(id);
+    if (isApproved(t)) throw new ClubError('This tournament is already approved');
+    if (!approve && (reason ?? '').trim().length < 3) throw new ClubError('Give the club a reason');
+    t.approval = approve ? 'approved' : 'rejected';
+    t.approvalReason = approve ? undefined : reason!.trim().slice(0, 300);
+    if (approve && (t.listing ?? 'none') !== 'none') { t.listingStatus = 'approved'; t.reviewedAt = new Date().toISOString(); }
+    this.save();
+  }
+
+  async setClubTrusted(id: string, trusted: boolean) {
+    this.me();
+    this.club(id).trusted = trusted;
+    if (trusted) {
+      for (const t of this.s.tournaments) {
+        if (t.clubId !== id || isApproved(t) || t.status === 'done') continue;
+        t.approval = 'approved'; t.approvalReason = undefined;
+        if ((t.listing ?? 'none') !== 'none') t.listingStatus = 'approved';
+      }
+    }
+    this.save();
+  }
 
   async adminTournaments(): Promise<AdminTournament[]> {
     this.me();

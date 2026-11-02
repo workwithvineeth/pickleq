@@ -76,32 +76,25 @@ describe('Admin dashboard in the demo (same rules as the server)', () => {
     expect((await b.adminTournaments()).find((t) => t.id === done.id)?.status).toBe('done');
   });
 
-  it('a new club must be approved before it hosts; rejection needs a reason', async () => {
+  it('a new club can create tournaments straight away; its contact number is kept for PaddleQ', async () => {
     const b = new DemoBackend(memoryStorage());
     await b.start('Robot');
     const id = await b.createClub('Smash Yard', 'Pune', 'Robot');
     let c = (await b.adminClubs()).find((x) => x.id === id)!;
-    expect(c.hosting).toBe('pending');
+    expect(c).toMatchObject({ hosting: 'approved', trusted: false });
     await expect(b.requestHosting(id, '12345', '')).rejects.toThrow('Add a phone number PaddleQ can call');
     await b.requestHosting(id, '+91 98765 43210', 'Two courts in Baner');
     c = (await b.adminClubs()).find((x) => x.id === id)!;
-    expect(c).toMatchObject({ hosting: 'pending', hostingPhone: '+91 98765 43210', hostingNote: 'Two courts in Baner' });
-    await expect(b.setClubHosting(id, false, '')).rejects.toThrow('Give the organiser a reason');
-    await b.setClubHosting(id, false, 'Add your venue');
-    expect((await b.clubBundle(id)).club).toMatchObject({ hosting: 'rejected', hostingReason: 'Add your venue' });
-    await b.requestHosting(id, '9876543210', 'Venue: Baner Courts');
-    expect((await b.clubBundle(id)).club.hosting).toBe('pending');
-    await b.setClubHosting(id, true);
-    expect((await b.clubBundle(id)).club.hosting).toBe('approved');
-    await expect(b.requestHosting(id, '9876543210', '')).rejects.toThrow('already host');
+    expect(c).toMatchObject({ hostingPhone: '+91 98765 43210', hostingNote: 'Two courts in Baner' });
   });
 
-  it('the demo shows the approval workflow: a club waiting with phone and note, and every club has a logo', async () => {
+  it('the demo shows the approval workflow: tournaments waiting, a trusted demo club, and every club has a logo', async () => {
     const b = new DemoBackend(memoryStorage());
     await b.start('Robot');
     const clubs = await b.adminClubs();
-    const yard = clubs.find((c) => c.name === 'PQ Demo Courtyard Club')!;
-    expect(yard).toMatchObject({ hosting: 'pending', hostingPhone: '+91 9000044444' });
+    expect(clubs.find((c) => c.name === 'PQ Demo Club')?.trusted).toBe(true);
+    expect(clubs.find((c) => c.name === 'PQ Demo Courtyard Club')).toMatchObject({ trusted: false, hostingPhone: '+91 9000044444' });
+    expect((await b.approvalQueue()).filter((q) => q.approval === 'submitted').map((q) => q.name).sort()).toEqual(['PQ Demo Corporate Cup', 'PQ Demo Courtyard Doubles Night', 'PQ Demo Ladder Cup']);
     expect(clubs.every((c) => (c.logoUrl ?? '').startsWith('data:image/svg'))).toBe(true);
   });
 

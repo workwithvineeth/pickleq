@@ -5,7 +5,7 @@ import type { Go } from '../../navigation';
 import type { ClubBackend, TournamentDetails } from '../backend';
 import { backend } from '../index';
 import { blankPerson, drawProblem, entryProblem, inboxCounts, planDraw, rulesLine, type DrawChoice } from '../registration';
-import { isAdmin, isStaff, PAYMENT_LABEL, REG_STATUS_LABEL, type ClubTournament, type Division, type EntryPerson, type Listing, type Payment, type Registration, type RegistrationStatus } from '../types';
+import { isAdmin, isApproved, isStaff, PAYMENT_LABEL, REG_STATUS_LABEL, type ClubTournament, type Division, type EntryPerson, type Listing, type Payment, type Registration, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { eventShareLink, PersonFields } from './Events';
 import { PosterPicker } from './Poster';
@@ -62,7 +62,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
       {!drawn && (
         <div className="meta">
           <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Reopen entries'}</button>
-          <button type="button" className="btn btn-outline" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>
+          {isApproved(t) && <button type="button" className="btn btn-outline" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>}
           <button type="button" className="btn btn-primary" aria-expanded={importing} onClick={() => setImporting((x) => !x)}>Import entries</button>
         </div>
       )}
@@ -192,6 +192,15 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
       </section>
     );
   }
+  if (!isApproved(t)) {
+    return (
+      <section className="card section" aria-label="Draw">
+        <h2 style={{ fontSize: 16 }}>Make the draw</h2>
+        <p className="small muted" style={{ margin: 0 }}>You can make the draw once PaddleQ approves this tournament. Keep adding and accepting entries meanwhile; submit it from the tournament page.</p>
+        <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Tournament page</button>
+      </section>
+    );
+  }
   const timing = courts !== t.courts || slot !== t.slotMinutes || start !== t.startTime ? { courts, slotMinutes: slot, startTime: start } : undefined;
   async function draw() {
     const plan = planDraw(t, divisions, regs, withEntries.map(({ d, n }) => choice(d, n)), newId, timing);
@@ -253,7 +262,7 @@ export function ListingCard({ b, t, role, onChanged }: { b: ClubBackend; t: Club
     setBusy(true); setMsg(null);
     try {
       const st = await b.submitListing(t.id, l);
-      setMsg({ ok: true, text: l === 'none' ? 'Taken off the events board' : st === 'approved' ? 'It’s on the events board.' : 'Sent to PaddleQ to check. It goes on the board once approved.' });
+      setMsg({ ok: true, text: l === 'none' ? 'Taken off the events board' : st === 'approved' ? 'It’s on the events board.' : 'It goes on the board once PaddleQ approves the tournament.' });
       onChanged();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }

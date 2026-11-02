@@ -81,4 +81,30 @@ test.describe('Server security (no account)', () => {
     expect(pub).not.toContain('"points"'); // the point-by-point order stays private
     expect(pub).toContain('Asha Test');
   });
+
+  test('a tournament PaddleQ hasn’t approved: no public results, no entry page, no board, no desk; the admin functions refuse visitors', async () => {
+    expect(box.pending?.slug).toBe('pqe2epend1');
+    const results = await rpc('public_tournament', { slug: box.pending!.slug });
+    expect(results.status).toBe(200);
+    expect(results.body).toBeNull();
+    const event = await rpc('public_event', { p_slug: box.pending!.slug });
+    expect(event.body).toBeNull();
+    const board = await rpc('public_events', { p_include_test: true });
+    expect(JSON.stringify(board.body)).not.toContain('E2E Pending Cup');
+    const desk = await rpc('desk_open', { p_token: box.pending!.desk.token, p_pin: box.pending!.desk.pin });
+    expect(JSON.stringify(desk.body)).toContain('approved');
+    for (const [fn, args] of [
+      ['submit_tournament', { p_tournament: '00000000-0000-0000-0000-000000000000', p_expected: null }],
+      ['admin_decide_tournament', { p_tournament: '00000000-0000-0000-0000-000000000000', p_approve: true, p_reason: null }],
+      ['admin_set_club_trusted', { p_club: '00000000-0000-0000-0000-000000000000', p_trusted: true }],
+      ['approval_queue', {}],
+      ['submit_testimonial', { p_club: '00000000-0000-0000-0000-000000000000', p_rating: 5, p_quote: 'x', p_name: 'x', p_role: 'x', p_photo: null, p_consent: true }],
+      ['admin_testimonials', {}],
+    ] as const) {
+      const r = await rpc(fn, args);
+      expect(r.status, fn).toBeGreaterThanOrEqual(400);
+    }
+    const tm = await rest('club_testimonials?select=*&limit=5');
+    expect(tm.status >= 400 || (Array.isArray(tm.body) && tm.body.length === 0)).toBe(true);
+  });
 });

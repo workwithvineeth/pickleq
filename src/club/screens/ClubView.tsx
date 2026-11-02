@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Field, Segmented } from '../../components/Controls';
+import { Segmented } from '../../components/Controls';
 import { scoreLine } from '../../domain/scoring';
 import type { Go } from '../../navigation';
 import type { ClubBundle } from '../backend';
@@ -7,9 +7,8 @@ import { biggest, type Swing, playerClubStats, playerFlags, playerMatches, sideO
 import { matchResult } from '../domain/engine';
 import { backend } from '../index';
 import { isClubApp } from '../config';
-import { canHost, isAdmin, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
+import { isAdmin, isApproved, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
 import { ClubHero, LogoPicker } from './Poster';
-import { joinPhone, PhoneField, phoneProblem, splitPhone } from './Phone';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyDate } from '../dates';
 
@@ -33,8 +32,7 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
       {d && (
         <>
           <ClubHero b={b} clubId={d.club.id} club={d.club.name} city={d.club.city} logoUrl={d.club.logoUrl} canEdit={staff && !!b} onChanged={state.reload}
-            badge={canHost(d.club) ? <span className="pq-badge">Approved</span> : <span className="pq-badge pq-badge-gold">{d.club.hosting === 'rejected' ? 'NOT APPROVED' : 'WAITING FOR PADDLEQ'}</span>} />
-          {!canHost(d.club) && isAdmin(d.role) && <HostingRequest d={d} reload={state.reload} />}
+            badge={d.club.trusted ? <span className="pq-badge">Trusted</span> : undefined} />
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
@@ -44,59 +42,6 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
         </>
       )}
     </main>
-  );
-}
-
-/** A club PaddleQ hasn't approved yet: where its request stands, and sending it (again). */
-function HostingRequest({ d, reload }: { d: ClubBundle; reload: () => void }) {
-  const b = backend();
-  const c = d.club;
-  const [phone, setPhone] = useState(() => splitPhone(c.hostingPhone));
-  const [note, setNote] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const waiting = c.hosting === 'pending' && !!c.hostingPhone;
-  async function send() {
-    if (!b) return;
-    const bad = phoneProblem(phone.country, phone.digits);
-    if (bad) return setMsg(bad);
-    setBusy(true); setMsg(null);
-    try { await b.requestHosting(c.id, joinPhone(phone.country, phone.digits), note); reload(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
-  }
-  return (
-    <section className="card section" aria-label="Hosting tournaments">
-      <div className="row" style={{ padding: 0 }}>
-        <h2 style={{ fontSize: 18 }}>Hosting tournaments</h2>
-        {!waiting && <span className={`pill${c.hosting === 'rejected' ? ' pill-bad' : ' pill-warn'}`}>{c.hosting === 'rejected' ? 'Not approved' : 'Not asked yet'}</span>}
-      </div>
-      {waiting && (
-        <>
-          <div className="pq-wait">
-            <span className="pq-badge pq-badge-gold" style={{ alignSelf: 'flex-start' }}>WAITING FOR PADDLEQ</span>
-            <p style={{ margin: 0, fontSize: 15 }}>We’re checking your club. We’ll call or WhatsApp you on <b>{c.hostingPhone}</b>, usually within a day.</p>
-          </div>
-          <ol className="pq-progress" aria-label="Getting approved">
-            <li className="pq-progress-done"><span aria-hidden="true" className="pq-progress-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg></span>
-              <span><b>Request sent</b><span className="small">Club, phone and a note about your courts</span></span></li>
-            <li className="pq-progress-now"><span aria-hidden="true" className="pq-progress-dot" />
-              <span><b>PaddleQ reviews</b><span className="small">A quick call to say hello</span></span></li>
-            <li><span aria-hidden="true" className="pq-progress-dot" />
-              <span><b>Host tournaments</b><span className="small">Post, take entries, make the draw, score live</span></span></li>
-          </ol>
-          <p className="small muted" style={{ margin: 0 }}>While you wait: add your club logo and invite co-organisers in the Members tab.</p>
-        </>
-      )}
-      {c.hosting === 'rejected' && <div role="status" className="msg msg-bad">PaddleQ’s note: {c.hostingReason ?? 'not approved yet'}. Fix it and ask again.</div>}
-      {!waiting && (
-        <>
-          {c.hosting !== 'rejected' && <p className="small muted" style={{ margin: 0 }}>PaddleQ checks every new club before it can host tournaments.</p>}
-          <PhoneField id="hosting-phone" country={phone.country} digits={phone.digits} onChange={(country, digits) => setPhone({ country, digits })} />
-          <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
-          {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={send}>{c.hosting === 'rejected' ? 'Ask again' : 'Ask to host tournaments'}</button>
-        </>
-      )}
-    </section>
   );
 }
 
@@ -127,12 +72,13 @@ function Events({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void }
   return (
     <>
       <section className="section" aria-label="Tournaments">
-        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && canHost(d.club) && <button type="button" className="link-btn" onClick={() => go('club-tournament-new', d.club.id)}>New tournament</button>}</div>
+        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && <button type="button" className="link-btn" onClick={() => go('club-tournament-new', d.club.id)}>New tournament</button>}</div>
         {d.tournaments.length === 0 && <p className="small muted">No tournaments yet.</p>}
         {d.tournaments.map((t) => (
           <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>
             <span style={{ flex: 1 }}><span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span><span className="small muted">{friendlyDate(t.startDate)} · {t.courts} courts</span></span>
-            <span className={`pill${t.status === 'live' ? ' pill-warn' : t.status === 'done' ? ' pill-ok' : ''}`}>{t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Draft'}</span>
+            {staff && !isApproved(t) ? <span className="pill">{t.approval === 'submitted' ? 'Waiting for PaddleQ' : t.approval === 'rejected' ? 'Not approved' : 'Needs approval'}</span>
+              : <span className={`pill${t.status === 'live' ? ' pill-warn' : t.status === 'done' ? ' pill-ok' : ''}`}>{t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Draft'}</span>}
           </button>
         ))}
       </section>

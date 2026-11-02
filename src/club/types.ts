@@ -22,9 +22,11 @@ export interface Club {
   verified?: boolean;
   /** The club's logo (shown on its pages, event pages and public results). */
   logoUrl?: string;
-  /** Can it host tournaments? New clubs ask PaddleQ ("pending"); PaddleQ approves or rejects with a reason.
-   * Missing means approved (clubs from before approvals, and demo samples). */
+  /** Legacy hosting flag retained for compatibility. Migration 0018 approves all clubs;
+   * permission to go live is decided per tournament. */
   hosting?: HostingStatus;
+  /** Trusted by PaddleQ: its tournaments are approved without asking. Only PaddleQ admins switch it. */
+  trusted?: boolean;
   hostingReason?: string;
   hostingPhone?: string;
   hostingNote?: string;
@@ -87,7 +89,24 @@ export interface ClubTournament {
   drawnAt?: string;
   /** The tournament's poster (an image address, or a data: image in the demo). */
   posterUrl?: string;
+  /** PaddleQ's approval of this tournament. Missing means approved (older demo samples). */
+  approval?: Approval;
+  /** Why PaddleQ said no (the club sees it). */
+  approvalReason?: string;
+  approvalRequestedAt?: string;
+  approvalExpected?: number;
 }
+
+/**
+ * "Create freely, go live with approval": a club creates the tournament, its events and entries without asking.
+ * The draw, referee and desk links, scoring, the public results link, the public registration form and the events board
+ * need PaddleQ's approval of the tournament. A trusted club's tournaments are approved automatically.
+ */
+export type Approval = 'draft' | 'submitted' | 'approved' | 'rejected';
+export const isApproved = (t: Pick<ClubTournament, 'approval'>) => !t.approval || t.approval === 'approved';
+export const APPROVAL_NOTE = 'Submit at least 24 hours before your event.';
+export const PICK_NEEDS_TRUST = 'Picking the players makes the draw straight away, which needs PaddleQ’s approval. Choose “They register”, add your players as entries, submit the tournament, then make the draw once it’s approved.';
+export const NOT_APPROVED = 'PaddleQ hasn’t approved this tournament yet. Submit it for approval first.';
 
 /** roster: the organiser picks players (Module 1). registration: players sign up, then the organiser draws. */
 export type EntryMode = 'roster' | 'registration';

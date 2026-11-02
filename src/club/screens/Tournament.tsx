@@ -7,8 +7,9 @@ import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend
 import { entryRating, formatFor, matchResult, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, type NewDivisionInput } from '../plan';
-import { isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
+import { isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
+import { ApprovalCard } from './Approvals';
 import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
@@ -46,6 +47,9 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   const [poster, setPoster] = useState<Blob | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Picking players makes the draw at once, so only trusted clubs (approved automatically) get that option.
+  const pickOk = !!club.data?.club.trusted;
+  useEffect(() => { if (club.data && !pickOk && post === 'roster') setPost('registration'); }, [club.data, pickOk, post]);
   const players = useMemo(() => [...(club.data?.players ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [club.data]);
   const pmap = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const entryCount = (d: DivDraft) => (d.kind === 'singles' ? d.picked.length : d.teams.length);
@@ -89,8 +93,9 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       <Header id="tnew-title" title="New tournament" onBack={onBack} />
       <Status error={club.error} loading={club.loading && !club.data} />
       <Field label="How do players enter?">
-        <Segmented<PostKind> label="How do players enter?" value={post} options={[{ value: 'roster', label: 'I pick them' }, { value: 'registration', label: 'They register' }, { value: 'listed', label: 'List only' }]} onChange={setPost} />
+        <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I pick them' }] : []), { value: 'registration', label: 'They register' }, { value: 'listed', label: 'List only' }]} onChange={setPost} />
       </Field>
+      {club.data && !pickOk && <p className="small muted" style={{ margin: 0 }}>Set it up and add your entries now; PaddleQ approves the tournament before the draw, links and entry link open. Submit at least 24 hours before your event.</p>}
       <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on PaddleQ.'}</p>
       <Field label="Tournament name"><input className="input" aria-label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
@@ -210,7 +215,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
     if (!b) throw new Error('Open Club mode first');
     const t = await b.tournamentBundle(id);
     // Create knockout rounds as soon as they're ready (staff only).
-    if (isStaff(t.role)) {
+    if (isStaff(t.role) && isApproved(t.tournament)) {
       const add = knockoutMatchesToAdd(t.tournament, t.divisions, t.entries, t.matches, newId);
       if (add.length) { await b.addMatches(add); return b.tournamentBundle(id); }
     }
@@ -230,6 +235,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   if (!d) return <main className="screen wide-ok" aria-labelledby="t-title"><Header id="t-title" title="Tournament" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const staff = isStaff(d.role);
   const t = d.tournament;
+  const approved = isApproved(t);
   const division = d.divisions.find((x) => x.id === div) ?? d.divisions[0];
   const link = appLink(`#/results/${t.publicSlug}`);
   const pmap = new Map(d.players.map((p) => [p.id, p]));
@@ -243,8 +249,15 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {!staff && <PosterImage src={t.posterUrl} name={t.name} />}
       <ClubLogo src={d.club.logoUrl} club={d.club.name} />
       <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {friendlyDate(t.startDate)} · from {friendlyTime(t.startTime)} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
-      {staff && b && t.status !== 'done' && <Preflight b={b} d={d} go={go} />}
-      {staff && (
+      {staff && b && <ApprovalCard b={b} t={t} onChanged={state.reload} />}
+      {staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}
+      {staff && !approved && (
+        <nav className="meta" aria-label="Set up the tournament">
+          {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>Entries inbox</button>}
+          <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>Entries</button>
+        </nav>
+      )}
+      {staff && approved && (
         <nav className="meta" aria-label="Run the tournament">
           {t.status === 'draft' && <button type="button" className="btn btn-primary" onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
           <button type="button" className={`btn ${t.status === 'draft' ? 'btn-outline' : 'btn-primary'}`} onClick={() => go('club-desk', t.id)}>Desk view</button>
@@ -257,17 +270,17 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       )}
       {staff && b && <ListingCard b={b} t={t} role={d.role} onChanged={state.reload} />}
       {t.entryMode === 'registration' && !t.drawnAt && <p className="small muted" style={{ margin: 0 }}>Players are registering. The pools and schedule appear here once you make the draw in the entries inbox.</p>}
-      {t.isPublic && (
+      {t.isPublic && approved && (
         <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={async () => setMsg(await shareLink(`${t.name} results`, link))}>
           <span>Share the results link (no login needed)</span><span>›</span>
         </button>
       )}
-      {staff && !t.isPublic && <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: true }, 'Results link is on')}>Turn on the results link</button>}
+      {staff && approved && !t.isPublic && <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: true }, 'Results link is on')}>Turn on the results link</button>}
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
       {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
       <Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} />
       <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />
-      {staff && (
+      {staff && approved && (
         <section className="card section" aria-label="When it’s over">
           <h2 style={{ fontSize: 16 }}>When it’s over</h2>
           {t.status === 'live' && !confirmDone && <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(true)}>Mark as finished</button>}

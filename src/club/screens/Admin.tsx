@@ -1,26 +1,28 @@
 import { useState } from 'react';
 import type { Go } from '../../navigation';
-import type { AdminClub, AdminTournament, ClubBackend } from '../backend';
+import type { AdminTournament, ClubBackend } from '../backend';
 import { trend, weekLabel } from '../adminStats';
 import { eventsBackend } from '../index';
 import { ROLE_LABEL } from '../types';
 import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { deskLink, PinPair } from './Access';
 import { BigLogo } from './Poster';
-import { ListingReviews } from './Events';
 import { resultsDuprLink } from './ResultsDupr';
+import { ApprovalQueue } from './Approvals';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 
-export type AdminSection = 'overview' | 'clubs' | 'tournaments' | 'listings' | 'admins' | 'desk';
+export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'admins' | 'desk';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'overview', label: 'Overview', title: 'Overview' },
+  { id: 'approvals', label: 'Approvals', title: 'Tournament approvals' },
   { id: 'clubs', label: 'Clubs', title: 'Clubs' },
   { id: 'tournaments', label: 'Events', title: 'Tournaments' },
-  { id: 'listings', label: 'Listings', title: 'Review listings' },
   { id: 'admins', label: 'Admins', title: 'PaddleQ admins' },
   { id: 'desk', label: 'Desk access', title: 'Desk access' },
 ];
 export const isAdminSection = (s: string | undefined): s is AdminSection => SECTIONS.some((x) => x.id === s);
+/** Old links to Admin → Listings open Approvals (board listings are approved with the tournament since 2 Nov 2026). */
+export const adminSectionOf = (s: string | undefined): AdminSection | undefined => (s === 'listings' ? 'approvals' : isAdminSection(s) ? s : undefined);
 
 const STATUS: Record<AdminTournament['status'], string> = { draft: 'Not started', live: 'Live', done: 'Finished' };
 const day = (iso?: string) => friendlyDate(iso);
@@ -72,7 +74,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           )}
           {section === 'clubs' && <Clubs go={go} />}
           {section === 'tournaments' && <Tournaments go={go} />}
-          {section === 'listings' && <ListingReviews go={go} />}
+          {section === 'approvals' && <ApprovalQueue b={b} go={go} />}
           {section === 'admins' && <Admins />}
           {section === 'desk' && <DeskAccessList />}
         </>
@@ -97,16 +99,16 @@ function Tile({ label, value, sub, onClick }: { label: string; value: number | s
 function Overview({ go }: { go: Go }) {
   const b = eventsBackend();
   const state = useLoad(() => b.adminOverview(), [b]);
-  const clubs = useLoad(() => b.adminClubs(), [b]);
-  const waiting = (clubs.data ?? []).filter((c) => c.hosting === 'pending' && !c.isTest).length;
+  const queue = useLoad(() => b.approvalQueue(), [b]);
+  const waiting = (queue.data ?? []).filter((q) => q.approval === 'submitted').length;
   const d = state.data;
   const max = Math.max(1, ...(d?.weeks.map((w) => w.matches) ?? [0]));
   return (
     <>
       <Status error={state.error} loading={state.loading && !d} />
       {waiting > 0 && (
-        <button type="button" className="banner-btn" onClick={() => go('admin', 'clubs')}>
-          <span>{waiting} club{waiting === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
+        <button type="button" className="banner-btn" onClick={() => go('admin', 'approvals')}>
+          <span>{waiting} tournament{waiting === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
         </button>
       )}
       {d && (
@@ -128,7 +130,7 @@ function Overview({ go }: { go: Go }) {
             <Tile label="Live now" value={d.live} onClick={() => go('admin', 'tournaments')} />
             <Tile label="Coming up" value={d.upcoming} onClick={() => go('admin', 'tournaments')} />
             <Tile label="Finished" value={d.finished} />
-            <Tile label="Listings to review" value={d.toReview} onClick={() => go('admin', 'listings')} />
+            <Tile label="To approve" value={waiting} onClick={() => go('admin', 'approvals')} />
             <Tile label="Clubs" value={d.clubs} sub={`${d.verifiedClubs} verified`} onClick={() => go('admin', 'clubs')} />
             <Tile label="Entries this week" value={d.entriesWeek} />
             <Tile label="Accounts" value={d.accounts} sub={`${d.accountsWeek} new this week`} />
@@ -147,10 +149,9 @@ function Clubs({ go }: { go: Go }) {
   const [q, setQ] = useState('');
   const [tests, setTests] = useState(false);
   const shown = (state.data ?? []).filter((c) => (tests || !c.isTest) && `${c.name} ${c.city ?? ''} ${c.owners.join(' ')}`.toLowerCase().includes(q.trim().toLowerCase()));
-  const waiting = (state.data ?? []).filter((c) => c.hosting === 'pending' && !c.isTest).length;
   return (
     <>
-      {waiting > 0 && <div role="status" className="msg msg-ok">{waiting} club{waiting === 1 ? '' : 's'} waiting for your approval (shown first).</div>}
+      <p className="small muted" style={{ margin: 0 }}>Trusted clubs’ tournaments skip approval. You can switch trust off at any time; tournaments already approved stay approved.</p>
       <input className="input" type="search" aria-label="Find a club" placeholder="Club, city or owner email" value={q} onChange={(e) => setQ(e.target.value)} />
       <label className="check-row small" style={{ borderTop: 'none' }}><input type="checkbox" checked={tests} onChange={(e) => setTests(e.target.checked)} /> Show the robot’s test club</label>
       <Status error={state.error} loading={state.loading && !state.data} />
@@ -162,18 +163,18 @@ function Clubs({ go }: { go: Go }) {
             <BigLogo src={c.logoUrl} club={c.name} size={56} />
             <b style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', fontSize: 17 }}>{c.name}</b>
             {c.isTest ? <span className="pill">Robot test</span>
-              : c.hosting === 'pending' ? <span className="pill pill-warn">Wants to host</span>
-              : c.hosting === 'rejected' ? <span className="pill pill-bad">Not approved</span>
-              : <span className={`pill${c.verified ? ' pill-ok' : ''}`}>{c.verified ? 'Verified' : 'Approved'}</span>}
+              : <span className={`pill${c.trusted ? ' pill-ok' : ''}`}>{c.trusted ? 'Trusted' : 'Needs approval'}</span>}
           </div>
-          {c.hosting !== 'approved' && !c.isTest && <HostingReview c={c} busy={busy} run={run} />}
           <div className="small muted">{[c.city, `${c.members} member${c.members === 1 ? '' : 's'}`, `${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}`, c.lastEvent && `last ${day(c.lastEvent)}`].filter(Boolean).join(' · ')}</div>
           <div className="small" style={{ overflowWrap: 'anywhere' }}>Owner: {c.owners.join(', ') || '–'}</div>
           <div className="meta">
             <button type="button" className="btn btn-outline" onClick={() => go('admin-club', c.id)}>People and events</button>
-            <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.setClubVerified(c.id, !c.verified), c.verified ? `${c.name} is no longer verified` : `${c.name} is verified: its listings go on the board straight away`)}>
-              {c.verified ? 'Unverify' : 'Verify'}
-            </button>
+            {!c.isTest && (
+              <button type="button" className="btn btn-outline" role="switch" aria-checked={c.trusted} aria-label={`Trusted club: ${c.name}`} disabled={busy}
+                onClick={() => run(() => b.setClubTrusted(c.id, !c.trusted), c.trusted ? `${c.name} is no longer trusted: new tournaments need your approval` : `${c.name} is trusted: its tournaments skip approval`)}>
+                {c.trusted ? 'Trusted: on' : 'Trusted: off'}
+              </button>
+            )}
           </div>
         </section>
       ))}
@@ -181,34 +182,6 @@ function Clubs({ go }: { go: Go }) {
   );
 }
 
-/** A club's request to host tournaments: approve, or reject with a reason the organiser sees. */
-function HostingReview({ c, busy, run }: { c: AdminClub; busy: boolean; run: (fn: () => Promise<unknown>, ok: string) => Promise<boolean> }) {
-  const b = eventsBackend();
-  const [rejecting, setRejecting] = useState(false);
-  const [reason, setReason] = useState('');
-  return (
-    <div className="section" style={{ gap: 6 }}>
-      {c.hostingPhone ? <div className="small">Phone: <a href={`tel:${c.hostingPhone.replace(/[^\d+]/g, '')}`}>{c.hostingPhone}</a>{c.hostingRequestedAt && <span className="muted"> · asked {day(c.hostingRequestedAt.slice(0, 10))}</span>}</div>
-        : <div className="small muted">Hasn’t sent the request yet (no phone number).</div>}
-      {c.hostingNote && <div className="small" style={{ overflowWrap: 'anywhere' }}>“{c.hostingNote}”</div>}
-      {c.hosting === 'rejected' && c.hostingReason && <div className="small muted">Your note: {c.hostingReason}</div>}
-      {!rejecting ? (
-        <div className="meta">
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.setClubHosting(c.id, true), `${c.name} can now host tournaments`)}>Approve to host</button>
-          {c.hosting === 'pending' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setRejecting(true)}>Reject…</button>}
-        </div>
-      ) : (
-        <>
-          <input className="input" aria-label={`Reason for rejecting ${c.name}`} placeholder="What should they fix?" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
-          <div className="meta">
-            <button type="button" className="btn btn-primary" disabled={busy} onClick={async () => { if (await run(() => b.setClubHosting(c.id, false, reason), `${c.name} was told: ${reason.trim()}`)) setRejecting(false); }}>Reject with this reason</button>
-            <button type="button" className="btn btn-outline" onClick={() => setRejecting(false)}>Cancel</button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 /** One club, read-only, for support. */
 export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
@@ -224,8 +197,7 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
           <section className="pq-clubhero" aria-label={`${c.name} club`}>
             <BigLogo src={c.logoUrl} club={c.name} />
             <div className="pq-clubhero-name">{c.name}</div>
-            <div className="pq-club-meta" style={{ justifyContent: 'center' }}>{[c.city, c.isTest ? 'Robot test club' : c.verified ? 'Verified' : 'Not verified yet'].filter(Boolean).join(' · ')}
-              {c.hosting === 'approved' ? <span className="pq-badge">Approved</span> : <span className="pq-badge pq-badge-gold">{c.hosting === 'rejected' ? 'NOT APPROVED' : 'WAITING FOR PADDLEQ'}</span>}</div>
+            <div className="pq-club-meta" style={{ justifyContent: 'center' }}>{[c.city, c.isTest ? 'Robot test club' : c.verified ? 'Verified' : 'Not verified yet'].filter(Boolean).join(' · ')}</div>
           </section>
           <div className="small muted">Read-only: changes are made by the club.</div>
           <section className="card section" aria-label="People">

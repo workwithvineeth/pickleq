@@ -7,6 +7,17 @@ export function scoreText(m: ClubMatch): string {
   if (m.status !== 'done') return m.status === 'live' ? `Live: ${m.games.map((g) => `${g.a}–${g.b}`).join(', ')}` : 'Not played';
   return m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : (m.sideB.length ? 'Walkover / no game score recorded' : 'Bye');
 }
+/** A champion is shown only for one completed final with a recorded winner and both sides present. */
+export function resultsChampions(d: TournamentBundle) {
+  const names = (ids: string[]) => ids.map((id) => d.players.find((p) => p.id === id)?.name ?? 'Unknown player').join(' / ');
+  return d.divisions.flatMap((div) => {
+    const finals = d.matches.filter((m) => m.divisionId === div.id && m.stage === 'final' && m.status !== 'void');
+    const m = finals[0];
+    if (finals.length !== 1 || m.status !== 'done' || !m.winner || !m.sideA.length || !m.sideB.length) return [];
+    const score = m.games.length ? m.games.map((g) => m.winner === 'A' ? `${g.a}–${g.b}` : `${g.b}–${g.a}`).join(', ') : scoreText(m);
+    return [{ division: div.name, winner: names(m.winner === 'A' ? m.sideA : m.sideB), opponent: names(m.winner === 'A' ? m.sideB : m.sideA), score }];
+  });
+}
 export function resultsRows(d: TournamentBundle): string[][] {
   const rows: string[][] = [['Tournament', 'Division', 'Section', 'Position / match', 'Player / side A', 'DUPR rating / side A', 'DUPR ID / side A', 'Side B', 'DUPR rating / side B', 'DUPR ID / side B', 'W', 'L', 'Points for', 'Points against', 'Games A-B', 'Winner']];
   const players = new Map(d.players.map((p) => [p.id, p]));
@@ -45,6 +56,7 @@ export async function resultsPdf(d: TournamentBundle): Promise<void> {
   line(d.tournament.name, 16);
   line([d.club.name, d.tournament.venue, d.tournament.city, d.tournament.startDate].filter(Boolean).join(' | '));
   line('Stored organiser-entered DUPR details; not synchronised or verified with DUPR.');
+  for (const c of resultsChampions(d)) line(`${c.division} champion: ${c.winner} | Final against ${c.opponent}: ${c.score}`, 11);
   for (const r of resultsRows(d).slice(1)) {
     if (y > 210) { pdf.addPage(); y = 18; }
     line(`${r[1]} | ${r[2]} | ${r[2].endsWith('standings') ? `Pool position ${r[3]}` : 'Match'}`, 11);

@@ -69,15 +69,14 @@ describe('Events tab (Club builds only)', () => {
     await user.click(within(screen.getByRole('group', { name: 'Show' })).getByRole('button', { name: 'Entries open' }));
     expect(screen.queryByRole('button', { name: 'PQ Demo Sunday Social' })).not.toBeInTheDocument();
 
-    // The demo user is a PICKLEQ admin: two listings wait, each with its poster. Approving puts it (and its poster) on the board.
-    await user.click(screen.getByRole('button', { name: /1 club to approve · 2 listings to review/ }));
-    await user.click(within(await screen.findByRole('group', { name: 'Admin sections' })).getByRole('button', { name: 'Listings' }));
-    await screen.findByRole('heading', { name: 'Review listings' });
-    const ladder = screen.getByRole('region', { name: 'PQ Demo Ladder Cup' });
-    expect(within(ladder).getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeInTheDocument();
-    expect(within(screen.getByRole('region', { name: 'PQ Demo Corporate Cup' })).getByRole('img', { name: 'Poster for PQ Demo Corporate Cup' })).toBeInTheDocument();
+    // The demo user is a PaddleQ admin: three tournaments wait for approval. Approving one puts its listing (and poster) on the board.
+    await user.click(screen.getByRole('button', { name: /3 tournaments to approve/ }));
+    await screen.findByRole('heading', { name: 'Tournament approvals' });
+    const ladder = await screen.findByRole('region', { name: 'PQ Demo Ladder Cup approval' });
+    expect(ladder).toHaveTextContent('ladder@demo');
+    expect(ladder).toHaveTextContent('PQ Demo New Club');
     await user.click(within(ladder).getByRole('button', { name: 'Approve' }));
-    expect(await screen.findByText('PQ Demo Ladder Cup is on the board. PQ Demo New Club is now verified.')).toBeInTheDocument();
+    expect(await screen.findByText('PQ Demo Ladder Cup is approved. PQ Demo New Club can now make the draw and share links.')).toBeInTheDocument();
     window.location.hash = '#/events';
     const card = await screen.findByRole('button', { name: 'PQ Demo Ladder Cup' });
     expect(within(card).getByRole('img', { name: 'Poster for PQ Demo Ladder Cup' })).toBeInTheDocument();
@@ -208,7 +207,7 @@ describe('Organiser: entries inbox and draw', () => {
 });
 
 describe('Posting a tournament and approving it', () => {
-  it('a new registration tournament waits for approval, then shows on the board', async () => {
+  it('a trusted club’s registration tournament goes straight on the board', async () => {
     const user = userEvent.setup();
     await openDemo(user);
     const clubId = window.location.hash.split('/')[2];
@@ -229,31 +228,11 @@ describe('Posting a tournament and approving it', () => {
     expect(screen.queryByLabelText('Event 1 find player')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Create and open entries' }));
     await screen.findByRole('heading', { name: 'Robot Mixed Cup' });
+    // PQ Demo Club is trusted, so the tournament is approved at once and its listing goes straight on the board.
     const card = screen.getByRole('region', { name: 'Events board' });
-    expect(card).toHaveTextContent('Being checked');
+    expect(card).toHaveTextContent('On the board');
     expect(card).toHaveTextContent('Robot Courts, Hyderabad');
-
-    window.location.hash = '#/admin-listings';
-    await screen.findByRole('heading', { name: 'Review listings' });
-    const review = await screen.findByRole('region', { name: 'Robot Mixed Cup' });
-    expect(review).toHaveTextContent('Mixed · Doubles · ₹700');
-    await user.click(within(review).getByRole('button', { name: 'Reject…' }));
-    await user.click(within(review).getByRole('button', { name: 'Reject with this reason' }));
-    expect(await screen.findByText('Give the organiser a reason')).toBeInTheDocument();
-    await user.type(within(review).getByLabelText('Reason for rejecting Robot Mixed Cup'), 'Add the start time');
-    await user.click(within(review).getByRole('button', { name: 'Reject with this reason' }));
-    expect(await screen.findByText('Robot Mixed Cup rejected')).toBeInTheDocument();
-
-    window.history.back();
-    await waitFor(() => expect(window.location.hash).toMatch(/club-tournament\//));
-    await screen.findByRole('heading', { name: 'Robot Mixed Cup' });
-    expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('Reason: Add the start time');
-    await user.click(screen.getByRole('button', { name: 'Put it on the board' }));
-    expect(await screen.findByText(/Sent to PaddleQ to check/)).toBeInTheDocument();
-    window.location.hash = '#/admin-listings';
-    const again = await screen.findByRole('region', { name: 'Robot Mixed Cup' });
-    await user.click(within(again).getByRole('button', { name: 'Approve' }));
-    expect(await screen.findByText('Robot Mixed Cup is on the board. PQ Demo Club is now verified.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'PaddleQ approval' })).not.toBeInTheDocument();
     window.location.hash = '#/events';
     expect(await screen.findByRole('button', { name: 'Robot Mixed Cup' })).toBeInTheDocument();
   });
@@ -274,7 +253,7 @@ describe('Posting a tournament and approving it', () => {
     await user.type(screen.getByLabelText('Contact number for entries'), '90000 11111');
     await user.click(screen.getByRole('button', { name: 'Post the listing' }));
     await screen.findByRole('heading', { name: 'Robot Listed Open' });
-    expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('Being checked');
+    expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('Listed');
     expect(screen.queryByRole('button', { name: /Entries inbox/ })).not.toBeInTheDocument();
   });
 });
@@ -290,40 +269,69 @@ describe('Signing in to enter (real server)', () => {
   });
 });
 
-describe('New clubs need PaddleQ’s approval to host', () => {
-  it('asks when the club is made, waits, and can host once an admin approves', async () => {
+describe('Create freely, go live with approval', () => {
+  it('a new club sets up a tournament, submits it, is rejected with a reason, then approved; trust skips it', async () => {
     const user = userEvent.setup();
     await openDemo(user);
     window.location.hash = '#/club-new';
     await screen.findByRole('heading', { name: 'Create a club' });
     await user.type(screen.getByLabelText('Club name'), 'Smash Yard');
     await user.type(screen.getByLabelText('Your name'), 'Robot');
-    await user.click(screen.getByRole('button', { name: 'Create club and ask to host' }));
-    expect(await screen.findByText('Enter the 10-digit India mobile number, without +91')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Phone number'), '98765 43210');
-    await user.type(screen.getByLabelText('About your club'), 'Two courts in Baner');
-    await user.click(screen.getByRole('button', { name: 'Create club and ask to host' }));
-    const card = await screen.findByRole('region', { name: 'Hosting tournaments' });
-    expect(card).toHaveTextContent(/waiting for paddleq/i);
-    expect(card).toHaveTextContent('+91 9876543210');
-    expect(screen.queryByRole('button', { name: 'New tournament' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create club' }));
+    await user.click(await screen.findByRole('button', { name: 'New tournament' }));
+    await screen.findByRole('heading', { name: 'New tournament' });
+    // Picking players makes the draw at once, so a club that isn't trusted only gets "They register" and "List only".
+    expect(within(screen.getByRole('group', { name: 'How do players enter?' })).queryByRole('button', { name: 'I pick them' })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Tournament name'), 'Smash Yard Open');
+    await user.type(screen.getByLabelText('City'), 'Pune');
+    await user.type(screen.getByLabelText('Venue'), 'Yard Courts');
+    await user.type(screen.getByLabelText('Your UPI ID'), 'yard@bank');
+    await user.click(screen.getByRole('button', { name: 'Create and open entries' }));
+    await screen.findByRole('heading', { name: 'Smash Yard Open' });
+    const card = screen.getByRole('region', { name: 'PaddleQ approval' });
+    expect(card).toHaveTextContent('Not submitted');
+    expect(card).toHaveTextContent('Submit at least 24 hours before your event.');
+    expect(screen.queryByRole('button', { name: 'Referee links' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Desk view' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /results link/ })).not.toBeInTheDocument();
+    await user.type(within(card).getByLabelText('Expected players'), '20');
+    await user.click(within(card).getByRole('button', { name: 'Submit for approval' }));
+    expect(await screen.findByText(/Sent to PaddleQ/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('region', { name: 'PaddleQ approval' })).toHaveTextContent('Waiting for PaddleQ'));
 
-    window.location.hash = '#/admin/clubs';
-    expect(await screen.findByText(/2 clubs waiting for your approval/)).toBeInTheDocument();
-    const req = screen.getByRole('region', { name: 'Smash Yard' });
-    expect(req).toHaveTextContent('Wants to host');
-    expect(req).toHaveTextContent('Two courts in Baner');
+    window.location.hash = '#/admin/approvals';
+    const req = await screen.findByRole('region', { name: 'Smash Yard Open approval' });
+    expect(req).toHaveTextContent('yard@bank');
+    expect(req).toHaveTextContent('about 20 expected');
     await user.click(within(req).getByRole('button', { name: 'Reject…' }));
+    await user.type(within(req).getByLabelText('Reason for rejecting'), 'Add the start time');
     await user.click(within(req).getByRole('button', { name: 'Reject with this reason' }));
-    expect(await screen.findByText('Give the organiser a reason')).toBeInTheDocument();
-    await user.type(within(req).getByLabelText('Reason for rejecting Smash Yard'), 'Add your venue');
-    await user.click(within(req).getByRole('button', { name: 'Reject with this reason' }));
-    expect(await screen.findByText('Smash Yard was told: Add your venue')).toBeInTheDocument();
-    await user.click(within(screen.getByRole('region', { name: 'Smash Yard' })).getByRole('button', { name: 'Approve to host' }));
-    expect(await screen.findByText('Smash Yard can now host tournaments')).toBeInTheDocument();
+    expect(await screen.findByText('Smash Yard Open: the club was told why')).toBeInTheDocument();
 
-    await user.click(within(screen.getByRole('region', { name: 'Smash Yard' })).getByRole('button', { name: 'People and events' }));
-    await screen.findByRole('heading', { name: 'Smash Yard' });
+    window.history.back();
+    await waitFor(() => expect(window.location.hash).toMatch(/club-tournament\//));
+    const back = await screen.findByRole('region', { name: 'PaddleQ approval' });
+    expect(back).toHaveTextContent('PaddleQ’s note: Add the start time');
+    await user.click(within(back).getByRole('button', { name: 'Submit again' }));
+    await waitFor(() => expect(screen.getByRole('region', { name: 'PaddleQ approval' })).toHaveTextContent('Waiting for PaddleQ'));
+
+    window.location.hash = '#/admin/approvals';
+    await user.click(within(await screen.findByRole('region', { name: 'Smash Yard Open approval' })).getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByText(/Smash Yard Open is approved/)).toBeInTheDocument();
+    window.history.back();
+    await waitFor(() => expect(window.location.hash).toMatch(/club-tournament\//));
+    expect(await screen.findByRole('button', { name: 'Referee links' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'PaddleQ approval' })).not.toBeInTheDocument();
+
+    // Trusted: the admin switches it on, and the club can pick players (approved at once); switching it off again is allowed.
+    window.location.hash = '#/admin/clubs';
+    const sw = await screen.findByRole('switch', { name: 'Trusted club: Smash Yard' });
+    expect(sw).toHaveAttribute('aria-checked', 'false');
+    await user.click(sw);
+    expect(await screen.findByText('Smash Yard is trusted: its tournaments skip approval')).toBeInTheDocument();
+    await user.click(await screen.findByRole('switch', { name: 'Trusted club: Smash Yard' }));
+    expect(await screen.findByText(/Smash Yard is no longer trusted/)).toBeInTheDocument();
   });
 });
 
@@ -332,15 +340,14 @@ describe('PaddleQ admin dashboard', () => {
     const user = userEvent.setup();
     await openDemo(user);
     window.location.hash = '#/events';
-    await user.click(await screen.findByRole('button', { name: /2 listings to review/ }));
-    await user.click(within(await screen.findByRole('group', { name: 'Admin sections' })).getByRole('button', { name: 'Listings' }));
-    await screen.findByRole('heading', { name: 'Review listings' });
+    await user.click(await screen.findByRole('button', { name: /3 tournaments to approve/ }));
+    await screen.findByRole('heading', { name: 'Tournament approvals' });
     const sections = screen.getByRole('group', { name: 'Admin sections' });
 
     await user.click(within(sections).getByRole('button', { name: 'Overview' }));
     expect(await screen.findByRole('region', { name: 'Matches scored this week' })).toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Matches scored per week' })).getAllByRole('listitem')).toHaveLength(8);
-    expect(screen.getByRole('button', { name: 'Listings to review: 2' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'To approve: 3' })).toBeInTheDocument();
 
     await user.click(within(sections).getByRole('button', { name: 'Clubs' }));
     const demo = await screen.findByRole('region', { name: 'PQ Demo Club' });

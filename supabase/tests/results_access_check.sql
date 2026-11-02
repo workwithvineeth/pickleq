@@ -12,7 +12,7 @@ insert into result_ids values ('club',public.create_club('Results Fixture','Test
 reset role;
 update public.clubs set hosting='approved' where id=(select v from result_ids where k='club');
 insert into public.club_members(club_id,user_id,role) select v,'ab000000-0000-4000-8000-000000000002','player' from result_ids where k='club';
-insert into public.tournaments(id,club_id,name,start_date,status) select 'ab000000-0000-4000-8000-000000000010',v,'Results Fixture',current_date,'live' from result_ids where k='club';
+insert into public.tournaments(id,club_id,name,start_date,status,approval) select 'ab000000-0000-4000-8000-000000000010',v,'Results Fixture',current_date,'live','approved' from result_ids where k='club';
 insert into public.divisions(id,tournament_id,club_id,name,kind,format,pools,advance,sort)
  select 'ab000000-0000-4000-8000-000000000011','ab000000-0000-4000-8000-000000000010',v,'Singles','singles',
  '{"pool":{"pointsTo":11,"bestOf":1,"scoring":"sideout","golden":true},"ko":{"pointsTo":11,"bestOf":1,"scoring":"sideout","golden":true}}',1,0,0 from result_ids where k='club';

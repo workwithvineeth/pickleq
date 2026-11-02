@@ -1,6 +1,6 @@
 import type { NewMatchRow, NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
-import type { Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { Approval, Club, ClubMatch, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 export interface ClubUser { id: string; email: string }
 export interface MyClub { club: Club; role: Role; myPlayerId?: string }
@@ -113,7 +113,7 @@ export interface ClubBackend extends EventsBackend {
   signOut(): Promise<void>;
   myClubs(): Promise<MyClub[]>;
   createClub(name: string, city: string, myName: string): Promise<string>;
-  /** The club's owner or admin asks PaddleQ to let the club host tournaments (again, after a rejection). */
+  /** Legacy method name: stores the owner's private contact details; no hosting approval is required after 0018. */
   requestHosting(clubId: string, phone: string, note: string): Promise<void>;
   joinClub(code: string, claim: string | null, myName: string): Promise<string>;
   clubBundle(clubId: string): Promise<ClubBundle>;
@@ -268,6 +268,25 @@ export interface EventsBackend {
   adminSetTournamentStatus(id: string, status: 'live' | 'done'): Promise<void>;
   /** Removes a PaddleQ admin; never the last one. */
   removePlatformAdmin(email: string): Promise<void>;
+
+  // ---------- Tournament approval ("create freely, go live with approval") ----------
+  /** The club's organisers send the tournament to PaddleQ. A trusted club's is approved straight away. Returns the new status. */
+  submitTournament(id: string, expectedPlayers?: number): Promise<Approval>;
+  /** PaddleQ admins: tournaments waiting (and decided in the last 30 days). */
+  approvalQueue(): Promise<ApprovalRequest[]>;
+  /** Approve, or reject with a reason the club sees. Never a tournament of a club you organise. */
+  decideTournament(id: string, approve: boolean, reason?: string): Promise<void>;
+  /** The trusted switch (PaddleQ admins only). */
+  setClubTrusted(id: string, trusted: boolean): Promise<void>;
+
+}
+
+/** A tournament waiting for (or recently given) PaddleQ's approval. */
+export interface ApprovalRequest {
+  id: string; name: string; startDate: string; startTime: string; city?: string; venue?: string; club: string; clubId: string; trusted: boolean;
+  upiId?: string; entryMode: EntryMode; listing: Listing; approval: Approval; reason?: string; expected?: number; requestedAt?: string; decidedAt?: string;
+  courts: number; entries: number; mine: boolean;
+  divisions: { name: string; kind: DivisionKind; fee?: number; cap?: number }[];
 }
 
 export interface AdminOverview {
@@ -276,7 +295,7 @@ export interface AdminOverview {
   /** Matches scored in each of the last 8 weeks (weeks start Monday), oldest first. */
   weeks: { week: string; matches: number }[];
 }
-export interface AdminClub { id: string; name: string; city?: string; logoUrl?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string; hostingRequestedAt?: string; owners: string[]; members: number; tournaments: number; lastEvent?: string }
+export interface AdminClub { id: string; name: string; city?: string; logoUrl?: string; verified: boolean; isTest: boolean; trusted: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string; hostingRequestedAt?: string; owners: string[]; members: number; tournaments: number; lastEvent?: string }
 export interface AdminClubDetail {
   id: string; name: string; city?: string; logoUrl?: string; verified: boolean; isTest: boolean; hosting: HostingStatus; hostingPhone?: string; hostingNote?: string; hostingReason?: string;  hostingRequestedAt?: string;
   people: { name: string; email?: string; role: Role; helper: boolean }[];
