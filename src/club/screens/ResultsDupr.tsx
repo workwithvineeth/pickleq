@@ -149,10 +149,11 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       })}
       <section className="card section" aria-label={`${div.name} Knockout results`}><h3>Knockout results</h3>
         {!data.matches.some((m) => m.divisionId === div.id && (isBronzeMatch(m) || KNOCKOUT_STAGES.includes(m.stage as typeof KNOCKOUT_STAGES[number]))) && <p>No knockout matches yet.</p>}
-        {data.matches.some((m) => m.divisionId === div.id && isBronzeMatch(m)) && <section aria-label={div.name + ' Bronze'}><h4>Bronze</h4>{data.matches.filter((m) => m.divisionId === div.id && isBronzeMatch(m)).map((m) => match(m, div))}</section>}
         {KNOCKOUT_STAGES.map((stage) => {
           const matches = data.matches.filter((m) => m.divisionId === div.id && m.stage === stage).sort((a, b) => (a.bracketPos ?? 0) - (b.bracketPos ?? 0));
-          return matches.length > 0 && <section key={stage} aria-label={`${div.name} ${STAGE_LABEL[stage]}`}><h4>{STAGE_LABEL[stage]}</h4>{matches.map((m) => match(m, div))}</section>;
+          if (stage === 'sf') return matches.map((m, index) => <section key={m.id}><h4>Semifinal {index + 1}</h4>{match(m, div)}</section>);
+          const bronze = stage === 'final' ? data.matches.filter((m) => m.divisionId === div.id && isBronzeMatch(m)) : [];
+          return <div key={stage}>{bronze.length > 0 && <section aria-label={div.name + ' Bronze match'}><h4>Bronze match</h4>{bronze.map((m) => match(m, div))}</section>}{matches.length > 0 && <section aria-label={`${div.name} ${STAGE_LABEL[stage]}`}><h4>{STAGE_LABEL[stage]}</h4>{matches.map((m) => match(m, div))}</section>}</div>;
         })}
       </section>
       {staff && div.shape === 'ko' && <section className="card section no-print" aria-label={`${div.name} DUPR details`}><h3>Edit DUPR details</h3>

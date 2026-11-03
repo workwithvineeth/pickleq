@@ -402,13 +402,14 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<
     <section className="section" aria-label="Knockouts">
       {division.advance === 0 && division.shape !== 'ko' && <p className="small muted">This event has no knockouts.</p>}
       {division.advance > 0 && ko.length === 0 && <p className="small muted">Knockouts are drawn once every pool match is finished.</p>}
-      {bronze.length > 0 && <section className="section" aria-label="Bronze"><h3>Bronze</h3>{bronze.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} />)}</section>}
       {rounds.map((r) => {
         const ms = ko.filter((m) => (m.round ?? 1) === r);
         const stage = ms[0].stage as KnockoutStage;
+        if (stage === 'sf') return ms.map((m, index) => <div key={m.id} className="section"><h3 style={{ fontSize: 16 }}>Semifinal {index + 1}</h3><FixtureRow m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} onScore={onScore} /></div>);
         const f = formatFor(division, stage);
         return (
           <div key={r} className="section">
+            {stage === 'final' && bronze.length > 0 && <section className="section" aria-label="Bronze match"><h3>Bronze match</h3>{bronze.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} />)}</section>}
             <h3 style={{ fontSize: 16 }}>{ROUND_LABEL[stage] ?? STAGE_LABEL[stage]}</h3>
             <p className="small muted" style={{ margin: 0 }}>{f.bestOf === 3 ? 'Best of 3 games' : 'One game'} to {f.pointsTo}{f.golden ? ', golden point' : ''}</p>
             {ms.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={m.entryB ? label(emap.get(m.entryB)) : 'Bye'} onScore={onScore} />)}
@@ -647,7 +648,7 @@ function GroupedMatches({ d, divisionId }: { d: PublicTournament; divisionId: st
   return (
     <>
       {pools.map((p) => block(`Pool ${poolLetter(p)}`, ms.filter((m) => m.stage === 'pool' && (m.pool ?? 1) === p)))}
-      {ms.some(isBronzeMatch) && block('Bronze', ms.filter(isBronzeMatch))}
+      {ms.some(isBronzeMatch) && block('Bronze match', ms.filter(isBronzeMatch))}
       {stages.map((st) => block(ROUND_LABEL[st as KnockoutStage], ms.filter((m) => m.stage === st)))}
     </>
   );
