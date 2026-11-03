@@ -178,7 +178,7 @@ describe('Club mode', () => {
   it('creates a tournament: seeds by rating into pools and schedules every match', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    await user.click(screen.getByRole('button', { name: 'New tournament' }));
+    await user.click(screen.getByRole('button', { name: '+ Create Tournament' }));
     await screen.findByRole('heading', { name: 'New tournament' });
     await user.type(screen.getByLabelText('Tournament name'), 'Friday Ladder');
     await user.click(within(screen.getByRole('group', { name: 'Courts' })).getByRole('button', { name: '2' }));
@@ -358,7 +358,7 @@ describe('Club mode', () => {
     await screen.findByText(/Message copied/);
     expect(writes[0]).toMatch(/^PQ Demo Open · Court \d+: .+ v .+ Please come to court \d+ now\.$/);
     // Entries page inside the desk link.
-    await user.click(screen.getByRole('button', { name: 'Entries' }));
+    await user.click(screen.getByRole('button', { name: '+ Add Entry' }));
     expect(await screen.findByRole('heading', { name: 'Entries' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Late entry' })).toBeInTheDocument();
     expect(window.location.hash).toBe(`#/desk/${token}~entries`);
@@ -390,7 +390,7 @@ describe('Club mode', () => {
     expect(within(check).getByText(/Draw made: \d+ matches/)).toBeInTheDocument();
     const run = screen.getByRole('navigation', { name: 'Run the tournament' });
     const names = within(run).getAllByRole('button').map((b) => b.textContent);
-    expect(names.slice(0, 3)).toEqual(['Desk view', 'Referee links', 'Entries']);
+    expect(names.slice(0, 3)).toEqual(['Desk view', 'Referee links', '+ Add Entry']);
     expect(within(run).queryByRole('button', { name: 'Mark as finished' })).not.toBeInTheDocument();
     const end = screen.getByRole('region', { name: 'When it’s over' });
     expect(within(end).getByRole('button', { name: 'Mark as finished' })).toBeInTheDocument();
@@ -443,7 +443,7 @@ describe('Club mode', () => {
     const players = new Map(before.players.map((p) => [p.id, p.name]));
     const semi = before.matches.find((m) => m.stage === 'sf' && m.status === 'scheduled') as ClubMatch;
     const out = semi.sideA.map((id) => players.get(id)).join(' / ');
-    await user.click(screen.getByRole('button', { name: 'Entries' }));
+    await user.click(screen.getByRole('button', { name: '+ Add Entry' }));
     await screen.findByRole('heading', { name: 'Entries' });
     await user.click(within(screen.getByRole('group', { name: 'Event' })).getByRole('button', { name: 'Open Doubles' }));
     const card = await screen.findByLabelText(out);
@@ -487,7 +487,7 @@ describe('Club mode', () => {
   it('every event chooses golden point or win by 2, and the choice reaches scoring', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    await user.click(screen.getByRole('button', { name: 'New tournament' }));
+    await user.click(screen.getByRole('button', { name: '+ Create Tournament' }));
     await screen.findByRole('heading', { name: 'New tournament' });
     expect(within(screen.getByRole('group', { name: 'Event 1 scoring' })).getByRole('button', { name: 'Golden point' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Golden point: at 10–10 the next point wins.')).toBeInTheDocument();

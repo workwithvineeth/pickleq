@@ -340,7 +340,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
       <div className="meta">
         {t.status === 'draft' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.updateTournament(t.id, { status: 'live' }), 'The tournament is live')}>Start tournament</button>}
         {!desk && <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>}
-        <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>Entries</button>
+        <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>+ Add Entry</button>
         <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Standings and draw</button>
       </div>
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}

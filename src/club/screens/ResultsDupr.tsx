@@ -7,7 +7,7 @@ import { poolLetter, standings, TIE_BREAK_TEXT } from '../domain/engine';
 import { isStaff, KNOCKOUT_STAGES, STAGE_LABEL, type ClubMatch, type Division } from '../types';
 import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resultsReport';
 import { ResultsHero } from './Brand';
-import { appLink, errorText, Header, Status, useLoad } from './common';
+import { displayPlayerName, appLink, errorText, Header, Status, useLoad } from './common';
 
 export const resultsDuprLink = (id: string) => appLink(`#/club-results-dupr/${id}`);
 type Edit = { singles?: string; doubles?: string; id?: string };
@@ -73,7 +73,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   function player(pid: string, div: Division, editable = false) {
     const p = pmap.get(pid); if (!p) return <span key={pid}>Unknown player</span>;
     const rating = div.kind === 'singles' ? p.duprSingles : p.duprDoubles;
-    return <div key={pid} className={`pq-result-player${editable ? ' pq-result-edit-player' : ''}`}><span>{p.name}</span>
+    return <div key={pid} className={`pq-result-player${editable ? ' pq-result-edit-player' : ''}`}><span>{displayPlayerName(p.name)}</span>
       <span className={`small${rating === undefined ? ' pq-result-missing' : ' muted'}`}>DUPR {div.kind}: {rating ?? 'Missing rating'}</span>
       {editable && staff && <div className="meta no-print">
         <label className="small">{div.kind === 'singles' ? 'Singles' : 'Doubles'} rating

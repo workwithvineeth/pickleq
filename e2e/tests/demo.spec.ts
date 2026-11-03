@@ -92,9 +92,21 @@ test.describe('Organiser screens (demo club)', () => {
     await expect(page.getByText('Result saved')).toBeVisible();
   });
 
+  test('opens an entrant’s actual pool matches from the standings', async ({ page }) => {
+    await openDemoEvent(page);
+    await page.getByRole('button', { name: 'Pools', exact: true }).click();
+    const table = page.getByRole('table', { name: 'Pool A', exact: true });
+    const entrant = table.getByRole('button').first();
+    await entrant.click();
+    await expect(entrant).toHaveAttribute('aria-expanded', 'true');
+    await expect(table.getByText(/^vs /).first()).toBeVisible();
+    await entrant.click();
+    await expect(entrant).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('entries: walk-in player, withdraw a team, and late entry refused once knockouts start', async ({ page }) => {
     await openDemoEvent(page);
-    await page.getByRole('button', { name: 'Entries' }).click();
+    await page.getByRole('button', { name: '+ Add Entry' }).click();
     await expect(page.getByRole('heading', { name: 'Entries' })).toBeVisible();
     await page.getByRole('button', { name: 'Open Doubles' }).click();
     await page.getByLabel('Walk-in player name').fill('Robot Walkin');

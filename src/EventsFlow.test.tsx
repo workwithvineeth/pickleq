@@ -279,7 +279,7 @@ describe('Create freely, go live with approval', () => {
     await user.type(screen.getByLabelText('Your name'), 'Robot');
     await user.type(screen.getByLabelText('Phone number'), '98765 43210');
     await user.click(screen.getByRole('button', { name: 'Create club' }));
-    await user.click(await screen.findByRole('button', { name: 'New tournament' }));
+    await user.click(await screen.findByRole('button', { name: '+ Create Tournament' }));
     await screen.findByRole('heading', { name: 'New tournament' });
     // Picking players makes the draw at once, so a club that isn't trusted only gets "They register" and "List only".
     expect(within(screen.getByRole('group', { name: 'How do players enter?' })).queryByRole('button', { name: 'I pick them' })).not.toBeInTheDocument();

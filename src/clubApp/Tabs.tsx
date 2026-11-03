@@ -42,7 +42,7 @@ export function ClubTournamentsTab({ go }: { go: Go }) {
               <span aria-hidden="true">›</span>
             </button>
           ))}
-          {(role === 'owner' || role === 'admin' || role === 'coach') && <button type="button" className="btn btn-outline" onClick={() => go('club-tournament-new', club.id)}>New tournament at {club.name}</button>}
+          {(role === 'owner' || role === 'admin' || role === 'coach') && <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', club.id)}>+ Create Tournament at {club.name}</button>}
         </section>
       ))}
     </main>

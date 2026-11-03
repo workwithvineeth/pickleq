@@ -131,7 +131,7 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   await expect(page.getByRole('button', { name: 'Create a club', exact: true })).toBeVisible();
   await page.goto(`#/club-view/${cid}`);
   await expect(page.getByRole('heading', { name: 'Fixture Club', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'New tournament', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '+ Create Tournament', exact: true })).toBeVisible();
   expect(calls).toContain('/auth/v1/signup'); expect(calls).toContain('/auth/v1/verify'); expect(calls).toContain('/auth/v1/token');
   expect(calls).not.toContain('/rest/v1/rpc/admin_set_club_hosting');
 });

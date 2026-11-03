@@ -68,7 +68,7 @@ async function openSeason8(page: Page) {
 test.describe('Pickleball Central Season 8 (demo sample)', () => {
   test('singles is live; the organiser adds and removes doubles teams before doubles starts', async ({ page }) => {
     await openSeason8(page);
-    await page.getByRole('button', { name: 'Entries' }).click();
+    await page.getByRole('button', { name: '+ Add Entry' }).click();
     await expect(page.getByRole('heading', { name: 'Entries' })).toBeVisible();
     await page.getByRole('button', { name: 'Season 8 Doubles' }).click();
     await expect(page.getByText('12 active teams')).toBeVisible();

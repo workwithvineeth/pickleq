@@ -1,6 +1,6 @@
 import { isBronzeMatch } from '../resultsReport';
 import { ResultsHero } from './Brand';
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
@@ -14,7 +14,7 @@ import { ApprovalCard } from './Approvals';
 import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
-import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
+import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 import { friendlyDate, friendlyTime } from '../dates';
 import { preflight, type PreflightItem } from '../preflight';
 
@@ -255,7 +255,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {staff && !approved && (
         <nav className="meta" aria-label="Set up the tournament">
           {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>Entries inbox</button>}
-          <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>Entries</button>
+          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>+ Add Entry</button>
         </nav>
       )}
       {staff && approved && (
@@ -264,7 +264,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           <button type="button" className={`btn ${t.status === 'draft' ? 'btn-outline' : 'btn-primary'}`} onClick={() => go('club-desk', t.id)}>Desk view</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>
           {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>{t.drawnAt ? 'Entries inbox' : 'Entries inbox and draw'}</button>}
-          <button type="button" className="btn btn-outline" onClick={() => go('club-entries', t.id)}>{t.entryMode === 'registration' ? 'Entries on the day' : 'Entries'}</button>
+          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>+ Add Entry</button>
           {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>}
           {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-results-dupr', t.id)}>Results and DUPR</button>}
         </nav>
@@ -381,7 +381,7 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<
       <section className="section" aria-label="Pools">
         {pools.map((p) => {
           const ids = entries.filter((e) => (e.pool ?? 1) === p).map((e) => e.id);
-          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => poolDone(p) && r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={(id) => label(emap.get(id))} />;
+          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => poolDone(p) && r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={(id) => label(emap.get(id))} matches={poolMatches} />;
         })}
         {q && q.runnersUp.length > 0 && (
           <div className="card section">
@@ -421,7 +421,8 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<
 }
 
 /** A pool table: P · W · L · PF · PA · +/−. Names wrap so it fits a 320 px phone. */
-function PoolTable({ title, rows, through, best, label, bare }: { title: string; rows: StandingRow[]; through: (r: StandingRow) => boolean; best?: (r: StandingRow) => boolean; label: (id: string) => string; bare?: boolean }) {
+function PoolTable({ title, rows, through, best, label, bare, matches }: { matches?: ClubMatch[]; title: string; rows: StandingRow[]; through: (r: StandingRow) => boolean; best?: (r: StandingRow) => boolean; label: (id: string) => string; bare?: boolean }) {
+  const [expanded, setExpanded] = useState<string>();
   const table = (
     <table className="table pool-table" aria-label={title} style={{ fontSize: 13, tableLayout: 'auto', width: '100%' }}>
       <thead><tr><th>#</th><th style={{ width: '100%' }}>Name</th><th>P</th><th>W</th><th>L</th><th>PF</th><th>PA</th><th>+/−</th></tr></thead>
@@ -429,10 +430,22 @@ function PoolTable({ title, rows, through, best, label, bare }: { title: string;
         {rows.map((r) => {
           const pill = through(r) ? 'Through' : best?.(r) ? 'Best runner-up' : null;
           return (
-            <tr key={r.entryId} style={pill ? { fontWeight: 600 } : undefined}>
-              <td>{r.rank}</td><td style={{ wordBreak: 'break-word' }}>{label(r.entryId)}{pill && <><br /><span className="pill pill-ok">{pill}</span></>}</td>
+            <Fragment key={r.entryId}><tr style={pill ? { fontWeight: 600 } : undefined}>
+              <td>{r.rank}</td><td style={{ wordBreak: 'break-word' }}>{matches ? <button type="button" className="link-btn" style={{ minHeight: 44, textAlign: 'left', overflowWrap: 'anywhere' }} aria-expanded={expanded === r.entryId} onClick={() => setExpanded(expanded === r.entryId ? undefined : r.entryId)}>{label(r.entryId)}</button> : label(r.entryId)}{pill && <><br /><span className="pill pill-ok">{pill}</span></>}</td>
               <td>{r.played}</td><td>{r.wins}</td><td>{r.losses}</td><td>{r.pointsFor}</td><td>{r.pointsAgainst}</td><td>{r.diff > 0 ? `+${r.diff}` : r.diff}</td>
             </tr>
+            {expanded === r.entryId && matches && <tr><td colSpan={8}>
+              <strong>Pool matches</strong>
+              {matches.filter((match) => match.entryA === r.entryId || match.entryB === r.entryId).map((match) => {
+                const first = match.entryA === r.entryId;
+                const opponent = first ? match.entryB : match.entryA;
+                const score = match.games.map((game) => first ? `${game.a}–${game.b}` : `${game.b}–${game.a}`).join(', ');
+                const status = { done: 'Completed', live: 'Live', scheduled: 'Scheduled', void: 'Cancelled' }[match.status];
+                return <p key={match.id}>vs {opponent ? label(opponent) : 'To be decided'} · {status}{score && ` · ${score}`}</p>;
+              })}
+              {!matches.some((match) => match.entryA === r.entryId || match.entryB === r.entryId) && <p>No pool matches scheduled.</p>}
+            </td></tr>}
+            </Fragment>
           );
         })}
       </tbody>
@@ -574,7 +587,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
               }),
               tournament: { startTime: d.startTime, slotMinutes: d.slotMinutes },
             }}
-            divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.join(' / ') : 'To be decided')}
+            divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')}
           />}
           <p className="small muted" style={{ margin: 0 }}>Live scores by <a href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>PaddleQ</a> · run your club’s tournament at paddleq.in</p>
         </>

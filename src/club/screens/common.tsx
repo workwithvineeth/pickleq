@@ -55,8 +55,15 @@ export function DemoNote({ b }: { b: ClubBackend | null }) {
   return <div className="notice notice-warn small">Demo club on this phone. Nothing here is sent anywhere, and the names are made up.</div>;
 }
 
+export function displayPlayerName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').replace(/\p{L}+/gu, (word) => {
+    if (word === word.toLocaleLowerCase()) return word[0].toLocaleUpperCase() + word.slice(1);
+    return word;
+  });
+}
+
 export function names(ids: string[], players: Map<string, ClubPlayer>): string {
-  return ids.map((id) => players.get(id)?.name ?? 'Unknown').join(' / ');
+  return ids.map((id) => displayPlayerName(players.get(id)?.name ?? 'Unknown')).join(' / ');
 }
 
 export function entryLabel(e: Entry | undefined, players: Map<string, ClubPlayer>): string {

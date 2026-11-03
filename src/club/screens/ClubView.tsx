@@ -74,7 +74,7 @@ function Events({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void }
   return (
     <>
       <section className="section" aria-label="Tournaments">
-        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && <button type="button" className="link-btn" onClick={() => go('club-tournament-new', d.club.id)}>New tournament</button>}</div>
+        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', d.club.id)}>+ Create Tournament</button>}</div>
         {d.tournaments.length === 0 && <p className="small muted">No tournaments yet.</p>}
         {d.tournaments.map((t) => (
           <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>

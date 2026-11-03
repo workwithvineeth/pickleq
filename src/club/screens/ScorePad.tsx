@@ -106,7 +106,11 @@ export function ScorePad(p: ScorePadProps) {
   }
   const point = (side: 'A' | 'B') => { if (!curOver && !matchOver) update([...games.slice(0, -1), withTally(cur.points + side)]); };
   const undo = () => {
-    if (cur.points.length === 0 && games.length > 1) return update(games.slice(0, -1));
+    if (cur.points.length === 0 && cur.a === 0 && cur.b === 0 && games.length > 1) {
+      const previous = games[games.length - 2];
+      if (previous.points.length) update([...games.slice(0, -2), withTally(previous.points.slice(0, -1))]);
+      return;
+    }
     if (cur.points.length) update([...games.slice(0, -1), withTally(cur.points.slice(0, -1))]);
   };
 
@@ -156,7 +160,7 @@ export function ScorePad(p: ScorePadProps) {
             {gp ? `Game point: ${gp === 'A' ? nameA : nameB}` : !golden && Math.abs(lead) >= thr ? `${lead > 0 ? nameA : nameB} lead by ${Math.abs(lead)}` : ''}
           </p>
           <div className="sticky-actions" style={{ position: 'static' }}>
-            <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || (cur.points.length === 0 && games.length === 1)}>Undo</button>
+            <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || (!cur.points.length && (cur.a !== 0 || cur.b !== 0 || !games[games.length - 2]?.points.length))}>Undo Last Point</button>
             {curOver && !matchOver && <button type="button" className="btn btn-primary" onClick={() => update([...games, { points: '', a: 0, b: 0 }])}>Start game {games.length + 1}</button>}
             {matchOver && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => finish(games)}>Save result</button>}
           </div>
