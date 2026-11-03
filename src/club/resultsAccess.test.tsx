@@ -41,7 +41,7 @@ describe('results access and editing', () => {
   });
   it('ordinary player projection has exports and no editing controls', async () => {
     bundle.role = 'player'; render(<ResultsDupr id={bundle.tournament.id} go={vi.fn()} onBack={() => {}} />);
-    expect(await screen.findByRole('button', { name: 'Download PDF' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Save as PDF' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Save DUPR details' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/DUPR ID/)).not.toBeInTheDocument();
   });
@@ -61,6 +61,6 @@ describe('results access and editing', () => {
     const box = (await screen.findAllByLabelText(/DUPR (singles|doubles) rating/))[0];
     await user.clear(box); await user.type(box, '4.2'); await user.click(screen.getByRole('button', { name: 'Save DUPR details' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('No permission');
-    expect(screen.getByRole('button', { name: 'Download PDF' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save as PDF' })).toBeDisabled();
   });
 });

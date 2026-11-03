@@ -46,28 +46,3 @@ export function resultsCsv(d: TournamentBundle): string {
   const cell = (s: string) => `"${(/^[\s]*[=+@-]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
   return '\uFEFF' + resultsRows(d).map((r) => r.map(cell).join(',')).join('\r\n');
 }
-export async function resultsPdf(d: TournamentBundle): Promise<void> {
-  const { jsPDF } = await import('jspdf');
-  const pdf = new jsPDF();
-  let y = 18;
-  const line = (text: string, size = 10) => {
-    pdf.setFontSize(size);
-    for (const part of pdf.splitTextToSize(text, 174) as string[]) {
-      if (y > 278) { pdf.addPage(); y = 18; }
-      pdf.text(part, 18, y); y += size * 0.45 + 2;
-    }
-  };
-  line(d.tournament.name, 16);
-  line([d.club.name, d.tournament.venue, d.tournament.city, d.tournament.startDate].filter(Boolean).join(' | '));
-  line('Stored organiser-entered DUPR details; not synchronised or verified with DUPR.');
-  for (const c of resultsChampions(d)) line(`${c.division} champion: ${c.winner} | Final against ${c.opponent}: ${c.score}`, 11);
-  for (const r of resultsRows(d).slice(1)) {
-    if (y > 210) { pdf.addPage(); y = 18; }
-    line(`${r[1]} | ${r[2]} | ${r[2].endsWith('standings') ? `Pool position ${r[3]}` : 'Match'}`, 11);
-    line(`${r[4]}\nDUPR: ${r[5]} | ID: ${r[6]}`);
-    if (r[7]) line(`${r[7]}\nDUPR: ${r[8]} | ID: ${r[9]}`);
-    line(r[2].endsWith('standings') ? `W ${r[10]} | L ${r[11]} | Points ${r[12]} for / ${r[13]} against` : `${r[14]}${r[15] ? ` | Winner: ${r[15]}` : ''}`);
-    y += 3;
-  }
-  pdf.save(`${d.tournament.name.replace(/[^\w-]+/g, '-')}-results.pdf`);
-}

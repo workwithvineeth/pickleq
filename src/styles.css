@@ -527,4 +527,21 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-result-winner > .pq-result-player > span:first-child { font-weight: 600; }
 .pq-results-footer { text-align: center; color: #6E5E52; font-size: 12px; margin-top: 14px; }
 @media (max-width: 350px) { .pq-result-edit-player { grid-template-columns: minmax(0,1fr) 154px; } .pq-result-edit-player > .meta { grid-template-columns: 68px 80px; } .pq-result-score { white-space: normal; max-width: 58px; text-align: center; } }
-@media print { .pq-results-page { background: white; } .pq-results-page .card, .pq-results-champion { break-inside: avoid; } .pq-results-champion { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+@media print {
+  .pq-brand:has(.pq-results-page) { display: block; max-width: none; }
+  .pq-results-page {
+    display: block;
+    padding: 0 12px 12px;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .pq-results-page section { display: block; margin-bottom: 12px; }
+  .pq-results-page .pq-hero,
+  .pq-results-page .pq-results-champion,
+  .pq-results-page .pq-result-match,
+  .pq-results-page tr { break-inside: avoid; }
+  .pq-results-page h2,
+  .pq-results-page h3,
+  .pq-results-page h4 { break-after: avoid; }
+  .pq-results-page thead { display: table-header-group; }
+}

@@ -5,7 +5,7 @@ import { clubMode } from '../config';
 import { friendlyDate } from '../dates';
 import { poolLetter, standings, TIE_BREAK_TEXT } from '../domain/engine';
 import { isStaff, KNOCKOUT_STAGES, STAGE_LABEL, type ClubMatch, type Division } from '../types';
-import { isBronzeMatch, resultsChampions, resultsCsv, resultsPdf, scoreText } from '../resultsReport';
+import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resultsReport';
 import { ResultsHero } from './Brand';
 import { appLink, errorText, Header, Status, useLoad } from './common';
 
@@ -117,7 +117,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       <p className="small muted">{[data.club.name, data.tournament.venue, data.tournament.city, friendlyDate(data.tournament.startDate), data.tournament.status === 'done' ? 'Finished' : data.tournament.status === 'live' ? 'Live' : 'Not started', `${data.matches.filter((m) => m.status !== 'void').length} matches on ${data.tournament.courts} courts`].filter(Boolean).join(' · ')}</p>
     </div>
     <div className="meta no-print pq-results-bar"><span className={`pill${missing.size ? ' pill-warn' : ' pill-ok'}`}>{missing.size ? `${missing.size} DUPR ratings missing` : 'All DUPR ratings in'}</span>
-      <button className="btn btn-primary" disabled={dirty || busy} onClick={async () => { try { await resultsPdf(data); } catch (e) { setMsg({ ok: false, text: errorText(e) }); } }}>Download PDF</button>
+      <button className="btn btn-primary" disabled={dirty || busy} onClick={() => window.print()}>Save as PDF</button>
       <button className="btn btn-outline" disabled={dirty || busy} onClick={csv}>Download results (CSV)</button>
       <button className="btn btn-outline" disabled={dirty || busy} onClick={savePage}>Save this page</button>
       {staff && <button className="btn btn-outline" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}

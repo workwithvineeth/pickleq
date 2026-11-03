@@ -49,17 +49,23 @@ test('organiser results: saved ratings under names, knockout scores, CSV/PDF, ph
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${colorScheme} ${width}`).toBeLessThanOrEqual(width);
   }
   const rating = page.getByLabel(/DUPR singles rating/).first(); await rating.fill('3.456');
-  await expect(page.getByRole('button', { name: 'Download PDF' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Save as PDF' })).toBeDisabled();
   await page.getByRole('button', { name: 'Save DUPR details' }).click();
   await expect(page.getByText('Saved. PaddleQ can see the new DUPR details now.')).toBeVisible();
   await page.reload(); await expect(page.getByLabel(/DUPR singles rating/).first()).toHaveValue('3.456');
-  for (const [label, extension] of [['Download results (CSV)', 'csv'], ['Download PDF', 'pdf'], ['Save this page', 'html']]) {
+  await page.evaluate(() => { window.print = () => { document.body.dataset.printRequested = 'yes'; }; });
+  await page.getByRole('button', { name: 'Save as PDF', exact: true }).click();
+  await expect(page.locator('body')).toHaveAttribute('data-print-requested', 'yes');
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.getByRole('button', { name: 'Save as PDF' })).toBeHidden();
+  await expect(page.getByRole('region', { name: 'Champions', exact: true })).toBeVisible();
+  await page.emulateMedia({ media: 'screen' });
+  for (const [label, extension] of [['Download results (CSV)', 'csv'], ['Save this page', 'html']]) {
     const pending = page.waitForEvent('download'); await page.getByRole('button', { name: label, exact: true }).click();
     const download = await pending; const path = info.outputPath(`results.${extension}`); await download.saveAs(path);
     const bytes = await readFile(path);
     expect(bytes.length).toBeGreaterThan(100);
-    if (extension === 'pdf') { expect(bytes.subarray(0, 5).toString()).toBe('%PDF-'); expect(bytes.toString('latin1')).toContain('DUPR'); }
-    else { expect(bytes.toString()).toContain('Final'); expect(bytes.toString()).toContain('3.456'); }
+    expect(bytes.toString()).toContain('Final'); expect(bytes.toString()).toContain('3.456');
     if (extension === 'html') { expect(bytes.toString()).not.toContain('<script'); expect(bytes.toString()).toContain("default-src 'none'"); }
   }
 });
