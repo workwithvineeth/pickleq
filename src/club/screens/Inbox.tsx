@@ -61,7 +61,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
       <p className="small muted" style={{ margin: 0 }}>{t.name} · {drawn ? 'Draw made' : t.registrationOpen ? 'Entries open' : 'Entries closed'}</p>
       {!drawn && (
         <div className="meta">
-          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Reopen entries'}</button>
+          <button type="button" className="btn btn-outline" disabled={busy || !isApproved(t)} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Open registration'}</button>
           {isApproved(t) && <button type="button" className="btn btn-outline" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>}
           <button type="button" className="btn btn-primary" aria-expanded={importing} onClick={() => setImporting((x) => !x)}>Import entries</button>
         </div>
@@ -76,6 +76,13 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         <div className="row"><span>Waitlist</span><b>{counts.waitlist}</b></div>
         {(div.rules?.fee ?? 0) > 0 && <div className="row"><span>Accepted but not marked paid</span><b>{counts.unpaidAccepted}</b></div>}
       </section>
+      {!drawn && (
+        <details className="card section">
+          <summary style={{ fontWeight: 600, cursor: 'pointer' }}>+ Add Entry</summary>
+          <p className="small muted" style={{ margin: 0 }}>For players who entered by phone or at the desk. A phone number is optional here.</p>
+          <EntryForm b={b} t={t} divisions={d.t.divisions} divisionId={div.id} busy={busy} offline onSave={(players, divisionId, extra) => run(() => b.addOfflineEntry({ tournamentId: t.id, divisionId, clubId: t.clubId, players, status: extra?.status ?? 'accepted', payment: extra?.payment ?? 'unpaid' }), `${players.map((p) => p.name).join(' / ')} added`)} />
+        </details>
+      )}
       <Chips label="Show entries" value={filter} options={FILTERS} onChange={setFilter} />
       {shown.length === 0 && <p className="small muted" style={{ margin: 0 }}>No entries here.</p>}
       {shown.map((r) => (
@@ -114,13 +121,6 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
           {editing === r.id && <EntryForm b={b} t={t} divisions={d.t.divisions} start={r} busy={busy} onCancel={() => setEditing(null)} onSave={(players, divisionId) => run(() => b.updateRegistration(r.id, { players, divisionId }), `${players.map((p) => p.name).join(' / ')} updated`)} />}
         </section>
       ))}
-      {!drawn && (
-        <details className="card section">
-          <summary style={{ fontWeight: 600, cursor: 'pointer' }}>Add an entry yourself (offline)</summary>
-          <p className="small muted" style={{ margin: 0 }}>For players who entered by phone or at the desk. A phone number is optional here.</p>
-          <EntryForm b={b} t={t} divisions={d.t.divisions} divisionId={div.id} busy={busy} offline onSave={(players, divisionId, extra) => run(() => b.addOfflineEntry({ tournamentId: t.id, divisionId, clubId: t.clubId, players, status: extra?.status ?? 'accepted', payment: extra?.payment ?? 'unpaid' }), `${players.map((p) => p.name).join(' / ')} added`)} />
-        </details>
-      )}
       <Draw b={b} t={t} divisions={d.t.divisions} regs={d.regs} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
     </main>
   );
@@ -281,7 +281,7 @@ export function ListingCard({ b, t, role, onChanged }: { b: ClubBackend; t: Club
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {!editing && admin && (
         <div className="meta">
-          {(status === 'none' || status === 'rejected') && t.entryMode === 'registration' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => list('run')}>Put it on the board</button>}
+          {(status === 'none' || status === 'rejected') && t.entryMode === 'registration' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => list('run')}>{isApproved(t) ? 'Publish on events board' : 'Queue for publication'}</button>}
           {(status === 'none' || status === 'rejected') && t.entryMode !== 'registration' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => list('listed')}>List it on the board</button>}
           {status !== 'none' && status !== 'rejected' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => list('none')}>Take it off the board</button>}
           <button type="button" className="btn btn-outline" onClick={() => setEditing(true)}>Edit details</button>

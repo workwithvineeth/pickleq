@@ -28,7 +28,7 @@ test.describe('Referee PIN and desk access (real server)', () => {
     await expect(page.getByRole('heading', { name: `${TEST.event} · Desk` })).toBeVisible();
     await expect(page.getByLabel('Court 1', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Referee links' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Entries' }).click();
+    await page.getByRole('button', { name: '+ Add Entry' }).click();
     await expect(page.getByRole('heading', { name: 'Entries' })).toBeVisible();
     await expect(page.getByText('Asha Test')).toBeVisible();
     const wide = await page.evaluate(() => document.documentElement.scrollWidth);

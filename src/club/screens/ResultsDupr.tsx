@@ -6,6 +6,7 @@ import { friendlyDate } from '../dates';
 import { poolLetter, standings, TIE_BREAK_TEXT } from '../domain/engine';
 import { isStaff, KNOCKOUT_STAGES, STAGE_LABEL, type ClubMatch, type Division } from '../types';
 import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resultsReport';
+import { ManualScores } from './ScorePad';
 import { ResultsHero } from './Brand';
 import { displayPlayerName, appLink, errorText, Header, Status, useLoad } from './common';
 
@@ -24,6 +25,8 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     return { bundle, source: server, admin };
   }, [id]);
   const [edits, setEdits] = useState<Record<string, Edit>>({});
+  const [correcting, setCorrecting] = useState<ClubMatch>();
+  const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const d = state.data?.bundle;
@@ -89,6 +92,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   function match(m: ClubMatch, div: Division) {
     return <article key={m.id} className="pq-result-match" aria-label={`${isBronzeMatch(m) ? 'Bronze' : STAGE_LABEL[m.stage]} match`}>
       <div className={m.winner === 'A' ? 'pq-result-winner' : ''}>{side(m.sideA, div)}</div><div className="small pq-result-score">{scoreText(m)}</div><div className={m.winner === 'B' ? 'pq-result-winner' : ''}>{side(m.sideB, div)}</div>
+      {staff && m.status === 'done' && m.sideA.length > 0 && m.sideB.length > 0 && <button type="button" className="link-btn no-print" style={{ gridColumn: '1 / -1' }} disabled={busy || dirty} onClick={() => { setCorrecting(m); setReason(''); }}>Correct score</button>}
     </article>;
   }
   function csv() {
@@ -127,6 +131,25 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     {staff && <p className="small muted no-print">Changes update this club’s player ratings wherever they appear. Ratings are stored to two decimal places.</p>}
     {dirty && <p role="status" className="small no-print">Save your edits before exporting. Exports use saved details.</p>}
     {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+    {correcting && <section className="card section no-print" aria-label="Correct completed score">
+      <h3>Correct completed score</h3>
+      <label>Reason for correction<input className="input" value={reason} maxLength={300} onChange={(event) => setReason(event.target.value)} /></label>
+      <ManualScores key={correcting.id} format={correcting.format}
+        nameA={correcting.sideA.map((id) => pmap.get(id)?.name ?? 'Unknown').join(' / ')}
+        nameB={correcting.sideB.map((id) => pmap.get(id)?.name ?? 'Unknown').join(' / ')}
+        busy={busy} onCancel={() => setCorrecting(undefined)} onSave={async (games) => {
+          if (reason.trim().length < 3) { setMsg({ ok: false, text: 'Enter a reason for the correction.' }); return; }
+          if (!b) return;
+          setBusy(true);
+          try {
+            await b.correctMatch(correcting, games, reason.trim());
+            setCorrecting(undefined);
+            setMsg({ ok: true, text: 'Score corrected.' });
+            state.reload();
+          } catch (error) { setMsg({ ok: false, text: errorText(error) }); }
+          finally { setBusy(false); }
+        }} />
+    </section>}
     <section className="card section" aria-label="Champions"><h3>Champions</h3><div className="pq-results-champions">
       {champions.map((c) => <article className="pq-results-champion" key={c.division}><span className="small">{c.division}</span><b>{c.winner}</b><span className="small">Final against {c.opponent} · {c.score}</span></article>)}
       {!champions.length && <p className="small muted">Champions will appear after a completed final has a recorded winner.</p>}

@@ -38,7 +38,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
     await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Tournaments' }).click();
-    await page.getByRole('button', { name: 'New tournament at PQ Demo Club' }).click();
+    await page.getByRole('button', { name: '+ Create Tournament at PQ Demo Club' }).click();
     await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
     await page.getByLabel('Tournament name').fill('Robot Split Form Cup');
     await page.getByLabel('City').fill('Hyderabad');
@@ -51,7 +51,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByLabel('Event 2 DUPR cap').fill('3.5');
     await page.getByRole('group', { name: 'Event 2 DUPR cap is for' }).getByRole('button', { name: 'Team average' }).click();
     await page.getByLabel('Show it on the PaddleQ events board').uncheck();
-    await page.getByRole('button', { name: 'Create and open entries' }).click();
+    await page.getByRole('button', { name: 'Save draft' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Split Form Cup' })).toBeVisible();
     await page.getByRole('button', { name: 'Entries inbox and draw' }).click();
     await page.getByRole('button', { name: 'Import entries' }).click();
@@ -73,7 +73,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
 
     // A tournament where players register (on a Google Form), with a team-average DUPR cap for doubles.
     await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Tournaments' }).click();
-    await page.getByRole('button', { name: 'New tournament at PQ Demo Club' }).click();
+    await page.getByRole('button', { name: '+ Create Tournament at PQ Demo Club' }).click();
     await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
     await page.getByLabel('Tournament name').fill('Robot Form Cup');
     await page.getByLabel('City').fill('Hyderabad');
@@ -86,7 +86,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByLabel('Event 2 DUPR cap').fill('3.5');
     await page.getByRole('group', { name: 'Event 2 DUPR cap is for' }).getByRole('button', { name: 'Team average' }).click();
     await page.getByLabel('Show it on the PaddleQ events board').uncheck();
-    await page.getByRole('button', { name: 'Create and open entries' }).click();
+    await page.getByRole('button', { name: 'Save draft' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Form Cup' })).toBeVisible();
     await page.getByRole('button', { name: 'Entries inbox and draw' }).click();
 
@@ -127,8 +127,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'See the draw' }).click();
     await page.getByRole('group', { name: 'Tournament view' }).getByRole('button', { name: 'Knockouts' }).click();
     const ko = page.getByRole('region', { name: 'Knockouts' });
-    await expect(ko.getByRole('heading', { name: 'Semi-finals' })).toBeVisible();
-    await expect(ko.getByText('Bye', { exact: true })).toBeVisible();
+    await expect(ko.getByRole('heading', { name: 'Semifinal 1' })).toBeVisible();
     await expect(ko.getByText('Through (bye)')).toBeVisible();
     await page.getByRole('group', { name: 'Event' }).getByRole('button', { name: 'Doubles 3.5' }).click();
     await page.getByRole('group', { name: 'Tournament view' }).getByRole('button', { name: 'Pools' }).click();

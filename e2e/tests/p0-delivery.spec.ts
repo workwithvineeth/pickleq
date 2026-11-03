@@ -36,7 +36,7 @@ test('organiser results: saved ratings under names, knockout scores, CSV/PDF, ph
     const t = s.tournaments.find((t: { name: string }) => t.name === 'PQ Demo Open');
     const m = s.matches.find((m: { tournamentId: string; stage: string }) => m.tournamentId === t.id && m.stage === 'pool');
     s.matches = s.matches.filter((x: { divisionId: string; stage: string }) => x.divisionId !== m.divisionId || x.stage !== 'final');
-    s.matches.push({ ...m, id: 'fixture-final', stage: 'final', status: 'done', winner: 'A', games: [{ a: 11, b: 7, points: '' }, { a: 11, b: 9, points: '' }] });
+    s.matches.push({ ...m, id: 'fixture-final', stage: 'final', status: 'done', winner: 'A', format: { ...m.format, pointsTo: 11, bestOf: 3 }, games: [{ a: 11, b: 7, points: '' }, { a: 11, b: 9, points: '' }] });
     localStorage.setItem(key, JSON.stringify(s)); return t.id as string;
   });
   await page.goto(`#/club-results-dupr/${id}`); await page.reload();
@@ -48,6 +48,15 @@ test('organiser results: saved ratings under names, knockout scores, CSV/PDF, ph
     await page.emulateMedia({ colorScheme }); await page.setViewportSize({ width, height: 760 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${colorScheme} ${width}`).toBeLessThanOrEqual(width);
   }
+  const final = page.getByRole('article', { name: 'Final match', exact: true });
+  await final.getByRole('button', { name: 'Correct score' }).click();
+  const correction = page.getByRole('region', { name: 'Correct completed score' });
+  await correction.getByLabel('Reason for correction').fill('Scorecard checked');
+  const scores = correction.getByRole('textbox', { name: /^Game / });
+  for (const [index, value] of ['11', '6', '11', '8'].entries()) await scores.nth(index).fill(value);
+  await correction.getByRole('button', { name: 'Save result' }).click();
+  await expect(page.getByText('Score corrected.')).toBeVisible();
+  await expect(final).toContainText('11–6, 11–8');
   const rating = page.getByLabel(/DUPR singles rating/).first(); await rating.fill('3.456');
   await expect(page.getByRole('button', { name: 'Save as PDF' })).toBeDisabled();
   await page.getByRole('button', { name: 'Save DUPR details' }).click();

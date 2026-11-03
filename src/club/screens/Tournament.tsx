@@ -28,7 +28,17 @@ const optNum = (v: string) => (v.trim() === '' ? undefined : Number(v));
 
 export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; onBack: () => void }) {
   const b = backend();
-  const club = useLoad(async () => { if (!b) throw new Error('Open Club mode first'); return b.clubBundle(clubId); }, [b, clubId]);
+  const club = useLoad(async () => {
+    if (!b) throw new Error('Open Club mode first');
+    const membership = (await b.myClubs()).find((item) => item.club.id === clubId);
+    if (membership && isStaff(membership.role)) {
+      const bundle = await b.clubBundle(clubId);
+      return { club: bundle.club, players: bundle.players, platformDraft: false };
+    }
+    if (!(await b.isPlatformAdmin())) throw new Error('Only authorised organisers can create tournaments');
+    const detail = await b.adminClub(clubId);
+    return { club: { name: detail.name, trusted: false }, players: [] as ClubPlayer[], platformDraft: true };
+  }, [b, clubId]);
   const [name, setName] = useState('');
   const [date, setDate] = useState(today());
   const [time, setTime] = useState('08:00');
@@ -44,13 +54,13 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   const [closes, setCloses] = useState('');
   const [contact, setContact] = useState('');
   const [link, setLink] = useState('');
-  const [onBoard, setOnBoard] = useState(true);
+  const [onBoard, setOnBoard] = useState(false);
   const [poster, setPoster] = useState<Blob | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Picking players makes the draw at once, so only trusted clubs (approved automatically) get that option.
   const pickOk = !!club.data?.club.trusted;
-  useEffect(() => { if (club.data && !pickOk && post === 'roster') setPost('registration'); }, [club.data, pickOk, post]);
+  useEffect(() => { if (club.data && ((!pickOk && post === 'roster') || (club.data.platformDraft && post !== 'registration'))) setPost('registration'); }, [club.data, pickOk, post]);
   const players = useMemo(() => [...(club.data?.players ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [club.data]);
   const pmap = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const entryCount = (d: DivDraft) => (d.kind === 'singles' ? d.picked.length : d.teams.length);
@@ -75,9 +85,10 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
     const opt = (v: string) => v.trim() || undefined;
     try {
       const id = await b.createTournament({
-        clubId, name, startDate: date, startTime: time, courts, slotMinutes: slot, divisions: divs.map(toInput), entryMode: mode, listingOnly: post === 'listed',
+        clubId, name, startDate: date, startTime: time, courts, slotMinutes: slot, divisions: divs.map(toInput), entryMode: mode, listingOnly: post === 'listed', registrationOpen: false, platformDraft: club.data?.platformDraft,
         details: { city: opt(city), venue: opt(venue), about: opt(about), upiId: post === 'registration' ? opt(upi) : undefined, entriesClose: post === 'registration' ? opt(closes) : undefined, contact: post === 'listed' ? opt(contact) : undefined, link: post === 'listed' ? opt(link) : undefined },
       });
+      if (club.data?.platformDraft) { go('admin-club', clubId, { replace: true }); return; }
       // A poster problem doesn't lose the tournament either: it can be added again from the tournament's page.
       if (poster) {
         const bundle = await b.tournamentBundle(id);
@@ -94,7 +105,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       <Header id="tnew-title" title="New tournament" onBack={onBack} />
       <Status error={club.error} loading={club.loading && !club.data} />
       <Field label="How do players enter?">
-        <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I pick them' }] : []), { value: 'registration', label: 'They register' }, { value: 'listed', label: 'List only' }]} onChange={setPost} />
+        <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I pick them' }] : []), { value: 'registration', label: 'They register' }, ...(club.data?.platformDraft ? [] : [{ value: 'listed' as const, label: 'List only' }])]} onChange={setPost} />
       </Field>
       {club.data && !pickOk && <p className="small muted" style={{ margin: 0 }}>Set it up and add your entries now; PaddleQ approves the tournament before the draw, links and entry link open. Submit at least 24 hours before your event.</p>}
       <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on PaddleQ.'}</p>
@@ -148,7 +159,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players are seeded by DUPR and spread across pools so the strongest don’t meet early. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
       {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by PaddleQ before it shows on the board. Adults only (18+).</p>}
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
-      <button type="button" className="btn btn-primary" disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Post the listing' : post === 'registration' ? 'Create and open entries' : 'Create tournament'}</button>
+      <button type="button" className="btn btn-primary" disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Post the listing' : post === 'registration' ? 'Save draft' : 'Create tournament'}</button>
     </main>
   );
 }
@@ -255,7 +266,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {staff && !approved && (
         <nav className="meta" aria-label="Set up the tournament">
           {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>Entries inbox</button>}
-          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>+ Add Entry</button>
+          <button type="button" className="btn btn-primary" onClick={() => go(t.entryMode === 'registration' && !t.drawnAt ? 'club-inbox' : 'club-entries', t.id)}>+ Add Entry</button>
         </nav>
       )}
       {staff && approved && (

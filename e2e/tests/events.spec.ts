@@ -197,7 +197,7 @@ test.describe('Create freely, go live with approval (demo club on the phone)', (
     await page.getByLabel('City').fill('Pune');
     await page.getByLabel('Venue').fill('Yard Courts');
     await page.getByLabel('Your UPI ID').fill('yard@bank');
-    await page.getByRole('button', { name: 'Create and open entries' }).click();
+    await page.getByRole('button', { name: 'Save draft' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Yard Open' })).toBeVisible();
     const card = page.getByRole('region', { name: 'PaddleQ approval' });
     await expect(card).toContainText('Submit at least 24 hours before your event.');

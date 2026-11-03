@@ -176,7 +176,7 @@ describe('Organiser: entries inbox and draw', () => {
     expect(aditya).toBeUndefined(); // still to decide, so not in the Accepted list
 
     // Offline entry: adults only; phone optional.
-    await user.click(screen.getByText('Add an entry yourself (offline)'));
+    await user.click(screen.getByText('+ Add Entry'));
     await fillPerson(user, 'Player 1', { name: 'Desk One', phone: '', dupr: '3.2', age: '44', gender: 'Man' });
     await fillPerson(user, 'Player 2', { name: 'Desk Two', phone: '', dupr: '3.0', age: '16', gender: 'Man' });
     await user.click(screen.getByRole('button', { name: 'Add entry' }));
@@ -218,7 +218,7 @@ describe('Posting a tournament and approving it', () => {
     await user.type(screen.getByLabelText('City'), 'Hyderabad');
     await user.type(screen.getByLabelText('Venue'), 'Robot Courts');
     await user.type(screen.getByLabelText('Your UPI ID'), 'not-a-upi');
-    await user.click(screen.getByRole('button', { name: 'Create and open entries' }));
+    await user.click(screen.getByRole('button', { name: 'Save draft' }));
     expect(await screen.findByText('A UPI ID looks like name@bank')).toBeInTheDocument();
     await user.clear(screen.getByLabelText('Your UPI ID'));
     await user.type(screen.getByLabelText('Your UPI ID'), 'robot@bank');
@@ -226,7 +226,7 @@ describe('Posting a tournament and approving it', () => {
     await user.click(within(screen.getByRole('group', { name: 'Event 1 gender' })).getByRole('button', { name: 'Mixed' }));
     await user.type(screen.getByLabelText('Event 1 entry fee'), '700');
     expect(screen.queryByLabelText('Event 1 find player')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Create and open entries' }));
+    await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await screen.findByRole('heading', { name: 'Robot Mixed Cup' });
     // PQ Demo Club is trusted, so the tournament is approved at once and its listing goes straight on the board.
     const card = screen.getByRole('region', { name: 'Events board' });
@@ -287,7 +287,7 @@ describe('Create freely, go live with approval', () => {
     await user.type(screen.getByLabelText('City'), 'Pune');
     await user.type(screen.getByLabelText('Venue'), 'Yard Courts');
     await user.type(screen.getByLabelText('Your UPI ID'), 'yard@bank');
-    await user.click(screen.getByRole('button', { name: 'Create and open entries' }));
+    await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await screen.findByRole('heading', { name: 'Smash Yard Open' });
     const card = screen.getByRole('region', { name: 'PaddleQ approval' });
     expect(card).toHaveTextContent('Not submitted');

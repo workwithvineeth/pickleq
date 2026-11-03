@@ -29,6 +29,8 @@ export interface NewTournamentInput {
   entryMode?: EntryMode;
   /** A listing only: the events are just categories on the board, with no entries. */
   listingOnly?: boolean;
+  registrationOpen?: boolean;
+  platformDraft?: boolean;
   details?: Pick<ClubTournament, 'city' | 'venue' | 'about' | 'contact' | 'link' | 'entriesClose' | 'upiId'>;
 }
 
@@ -93,7 +95,7 @@ export function buildTournamentRows(input: NewTournamentInput, players: Map<stri
     id: newId(), clubId: input.clubId, name: input.name.trim(), startDate: input.startDate, startTime: input.startTime,
     courts: input.courts, slotMinutes: input.slotMinutes, status: 'draft', isPublic: false, publicSlug: newId().replace(/-/g, '').slice(0, 10),
   };
-  if (input.entryMode === 'registration') Object.assign(tournament, { entryMode: 'registration', registrationOpen: true }, input.details ?? {});
+  if (input.entryMode === 'registration') Object.assign(tournament, { entryMode: 'registration', registrationOpen: input.registrationOpen ?? true }, input.details ?? {});
   else if (input.details) Object.assign(tournament, input.details);
   const divisions = input.divisions.map((d, sort): Division => ({ id: newId(), tournamentId: tournament.id, clubId: input.clubId, name: d.name.trim(), kind: d.kind, format: d.format, koFormat: d.koFormat, pools: d.shape === 'ko' ? 1 : d.pools, advance: d.shape === 'ko' ? 0 : d.advance, sort, rules: d.rules, ...shapeFields(d) }));
   const drawn = drawRows(tournament, divisions.map((division, i) => ({ division, entries: input.divisions[i].entries })), players, newId);

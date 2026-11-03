@@ -98,6 +98,7 @@ export interface ClubBackend extends EventsBackend {
   deskOpen(token: string, pin: string): Promise<TournamentBundle>;
   deskSaveScore(token: string, pin: string, matchId: string, patch: ScorePatch): Promise<void>;
   deskPatchMatches(token: string, pin: string, changes: { id: string; patch: MatchPatch }[]): Promise<void>;
+  deskAddLatePoolEntry(token: string, pin: string, entry: Entry, matches: NewMatchRow[]): Promise<void>;
   deskAddEntry(token: string, pin: string, entry: Entry): Promise<void>;
   deskUpdateEntry(token: string, pin: string, id: string, patch: EntryPatch): Promise<void>;
   deskAddMatches(token: string, pin: string, rows: NewMatchRow[]): Promise<void>;
@@ -131,9 +132,11 @@ export interface ClubBackend extends EventsBackend {
   updateTournament(id: string, patch: Partial<Pick<ClubTournament, 'status' | 'isPublic'>>): Promise<void>;
   addMatches(rows: NewMatchRow[]): Promise<void>;
   matchBundle(matchId: string): Promise<MatchBundle>;
+  correctMatch(match: ClubMatch, games: ClubMatch['games'], reason: string): Promise<void>;
   saveScore(matchId: string, patch: ScorePatch): Promise<void>;
   /** Organiser edits to matches (coaches and admins). */
   patchMatches(changes: { id: string; patch: MatchPatch }[]): Promise<void>;
+  addLatePoolEntry(entry: Entry, matches: NewMatchRow[]): Promise<void>;
   addEntry(entry: Entry): Promise<void>;
   updateEntry(id: string, patch: EntryPatch): Promise<void>;
   /** Scorer links for an event (coaches and admins only). */

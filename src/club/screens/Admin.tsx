@@ -204,7 +204,7 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
             <div className="pq-clubhero-name">{c.name}</div>
             <div className="pq-club-meta" style={{ justifyContent: 'center' }}>{[c.city, c.isTest ? 'Robot test club' : c.verified ? 'Verified' : 'Not verified yet'].filter(Boolean).join(' · ')}</div>
           </section>
-          <div className="small muted">Read-only: changes are made by the club.</div>
+          <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', c.id)}>+ Create Tournament</button>
           <section className="card section" aria-label="People">
             <h2 style={{ fontSize: 16 }}>People ({c.people.length})</h2>
             {c.people.map((p, i) => (

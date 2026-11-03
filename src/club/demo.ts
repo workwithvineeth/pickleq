@@ -1,3 +1,4 @@
+import { matchResult } from './domain/engine';
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
 import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
@@ -245,7 +246,10 @@ export class DemoBackend implements ClubBackend {
   }
 
   async createTournament(input: NewTournamentInput) {
-    this.need(input.clubId, isStaff, 'Only coaches and admins can create tournaments');
+    if (input.platformDraft) {
+      this.me();
+      if (input.entryMode !== 'registration' || input.divisions.some((division) => division.entries.length)) throw new ClubError('Platform admins can create registration drafts only');
+    } else this.need(input.clubId, isStaff, 'Only coaches and admins can create tournaments');
     if (input.name.trim().length < 2) throw new ClubError('Give the tournament a name');
     for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : input.entryMode ?? 'roster'); if (e) throw new ClubError(e); }
     const players = new Map(this.s.players.filter((p) => p.clubId === input.clubId).map((p) => [p.id, p]));
@@ -343,6 +347,23 @@ export class DemoBackend implements ClubBackend {
     };
   }
 
+  async correctMatch(match: ClubMatch, games: ClubMatch['games'], reason: string) {
+    const current = this.s.matches.find((m) => m.id === match.id);
+    if (!current || current.status !== 'done' || current.updatedAt !== match.updatedAt) throw new ClubError('This result changed. Reload before correcting it.');
+    this.need(current.clubId, isStaff, 'Only organisers can correct results');
+    if (reason.trim().length < 3 || reason.trim().length > 300) throw new ClubError('Enter a reason of 3 to 300 characters');
+    const division = this.s.divisions.find((d) => d.id === current.divisionId);
+    const fixtures = this.s.matches.filter((m) => m.divisionId === current.divisionId);
+    if (current.stage === 'pool' && (fixtures.some((m) => !['pool', 'friendly'].includes(m.stage) && m.status !== 'void')
+      || ((division?.advance ?? 0) > 0 && !fixtures.some((m) => m.stage === 'pool' && ['scheduled', 'live'].includes(m.status)))))
+      throw new ClubError('Pool results are locked for the knockout draw');
+    const { winner } = matchResult({ games, format: current.format });
+    if (!winner) throw new ClubError('Enter enough games to decide the match');
+    if (!['pool', 'friendly'].includes(current.stage) && winner !== current.winner) throw new ClubError('A knockout winner cannot change through score correction');
+    this.s.matches = this.s.matches.map((m) => m.id === current.id ? { ...m, games, winner, updatedAt: new Date().toISOString() } : m);
+    this.save();
+  }
+
   async saveScore(matchId: string, patch: ScorePatch) {
     const m = this.s.matches.find((x) => x.id === matchId);
     if (!m) throw new ClubError('Match not found');
@@ -366,6 +387,36 @@ export class DemoBackend implements ClubBackend {
       Object.assign(m, rest, { updatedAt: now });
       if (winner !== undefined) m.winner = winner ?? undefined;
     }
+    this.save();
+  }
+
+  async addLatePoolEntry(entry: Entry, matches: NewMatchRow[]) {
+    this.need(entry.clubId, isStaff, 'Only club staff can add entries');
+    this.saveLatePoolEntry(entry, matches);
+  }
+
+  private saveLatePoolEntry(entry: Entry, matches: NewMatchRow[]) {
+    const division = this.s.divisions.find((d) => d.id === entry.divisionId && d.clubId === entry.clubId);
+    const tournament = this.s.tournaments.find((t) => t.id === division?.tournamentId);
+    if (!division || !tournament || tournament.status === 'done' || !isApproved(tournament)) throw new ClubError('This tournament cannot accept entries');
+    if (tournament.entryMode === 'registration' && !tournament.drawnAt) throw new ClubError('Use the entries inbox before the draw');
+    if (this.s.matches.some((m) => m.divisionId === division.id && m.stage !== 'pool' && m.status !== 'void')) throw new ClubError('Knockouts have started, so new entries can’t join');
+    const active = this.s.entries.filter((e) => e.divisionId === division.id && e.status !== 'withdrawn');
+    if (active.some((e) => e.playerIds.some((p) => entry.playerIds.includes(p)))) throw new ClubError('A player is already entered in this event');
+    if (division.rules?.cap && active.length >= division.rules.cap) throw new ClubError('This event is full');
+    if (division.rules?.fee || division.rules?.minAge || (division.rules?.gender && division.rules.gender !== 'open')) throw new ClubError('Use the registration workflow for eligibility and payment verification');
+    const players = entry.playerIds.map((id) => this.s.players.find((p) => p.id === id && p.clubId === entry.clubId));
+    if (players.some((p) => !p) || new Set(entry.playerIds).size !== (division.kind === 'doubles' ? 2 : 1)) throw new ClubError('Choose eligible players from this club');
+    const ratings = players.map((p) => division.kind === 'doubles' ? p?.duprDoubles : p?.duprSingles);
+    const cap = division.rules?.maxDupr;
+    if (cap !== undefined) {
+      const values = ratings.filter((r): r is number => r !== undefined);
+      const rating = division.rules?.duprCap === 'average' ? values.reduce((a, b) => a + b, 0) / values.length : Math.max(...values);
+      if (values.length !== players.length || rating > cap) throw new ClubError('Player ratings do not meet this event’s DUPR limit');
+    }
+    this.s.entries.push({ ...entry });
+    const updatedAt = new Date().toISOString();
+    this.s.matches.push(...matches.map((m) => ({ ...m, updatedAt })));
     this.save();
   }
 
@@ -577,6 +628,12 @@ export class DemoBackend implements ClubBackend {
       if (winner !== undefined) m.winner = winner ?? undefined;
     }
     this.save();
+  }
+
+  async deskAddLatePoolEntry(token: string, pin: string, entry: Entry, matches: NewMatchRow[]) {
+    const t = this.checkDesk(token, pin);
+    if (!this.s.divisions.some((d) => d.id === entry.divisionId && d.tournamentId === t.id)) throw new ClubError('That event isn’t in your tournament');
+    this.saveLatePoolEntry(entry, matches);
   }
 
   async deskAddEntry(token: string, pin: string, entry: Entry) {

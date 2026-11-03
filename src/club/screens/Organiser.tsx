@@ -340,7 +340,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
       <div className="meta">
         {t.status === 'draft' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.updateTournament(t.id, { status: 'live' }), 'The tournament is live')}>Start tournament</button>}
         {!desk && <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>}
-        <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>+ Add Entry</button>
+        {(!desk || t.entryMode !== 'registration' || t.drawnAt) && <button type="button" className="btn btn-primary" onClick={() => go(t.entryMode === 'registration' && !t.drawnAt ? 'club-inbox' : 'club-entries', t.id)}>+ Add Entry</button>}
         <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Standings and draw</button>
       </div>
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
@@ -462,7 +462,7 @@ export function Entries({ id, onBack }: { id: string; go?: Go; onBack: () => voi
   function late(playerIds: string[]) {
     const plan = planLateEntry(t, div, playerIds, d!.entries, d!.matches, newId);
     if (typeof plan === 'string') return setMsg({ ok: false, text: plan });
-    return run(async () => { await b!.addEntry(plan.entry); if (plan.matches.length) await b!.addMatches(plan.matches); },
+    return run(() => b!.addLatePoolEntry(plan.entry, plan.matches),
       `${names(playerIds, pmap)} added to Pool ${poolLetter(plan.entry.pool)} with ${plan.matches.length} new match${plan.matches.length === 1 ? '' : 'es'}`);
   }
 

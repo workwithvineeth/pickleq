@@ -287,6 +287,14 @@ export class ServerBackend implements ClubBackend {
     if (rows.length) answer(check(await this.sb.rpc('desk_patch_matches', { p_token: token, p_pin: pin, p_changes: rows })));
   }
 
+  async deskAddLatePoolEntry(token: string, pin: string, e: Entry, matches: NewMatchRow[]) {
+    answer(check(await this.sb.rpc('desk_add_late_pool_entry', {
+      p_token: token, p_pin: pin,
+      p_entry: { id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed, pool: e.pool, status: e.status },
+      p_matches: matches.map(fromMatch),
+    })));
+  }
+
   async deskAddEntry(token: string, pin: string, e: Entry) {
     answer(check(await this.sb.rpc('desk_add_entry', { p_token: token, p_pin: pin, p_entry: { id: e.id, division_id: e.divisionId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null } })));
   }
@@ -408,7 +416,7 @@ export class ServerBackend implements ClubBackend {
     if (input.name.trim().length < 2) throw new ClubError('Give the tournament a name');
     const mode = input.entryMode ?? 'roster';
     for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : mode); if (e) throw new ClubError(e); }
-    const ps = (check(await this.sb.from('club_players').select('*').eq('club_id', input.clubId)) as Row[]).map(toPlayer);
+    const ps = input.platformDraft ? [] : (check(await this.sb.from('club_players').select('*').eq('club_id', input.clubId)) as Row[]).map(toPlayer);
     const rows = buildTournamentRows(input, new Map(ps.map((p) => [p.id, p])), newId);
     const t = rows.tournament;
     // Picking the players makes the draw at once, which needs approval: only trusted clubs can do that in one step.
@@ -486,6 +494,10 @@ export class ServerBackend implements ClubBackend {
     };
   }
 
+  async correctMatch(match: ClubMatch, games: ClubMatch['games'], reason: string) {
+    check(await this.sb.rpc('correct_club_match', { p_match: match.id, p_games: games, p_reason: reason, p_updated_at: match.updatedAt }));
+  }
+
   async saveScore(matchId: string, patch: ScorePatch) {
     const uid = await this.uid();
     check(await this.sb.from('club_matches').update({ games: patch.games, status: patch.status, winner: patch.winner ?? null, played_on: patch.playedOn ?? null, updated_at: new Date().toISOString(), updated_by: uid }).eq('id', matchId));
@@ -505,6 +517,13 @@ export class ServerBackend implements ClubBackend {
       const res = check(await this.sb.from('club_matches').update(row).eq('id', id).select('id')) as Row[];
       if (!res.length) throw new ClubError('You can’t change this match');
     }
+  }
+
+  async addLatePoolEntry(e: Entry, matches: NewMatchRow[]) {
+    check(await this.sb.rpc('add_late_pool_entry', {
+      p_entry: { id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed, pool: e.pool, status: e.status },
+      p_matches: matches.map(fromMatch),
+    }));
   }
 
   async addEntry(e: Entry) {
@@ -668,7 +687,7 @@ export class ServerBackend implements ClubBackend {
   }
 
   async addOfflineEntry(e: OfflineEntry) {
-    check(await this.sb.from('registrations').insert({ tournament_id: e.tournamentId, division_id: e.divisionId, club_id: e.clubId, source: 'offline', players: e.players.map(fromPerson), status: e.status, payment: e.payment }));
+    check(await this.sb.rpc('add_walk_in_registration', { p_division: e.divisionId, p_players: e.players.map(fromPerson), p_payment: e.payment }));
   }
 
   async importEntries(tournamentId: string, rows: ImportEntryRow[]): Promise<ImportResult> {
