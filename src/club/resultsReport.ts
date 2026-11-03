@@ -2,6 +2,10 @@ import type { TournamentBundle } from './backend';
 import { poolLetter, standings } from './domain/engine';
 import { STAGE_LABEL, type ClubMatch } from './types';
 
+export function isBronzeMatch(match: Pick<ClubMatch, 'id' | 'stage'>): boolean {
+  return match.stage === 'friendly' && (match.id === '9dc404d8-b6b1-44e0-9736-eed346d86784' || match.id === 'e2d45606-456e-4053-b9d5-e5e6d44bebcd');
+}
+
 export function scoreText(m: ClubMatch): string {
   if (m.status === 'void') return 'Cancelled';
   if (m.status !== 'done') return m.status === 'live' ? `Live: ${m.games.map((g) => `${g.a}–${g.b}`).join(', ')}` : 'Not played';
@@ -33,7 +37,7 @@ export function resultsRows(d: TournamentBundle): string[][] {
         for (const pid of group.find((e) => e.id === r.entryId)?.playerIds ?? []) rows.push([d.tournament.name, div.name, `Pool ${poolLetter(pool)} standings`, String(i + 1), names([pid]), ratings([pid]), duprIds([pid]), '', '', '', String(r.wins), String(r.losses), String(r.pointsFor), String(r.pointsAgainst), '', '']);
       });
     }
-    for (const m of matches) rows.push([d.tournament.name, div.name, m.stage === 'pool' ? `Pool ${poolLetter(m.pool ?? 1)} match` : STAGE_LABEL[m.stage], m.id,
+    for (const m of matches) rows.push([d.tournament.name, div.name, m.stage === 'pool' ? `Pool ${poolLetter(m.pool ?? 1)} match` : isBronzeMatch(m) ? 'Bronze' : STAGE_LABEL[m.stage], m.id,
       names(m.sideA), ratings(m.sideA), duprIds(m.sideA), names(m.sideB), ratings(m.sideB), duprIds(m.sideB), '', '', '', '', scoreText(m), m.winner ? names(m.winner === 'A' ? m.sideA : m.sideB) : '']);
   }
   return rows;

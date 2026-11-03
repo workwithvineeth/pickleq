@@ -5,7 +5,7 @@ import { clubMode } from '../config';
 import { friendlyDate } from '../dates';
 import { poolLetter, standings, TIE_BREAK_TEXT } from '../domain/engine';
 import { isStaff, KNOCKOUT_STAGES, STAGE_LABEL, type ClubMatch, type Division } from '../types';
-import { resultsChampions, resultsCsv, resultsPdf, scoreText } from '../resultsReport';
+import { isBronzeMatch, resultsChampions, resultsCsv, resultsPdf, scoreText } from '../resultsReport';
 import { ResultsHero } from './Brand';
 import { appLink, errorText, Header, Status, useLoad } from './common';
 
@@ -87,7 +87,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   }
   function side(ids: string[], div: Division) { return ids.length ? ids.map((pid) => player(pid, div)) : <span>To be decided / bye</span>; }
   function match(m: ClubMatch, div: Division) {
-    return <article key={m.id} className="pq-result-match" aria-label={`${STAGE_LABEL[m.stage]} match`}>
+    return <article key={m.id} className="pq-result-match" aria-label={`${isBronzeMatch(m) ? 'Bronze' : STAGE_LABEL[m.stage]} match`}>
       <div className={m.winner === 'A' ? 'pq-result-winner' : ''}>{side(m.sideA, div)}</div><div className="small pq-result-score">{scoreText(m)}</div><div className={m.winner === 'B' ? 'pq-result-winner' : ''}>{side(m.sideB, div)}</div>
     </article>;
   }
@@ -148,7 +148,8 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
         </section>;
       })}
       <section className="card section" aria-label={`${div.name} Knockout results`}><h3>Knockout results</h3>
-        {!data.matches.some((m) => m.divisionId === div.id && KNOCKOUT_STAGES.includes(m.stage as typeof KNOCKOUT_STAGES[number])) && <p>No knockout matches yet.</p>}
+        {!data.matches.some((m) => m.divisionId === div.id && (isBronzeMatch(m) || KNOCKOUT_STAGES.includes(m.stage as typeof KNOCKOUT_STAGES[number]))) && <p>No knockout matches yet.</p>}
+        {data.matches.some((m) => m.divisionId === div.id && isBronzeMatch(m)) && <section aria-label={div.name + ' Bronze'}><h4>Bronze</h4>{data.matches.filter((m) => m.divisionId === div.id && isBronzeMatch(m)).map((m) => match(m, div))}</section>}
         {KNOCKOUT_STAGES.map((stage) => {
           const matches = data.matches.filter((m) => m.divisionId === div.id && m.stage === stage).sort((a, b) => (a.bracketPos ?? 0) - (b.bracketPos ?? 0));
           return matches.length > 0 && <section key={stage} aria-label={`${div.name} ${STAGE_LABEL[stage]}`}><h4>{STAGE_LABEL[stage]}</h4>{matches.map((m) => match(m, div))}</section>;

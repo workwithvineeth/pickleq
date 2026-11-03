@@ -1,3 +1,4 @@
+import { isBronzeMatch } from '../resultsReport';
 import { ResultsHero } from './Brand';
 import { useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
@@ -644,6 +645,7 @@ function GroupedMatches({ d, divisionId }: { d: PublicTournament; divisionId: st
   return (
     <>
       {pools.map((p) => block(`Pool ${poolLetter(p)}`, ms.filter((m) => m.stage === 'pool' && (m.pool ?? 1) === p)))}
+      {ms.some(isBronzeMatch) && block('Bronze', ms.filter(isBronzeMatch))}
       {stages.map((st) => block(ROUND_LABEL[st as KnockoutStage], ms.filter((m) => m.stage === st)))}
     </>
   );
