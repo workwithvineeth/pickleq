@@ -395,12 +395,14 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<
       </section>
     );
   }
-  const ko = matches.filter((m) => m.stage !== 'pool').sort((a, b) => (a.round ?? 0) - (b.round ?? 0) || (a.bracketPos ?? 0) - (b.bracketPos ?? 0));
+  const bronze = matches.filter(isBronzeMatch);
+  const ko = matches.filter((m) => m.stage !== 'pool' && !isBronzeMatch(m)).sort((a, b) => (a.round ?? 0) - (b.round ?? 0) || (a.bracketPos ?? 0) - (b.bracketPos ?? 0));
   const rounds = [...new Set(ko.map((m) => m.round ?? 1))];
   return (
     <section className="section" aria-label="Knockouts">
       {division.advance === 0 && division.shape !== 'ko' && <p className="small muted">This event has no knockouts.</p>}
       {division.advance > 0 && ko.length === 0 && <p className="small muted">Knockouts are drawn once every pool match is finished.</p>}
+      {bronze.length > 0 && <section className="section" aria-label="Bronze"><h3>Bronze</h3>{bronze.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} />)}</section>}
       {rounds.map((r) => {
         const ms = ko.filter((m) => (m.round ?? 1) === r);
         const stage = ms[0].stage as KnockoutStage;
