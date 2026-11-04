@@ -37,6 +37,7 @@ insert into ids select 'md', id from x;
 with x as (insert into public.divisions (tournament_id, club_id, name, kind, format, pools, advance, min_age)
   select (select v from ids where k = 't'), v, 'Singles 35+', 'singles', '{"pointsTo":11,"bestOf":1,"scoring":"sideout"}', 1, 0, 35 from ids where k = 'club' returning id)
 insert into ids select 's35', id from x;
+update public.tournaments set registration_open = true where id = (select v from ids where k = 't');
 
 do $$
 declare r jsonb; n int; s text;

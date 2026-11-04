@@ -32,6 +32,7 @@ begin
     returning id into t;
   insert into ids values ('t', t);
   if (select approval from public.tournaments where id = t) <> 'draft' then raise exception 'FAIL: an organiser created an approved tournament'; end if;
+  if (select registration_open from public.tournaments where id = t) then raise exception 'FAIL: a new tournament accepted an open flag'; end if;
   insert into public.divisions (tournament_id, club_id, name, kind, format, pools, advance, gender, fee)
     values (t, pg_temp.id('club'), 'Open Singles', 'singles', '{"pointsTo":11,"bestOf":1,"scoring":"sideout"}', 1, 0, 'open', 500) returning id into d;
   insert into ids values ('div', d);
@@ -139,8 +140,14 @@ begin
   r := public.admin_decide_tournament(pg_temp.id('t'), true, null);
   if r ->> 'ok' is null then raise exception 'FAIL: approve: %', r; end if;
 end $$;
--- After approval everything opens: matches, the board, public results and online entries.
+-- Approval publishes the previously queued listing but entries require a separate action.
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000a1');
+do $$ begin
+  if (select registration_open from public.tournaments where id = pg_temp.id('t')) then
+    raise exception 'FAIL: publishing opened entries';
+  end if;
+end $$;
+update public.tournaments set registration_open = true where id = pg_temp.id('t');
 insert into public.club_matches (club_id, tournament_id, division_id, stage, side_a, side_b, format)
   values (pg_temp.id('club'), pg_temp.id('t'), pg_temp.id('div'), 'pool', '{}', '{}', '{"pointsTo":11,"bestOf":1,"scoring":"sideout"}');
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000a2');
@@ -170,7 +177,15 @@ select pg_temp.as_user('00000000-0000-4000-8000-0000000000a1');
 do $$
 declare t uuid;
 begin
-  insert into public.tournaments (club_id, name, start_date) values (pg_temp.id('club'), 'Trusted Cup', current_date + 9) returning id into t;
+  insert into public.tournaments (club_id, name, start_date, entry_mode, listing, registration_open)
+    values (pg_temp.id('club'), 'Trusted Cup', current_date + 9, 'registration', 'run', true) returning id into t;
+  if exists (select 1 from public.tournaments where id = t and (listing <> 'none' or registration_open)) then
+    raise exception 'FAIL: trusted creation bypassed hidden and closed defaults';
+  end if;
+  update public.tournaments set registration_open = true where id = t;
+  if not exists (select 1 from public.tournaments where id = t and listing = 'none' and registration_open) then
+    raise exception 'FAIL: explicit opening affected the listing';
+  end if;
   if (select approval from public.tournaments where id = t) <> 'approved' then raise exception 'FAIL: a trusted club''s tournament wasn''t approved'; end if;
   insert into ids values ('t2', t);
 end $$;

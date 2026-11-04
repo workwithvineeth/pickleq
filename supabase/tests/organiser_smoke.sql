@@ -26,6 +26,7 @@ begin
   insert into out values (4, 'queue has it (expect true): ' || (public.listing_queue()::text like '%Rollback Cup%'));
   r := public.review_listing(t, true, null); insert into out values (6, 'approve: ' || r::text);
   insert into out values (7, 'board after approve (expect true): ' || (public.public_events(false)::text like '%Rollback Cup%'));
+  update public.tournaments set registration_open = true where id = t;
   r := public.register_entry(md, '[{"name":"Vin","phone":"9800000001","gender":"m","age":30,"dupr":3.6},{"name":"Pal","phone":"9800000002","gender":"m","age":30,"dupr":3.0}]', 'venue', null);
   insert into out values (8, 'over cap (expect error, cap 3.5): ' || r::text);
   r := public.register_entry(md, '[{"name":"Vin","phone":"9800000001","gender":"m","age":30,"dupr":3.4},{"name":"Pal","phone":"9800000002","gender":"m","age":30,"dupr":3.0}]', 'claimed', 'UPI99887766');

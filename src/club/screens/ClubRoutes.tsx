@@ -1,6 +1,7 @@
 import type { Go, Route } from '../../navigation';
 import { AdminClubView, AdminDashboard, adminSectionOf } from './Admin';
 import { ResultsDupr } from './ResultsDupr';
+import { PlayerStudio } from './PlayerStudio';
 import { ClubView, PlayerView, Sharing } from './ClubView';
 import { EnterEvent, EventPage, EventsBoard, MyEntries, PostEvent } from './Events';
 import { DeskApp, OldDeskLink } from './DeskApp';
@@ -22,6 +23,7 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'club-join': return <ClubJoin key={id} code={id} go={go} onBack={() => go('club')} />;
     case 'club-view': return <ClubView key={id} clubId={id} go={go} onBack={() => go('club')} />;
     case 'club-player': return <PlayerView key={id} playerId={id} go={go} onBack={back} />;
+    case 'club-player-studio': return <PlayerStudio go={go} onBack={back} />;
     case 'club-sharing': return <Sharing key={id} playerId={id} go={go} onBack={back} />;
     case 'club-tournament': return <TournamentView key={id} id={id} go={go} onBack={back} />;
     case 'club-tournament-new': return <TournamentNew key={id} clubId={id} go={go} onBack={back} />;

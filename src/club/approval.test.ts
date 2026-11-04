@@ -33,6 +33,22 @@ async function newClub() {
 }
 
 describe('Create freely, go live with approval (demo backend, same rules as the server)', () => {
+  it('keeps entry opening separate from trusted approval and board publication', async () => {
+    const { b, demoClub } = await newClub();
+    const id = await b.createTournament({ ...reg(demoClub, 'Trusted Closed Cup'), registrationOpen: true });
+    const { tournament } = await b.tournamentBundle(id);
+    const slug = tournament.publicSlug;
+    expect(tournament.approval).toBe('approved');
+    expect(await b.publicEvent(slug)).toMatchObject({ registrationOpen: false });
+    expect((await b.publicEvents()).some((event) => event.slug === slug)).toBe(false);
+    await b.updateTournamentDetails(id, { registrationOpen: true });
+    expect(await b.publicEvent(slug)).toMatchObject({ registrationOpen: true });
+    expect((await b.publicEvents()).some((event) => event.slug === slug)).toBe(false);
+    await b.updateTournamentDetails(id, { registrationOpen: false });
+    await b.submitListing(id, 'run');
+    expect((await b.publicEvents()).some((event) => event.slug === slug)).toBe(true);
+    expect(await b.publicEvent(slug)).toMatchObject({ registrationOpen: false });
+  });
   it('a new club’s tournament starts as a draft; entries can be added and imported, but nothing goes live', async () => {
     const { b, id, t } = await newClub();
     expect(t.approval).toBe('draft');

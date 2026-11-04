@@ -1,3 +1,4 @@
+import { AdminOverviewPreview, BrandClubKits, CircuitPreview, MarketingPerformance } from './AdminGrowth';
 import { TestimonialsAdmin } from './Testimonials';
 import { useState } from 'react';
 import type { Go } from '../../navigation';
@@ -12,7 +13,7 @@ import { resultsDuprLink } from './ResultsDupr';
 import { ApprovalQueue } from './Approvals';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 
-export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'results' | 'testimonials' | 'admins' | 'desk';
+export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'results' | 'testimonials' | 'admins' | 'desk' | 'branding' | 'marketing' | 'circuit';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'overview', label: 'Overview', title: 'Overview' },
   { id: 'approvals', label: 'Approvals', title: 'Tournament approvals' },
@@ -21,6 +22,9 @@ const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'results', label: 'Results & DUPR', title: 'Tournament results & DUPR' },
   { id: 'testimonials', label: 'Testimonials', title: 'Testimonials' },
   { id: 'admins', label: 'Admins', title: 'PaddleQ admins' },
+  { id: 'branding', label: 'Branding & Club Kits', title: 'Branding & Club Kits' },
+  { id: 'marketing', label: 'Marketing Performance', title: 'Marketing Performance' },
+  { id: 'circuit', label: 'Club Circuit', title: 'Club Circuit' },
   { id: 'desk', label: 'Desk access', title: 'Desk access' },
 ];
 export const isAdminSection = (s: string | undefined): s is AdminSection => SECTIONS.some((x) => x.id === s);
@@ -48,6 +52,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
   const b = eventsBackend();
   const allowed = useLoad(() => b.isPlatformAdmin(), [b]);
   const current = SECTIONS.find((s) => s.id === section)!;
+  const growthSection = section === 'branding' || section === 'marketing' || section === 'circuit';
   return (
     <main className="screen" aria-labelledby="admin-title">
       <Header id="admin-title" title="PaddleQ admin" onBack={onBack} />
@@ -62,12 +67,12 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
       {allowed.data && (
         <>
           <div className="seg seg-wrap" role="group" aria-label="Admin sections">
-            {SECTIONS.map((s) => (
+            {SECTIONS.filter((s) => b.kind === 'server' || (s.id !== 'branding' && s.id !== 'marketing' && s.id !== 'circuit')).map((s) => (
               <button key={s.id} type="button" aria-pressed={s.id === section} onClick={() => go('admin', s.id, { replace: true })}>{s.label}</button>
             ))}
           </div>
           <h2 style={{ fontSize: 20, margin: 0 }}>{current.title}</h2>
-          {section === 'overview' && <Overview go={go} />}
+          {section === 'overview' && (b.kind === 'server' ? <OverviewMode go={go} /> : <Overview go={go} />)}
           {section === 'overview' && b.kind === 'server' && (
             <section className="card section" aria-label="Demo club">
               <h2 style={{ fontSize: 16 }}>Demo club</h2>
@@ -82,6 +87,10 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           {section === 'testimonials' && <TestimonialsAdmin b={b} />}
           {section === 'admins' && <Admins />}
           {section === 'desk' && <DeskAccessList />}
+          {growthSection && b.kind !== 'server' && <p className="muted">Sign in to Platform Admin on the connected app to open this section.</p>}
+          {section === 'branding' && b.kind === 'server' && <BrandClubKits go={go} />}
+          {section === 'marketing' && b.kind === 'server' && <MarketingPerformance />}
+          {section === 'circuit' && b.kind === 'server' && <CircuitPreview />}
         </>
       )}
     </main>
@@ -99,6 +108,17 @@ function Tile({ label, value, sub, onClick }: { label: string; value: number | s
   return onClick
     ? <button type="button" className="stat-tile" style={{ textAlign: 'left', border: 'none', color: 'inherit' }} aria-label={`${label}: ${value}`} onClick={onClick}>{body}</button>
     : <div className="stat-tile" role="group" aria-label={`${label}: ${value}`}>{body}</div>;
+}
+
+function OverviewMode({ go }: { go: Go }) {
+  const [sample, setSample] = useState(false);
+  return <>
+    <div className="seg seg-wrap" role="group" aria-label="Overview data mode">
+      <button type="button" aria-pressed={!sample} onClick={() => setSample(false)}>Real Data</button>
+      <button type="button" aria-pressed={sample} onClick={() => setSample(true)}>Demo Preview</button>
+    </div>
+    {sample ? <AdminOverviewPreview /> : <Overview go={go} />}
+  </>;
 }
 
 function Overview({ go }: { go: Go }) {

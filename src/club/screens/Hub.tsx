@@ -108,6 +108,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           </div>
           {msg && <div role="status" className="msg msg-ok">{msg}</div>}
           <div className="meta" aria-label="Dashboard shortcuts">
+            {b?.kind === 'server' && <button type="button" className="btn btn-outline" onClick={() => go('club-player-studio')}>Player Studio</button>}
             {signedIn.admin && <button type="button" className="btn btn-primary" onClick={() => go('admin', 'overview')}>Admin dashboard</button>}
             <button type="button" className="btn btn-outline" onClick={() => signedIn.admin ? go('admin', 'results') : go('club-results')}>Results &amp; DUPR</button>
           </div>

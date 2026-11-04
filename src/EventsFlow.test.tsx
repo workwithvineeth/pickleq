@@ -207,7 +207,7 @@ describe('Organiser: entries inbox and draw', () => {
 });
 
 describe('Posting a tournament and approving it', () => {
-  it('a trusted club’s registration tournament goes straight on the board', async () => {
+  it('a trusted club can publish explicitly while entries stay closed', async () => {
     const user = userEvent.setup();
     await openDemo(user);
     const clubId = window.location.hash.split('/')[2];
@@ -228,11 +228,12 @@ describe('Posting a tournament and approving it', () => {
     expect(screen.queryByLabelText('Event 1 find player')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await screen.findByRole('heading', { name: 'Robot Mixed Cup' });
-    // PQ Demo Club is trusted, so the tournament is approved at once and its listing goes straight on the board.
     const card = screen.getByRole('region', { name: 'Events board' });
-    expect(card).toHaveTextContent('On the board');
+    expect(card).toHaveTextContent('Not on the PaddleQ events board');
     expect(card).toHaveTextContent('Robot Courts, Hyderabad');
     expect(screen.queryByRole('region', { name: 'PaddleQ approval' })).not.toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'Publish on events board' }));
+    expect(await within(card).findByText('On the board', { exact: true })).toBeInTheDocument();
     window.location.hash = '#/events';
     expect(await screen.findByRole('button', { name: 'Robot Mixed Cup' })).toBeInTheDocument();
   });

@@ -1,3 +1,4 @@
+import type { StudioLog, StudioLogInput } from './playerStudio';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
@@ -134,6 +135,17 @@ export class ServerBackend implements ClubBackend {
     const { data } = await this.sb.auth.getSession();
     const u = data.session?.user;
     return u ? { id: u.id, email: u.email ?? '' } : null;
+  }
+
+  async studioLogs(): Promise<StudioLog[]> {
+    return check(await this.sb.from('player_studio_logs').select('id,kind,played_on,opponents,partner,location,score_for,score_against,reflection,tags')
+      .order('played_on', { ascending: false })) as StudioLog[];
+  }
+
+  async saveStudioLog(input: StudioLogInput, id?: string): Promise<void> {
+    const table = this.sb.from('player_studio_logs');
+    const write = id ? table.update(input).eq('id', id) : table.insert(input);
+    check(await write.select('id').single());
   }
 
   async sendCode(email: string) {
@@ -415,21 +427,33 @@ export class ServerBackend implements ClubBackend {
   async createTournament(input: NewTournamentInput) {
     if (input.name.trim().length < 2) throw new ClubError('Give the tournament a name');
     const mode = input.entryMode ?? 'roster';
+    if (input.platformDraft && (mode !== 'registration' || input.listingOnly || input.divisions.some((d) => d.entries.length))) {
+      throw new ClubError('A platform draft must use player registration without existing entries');
+    }
     for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : mode); if (e) throw new ClubError(e); }
     const ps = input.platformDraft ? [] : (check(await this.sb.from('club_players').select('*').eq('club_id', input.clubId)) as Row[]).map(toPlayer);
     const rows = buildTournamentRows(input, new Map(ps.map((p) => [p.id, p])), newId);
     const t = rows.tournament;
+    const tournament = {
+      id: t.id, club_id: t.clubId, name: t.name, start_date: t.startDate, start_time: t.startTime, courts: t.courts, slot_minutes: t.slotMinutes, status: t.status, is_public: t.isPublic, public_slug: t.publicSlug,
+      city: t.city || null, venue: t.venue || null, about: t.about || null, contact: t.contact || null, link: t.link || null, entry_mode: mode,
+      registration_open: false, entries_close: t.entriesClose || null, upi_id: t.upiId || null,
+    };
+    const divisions = rows.divisions.map((d) => ({ id: d.id, tournament_id: d.tournamentId, club_id: d.clubId, name: d.name, kind: d.kind, format: formatJson(d), pools: d.pools, advance: d.advance, sort: d.sort, ...fromRules(d.rules) }));
+    if (input.platformDraft) {
+      check(await this.sb.rpc('create_platform_tournament_draft', {
+        p_tournament: tournament,
+        p_divisions: divisions,
+      }));
+      return t.id;
+    }
     // Picking the players makes the draw at once, which needs approval: only trusted clubs can do that in one step.
     if (rows.matches.length) {
       const club = check(await this.sb.from('clubs').select('trusted, is_test').eq('id', input.clubId).single()) as Row;
       if (!club.trusted && !club.is_test) throw new ClubError(PICK_NEEDS_TRUST);
     }
-    check(await this.sb.from('tournaments').insert({
-      id: t.id, club_id: t.clubId, name: t.name, start_date: t.startDate, start_time: t.startTime, courts: t.courts, slot_minutes: t.slotMinutes, status: t.status, is_public: t.isPublic, public_slug: t.publicSlug,
-      city: t.city || null, venue: t.venue || null, about: t.about || null, contact: t.contact || null, link: t.link || null, entry_mode: mode,
-      registration_open: mode === 'registration', entries_close: t.entriesClose || null, upi_id: t.upiId || null,
-    }));
-    check(await this.sb.from('divisions').insert(rows.divisions.map((d) => ({ id: d.id, tournament_id: d.tournamentId, club_id: d.clubId, name: d.name, kind: d.kind, format: formatJson(d), pools: d.pools, advance: d.advance, sort: d.sort, ...fromRules(d.rules) }))));
+    check(await this.sb.from('tournaments').insert(tournament));
+    check(await this.sb.from('divisions').insert(divisions));
     if (rows.entries.length) check(await this.sb.from('entries').insert(rows.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));
     if (rows.matches.length) check(await this.sb.from('club_matches').insert(rows.matches.map(fromMatch)));
     return t.id;

@@ -64,4 +64,28 @@ do $$ begin
     raise exception 'FAIL draft visibility';
   end if;
 end $$;
+-- Run as the fixture database owner to exercise the foreign keys independently of RLS.
+do $$
+declare f ops_fixture;
+begin
+  select * into f from ops_fixture;
+  begin
+    delete from public.club_matches where id=f.match;
+    raise exception 'FAIL direct match deletion erased score audit';
+  exception when foreign_key_violation or restrict_violation then null;
+  end;
+  begin
+    delete from public.tournaments where id=f.tournament;
+    raise exception 'FAIL tournament cascade erased score audit';
+  exception when foreign_key_violation or restrict_violation then null;
+  end;
+  begin
+    delete from public.clubs where id=f.club;
+    raise exception 'FAIL club cascade erased score audit';
+  exception when foreign_key_violation or restrict_violation then null;
+  end;
+  if not exists(select 1 from public.club_score_corrections where match_id=f.match and old_winner='A' and new_winner='B') then
+    raise exception 'FAIL missing retained score audit';
+  end if;
+end $$;
 rollback;
