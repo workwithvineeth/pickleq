@@ -7,6 +7,8 @@ name: Club checks
 on:
   push:
     branches: [club-mode]
+  pull_request:
+    branches: [club-mode]
   workflow_dispatch:
 
 permissions:
