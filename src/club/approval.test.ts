@@ -112,9 +112,21 @@ describe('Create freely, go live with approval (demo backend, same rules as the 
   });
 });
 
+/** Testimonials need a finished tournament (Phase 3): give the club one, as the server would after "Mark as finished". */
+function finishedTournamentFor(b: unknown, ...clubIds: string[]) {
+  const st = (b as { s: { tournaments: { id: string; clubId: string; status: string }[] } }).s;
+  for (const clubId of clubIds) st.tournaments.push({ ...st.tournaments[0], id: `done-${clubId}`, clubId, status: 'done' });
+}
+
 describe('Club testimonials (demo backend, same rules as the server)', () => {
+  it('is only offered after the club has finished a tournament', async () => {
+    const { b, clubId } = await newClub();
+    await expect(b.submitTestimonial({ clubId, rating: 5, quote: 'We have not run anything yet.', personName: 'Robot', personRole: 'Owner', consent: true })).rejects.toThrow('after your first finished tournament');
+  });
+
   it('needs the permission tick, a 1–5 rating, at most 400 characters and no phones or emails', async () => {
     const { b, clubId } = await newClub();
+    finishedTournamentFor(b, clubId);
     const base = { clubId, rating: 5, quote: 'PaddleQ ran our whole event without a hitch.', personName: 'Robot', personRole: 'Owner, Robot Yard', consent: true };
     await expect(b.submitTestimonial({ ...base, consent: false })).rejects.toThrow('Tick the box');
     await expect(b.submitTestimonial({ ...base, rating: 0 })).rejects.toThrow('rating from 1 to 5');
@@ -129,6 +141,7 @@ describe('Club testimonials (demo backend, same rules as the server)', () => {
 
   it('PaddleQ approves, features and hides; the club sees the status, only its own, and can withdraw', async () => {
     const { b, clubId, demoClub } = await newClub();
+    finishedTournamentFor(b, clubId, demoClub);
     await b.submitTestimonial({ clubId, rating: 4, quote: 'Easy for our referees on the day.', personName: 'Robot', personRole: 'Owner', consent: true });
     await b.submitTestimonial({ clubId: demoClub, rating: 5, quote: 'The demo club loves the live results.', personName: 'Demo', personRole: 'Admin', consent: true });
     expect((await b.clubTestimonials(clubId)).map((t) => t.quote)).toEqual(['Easy for our referees on the day.']);

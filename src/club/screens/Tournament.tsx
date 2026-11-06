@@ -7,8 +7,8 @@ import type { Go } from '../../navigation';
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, formatFor, matchResult, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor } from '../index';
-import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, type NewDivisionInput } from '../plan';
-import { isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
+import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, poolsComplete, type NewDivisionInput } from '../plan';
+import { isAdmin, isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type Division, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
 import { ApprovalCard } from './Approvals';
 import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
@@ -254,6 +254,11 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   async function set(patch: Parameters<NonNullable<typeof b>['updateTournament']>[1], ok: string) {
     try { await b?.updateTournament(t.id, patch); setMsg(ok); state.reload(); } catch (e) { setMsg(errorText(e)); }
   }
+  async function addKnockouts(x: Division, n: number) {
+    try { await b?.addKnockoutStage(x, n); setMsg(n === 2 ? `${x.name}: the final is ready to score` : `${x.name}: semi-finals are ready to score`); state.reload(); } catch (e) { setMsg(errorText(e)); }
+  }
+  // Round-robin-only events that are fully played: offer knockouts (TPC follow-up, Phase 3).
+  const rrDone = d.divisions.filter((x) => x.advance === 0 && x.shape !== 'ko' && d.matches.some((m) => m.divisionId === x.id && m.stage === 'pool') && poolsComplete(x.id, d.matches) && !d.matches.some((m) => m.divisionId === x.id && m.stage !== 'pool' && m.status !== 'void'));
   return (
     <main className="screen wide-ok" aria-labelledby="t-title">
       <Header id="t-title" title={t.name} onBack={onBack} />
@@ -292,6 +297,26 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
       <Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} />
       <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />
+      {staff && approved && t.status === 'live' && rrDone.map((x) => {
+        const teams = d.entries.filter((e) => e.divisionId === x.id && e.status !== 'withdrawn').length;
+        return (
+          <section key={x.id} className="card section" aria-label={`${x.name}: round robin finished`}>
+            <h2 style={{ fontSize: 16 }}>{x.name}: every round-robin game is played</h2>
+            <p className="small muted" style={{ margin: 0 }}>It was set up as round robin only, so no knockouts were made. Crown the table winner by marking the tournament finished, or add knockouts from the table now.</p>
+            <div className="meta">
+              {teams >= 4 && <button type="button" className="btn btn-primary" onClick={() => void addKnockouts(x, 4)}>Add semi-finals and a final (top 4)</button>}
+              {teams >= 2 && <button type="button" className={`btn ${teams >= 4 ? 'btn-outline' : 'btn-primary'}`} onClick={() => void addKnockouts(x, 2)}>Add a final (top 2)</button>}
+            </div>
+          </section>
+        );
+      })}
+      {staff && approved && t.status === 'done' && isAdmin(d.role) && (
+        <section className="card section" aria-label="Share your experience">
+          <h2 style={{ fontSize: 16 }}>That’s a wrap! How did it go?</h2>
+          <p className="small muted" style={{ margin: 0 }}>Two lines from you help other clubs try PaddleQ. It takes 30 seconds.</p>
+          <button type="button" className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-view', d.club.id)}>Share your experience</button>
+        </section>
+      )}
       {staff && approved && (
         <section className="card section" aria-label="When it’s over">
           <h2 style={{ fontSize: 16 }}>When it’s over</h2>

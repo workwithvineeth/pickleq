@@ -545,3 +545,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .pq-results-page h4 { break-after: avoid; }
   .pq-results-page thead { display: table-header-group; }
 }
+
+/* Phase 3: account strip with Sign out on every signed-in screen */
+.pq-account { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 16px; border-bottom: 1px solid var(--border); background: var(--card); }
+.pq-account .link-btn { min-height: 36px; white-space: nowrap; }

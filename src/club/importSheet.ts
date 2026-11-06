@@ -24,6 +24,51 @@ export function parseTable(text: string): string[][] {
   return rows.map((r) => r.map((c) => c.trim())).filter((r) => r.some((c) => c !== ''));
 }
 
+/**
+ * Booking-platform exports (e.g. "event-booking-summary" CSVs) list one row per PLAYER, with the event in a ticket
+ * column and doubles partners sharing a booking ID. This pairs doubles rows by booking ID into one row per team (adding
+ * partner columns) so the rest of the importer works as for a form. Singles rows pass through. A partner whose phone is
+ * the booking contact's (shared number) gets a blank phone rather than a copy, so they aren't flagged as the same person.
+ */
+export function pairBookingRows(rows: string[][]): { rows: string[][]; pairs: number; booking: boolean } {
+  if (rows.length < 2) return { rows, pairs: 0, booking: false };
+  const h = rows[0].map((x) => x.toLowerCase().replace(/[\s_-]+/g, ''));
+  const bi = h.findIndex((x) => /^(bookingid|bookingno|bookingnumber|orderid|ordernumber|bookingref)$/.test(x));
+  const ki = h.findIndex((x) => /ticket|category|eventtype/.test(x));
+  if (bi < 0 || ki < 0) return { rows, pairs: 0, booking: false };
+  const col = (re: RegExp) => h.findIndex((x) => re.test(x));
+  const ni = h.findIndex((x) => /name/.test(x) && !/ticket|event|tournament|category|source|sheet|booking|order/.test(x));
+  const pi = col(/phone|mobile|whatsapp|contact/);
+  const di = h.findIndex((x) => /dupr|rating/.test(x) && !/id$/.test(x));
+  const ii = h.findIndex((x) => /dupr.*id|duprnumber/.test(x));
+  const gi = col(/gender|sex/);
+  const ai = h.findIndex((x) => /^age$|age\b/.test(x));
+  const extra = ['Partner name', 'Partner phone', 'Partner DUPR rating', 'Partner DUPR ID', 'Partner gender', 'Partner age'];
+  const out: string[][] = [[...rows[0], ...extra]];
+  const byBooking = new Map<string, string[][]>();
+  const order: (string[] | string)[] = [];
+  for (const r of rows.slice(1)) {
+    const doubles = /double|pair|team|mixed/i.test(r[ki] ?? '');
+    const key = `${(r[bi] ?? '').trim()}|${(r[ki] ?? '').trim().toLowerCase()}`;
+    if (!doubles || !(r[bi] ?? '').trim()) { order.push(r); continue; }
+    if (!byBooking.has(key)) { byBooking.set(key, []); order.push(key); }
+    byBooking.get(key)!.push(r);
+  }
+  let pairs = 0;
+  const pick = (r: string[] | undefined, i: number) => (r && i >= 0 ? r[i] ?? '' : '');
+  for (const o of order) {
+    if (typeof o !== 'string') { out.push([...o, ...extra.map(() => '')]); continue; }
+    const group = byBooking.get(o)!;
+    for (let k = 0; k < group.length; k += 2) {
+      const a = group[k], b = group[k + 1];
+      if (b) pairs++;
+      const bPhone = pick(b, pi);
+      out.push([...a, pick(b, ni), bPhone && bPhone === pick(a, pi) ? '' : bPhone, pick(b, di), pick(b, ii), pick(b, gi), pick(b, ai)]);
+    }
+  }
+  return { rows: out, pairs, booking: true };
+}
+
 export type Field = 'kind' | 'name' | 'phone' | 'gender' | 'age' | 'dupr' | 'duprId' | 'partnerName' | 'partnerPhone' | 'partnerGender' | 'partnerAge' | 'partnerDupr' | 'partnerDuprId' | 'paid';
 export const FIELD_LABEL: Record<Field, string> = {
   kind: 'Singles or doubles', name: 'Player name', phone: 'Player phone', gender: 'Player gender', age: 'Player age', dupr: 'Player DUPR rating', duprId: 'Player DUPR ID',
@@ -56,6 +101,8 @@ export function guessColumns(header: string[]): { map: Mapping; alt: Partial<Map
   header.forEach((raw, i) => {
     const h = raw.toLowerCase().replace(/\s+/g, ' ').trim();
     if (/time\s*stamp|^email|e-mail|email address/.test(h)) return;
+    if (/source\s*sheet|sourcesheet|booking\s*id|bookingid|order\s*id|orderid/.test(h)) return;
+    if (/ticket|event\s*name|eventname|tournament/.test(h)) return take('kind', i);
     if (isPartner(h)) side = 'partner';
     else if (/player\s*(1|one)\b|\(you\)|\byour?\b/.test(h)) side = 'player';
     const partner = isPartner(h) || (side === 'partner' && /\s[2-9]$/.test(h));

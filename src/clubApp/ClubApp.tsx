@@ -15,6 +15,27 @@ const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
   { id: 'club-results', label: 'Results', icon: 'stats' },
 ];
 
+/** Screens without an account (referee court, desk PIN, public results and event pages): no account strip there. */
+const NO_ACCOUNT: RouteName[] = ['court', 'desk', 'helper', 'results', 'event', 'club-signin', 'admin-login', 'demo'];
+
+/** "Signed in as … · Sign out" on every signed-in screen, so sign-out is never more than one tap away. */
+function AccountStrip({ route, go }: { route: RouteName; go: Go }) {
+  const [email, setEmail] = useState<string | null>(null);
+  useEffect(() => { let on = true; eventsBackend().currentUser().then((u) => { if (on) setEmail(u?.email ?? null); }, () => undefined); return () => { on = false; }; }, [route]);
+  if (!email || NO_ACCOUNT.includes(route)) return null;
+  async function signOut() {
+    await eventsBackend().signOut().catch(() => undefined);
+    setEmail(null);
+    go('club', undefined, { replace: true });
+  }
+  return (
+    <div className="pq-account" role="region" aria-label="Account">
+      <span className="small muted" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Signed in as {email}</span>
+      <button type="button" className="link-btn" onClick={() => void signOut()}>Sign out</button>
+    </div>
+  );
+}
+
 /** Routes that belong to the personal PaddleQ app: not part of PaddleQ, so they open My club instead. */
 const PERSONAL: RouteName[] = ['matches', 'train', 'stats', 'coach', 'log', 'backfill', 'edit', 'details', 'match', 'trash', 'settings', 'backup', 'ratings', 'coach-task', 'conversation', 'coach-settings', 'report', 'help', 'privacy', 'tournaments', 'tournament-new', 'tournament-edit', 'tournament', 'clips', 'goals', 'session-new', 'session', 'club-sharing'];
 
@@ -39,6 +60,7 @@ export default function ClubApp() {
     <div className="app pq-brand">
       {/* At the top of the page, never floating over the sign-in form or the main buttons; no "works offline" popup. */}
       <UpdatePrompt offlineNotice={false} inline />
+      <AccountStrip route={name} go={clubGo} />
       {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
       {name === 'club-results' && <ClubResultsTab go={clubGo} />}
       {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}

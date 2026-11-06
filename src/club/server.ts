@@ -724,6 +724,11 @@ export class ServerBackend implements ClubBackend {
     return r?.error ? String(r.error) : null;
   }
 
+  async addKnockoutStage(division: Division, advance: number) {
+    if (division.shape === 'ko' || division.advance > 0) throw new ClubError('This event already has knockouts');
+    check(await this.sb.from('divisions').update({ advance, format: formatJson({ ...division, shape: undefined, extra: 0 }) }).eq('id', division.id));
+  }
+
   async applyDraw(tournamentId: string, plan: DrawPlan) {
     const t = toTournament(check(await this.sb.from('tournaments').select('*').eq('id', tournamentId).single()) as Row);
     if (t.drawnAt) throw new ClubError('The draw is already made');

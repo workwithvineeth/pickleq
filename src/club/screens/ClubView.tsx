@@ -36,7 +36,7 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
             badge={d.club.trusted ? <span className="pq-badge">Trusted</span> : undefined} />
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
-          {tab === 'events' && isAdmin(d.role) && b && <TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} />}
+          {tab === 'events' && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} />}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
           {tab === 'squad' && staff && <Squad d={d} go={go} />}
           {tab === 'members' && staff && b && <LogoPicker b={b} clubId={d.club.id} club={d.club.name} current={d.club.logoUrl} onChanged={state.reload} />}

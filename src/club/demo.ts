@@ -990,6 +990,14 @@ export class DemoBackend implements ClubBackend {
     return entryProblem(d.kind, d.rules, players, false) ?? (this.entryTaken(d.id, players, exceptId) ? 'Someone with that phone number is already entered in this event' : null);
   }
 
+  async addKnockoutStage(division: Division, advance: number) {
+    const d = this.s.divisions.find((x) => x.id === division.id);
+    if (!d) throw new ClubError('Event not found');
+    this.need(d.clubId, isStaff, 'Only coaches and admins can change the format');
+    if (d.shape === 'ko' || d.advance > 0) throw new ClubError('This event already has knockouts');
+    d.advance = advance; d.extra = 0; this.save();
+  }
+
   async applyDraw(tournamentId: string, plan: DrawPlan) {
     const t = this.tournament(tournamentId);
     this.need(t.clubId, isStaff, 'Only coaches and admins can make the draw');
@@ -1174,6 +1182,7 @@ export class DemoBackend implements ClubBackend {
 
   async submitTestimonial(input: NewTestimonial) {
     this.need(input.clubId, isAdmin, 'Only the club’s owner and admins can share a testimonial');
+    if (!this.s.tournaments.some((t) => t.clubId === input.clubId && t.status === 'done')) throw new ClubError('Share your experience after your first finished tournament');
     const quote = input.quote.trim(); const name = input.personName.trim(); const role = input.personRole.trim();
     if (!input.consent) throw new ClubError('Tick the box to let PaddleQ use it');
     if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) throw new ClubError('Pick a rating from 1 to 5');
