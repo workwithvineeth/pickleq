@@ -43,7 +43,7 @@ jobs:
         continue-on-error: true
         run: |
           [ -f supabase/config.toml ] || supabase init --force >/dev/null
-          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
+          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta,inbucket
       - name: Database checks
         id: db
         continue-on-error: true
