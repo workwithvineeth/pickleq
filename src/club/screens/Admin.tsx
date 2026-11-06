@@ -12,8 +12,9 @@ import { BigLogo } from './Poster';
 import { resultsDuprLink } from './ResultsDupr';
 import { ApprovalQueue } from './Approvals';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
+import { SupportOpenButton } from './Lifecycle';
 
-export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'results' | 'testimonials' | 'admins' | 'desk' | 'branding' | 'marketing' | 'circuit';
+export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'results' | 'testimonials' | 'admins' | 'desk' | 'branding' | 'marketing' | 'circuit' | 'audit';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'overview', label: 'Overview', title: 'Overview' },
   { id: 'approvals', label: 'Approvals', title: 'Tournament approvals' },
@@ -26,6 +27,7 @@ const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'marketing', label: 'Marketing Performance', title: 'Marketing Performance' },
   { id: 'circuit', label: 'Club Circuit', title: 'Club Circuit' },
   { id: 'desk', label: 'Desk access', title: 'Desk access' },
+  { id: 'audit', label: 'Audit log', title: 'Audit log' },
 ];
 export const isAdminSection = (s: string | undefined): s is AdminSection => SECTIONS.some((x) => x.id === s);
 /** Old links to Admin → Listings open Approvals (board listings are approved with the tournament since 2 Nov 2026). */
@@ -86,6 +88,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           {section === 'approvals' && <ApprovalQueue b={b} go={go} />}
           {section === 'testimonials' && <TestimonialsAdmin b={b} />}
           {section === 'admins' && <Admins />}
+          {section === 'audit' && <AuditLog />}
           {section === 'desk' && <DeskAccessList />}
           {growthSection && b.kind !== 'server' && <p className="muted">Sign in to Platform Admin on the connected app to open this section.</p>}
           {section === 'branding' && b.kind === 'server' && <BrandClubKits go={go} />}
@@ -295,6 +298,7 @@ function Tournaments({ go, resultsOnly = false }: { go: Go; resultsOnly?: boolea
               )
               : (
                 <div className="meta">
+                  <SupportOpenButton b={b} clubId={t.clubId} tournamentId={t.id} reason={`Admin events: ${t.name}`} go={go} label="Manage tournament" primary />
                   {t.status !== 'draft' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setConfirm(t.id)}>{t.status === 'done' ? 'Reopen' : 'Mark finished'}</button>}
                   {t.status !== 'done' && t.deskToken && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: desk`, deskLink(t.deskToken as string)), 'Desk link shared or copied: send it to the desk team (with the desk PIN)')}>Share desk link</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('results', t.slug)}>Results</button>}
@@ -377,5 +381,30 @@ function DeskAccessList() {
         </section>
       ))}
     </>
+  );
+}
+
+const AUDIT_LABEL: Record<string, string> = {
+  support_start: 'Started a support session', support_end: 'Ended a support session', support_open_member: 'Opened a club they belong to',
+  tournament_delete: 'Deleted a tournament', tournament_cancel: 'Cancelled a tournament', tournament_archive: 'Archived a tournament', tournament_unarchive: 'Brought a tournament back',
+};
+/** Every support session and lifecycle action, newest first (PaddleQ admins only; server: platform_audit). */
+function AuditLog() {
+  const b = eventsBackend();
+  const state = useLoad(() => b.platformAudit(), [b]);
+  return (
+    <section className="section" aria-label="Audit log">
+      <p className="small muted" style={{ margin: 0 }}>Support sessions (with the reason given) and every delete, cancel and archive. Kept for good.</p>
+      <Status error={state.error} loading={state.loading && !state.data} />
+      {state.data?.length === 0 && <p className="small muted">Nothing yet.</p>}
+      {state.data && state.data.length > 0 && (
+        <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+          <table className="table" aria-label="Privileged actions">
+            <thead><tr><th>When</th><th>What</th><th>Details</th></tr></thead>
+            <tbody>{state.data.map((r, i) => <tr key={i}><td className="small">{friendlyDateTime(r.at)}</td><td><b>{AUDIT_LABEL[r.action] ?? r.action}</b></td><td className="small muted">{r.detail}</td></tr>)}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }

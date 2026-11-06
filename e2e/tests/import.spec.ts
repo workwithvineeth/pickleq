@@ -12,7 +12,9 @@ test.describe('PaddleQ app', () => {
   test('has its own tabs, and no personal-app tabs', async ({ page }) => {
     await page.goto('./');
     const nav = page.getByRole('navigation', { name: 'Main' });
-    for (const t of ['Events', 'My club', 'Tournaments', 'Results']) await expect(nav.getByRole('button', { name: t })).toBeVisible();
+    for (const t of ['Events', 'My club', 'Results']) await expect(nav.getByRole('button', { name: t })).toBeVisible();
+    // The separate Tournaments tab is gone (Phase 3): tournaments live under My clubs.
+    await expect(nav.getByRole('button', { name: 'Tournaments' })).toHaveCount(0);
     for (const t of ['Home', 'Train', 'Stats', 'Coach']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Log a match' })).toHaveCount(0);
     // Signed out, paddleq.in opens on the sign-in page; the demo lives in the admin dashboard, not here.
@@ -37,8 +39,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
-    await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Tournaments' }).click();
-    await page.getByRole('button', { name: '+ Create Tournament at PQ Demo Club' }).click();
+    await page.getByRole('button', { name: '+ Create Tournament' }).click();
     await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
     await page.getByLabel('Tournament name').fill('Robot Split Form Cup');
     await page.getByLabel('City').fill('Hyderabad');
@@ -72,8 +73,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
 
     // A tournament where players register (on a Google Form), with a team-average DUPR cap for doubles.
-    await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Tournaments' }).click();
-    await page.getByRole('button', { name: '+ Create Tournament at PQ Demo Club' }).click();
+    await page.getByRole('button', { name: '+ Create Tournament' }).click();
     await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
     await page.getByLabel('Tournament name').fill('Robot Form Cup');
     await page.getByLabel('City').fill('Hyderabad');

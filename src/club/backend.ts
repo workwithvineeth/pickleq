@@ -3,6 +3,8 @@ import type { DrawPlan } from './registration';
 import type { Approval, Club, ClubMatch, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 export interface ClubUser { id: string; email: string }
+export interface SupportSession { clubId: string; club: string; until: string }
+export interface AuditRow { at: string; action: string; detail: string; clubId?: string; tournamentId?: string }
 export interface MyClub { club: Club; role: Role; myPlayerId?: string }
 
 export interface ClubBundle {
@@ -258,6 +260,15 @@ export interface EventsBackend {
   applyDraw(tournamentId: string, plan: DrawPlan): Promise<void>;
   /** A round-robin-only event whose games are all played gets knockouts: the top `advance` from the table go through (2 = final, 4 = semi-finals). */
   addKnockoutStage(division: Division, advance: number): Promise<void>;
+  /** PaddleQ admins: join a club as a 4-hour, logged support admin (normal club permissions; never owner). Returns when it ends (null if already a member). */
+  startSupport(clubId: string, reason: string): Promise<string | null>;
+  endSupport(clubId: string): Promise<void>;
+  supportSessions(): Promise<SupportSession[]>;
+  /** Lifecycle: delete only before anyone enters (type the name); cancel keeps everything; archive hides finished or cancelled ones. */
+  deleteTournament(id: string, confirmName: string): Promise<void>;
+  cancelTournament(id: string, reason: string): Promise<void>;
+  archiveTournament(id: string, archive: boolean): Promise<void>;
+  platformAudit(): Promise<AuditRow[]>;
   isPlatformAdmin(): Promise<boolean>;
   listingQueue(): Promise<ListingReview[]>;
   reviewListing(id: string, approve: boolean, reason?: string): Promise<void>;

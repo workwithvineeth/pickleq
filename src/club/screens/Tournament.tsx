@@ -10,6 +10,8 @@ import { backend, publicSourcesFor } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, poolsComplete, type NewDivisionInput } from '../plan';
 import { isAdmin, isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type Division, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
+import { LifecycleCard } from './Lifecycle';
+import { PromoStudio } from './PromoStudio';
 import { ApprovalCard } from './Approvals';
 import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
@@ -266,6 +268,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {!staff && <PosterImage src={t.posterUrl} name={t.name} />}
       <ClubLogo src={d.club.logoUrl} club={d.club.name} />
       <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {friendlyDate(t.startDate)} · from {friendlyTime(t.startTime)} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
+      {t.cancelledAt && <div role="status" className="msg msg-bad">This tournament was cancelled{t.cancelReason ? `: ${t.cancelReason}` : ''}.</div>}
       {staff && b && <ApprovalCard b={b} t={t} onChanged={state.reload} />}
       {staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}
       {staff && !approved && (
@@ -286,6 +289,12 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
         </nav>
       )}
       {staff && b && <ListingCard b={b} t={t} role={d.role} onChanged={state.reload} />}
+      {staff && !t.cancelledAt && (
+        <details className="card section">
+          <summary><b>Promote this tournament</b> <span className="small muted">· posts, story, results card, A4 poster with QR</span></summary>
+          <PromoStudio events={[{ id: t.id, name: t.name, club: d.club.name, startDate: t.startDate, startTime: t.startTime, courts: t.courts, slug: t.publicSlug }]} />
+        </details>
+      )}
       {t.entryMode === 'registration' && !t.drawnAt && <p className="small muted" style={{ margin: 0 }}>Players are registering. The pools and schedule appear here once you make the draw in the entries inbox.</p>}
       {t.isPublic && approved && (
         <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={async () => setMsg(await shareLink(`${t.name} results`, link))}>
@@ -335,6 +344,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           {t.isPublic && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => set({ isPublic: false }, 'Results link turned off')}>Turn off the results link</button>}
         </section>
       )}
+      {b && isAdmin(d.role) && <LifecycleCard b={b} d={d} go={go} onChanged={state.reload} />}
     </main>
   );
 }

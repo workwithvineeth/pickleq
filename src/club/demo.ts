@@ -1,7 +1,7 @@
 import { matchResult } from './domain/engine';
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
-import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AuditRow, type SupportSession, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
 import { pinProblem, randomPin as randomPinOf } from './pins';
@@ -989,6 +989,46 @@ export class DemoBackend implements ClubBackend {
     if (!isStaff(this.role(d.clubId))) return 'Only the organiser can do this';
     return entryProblem(d.kind, d.rules, players, false) ?? (this.entryTaken(d.id, players, exceptId) ? 'Someone with that phone number is already entered in this event' : null);
   }
+
+  // Support sessions: the demo admin already belongs to the demo clubs, so these only record the reason.
+  private audit: AuditRow[] = [];
+  async startSupport(clubId: string, reason: string) {
+    if (reason.trim().length < 3) throw new ClubError('Say why you are opening this club (3+ characters)');
+    this.audit.unshift({ at: new Date().toISOString(), action: 'support_start', detail: reason.trim(), clubId });
+    return null;
+  }
+  async endSupport(clubId: string) { this.audit.unshift({ at: new Date().toISOString(), action: 'support_end', detail: '', clubId }); }
+  async supportSessions(): Promise<SupportSession[]> { return []; }
+  async deleteTournament(id: string, confirmName: string) {
+    const t = this.tournament(id);
+    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or PaddleQ admins) can delete a tournament');
+    const divs = new Set(this.s.divisions.filter((d) => d.tournamentId === id).map((d) => d.id));
+    if (this.s.entries.some((e) => divs.has(e.divisionId)) || this.s.matches.some((m) => m.tournamentId === id && m.status !== 'void') || (this.s.registrations ?? []).some((r) => divs.has(r.divisionId))) throw new ClubError('People have entered this tournament. Cancel it instead, so nothing is lost.');
+    if (confirmName.trim() !== t.name.trim()) throw new ClubError('Type the tournament name exactly to confirm');
+    this.s.divisions = this.s.divisions.filter((d) => d.tournamentId !== id);
+    this.s.tournaments = this.s.tournaments.filter((x) => x.id !== id);
+    this.audit.unshift({ at: new Date().toISOString(), action: 'tournament_delete', detail: t.name, clubId: t.clubId, tournamentId: id });
+    this.save();
+  }
+  async cancelTournament(id: string, reason: string) {
+    const t = this.tournament(id);
+    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or PaddleQ admins) can cancel a tournament');
+    if (t.status === 'done') throw new ClubError('It has finished. Archive it instead.');
+    if (t.cancelledAt) throw new ClubError('It is already cancelled');
+    if (reason.trim().length < 4) throw new ClubError('Give players a reason (4+ characters)');
+    Object.assign(t, { cancelledAt: new Date().toISOString(), cancelReason: reason.trim(), registrationOpen: false, listing: 'none' });
+    this.audit.unshift({ at: new Date().toISOString(), action: 'tournament_cancel', detail: `${t.name} · ${reason.trim()}`, clubId: t.clubId, tournamentId: id });
+    this.save();
+  }
+  async archiveTournament(id: string, archive: boolean) {
+    const t = this.tournament(id);
+    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or PaddleQ admins) can archive a tournament');
+    if (archive && t.status !== 'done' && !t.cancelledAt) throw new ClubError('Only finished or cancelled tournaments can be archived');
+    t.archivedAt = archive ? new Date().toISOString() : undefined;
+    this.audit.unshift({ at: new Date().toISOString(), action: archive ? 'tournament_archive' : 'tournament_unarchive', detail: t.name, clubId: t.clubId, tournamentId: id });
+    this.save();
+  }
+  async platformAudit() { return [...this.audit]; }
 
   async addKnockoutStage(division: Division, advance: number) {
     const d = this.s.divisions.find((x) => x.id === division.id);

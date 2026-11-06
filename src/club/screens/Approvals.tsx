@@ -4,6 +4,7 @@ import type { ApprovalRequest, ClubBackend, EventsBackend } from '../backend';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 import { APPROVAL_NOTE, isApproved, type ClubTournament } from '../types';
 import { errorText, Status, useLoad } from './common';
+import { SupportOpenButton } from './Lifecycle';
 
 const KIND = { singles: 'Singles', doubles: 'Doubles' } as const;
 
@@ -80,6 +81,7 @@ export function ApprovalQueue({ b, go }: { b: EventsBackend; go: Go }) {
             <div className="meta">
               <button type="button" className="btn btn-primary" disabled={busy || q.mine} onClick={() => run(() => b.decideTournament(q.id, true), `${q.name} is approved. ${q.club} can now make the draw and share links.`)}>Approve</button>
               <button type="button" className="btn btn-outline" disabled={busy || q.mine} onClick={() => { setRejecting(q.id); setReason(''); }}>Reject…</button>
+              <SupportOpenButton b={b} clubId={q.clubId} tournamentId={q.id} reason={`Approval review: ${q.name}`} go={go} label="Open full tournament" />
               <button type="button" className="btn btn-outline" onClick={() => go('admin-club', q.clubId)}>Club</button>
             </div>
           ) : (

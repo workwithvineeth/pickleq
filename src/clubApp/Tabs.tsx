@@ -49,6 +49,35 @@ export function ClubTournamentsTab({ go }: { go: Go }) {
   );
 }
 
+/** Home: live and upcoming tournaments across every club you run, one tap into each (replaces the separate Tournaments tab). */
+export function TodayAndUpcoming({ go }: { go: Go }) {
+  const b = backend();
+  const state = useLoad(async () => {
+    if (!b || !(await b.currentUser())) return [];
+    const clubs = await b.myClubs();
+    const bundles = await Promise.all(clubs.filter((c) => c.role === 'owner' || c.role === 'admin' || c.role === 'coach').map((c) => b.clubBundle(c.club.id)));
+    return bundles.flatMap((x) => x.tournaments.filter((t) => t.status !== 'done' && !t.cancelledAt && !t.archivedAt).map((t) => ({ t, club: x.club.name, clubId: x.club.id })))
+      .sort((p, q) => (p.t.status === 'live' ? -1 : q.t.status === 'live' ? 1 : p.t.startDate.localeCompare(q.t.startDate)));
+  }, [b]);
+  const list = state.data ?? [];
+  if (!list.length) return null;
+  return (
+    <section className="section" aria-label="Today and upcoming">
+      <h2 className="pq-kicker">TODAY AND UPCOMING</h2>
+      {list.map(({ t, club }) => (
+        <button key={t.id} type="button" className={`match-row${t.status === 'live' ? ' pq-live-row' : ''}`} onClick={() => go('club-tournament', t.id)}>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span>
+            <span className="small muted">{club} · {friendlyDate(t.startDate)} · {friendlyTime(t.startTime)}</span>
+          </span>
+          {t.status === 'live' ? <span className="pill pill-warn">Live</span> : <span className="pill">{STATUS_TEXT[t.status]}</span>}
+          <span aria-hidden="true">›</span>
+        </button>
+      ))}
+    </section>
+  );
+}
+
 /** Results tab: tournaments live now and finished in the last 30 days, with their public results. */
 export function ClubResultsTab({ go }: { go: Go }) {
   const b = eventsBackend();

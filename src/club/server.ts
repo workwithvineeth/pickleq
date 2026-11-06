@@ -2,7 +2,7 @@ import type { StudioLog, StudioLogInput } from './playerStudio';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
-import { ClubError, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type SupportSession, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
 import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
@@ -27,6 +27,7 @@ const toTournament = (r: Row): ClubTournament => ({
   registrationOpen: !!r.registration_open, entriesClose: s(r.entries_close), upiId: s(r.upi_id), listing: (r.listing as Listing) ?? 'none',
   listingStatus: (r.listing_status as ListingStatus) ?? 'none', rejectReason: s(r.reject_reason), reviewedAt: s(r.reviewed_at), drawnAt: s(r.drawn_at), posterUrl: s(r.poster_url),
   approval: (s(r.approval) as Approval) ?? 'approved', approvalReason: s(r.approval_reason), approvalRequestedAt: s(r.approval_requested_at), approvalExpected: n(r.approval_expected),
+  cancelledAt: s(r.cancelled_at), cancelReason: s(r.cancel_reason), archivedAt: s(r.archived_at),
 });
 const toTestimonial = (r: Row): Testimonial => ({
   id: String(r.id), clubId: String(r.club_id), club: s(r.club), rating: Number(r.rating), quote: String(r.quote ?? ''), personName: String(r.person_name ?? ''),
@@ -722,6 +723,17 @@ export class ServerBackend implements ClubBackend {
   async checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null> {
     const r = check(await this.sb.rpc('check_entry', { p_division: divisionId, p_players: players.map(fromPerson), p_except: exceptId ?? null })) as Row | null;
     return r?.error ? String(r.error) : null;
+  }
+
+  async startSupport(clubId: string, reason: string) { return (check(await this.sb.rpc('admin_start_support', { p_club: clubId, p_reason: reason })) as string | null) ?? null; }
+  async endSupport(clubId: string) { check(await this.sb.rpc('admin_end_support', { p_club: clubId })); }
+  async supportSessions() { return ((check(await this.sb.rpc('my_support_sessions')) as SupportSession[] | null) ?? []); }
+  async deleteTournament(id: string, confirmName: string) { check(await this.sb.rpc('delete_tournament', { p_tournament: id, p_confirm_name: confirmName })); }
+  async cancelTournament(id: string, reason: string) { check(await this.sb.rpc('cancel_tournament', { p_tournament: id, p_reason: reason })); }
+  async archiveTournament(id: string, archive: boolean) { check(await this.sb.rpc('archive_tournament', { p_tournament: id, p_archive: archive })); }
+  async platformAudit() {
+    return ((check(await this.sb.from('platform_audit').select('at, action, detail, club_id, tournament_id').order('at', { ascending: false }).limit(200)) as Row[]) ?? [])
+      .map((r) => ({ at: String(r.at), action: String(r.action), detail: String(r.detail ?? ''), clubId: s(r.club_id), tournamentId: s(r.tournament_id) }));
   }
 
   async addKnockoutStage(division: Division, advance: number) {

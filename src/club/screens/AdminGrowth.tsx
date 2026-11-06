@@ -1,77 +1,67 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { eventsBackend } from '../index';
+import { Status, useLoad } from './common';
+import { downloadBlob } from '../promoArt';
+import { Q_PATH } from '../../components/Logo';
+import { PromoStudio, type PromoEvent } from './PromoStudio';
 import type { Go } from '../../navigation';
 import { BrandMark } from './Brand';
 
-const artwork = import.meta.glob<string>('./growthAssets/*.svg', { eager: true, query: '?url', import: 'default' });
-const brandFiles = [
-  ['Official PaddleQ mark', 'PaddleQ-BrandMark.svg'],
-  ['Social profile', 'profile.svg'],
-  ['Social cover', 'cover.svg'],
-  ['Launch post', 'launch-post.svg'],
-  ['Launch story', 'launch-story.svg'],
-  ['Results announcement', 'results-celebration.svg'],
+const LOGO_FILES: { id: string; label: string; use: string; bg: string; tile: 'maroon' | 'cream' }[] = [
+  { id: 'maroon-tile', label: 'App icon · maroon', use: 'Instagram, YouTube and WhatsApp profile, app icon', bg: '#F3EBDD', tile: 'maroon' },
+  { id: 'cream-tile', label: 'Cream tile', use: 'On maroon or dark photos', bg: '#7A1F2B', tile: 'cream' },
 ];
-const clubFiles = [
-  ['Tournament poster', 'PaddleQ-tournament-poster.svg'],
-  ['Poster with QR slot', 'qr-poster.svg'],
+const COLOURS: [string, string, string][] = [
+  ['Maroon', '#7A1F2B', 'Brand colour: buttons, side menu, title bands, LIVE'], ['Cream', '#F3EBDD', 'Background; text on maroon'], ['Card', '#FBF7F0', 'Cards and panels'],
+  ['Ink', '#2B1D17', 'Text on cream, scores'], ['Muted', '#6E5E52', 'Hints and labels on cream'], ['Line', '#E3D5BF', 'Borders and dividers'],
+  ['Pink-cream', '#E9CBCF', 'Small text on maroon (never grey)'], ['Light maroon', '#C9A9AE', 'Opponent bars in momentum charts'],
+  ['Gold', '#B8862B', 'Only golden point, warnings, unpaid'], ['Error', '#C0392B', 'Only errors, never branding'],
 ];
-
-function Artwork({ files }: { files: string[][] }) {
-  return <ul style={{ paddingLeft: 20 }}>
-    {files.map(([label, file]) => {
-      const href = artwork['./growthAssets/' + file];
-      return <li key={file} style={{ marginBlock: 8 }}>
-        <strong>{label}</strong>{' · '}
-        <a href={href} target="_blank" rel="noreferrer" aria-label={'Preview ' + label}>Preview</a>{' · '}
-        <a href={href} download={file} aria-label={'Download ' + label}>Download</a>
-      </li>;
-    })}
-  </ul>;
+function logoSvg(tile: 'maroon' | 'cream') {
+  const bg = tile === 'maroon' ? '#7A1F2B' : '#F3EBDD', fg = tile === 'maroon' ? '#F3EBDD' : '#7A1F2B';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024"><rect width="512" height="512" rx="112" fill="${bg}"/><svg x="66.6" y="66.6" width="378.9" height="378.9" viewBox="0 0 260 260"><g transform="rotate(-28 130 130)"><rect x="72" y="16" width="116" height="150" rx="54" fill="${fg}"/><rect x="119" y="160" width="22" height="14" fill="${fg}"/><rect x="113" y="170" width="34" height="80" rx="12" fill="${fg}" fill-opacity="0.6"/><path transform="translate(89.75 124) scale(0.052 -0.052)" d="${Q_PATH}" fill="${bg}"/></g><circle cx="212" cy="54" r="24" fill="${fg}"/></svg></svg>`;
 }
 
+/** Admin → Brand kit and promotion studio: the official logos and colours, and event artwork that fills itself in. */
 export function BrandClubKits({ go }: { go: Go }) {
-  const [files, setFiles] = useState<{ name: string; url: string }[]>([]);
-  useEffect(() => () => files.forEach(({ url }) => URL.revokeObjectURL(url)), [files]);
+  const b = eventsBackend();
+  const state = useLoad(() => b.adminTournaments(), [b]);
+  const events: PromoEvent[] = (state.data ?? []).filter((t) => !t.isTest).map((t) => ({ id: t.id, name: t.name, club: t.club, startDate: t.startDate, startTime: t.startTime, slug: t.slug }));
   return <>
     <section className="pq-flow" aria-label="PaddleQ brand">
       <BrandMark size={64} />
-      <h3 className="pq-flow-title">Brand &amp; Growth Centre</h3>
-      <p className="pq-flow-sub">Artwork, club onboarding and demo materials for review.</p>
+      <h3 className="pq-flow-title">Brand kit</h3>
+      <p className="pq-flow-sub">Out of the kitchen, into the stats.</p>
     </section>
-    <section className="card section">
-      <h3 style={{ margin: 0 }}>PaddleQ Branding Kit</h3>
-      <p className="small muted">Official mark and editable artwork. Draft promotional templates require approval before publishing.</p>
-      <p>Maroon #7A1F2B · Cream #F3EBDD · Card #FBF7F0 · Text #2B1D17 · Muted #6E5E52 · Border #E3D5BF</p>
-      <p>Fraunces headings · DM Sans body. Place the mark on maroon and preserve its proportions.</p>
-      <Artwork files={brandFiles} />
+    <section className="card section" aria-label="Logos">
+      <h2 style={{ fontSize: 18 }}>Logos</h2>
+      <div className="pq-kit-grid">
+        {LOGO_FILES.map((l) => (
+          <div key={l.id} className="pq-kit-tile">
+            <div style={{ background: l.bg, borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'center' }} dangerouslySetInnerHTML={{ __html: logoSvg(l.tile).replace('width="1024" height="1024"', 'width="96" height="96"') }} />
+            <b>{l.label}</b><span className="small muted">{l.use}</span>
+            <button type="button" className="btn btn-outline" onClick={() => downloadBlob(`paddleq-${l.id}.svg`, new Blob([logoSvg(l.tile)], { type: 'image/svg+xml' }))}>Download {l.label} (SVG)</button>
+          </div>
+        ))}
+      </div>
     </section>
-    <section className="card section">
-      <h3 style={{ margin: 0 }}>Club Acquisition &amp; Demonstration Kits</h3>
-      <p className="small muted">Verify the entry URL and scan the finished QR poster before sharing.</p>
-      <Artwork files={clubFiles} />
-      <button type="button" className="btn btn-outline" onClick={() => go('demo')}>Open the isolated demo club</button>
-      <details><summary>Club onboarding, referee and payments</summary>
-        <p>Agree the format, courts and desk lead. Rehearse one match. Check approval, board visibility and registration separately.</p>
-        <p>Players pay the club directly. Check a claimed UPI reference against the club’s account before confirming payment.</p>
-        <p>Give scorers their court links privately. Check both sides and the final score. Escalate discrepancies to the desk before sharing results.</p>
-      </details>
-      <details><summary>Club outreach copy · draft</summary>
-        <p>Would you try PaddleQ on one doubles division? Share a tentative date and court count and we’ll check whether the format fits.</p>
-      </details>
+    <section className="card section" aria-label="Colours and type">
+      <h2 style={{ fontSize: 18 }}>Colours and type</h2>
+      <div className="pq-kit-grid">
+        {COLOURS.map(([n, h, u]) => (
+          <div key={h} className="pq-kit-swatch"><span style={{ background: h }} /><b>{n}</b><span className="small">{h}</span><span className="small muted">{u}</span></div>
+        ))}
+      </div>
+      <p className="small" style={{ margin: 0 }}>Headings: <b style={{ fontFamily: 'var(--font-display)' }}>Fraunces 600</b>. Everything else: DM Sans. On maroon, text is cream; on cream, text is ink with maroon for headings, links and scores.</p>
     </section>
-    <section className="card section">
-      <h3 style={{ margin: 0 }}>Private review files</h3>
-      <p className="small muted">Select the pitch, guides, videos or campaign files from your device. They stay in this browser tab. Historical footage and silent sample storyboards are for review. Verified current-candidate footage is pending.</p>
-      <label>Choose review files <input className="input" type="file" multiple onChange={(e) => {
-        setFiles(Array.from(e.currentTarget.files ?? [], (file) => ({ name: file.name, url: URL.createObjectURL(file) })));
-      }} /></label>
-      {files.length > 0 && <ul>
-        {files.map(({ name, url }) => <li key={url}><a href={url} download={name}>{name}</a></li>)}
-      </ul>}
+    <section className="card section" aria-label="Promotion studio">
+      <h2 style={{ fontSize: 18 }}>Promotion studio</h2>
+      <Status error={state.error} loading={state.loading && !state.data} />
+      {state.data && <PromoStudio events={events} />}
+      <button type="button" className="btn btn-outline" style={{ alignSelf: 'flex-start' }} onClick={() => go('demo')}>Open the demo club</button>
     </section>
   </>;
 }
-
 // Fictional campaign rows from Agent 06 emergency BI handoff.
 const campaignRows = [
   { date: '2026-10-19', channel: 'instagram', campaign: 'club-open', content: 'Tournament day reel', impressions: 4200, engagements: 206, websiteSessions: 94, tournamentSessions: 64, resultsSessions: 18, qrScans: 0, enquiries: 4, registrationSessions: 9 },

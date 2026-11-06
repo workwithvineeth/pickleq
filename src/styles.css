@@ -549,3 +549,49 @@ a { color: var(--accent); text-underline-offset: 3px; }
 /* Phase 3: account strip with Sign out on every signed-in screen */
 .pq-account { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 16px; border-bottom: 1px solid var(--border); background: var(--card); }
 .pq-account .link-btn { min-height: 36px; white-space: nowrap; }
+
+/* ---------- Phase 3 design system (approved 7 Nov 2026: "B" — maroon frame, title bands, table heads) ---------- */
+/* Text rule: on maroon → cream #FBF7F0 (secondary #E9CBCF, never grey); on cream → ink, maroon for headings/links/scores. */
+.pq-brand .card h2, .pq-brand .section > h2:not(.pq-kicker) { color: var(--accent); }
+.pq-brand .table th { background: #7A1F2B; color: #FBF7F0; border-color: #7A1F2B; }
+.pq-brand .table thead th:first-child { border-top-left-radius: 10px; }
+.pq-brand .table thead th:last-child { border-top-right-radius: 10px; }
+.pq-brand .pq-live-row { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.nav-brand { display: none; }
+@media (max-width: 899px) { .nav.nav-sub { display: none; } }
+
+/* Desktop (≥ 900 px): the bottom tabs become a maroon side menu, content gets real width. Phones are unchanged. */
+@media (min-width: 900px) {
+  .app.pq-brand { max-width: none; }
+  .app.pq-brand.has-side { padding-left: 248px; }
+  .app.pq-brand > .screen, .app.pq-brand > main, .app.pq-brand > .pq-account, .app.pq-brand > p { max-width: 1120px; margin-left: auto; margin-right: auto; width: 100%; }
+  .app.pq-brand .screen { padding-left: 32px; padding-right: 32px; padding-bottom: 48px; }
+  .app.pq-brand .screen > .header:first-child { margin-left: -32px; margin-right: -32px; padding-left: 32px; padding-right: 32px; border-radius: 0 0 24px 24px; }
+  .app.pq-brand .nav {
+    left: 0; top: 0; bottom: 0; transform: none; width: 248px; max-width: none; padding: 20px 14px;
+    grid-auto-flow: row; grid-auto-rows: max-content; grid-auto-columns: auto; align-content: start; gap: 4px;
+    background: #7A1F2B; border-top: none; border-right: 1px solid #5E1621;
+  }
+  .app.pq-brand .nav-brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 18px; color: #F3EBDD; }
+  .app.pq-brand .nav-brand b { display: block; font-family: var(--font-display); font-size: 22px; line-height: 1; }
+  .app.pq-brand .nav-brand small { display: block; font-size: 11px; color: #E9CBCF; margin-top: 3px; }
+  .app.pq-brand .nav-brand-tile { width: 40px; height: 40px; border-radius: 12px; background: #5E1621; border: 1px solid rgba(243, 235, 221, 0.25); display: inline-flex; align-items: center; justify-content: center; }
+  .app.pq-brand .nav-btn { flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #F3EBDD; font-size: 15px; font-weight: 500; }
+  .app.pq-brand .nav-btn:hover { background: rgba(255, 255, 255, 0.08); }
+  .app.pq-brand .nav-btn[aria-current='page'] { background: #F3EBDD; color: #7A1F2B; font-weight: 700; }
+  .app.pq-brand .toast { left: calc(50% + 124px); }
+}
+.pq-brand .btn.pq-danger { color: #C0392B; border-color: #E8B9B2; }
+.pq-brand .btn.pq-danger-solid { background: #C0392B; color: #FFFFFF; border-color: #C0392B; }
+.pq-support { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: #7A1F2B; color: #FBF7F0; font-size: 14px; }
+.pq-support .link-btn { color: #FBF7F0; }
+.pq-studio-grid { display: grid; gap: 16px; }
+@media (min-width: 900px) { .pq-studio-grid { grid-template-columns: minmax(0, 360px) minmax(0, 1fr); align-items: start; } }
+.pq-choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; min-height: 52px; padding: 10px 14px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); }
+.pq-choice.on { border-color: var(--accent); background: var(--accent-soft); }
+.pq-studio-preview { width: 100%; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 14px 40px rgba(43, 29, 23, 0.22); }
+.pq-studio-preview svg { display: block; height: auto; }
+.pq-kit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.pq-kit-tile { display: flex; flex-direction: column; gap: 6px; }
+.pq-kit-swatch { display: flex; flex-direction: column; gap: 2px; }
+.pq-kit-swatch > span:first-child { height: 56px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 4px; }

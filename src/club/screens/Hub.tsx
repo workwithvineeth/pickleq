@@ -13,6 +13,7 @@ import { PinPair } from './Access';
 import { isApproved, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
 import { appLink, DemoNote, errorText, Header, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyTime, relativeDate } from '../dates';
+import { TodayAndUpcoming } from '../../clubApp/Tabs';
 
 const PENDING_JOIN = 'pq-club-pending-join';
 // localStorage, not sessionStorage: the email's sign-in link opens in a new tab.
@@ -118,7 +119,8 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               <span>{signedIn.toApprove} tournament{signedIn.toApprove === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
             </button>
           )}
-          {signedIn.admin && <h2 className="pq-kicker">YOUR CLUBS</h2>}
+          <TodayAndUpcoming go={go} />
+          <h2 className="pq-kicker">YOUR CLUBS</h2>
           <section className="section" aria-label="Your clubs" style={{ gap: 10 }}>
             {signedIn.clubs.length === 0 && (
               <div className="pq-info"><span>You’re not in a club yet. Create your club and set up a tournament (PaddleQ approves it before it goes live), or open the invite link your club sent you.</span></div>

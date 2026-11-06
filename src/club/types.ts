@@ -58,6 +58,10 @@ export interface ClubPlayer {
 export type TournamentStatus = 'draft' | 'live' | 'done';
 export interface ClubTournament {
   id: string;
+  /** Phase 3 lifecycle: cancelled (kept, closed to scoring and registration) and archived (hidden from lists). */
+  cancelledAt?: string;
+  cancelReason?: string;
+  archivedAt?: string;
   clubId: string;
   name: string;
   startDate: string;

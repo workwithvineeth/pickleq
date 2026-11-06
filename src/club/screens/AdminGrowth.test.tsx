@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { AdminDashboard } from './Admin';
 
-const backend = vi.hoisted(() => ({ kind: 'server', isPlatformAdmin: vi.fn(), adminOverview: vi.fn(async () => null), approvalQueue: vi.fn(async () => []) }));
+const backend = vi.hoisted(() => ({ kind: 'server', isPlatformAdmin: vi.fn(), adminOverview: vi.fn(async () => null), approvalQueue: vi.fn(async () => []), adminTournaments: vi.fn(async () => [{ id: 't1', name: 'Winter Smash Open', club: 'Banjara Pickle House', clubId: 'c1', isTest: false, startDate: '2026-12-12', startTime: '08:00', status: 'draft', listing: 'none', listingStatus: 'none', slug: 'wso', results: false, registrations: 0, matches: 0, matchesDone: 0 }]) }));
 vi.mock('../index', async (importOriginal) => ({
   ...await importOriginal<typeof import('../index')>(),
   eventsBackend: () => backend,
@@ -13,7 +13,7 @@ it('denies direct growth routes to non-admins', async () => {
   const props = { go: vi.fn(), onBack: vi.fn() };
   const view = render(<AdminDashboard section="branding" {...props} />);
   await screen.findByText('Only PaddleQ admins can see this.');
-  expect(screen.queryByText('PaddleQ Branding Kit')).toBeNull();
+  expect(screen.queryByText('Promotion studio')).toBeNull();
   view.rerender(<AdminDashboard section="marketing" {...props} />);
   expect(screen.queryByText('Sample Data Preview')).toBeNull();
 });
@@ -22,7 +22,11 @@ it('shows editable artwork and isolates fictional numbers from real mode', async
   backend.isPlatformAdmin.mockResolvedValue(true);
   const props = { go: vi.fn(), onBack: vi.fn() };
   const view = render(<AdminDashboard section="branding" {...props} />);
-  expect((await screen.findByRole('link', { name: 'Download Tournament poster' })).getAttribute('href')).toBeTruthy();
+  expect(await screen.findByRole('button', { name: 'Download App icon · maroon (SVG)' })).toBeTruthy();
+  // The promotion studio fills the artwork from the event, and the poster carries a real QR code.
+  expect((await screen.findByLabelText('Headline') as HTMLInputElement).value).toBe('Winter Smash Open');
+  fireEvent.click(screen.getByRole('radio', { name: /A4 poster with QR/ }));
+  expect(screen.getByLabelText('A4 poster with QR preview').innerHTML).toContain('SCAN TO REGISTER');
   view.rerender(<AdminDashboard section="marketing" {...props} />);
   expect(screen.getByText('Real Data · Not connected')).toBeTruthy();
   expect(screen.queryByText('Attributed registration sessions')).toBeNull();
