@@ -492,7 +492,7 @@ describe('Club mode', () => {
     expect(within(screen.getByRole('group', { name: 'Event 1 scoring' })).getByRole('button', { name: 'Golden point' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Golden point: at 10–10 the next point wins.')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Tournament name'), 'Win by two night');
-    await user.click(within(screen.getByRole('group', { name: 'Event 1 format' })).getByRole('button', { name: 'Round robin' }));
+    await user.click(within(screen.getByRole('group', { name: 'Event 1 format' })).getByRole('button', { name: 'Round robin only' }));
     await user.click(within(screen.getByRole('group', { name: 'Event 1 scoring' })).getByRole('button', { name: 'Win by 2' }));
     expect(screen.getByText('Win by 2: play on past 11 until someone leads by 2.')).toBeInTheDocument();
     for (const box of screen.getAllByRole('checkbox').slice(0, 4)) await user.click(box);

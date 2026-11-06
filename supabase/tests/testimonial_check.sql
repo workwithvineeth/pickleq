@@ -24,6 +24,16 @@ select pg_temp.as_user('00000000-0000-4000-8000-0000000000b1');
 insert into ids values ('club', public.create_club('Story Club', 'Pune', 'Sana'));
 reset role;
 insert into public.club_members (club_id, user_id, role) values (pg_temp.id('club'), '00000000-0000-4000-8000-0000000000b2', 'coach');
+-- Phase 3: only clubs with a finished tournament can share a testimonial.
+insert into public.tournaments (club_id, name, start_date, status, approval) values (pg_temp.id('club'), 'Story Open', current_date - 1, 'done', 'approved');
+do $$ begin
+  begin
+    insert into public.club_testimonials (club_id, rating, quote, person_name, person_role, consent) values (pg_temp.id('other'), 5, 'We have not hosted anything yet at all.', 'Olu', 'Owner', true);
+    raise exception 'FAIL: a club with no finished tournament shared a testimonial';
+  exception when others then
+    if sqlerrm <> 'Share your experience after your first finished tournament' then raise; end if;
+  end;
+end $$;
 set local role authenticated;
 
 do $$

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import type { ClubBackend, ImportResult } from '../backend';
-import { buildImport, FIELD_LABEL, FIELDS, guessColumns, guessMapping, importSummary, parseTable, type Field as SheetField, type ImportSettings, type Mapping } from '../importSheet';
+import { buildImport, FIELD_LABEL, FIELDS, guessColumns, guessMapping, importSummary, pairBookingRows, parseTable, type Field as SheetField, type ImportSettings, type Mapping } from '../importSheet';
 import type { ClubTournament, Division, Registration } from '../types';
 import { errorText } from './common';
 
@@ -18,7 +18,8 @@ export function ImportEntries({ b, t, divisions, regs, onDone, onClose }: { b: C
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
-  const rows = useMemo(() => parseTable(text), [text]);
+  const paired = useMemo(() => pairBookingRows(parseTable(text)), [text]);
+  const rows = paired.rows;
   const header = rows[0] ?? [];
   const mapping = map ?? (header.length ? guessMapping(header) : null);
   // A second set of columns (e.g. the form's doubles questions) fills a row's empty cells.
@@ -56,6 +57,7 @@ export function ImportEntries({ b, t, divisions, regs, onDone, onClose }: { b: C
         <input type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" aria-label="Choose CSV file" style={{ display: 'none' }} onChange={(e) => readFile(e.target.files?.[0])} />
       </label>
       <textarea className="input" aria-label="Paste rows from Google Sheets" placeholder="…or paste the rows here, including the heading row" rows={4} value={text} onChange={(e) => { setText(e.target.value); setMap(null); setResult(null); }} />
+      {paired.booking && <p className="msg msg-ok small" role="status" style={{ margin: 0 }}>Booking-platform file: one row per player. {paired.pairs} doubles {paired.pairs === 1 ? 'team' : 'teams'} paired by booking ID. Row numbers below count teams, not players.</p>}
       {rows.length === 1 && <p className="small muted" style={{ margin: 0 }}>Only a heading row: no responses yet.</p>}
       {mapping && rows.length > 1 && (
         <>

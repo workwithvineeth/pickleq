@@ -256,6 +256,8 @@ export interface EventsBackend {
   checkEntry(divisionId: string, players: EntryPerson[], exceptId?: string): Promise<string | null>;
   /** Makes the draw: roster players, entries, matches; links each registration to its entry and closes entries. */
   applyDraw(tournamentId: string, plan: DrawPlan): Promise<void>;
+  /** A round-robin-only event whose games are all played gets knockouts: the top `advance` from the table go through (2 = final, 4 = semi-finals). */
+  addKnockoutStage(division: Division, advance: number): Promise<void>;
   isPlatformAdmin(): Promise<boolean>;
   listingQueue(): Promise<ListingReview[]>;
   reviewListing(id: string, approve: boolean, reason?: string): Promise<void>;

@@ -2,7 +2,7 @@ import CSV from '../../e2e/fixtures/google-form.csv?raw';
 import SPLIT from '../../e2e/fixtures/google-form-split.csv?raw';
 import { describe, expect, it } from 'vitest';
 import { DemoBackend } from './demo';
-import { buildImport, guessColumns, guessMapping, importSummary, parseTable } from './importSheet';
+import { buildImport, guessColumns, guessMapping, importSummary, pairBookingRows, parseTable } from './importSheet';
 import type { Division } from './types';
 
 const F = { pointsTo: 11 as const, bestOf: 1 as const, scoring: 'sideout' as const, golden: true };
@@ -81,5 +81,40 @@ describe('Google Form import', () => {
     const again = await b.importEntries(tid, [{ divisionId: tb.divisions[0].id, players: [{ name: 'Robot Aarav', phone: '9848011001', gender: 'x', adult: true, dupr: 3.21 }], status: 'accepted', payment: 'unpaid' }]);
     expect([again.added, again.skipped]).toEqual([0, 1]);
     expect((await b.registrations(tid)).length).toBe(5);
+  });
+});
+
+describe('booking-platform export (one row per player, doubles paired by booking ID)', () => {
+  const csv = [
+    'sourceSheet,bookingId,ticketName,name,phone,email,duprRating,duprId,status',
+    'Combined-Age18Plus,BK-1,Open Singles,Kabir Sharma,9844101234,k@example.test,3.41,ABC123,Paid',
+    'Combined-Age18Plus,BK-2,Open Doubles,Isha Desai,9844105678,i@example.test,3.10,,Paid',
+    'Combined-Age18Plus,BK-2,Open Doubles,Arjun Varma,9844105678,a@example.test,3.25,XYZ9,Paid',
+    'Combined-Age18Plus,BK-3,Open Singles,Isha Desai,9844105678,i@example.test,3.10,,Paid',
+    'Combined-Age18Plus,BK-4,Open Doubles,Tara Rao,9844107777,t@example.test,,,Paid',
+    'Combined-Age18Plus,BK-4,Open Doubles,Dev Nair,9844108888,d@example.test,3.6,,Paid',
+  ].join('\n');
+  it('pairs doubles by booking, keeps singles, never uses the event as a name, and allows singles + doubles', () => {
+    const paired = pairBookingRows(parseTable(csv));
+    expect(paired.booking).toBe(true);
+    expect(paired.pairs).toBe(2);
+    expect(paired.rows.length).toBe(1 + 2 + 2);
+    const { map, alt } = guessColumns(paired.rows[0]);
+    expect(paired.rows[0][map.name]).toBe('name');
+    expect(paired.rows[0][map.kind]).toBe('ticketName');
+    const singles = { id: 's', kind: 'singles' } as unknown as Division;
+    const doubles = { id: 'd', kind: 'doubles' } as unknown as Division;
+    const out = buildImport(paired.rows, map, [singles, doubles], { singles: 's', doubles: 'd', adults: true, status: 'accepted', payment: 'venue' }, [], alt);
+    expect(out.filter((r) => r.problem)).toEqual([]);
+    const team = out.find((r) => r.players[0].name === 'Isha Desai' && r.divisionId === 'd')!;
+    expect(team.players[1].name).toBe('Arjun Varma');
+    expect(team.players[1].phone).toBe(''); // shared booking phone is not copied to the partner
+    expect(team.players[1].duprId).toBe('XYZ9');
+    expect(out.some((r) => r.players[0].name === 'Isha Desai' && r.divisionId === 's')).toBe(true);
+    expect(out.every((r) => r.players.every((p) => p.name !== 'Open Singles' && p.name !== 'Open Doubles'))).toBe(true);
+  });
+  it('leaves ordinary Google Form sheets alone', () => {
+    const rows = parseTable('Timestamp,Full name,Phone,Singles or doubles\n1,Asha,98,Singles');
+    expect(pairBookingRows(rows).booking).toBe(false);
   });
 });

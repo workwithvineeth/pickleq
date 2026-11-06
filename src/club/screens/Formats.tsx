@@ -64,7 +64,7 @@ export function FormatFields({ label, entries, value, onChange, showShape = true
   return (
     <div className="section">
       {showShape && <Field label="Format">
-        <Segmented label={`${label} format`} value={d.shape} options={[{ value: 'rr', label: 'Round robin' }, { value: 'pools-ko', label: 'Pools, then knockouts' }, { value: 'ko', label: 'Knockout only' }]} onChange={(v) => onChange({ shape: v, ...(v === 'pools-ko' ? { pools: Math.max(2, d.pools), advance: d.advance || 2 } : {}) })} />
+        <Segmented label={`${label} format`} value={d.shape} options={[{ value: 'pools-ko', label: 'Groups, then knockouts' }, { value: 'rr', label: 'Round robin only' }, { value: 'ko', label: 'Knockout only' }]} onChange={(v) => onChange({ shape: v, ...(v === 'pools-ko' ? { pools: Math.max(1, d.pools), advance: d.advance || 2 } : {}) })} />
       </Field>}
       {showShape && d.shape === 'pools-ko' && <>
         <Field label="Pools"><Chips label={`${label} pools`} value={d.pools} options={[1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ value: n, label: String(n) }))} onChange={(v) => onChange({ pools: v, extra: Math.min(d.extra, Math.max(0, v - 1)) })} /></Field>
@@ -73,6 +73,7 @@ export function FormatFields({ label, entries, value, onChange, showShape = true
           <Chips label={`${label} best runners-up`} value={d.extra} options={Array.from({ length: Math.min(d.pools, 8) }, (_, n) => ({ value: n, label: n === 0 ? 'None' : String(n) }))} onChange={(v) => onChange({ extra: v })} />
         </Field>}
       </>}
+      {showShape && d.shape === 'rr' && <p className="msg small" role="note" style={{ margin: 0 }}>Round robin only: everyone plays everyone and the table decides the winner. <b>No knockouts are made.</b> Want semi-finals and a final? Choose “Groups, then knockouts” (one group is fine).</p>}
       {showShape && entries >= 2 && <p className="small muted" style={{ margin: 0 }} aria-label={`${label} plan`}>{shapeText({ ...d, name: label, entries })} · {counts.pool + counts.knockout} matches</p>}
       {showShape && problem && <div className="msg msg-bad small">{problem}</div>}
       {d.shape !== 'ko' && <>
