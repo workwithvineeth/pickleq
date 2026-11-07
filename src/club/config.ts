@@ -27,3 +27,8 @@ export function setClubMode(m: ClubMode | null) {
 export function isClubApp(): boolean {
   return import.meta.env.VITE_CLUB_APP === 'on';
 }
+
+/** PaddleQ launches in Hyderabad only (Vineeth, 8 Nov 2026): the events board and home page show Hyderabad events. Events with no city stay in. */
+export const LAUNCH_CITY = 'Hyderabad';
+const LAUNCH_AREA = ['hyderabad', 'secunderabad', 'cyberabad'];
+export const inLaunchCity = (city?: string | null) => !city?.trim() || LAUNCH_AREA.includes(city.trim().toLowerCase());

@@ -73,7 +73,7 @@ export function ApprovalQueue({ b, go }: { b: EventsBackend; go: Go }) {
       <Status error={state.error} loading={state.loading && !state.data} />
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {state.data && waiting.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nothing waiting.</p>}
-      {waiting.map((q) => (
+      <div className="pq-admin-list">{waiting.map((q) => (
         <section key={q.id} className="card section" aria-label={`${q.name} approval`}>
           <RequestDetails q={q} />
           {q.mine && <div className="small muted">You organise this club, so another PaddleQ admin must decide (or make the club trusted).</div>}
@@ -95,7 +95,7 @@ export function ApprovalQueue({ b, go }: { b: EventsBackend; go: Go }) {
             </>
           )}
         </section>
-      ))}
+      ))}</div>
       {decided.length > 0 && <h3 style={{ fontSize: 16, margin: '8px 0 0' }}>Decided in the last 30 days</h3>}
       {decided.map((q) => (
         <section key={q.id} className="card section" aria-label={`${q.name} decided`}>

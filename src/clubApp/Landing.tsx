@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Go } from '../navigation';
 import { eventsBackend, serverBackend } from '../club/index';
+import { inLaunchCity } from '../club/config';
 import type { PublicEvent } from '../club/backend';
 import { PosterImage } from '../club/screens/Poster';
 import { useLoad } from '../club/screens/common';
@@ -27,8 +28,8 @@ export function Landing({ go }: { go: Go }) {
     const server = serverBackend();
     if (!server) return { live: [], upcoming: [], past: [] };
     const [events, past] = await Promise.all([server.publicEvents().catch(() => []), server.recentResults().catch(() => [])]);
-    const sorted = [...events].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.startTime.localeCompare(b.startTime));
-    return { live: sorted.filter((e) => e.status === 'live'), upcoming: sorted.filter((e) => e.status !== 'live').slice(0, 6), past: past.slice(0, 4) };
+    const sorted = events.filter((e) => inLaunchCity(e.city)).sort((a, b) => a.startDate.localeCompare(b.startDate) || a.startTime.localeCompare(b.startTime));
+    return { live: sorted.filter((e) => e.status === 'live'), upcoming: sorted.filter((e) => e.status !== 'live').slice(0, 6), past: past.filter((e) => inLaunchCity(e.city)).slice(0, 4) };
   }, []);
   useEffect(() => {
     const prev = document.title;

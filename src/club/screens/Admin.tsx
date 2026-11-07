@@ -185,7 +185,7 @@ function Clubs({ go }: { go: Go }) {
       <Status error={state.error} loading={state.loading && !state.data} />
       {note}
       {state.data && shown.length === 0 && <p className="small muted" style={{ margin: 0 }}>No clubs match.</p>}
-      {shown.map((c) => (
+      <div className="pq-admin-list">{shown.map((c) => (
         <section key={c.id} className="card section" aria-label={c.name}>
           <div className="row" style={{ padding: 0, justifyContent: 'flex-start', gap: 12 }}>
             <BigLogo src={c.logoUrl} club={c.name} size={56} />
@@ -205,7 +205,7 @@ function Clubs({ go }: { go: Go }) {
             )}
           </div>
         </section>
-      ))}
+      ))}</div>
     </>
   );
 }
@@ -227,7 +227,10 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
             <div className="pq-clubhero-name">{c.name}</div>
             <div className="pq-club-meta" style={{ justifyContent: 'center' }}>{[c.city, c.isTest ? 'Robot test club' : c.verified ? 'Verified' : 'Not verified yet'].filter(Boolean).join(' · ')}</div>
           </section>
-          <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', c.id)}>+ Create Tournament</button>
+          <div className="meta">
+            <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', c.id)}>+ Create Tournament</button>
+            <SupportOpenButton b={b} clubId={c.id} reason={`Admin club page: ${c.name}`} go={go} label="Open club as support" />
+          </div>
           <section className="card section" aria-label="People">
             <h2 style={{ fontSize: 16 }}>People ({c.people.length})</h2>
             {c.people.map((p, i) => (
@@ -241,7 +244,10 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
             <h2 style={{ fontSize: 16 }}>Tournaments ({c.tournaments.length})</h2>
             {c.tournaments.length === 0 && <p className="small muted" style={{ margin: 0 }}>None yet.</p>}
             {c.tournaments.map((t) => (
-              <div key={t.id} className="row"><span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{t.name}<span className="small muted" style={{ display: 'block' }}>{day(t.startDate)}</span></span><span className="pill">{STATUS[t.status]}</span></div>
+              <div key={t.id} className="row pq-admin-trow">
+                <span style={{ minWidth: 0, overflowWrap: 'anywhere', flex: 1 }}>{t.name}<span className="small muted" style={{ display: 'block' }}>{day(t.startDate)} · {STATUS[t.status]}</span></span>
+                <SupportOpenButton b={b} clubId={c.id} tournamentId={t.id} reason={`Admin club page: ${t.name}`} go={go} label="Open" primary />
+              </div>
             ))}
             <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('admin', 'tournaments')}>Manage in Events</button>
           </section>
@@ -276,7 +282,7 @@ function Tournaments({ go, resultsOnly = false }: { go: Go; resultsOnly?: boolea
       <Status error={state.error} loading={state.loading && !state.data} />
       {note}
       {state.data && shown.length === 0 && <p className="small muted" style={{ margin: 0 }}>No tournaments match.</p>}
-      {shown.map((t) => {
+      <div className="pq-admin-list">{shown.map((t) => {
         const next = t.status === 'done' ? 'live' : 'done';
         return (
           <section key={t.id} className="card section" aria-label={t.name}>
@@ -311,7 +317,7 @@ function Tournaments({ go, resultsOnly = false }: { go: Go; resultsOnly?: boolea
               )}
           </section>
         );
-      })}
+      })}</div>
     </>
   );
 }

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import type { Go } from '../../navigation';
 import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backend';
-import { clubMode } from '../config';
+import { clubMode, inLaunchCity, LAUNCH_CITY } from '../config';
 import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBackend } from '../index';
 import { blankPerson, capText, cleanEmail, entryProblem, rulesLine, upiLink } from '../registration';
 import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
@@ -63,17 +63,15 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       b.isPlatformAdmin().catch(() => false),
     ]);
     const seen = new Set(real.map((e) => e.slug));
-    const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
+    const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].filter((e) => inLaunchCity(e.city)).sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
     const pastSeen = new Set(pastReal.map((e) => e.slug));
-    const past = [...pastReal, ...pastDemo.filter((e) => !pastSeen.has(e.slug))].sort((x, y) => y.startDate.localeCompare(x.startDate));
+    const past = [...pastReal, ...pastDemo.filter((e) => !pastSeen.has(e.slug))].filter((e) => inLaunchCity(e.city)).sort((x, y) => y.startDate.localeCompare(x.startDate));
     const queue = admin ? await b.approvalQueue().catch(() => []) : [];
     return { events, past, pending: queue.filter((q) => q.approval === 'submitted').length, admin, serverDown };
   }, [b, robot]);
-  const [city, setCity] = useState('all');
   const [kind, setKind] = useState<'all' | 'open'>('all');
   const events = state.data?.events ?? [];
-  const cities = useMemo(() => [...new Set(events.map((e) => e.city).filter(Boolean) as string[])].sort(), [events]);
-  const shown = events.filter((e) => (city === 'all' || e.city === city) && (kind === 'all' || e.registrationOpen));
+  const shown = events.filter((e) => kind === 'all' || e.registrationOpen);
   const byDay = new Map<string, PublicEvent[]>();
   for (const e of shown) byDay.set(e.startDate, [...(byDay.get(e.startDate) ?? []), e]);
 
@@ -87,11 +85,10 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
           <span>{state.data.pending ? `${state.data.pending} tournament${state.data.pending === 1 ? '' : 's'} to approve` : 'PaddleQ admin'}</span><span>›</span>
         </button>
       )}
-      {cities.length > 1 && <Segmented label="City" value={city} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} onChange={setCity} />}
       <Segmented label="Show" value={kind} options={[{ value: 'all', label: 'All events' }, { value: 'open', label: 'Entries open' }]} onChange={setKind} />
       <Status error={state.error} loading={state.loading && !state.data} />
       {state.data?.serverDown && <div role="status" className="msg msg-bad small">Can’t reach the club server right now, so only the demo’s events are showing.</div>}
-      {state.data && shown.length === 0 && <p className="muted">No upcoming events{city !== 'all' ? ` in ${city}` : ''} yet.</p>}
+      {state.data && shown.length === 0 && <p className="muted">No upcoming events in {LAUNCH_CITY} yet.</p>}
       {[...byDay.entries()].map(([day, list]) => (
         <section key={day} className="section" aria-label={dayLabel(day)}>
           <div className="label">{dayLabel(day)}</div>
