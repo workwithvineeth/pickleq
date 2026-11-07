@@ -825,3 +825,130 @@ a { color: var(--accent); text-underline-offset: 3px; }
 /* Admin lists (events, approvals, clubs): one column on phones, two across on wide screens. */
 .pq-admin-list { display: flex; flex-direction: column; gap: 12px; }
 @media (min-width: 1100px) { .pq-admin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+
+/* ---------- Workspaces (Phase 3 prototypes 01 admin, 02 club / organiser, 03 Player Studio) ----------
+   Laptops: grouped maroon side menu, a top bar with where you are, big serif page titles, KPI cards and panels.
+   Phones: the same sections as scrollable tabs under the page title; the bottom tabs stay. */
+.pq-ws-side, .pq-ws-top { display: none; }
+.pq-ws-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 8px 16px; background: var(--bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 6; }
+.pq-ws-tabs::-webkit-scrollbar { display: none; }
+.pq-ws-tabs button { flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
+.pq-ws-tabs button[aria-current='page'] { background: var(--solid); border-color: var(--solid); color: var(--on-solid); }
+.pq-ws-tabs button:disabled { opacity: 0.45; }
+/* Phones: admin and Player Studio keep their own section switchers; club screens use the workspace tabs. */
+.pq-ws-admin .pq-ws-tabs, .pq-ws-studio .pq-ws-tabs { display: none; }
+.pq-ws [aria-label='Club sections'] { display: none !important; }
+
+@media (min-width: 760px) {
+  .pq-ws .nav.nav-ws, .pq-ws .pq-ws-tabs, .pq-ws > .pq-account { display: none !important; }
+  /* Laptops: the side menu replaces each screen's own section switcher. */
+  .pq-ws [aria-label='Admin sections'], .pq-ws .pq-studio-nav { display: none !important; }
+  .pq-ws .pq-studio-layout { display: flex !important; flex-direction: column; }
+  .app.pq-brand.pq-ws { padding-left: 262px; background: var(--bg); }
+  .pq-ws-side {
+    display: flex; flex-direction: column; gap: 2px; position: fixed; left: 0; top: 0; bottom: 0; width: 262px; box-sizing: border-box; overflow-y: auto;
+    padding: 22px 14px 18px; background: #7A1F2B; color: #F3EBDD; z-index: 20; scrollbar-width: thin; scrollbar-color: rgba(243,235,221,.3) transparent;
+  }
+  .pq-ws-brand { display: flex; align-items: center; gap: 12px; padding: 4px 10px 18px; border-bottom: 1px solid rgba(243, 235, 221, 0.16); margin-bottom: 14px; }
+  .pq-ws-tile { width: 46px; height: 46px; flex: none; border-radius: 14px; background: #5E1621; border: 1px solid rgba(243, 235, 221, 0.3); display: inline-flex; align-items: center; justify-content: center; }
+  .pq-ws-brand b { display: block; font-family: var(--font-display); font-size: 26px; line-height: 1; color: #F3EBDD; }
+  .pq-ws-brand small { display: block; margin-top: 6px; font-size: 9.5px; letter-spacing: 0.06em; color: #E9CBCF; line-height: 1.3; }
+  .pq-ws-area { padding: 0 12px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #E9CBCF; }
+  .pq-ws-clubname { margin: 2px 12px 6px; font-family: var(--font-display); font-size: 17px; color: #F3EBDD; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pq-ws-group { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+  .pq-ws-glabel { padding: 0 12px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #E9CBCF; }
+  .pq-ws-item { display: flex; align-items: center; gap: 14px; min-height: 46px; padding: 0 14px; border: none; border-radius: 12px; background: transparent; color: #F3EBDD; font: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; }
+  .pq-ws-item:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
+  .pq-ws-item[aria-current='page'] { background: #F3EBDD; color: #7A1F2B; }
+  .pq-ws-item:disabled { opacity: 0.5; cursor: default; }
+  .pq-ws-item:focus-visible { outline: 3px solid #E9CBCF; outline-offset: 1px; }
+  .pq-ws-glyph { width: 20px; flex: none; text-align: center; font-size: 17px; line-height: 1; }
+  .pq-ws-pick { display: flex; flex-direction: column; gap: 4px; margin: 0 8px 6px; font-size: 11px; color: #E9CBCF; }
+  .pq-ws-pick select { min-height: 40px; border-radius: 10px; border: 1px solid rgba(243, 235, 221, 0.35); background: #5E1621; color: #F3EBDD; font: inherit; font-size: 14px; padding: 0 8px; }
+  .pq-ws-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(243, 235, 221, 0.16); display: flex; flex-direction: column; gap: 2px; }
+  .pq-ws-foot .pq-ws-item { min-height: 40px; font-size: 14px; font-weight: 500; }
+  .pq-ws-top { display: flex; align-items: center; gap: 10px; min-height: 74px; padding: 0 46px; box-sizing: border-box; background: var(--card); border-bottom: 1px solid var(--border); }
+  .pq-ws-top b { font-size: 16px; }
+  .pq-ws-top-tile { width: 30px; height: 30px; border-radius: 9px; background: #7A1F2B; display: inline-flex; align-items: center; justify-content: center; }
+  .pq-ws-sep, .pq-ws-crumb { color: var(--muted); font-size: 13px; }
+  .pq-ws-crumb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .pq-ws-email { color: var(--muted); font-size: 13px; }
+  .pq-ws-signout { min-height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; }
+  .pq-ws-avatar { width: 36px; height: 36px; border-radius: 50%; background: #7A1F2B; color: #F3EBDD; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+  /* Content: wide, generous padding; the maroon title band becomes the prototype's big serif title on cream. */
+  .app.pq-brand.pq-ws > .screen, .app.pq-brand.pq-ws > main { max-width: 1240px; margin: 0; padding: 28px 46px 64px; }
+  .app.pq-brand.pq-ws .screen > .header:first-child { background: transparent; margin: 0 0 4px; padding: 0; border-radius: 0; min-height: 0; box-shadow: none; }
+  .app.pq-brand.pq-ws .screen > .header:first-child .screen-title { color: var(--text); font-size: 40px; line-height: 1.1; font-weight: 700; }
+  .app.pq-brand.pq-ws .screen > .header:first-child .icon-btn { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .app.pq-brand.pq-ws .screen > .header:first-child .pill { background: var(--accent-soft); color: var(--accent); }
+  .app.pq-brand.pq-ws .screen > .header:first-child .btn-outline { color: var(--accent); border-color: var(--accent); }
+}
+@media (min-width: 760px) and (max-width: 1099px) {
+  .app.pq-brand.pq-ws { padding-left: 224px; }
+  .pq-ws-side { width: 224px; padding-left: 10px; padding-right: 10px; }
+  .pq-ws-item { font-size: 15px; gap: 10px; padding: 0 10px; }
+  .pq-ws-top { padding: 0 24px; }
+  .pq-ws-email { display: none; }
+  .app.pq-brand.pq-ws > .screen, .app.pq-brand.pq-ws > main { padding: 22px 24px 56px; }
+  .app.pq-brand.pq-ws .screen > .header:first-child .screen-title { font-size: 32px; }
+}
+
+/* Dashboard pieces shared by the three overviews. */
+.pq-kick { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; }
+.pq-intro { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.pq-intro p { margin: 6px 0 0; color: var(--muted); font-size: 16px; max-width: 780px; }
+.pq-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 1000px) { .pq-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } }
+.pq-kpi { position: relative; display: flex; flex-direction: column; gap: 4px; min-height: 120px; padding: 20px 22px; border-radius: 22px; border: 1px solid var(--border); background: var(--card); color: var(--text); text-align: left; font: inherit; }
+button.pq-kpi { cursor: pointer; }
+button.pq-kpi:hover { border-color: var(--accent); }
+.pq-kpi-label { font-size: 13px; font-weight: 600; }
+.pq-kpi-arrow { position: absolute; top: 18px; right: 20px; color: var(--muted); font-size: 15px; }
+.pq-kpi-value { margin-top: 14px; font-family: var(--font-display); font-size: 32px; font-weight: 700; line-height: 1.05; }
+.pq-kpi-sub { font-size: 13px; color: var(--muted); }
+@media (min-width: 1000px) { .pq-kpi { min-height: 165px; } .pq-kpi-value { margin-top: 22px; } }
+.pq-panels { display: grid; gap: 16px; }
+@media (min-width: 1000px) { .pq-panels { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; } .pq-panels.pq-even { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pq-panel { display: flex; flex-direction: column; gap: 4px; padding: 22px; border-radius: 22px; border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.pq-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.pq-panel-head h2 { margin: 0; font-family: var(--font-display); font-size: 19px; font-weight: 700; }
+.pq-mini-btn { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.pq-mini-btn:hover { border-color: var(--accent); }
+.pq-lrow { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0; border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none; color: var(--text); font: inherit; text-align: left; width: 100%; }
+.pq-lrow:last-child { border-bottom: none; }
+button.pq-lrow { cursor: pointer; }
+button.pq-lrow:hover .pq-lrow-main b { color: var(--accent); }
+.pq-lrow-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pq-lrow-main .small { color: var(--muted); }
+.pq-tag { flex: none; padding: 3px 9px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--card-2); color: var(--muted); }
+.pq-tag-live { background: var(--accent-soft); color: var(--accent); }
+.pq-tag-ready { background: var(--win-bg); color: var(--win-fg); }
+.pq-tag-action { background: var(--warn-bg); color: var(--warn-fg); }
+.pq-note { margin-top: 10px; padding: 12px 16px; border-left: 4px solid var(--solid); border-radius: 12px; background: var(--bg); font-size: 14px; }
+.pq-band { position: relative; overflow: hidden; display: flex; align-items: center; gap: 18px; padding: 26px 28px; border-radius: 26px; background: #7A1F2B; color: #F3EBDD; }
+.pq-band::before, .pq-band::after { content: ''; position: absolute; background: rgba(243, 235, 221, 0.14); }
+.pq-band::before { width: 2px; height: 220%; left: 36%; top: -60%; transform: rotate(-18deg); }
+.pq-band::after { width: 2px; height: 220%; left: 78%; top: -60%; transform: rotate(-18deg); }
+.pq-band > * { position: relative; }
+.pq-band-logo { width: 58px; height: 58px; flex: none; border-radius: 16px; border: 2px solid rgba(243, 235, 221, 0.5); background: rgba(243, 235, 221, 0.12); display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; overflow: hidden; }
+.pq-band-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.pq-band-kick { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #E9CBCF; }
+.pq-band h2, .pq-band-name { margin: 2px 0; font-family: var(--font-display); font-size: 30px; font-weight: 700; color: #F3EBDD; line-height: 1.1; }
+.pq-band p { margin: 0; font-size: 14px; color: #EAD8D2; }
+.pq-band .btn-cream { min-height: 44px; padding: 0 18px; border-radius: 12px; border: none; background: #F3EBDD; color: #7A1F2B; font: inherit; font-weight: 700; cursor: pointer; }
+.pq-snap { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+.pq-snap b { font-weight: 700; }
+.pq-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pq-dash { display: flex; flex-direction: column; gap: 16px; }
+.pq-bars { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 6px; align-items: end; height: 150px; }
+.pq-bars li { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 4px; }
+.pq-bars li > span:first-child { display: block; background: var(--solid); border-radius: 6px 6px 2px 2px; }
+.pq-bars li > span:last-child { font-size: 11px; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; }
+
+/* Player Studio Home (prototype 03). */
+.pq-player-head { display: flex; align-items: center; gap: 16px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.pq-player-ini { width: 68px; height: 68px; flex: none; border-radius: 20px; background: var(--accent-soft); color: var(--accent); font-family: var(--font-display); font-weight: 700; font-size: 26px; display: inline-flex; align-items: center; justify-content: center; }
+.pq-player-name { font-family: var(--font-display); font-size: 26px; font-weight: 700; line-height: 1.15; }
+.pq-band-tall { padding: 30px 30px 28px; align-items: flex-start; }
+.pq-band-tall .pq-band-name { font-size: 32px; }
+.pq-band .pq-story-text { color: #EAD8D2; font-size: 15px; }

@@ -336,6 +336,7 @@ test.describe('Club logos and the new demo events (demo club on the phone)', () 
     await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await page.getByRole('navigation', { name: 'Club / Organiser sections' }).getByRole('button', { name: 'Club profile' }).click();
     const hero = page.getByRole('region', { name: 'PQ Demo Club club' });
     await expect(hero.getByRole('img', { name: 'PQ Demo Club logo' })).toBeVisible();
     await expect(hero.getByRole('button', { name: 'Change logo' })).toBeVisible();

@@ -66,7 +66,10 @@ describe('Player Studio', () => {
     const nav = screen.getByRole('navigation', { name: 'Player Studio' });
     expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['Home', 'Matches', 'Train', 'Stats', 'Coach', 'Profile']);
     expect(within(nav).getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('button', { name: 'Singles DUPR 3.400' })).toBeInTheDocument();
+    const snap = screen.getByRole('region', { name: 'Season snapshot' });
+    expect(within(snap).getByText('Singles DUPR').nextSibling).toHaveTextContent('3.400');
+    expect(within(snap).getByText('Win rate').nextSibling).toHaveTextContent('100.0%');
+    expect(screen.getByRole('button', { name: /^Recent form: W/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Review and claim' }));
     expect(go).toHaveBeenCalledWith('club-claim', 'p.p2');
   });

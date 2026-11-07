@@ -39,7 +39,7 @@ test.describe('Full-scale day (13 tournaments, 300 players)', () => {
     for (const t of report.tournamentIds) {
       await page.goto(`#/club-tournament/${t.id}`);
       await expect(page.getByRole('heading', { name: t.name })).toBeVisible();
-      await page.getByRole('button', { name: 'Knockouts' }).click();
+      await page.getByRole('button', { name: 'Knockouts', exact: true }).click();
       await expect(page.getByRole('region', { name: 'Knockouts' }).getByText(/Final|This event has no knockouts/).first()).toBeVisible();
     }
     // Walkovers and cancelled matches are shown as such.

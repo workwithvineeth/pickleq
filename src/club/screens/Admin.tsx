@@ -3,7 +3,6 @@ import { TestimonialsAdmin } from './Testimonials';
 import { useState } from 'react';
 import type { Go } from '../../navigation';
 import type { AdminTournament, ClubBackend } from '../backend';
-import { trend, weekLabel } from '../adminStats';
 import { eventsBackend } from '../index';
 import { ROLE_LABEL } from '../types';
 import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
@@ -13,6 +12,7 @@ import { resultsDuprLink } from './ResultsDupr';
 import { ApprovalQueue } from './Approvals';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 import { SupportOpenButton } from './Lifecycle';
+import { AdminCommandCentre } from './AdminHome';
 
 export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'results' | 'testimonials' | 'admins' | 'desk' | 'branding' | 'marketing' | 'circuit' | 'audit';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
@@ -57,7 +57,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
   const growthSection = section === 'branding' || section === 'marketing' || section === 'circuit';
   return (
     <main className="screen" aria-labelledby="admin-title">
-      <Header id="admin-title" title="PaddleQ admin" onBack={onBack} />
+      <Header id="admin-title" title={section === 'overview' ? 'Founder command centre' : current.title} onBack={onBack} />
       <DemoNote b={b.kind === 'demo' ? b : null} />
       <Status error={allowed.error} loading={allowed.loading && allowed.data === null} />
       {allowed.data === false && (
@@ -73,8 +73,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
               <button key={s.id} type="button" aria-pressed={s.id === section} onClick={() => go('admin', s.id, { replace: true })}>{s.label}</button>
             ))}
           </div>
-          <h2 style={{ fontSize: 20, margin: 0 }}>{current.title}</h2>
-          {section === 'overview' && (b.kind === 'server' ? <OverviewMode go={go} /> : <Overview go={go} />)}
+          {section === 'overview' && (b.kind === 'server' ? <OverviewMode go={go} /> : <AdminCommandCentre go={go} />)}
           {section === 'overview' && b.kind === 'server' && (
             <section className="card section" aria-label="Demo club">
               <h2 style={{ fontSize: 16 }}>Demo club</h2>
@@ -100,18 +99,6 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
   );
 }
 
-function Tile({ label, value, sub, onClick }: { label: string; value: number | string; sub?: string; onClick?: () => void }) {
-  const body = (
-    <>
-      <span className="small muted" style={{ display: 'block' }}>{label}</span>
-      <span style={{ display: 'block', fontWeight: 600, fontSize: 22 }}>{value}</span>
-      {sub && <span className="small muted" style={{ display: 'block' }}>{sub}</span>}
-    </>
-  );
-  return onClick
-    ? <button type="button" className="stat-tile" style={{ textAlign: 'left', border: 'none', color: 'inherit' }} aria-label={`${label}: ${value}`} onClick={onClick}>{body}</button>
-    : <div className="stat-tile" role="group" aria-label={`${label}: ${value}`}>{body}</div>;
-}
 
 function OverviewMode({ go }: { go: Go }) {
   const [sample, setSample] = useState(false);
@@ -120,55 +107,10 @@ function OverviewMode({ go }: { go: Go }) {
       <button type="button" aria-pressed={!sample} onClick={() => setSample(false)}>Real Data</button>
       <button type="button" aria-pressed={sample} onClick={() => setSample(true)}>Demo Preview</button>
     </div>
-    {sample ? <AdminOverviewPreview /> : <Overview go={go} />}
+    {sample ? <AdminOverviewPreview /> : <AdminCommandCentre go={go} />}
   </>;
 }
 
-function Overview({ go }: { go: Go }) {
-  const b = eventsBackend();
-  const state = useLoad(() => b.adminOverview(), [b]);
-  const queue = useLoad(() => b.approvalQueue(), [b]);
-  const waiting = (queue.data ?? []).filter((q) => q.approval === 'submitted').length;
-  const d = state.data;
-  const max = Math.max(1, ...(d?.weeks.map((w) => w.matches) ?? [0]));
-  return (
-    <>
-      <Status error={state.error} loading={state.loading && !d} />
-      {waiting > 0 && (
-        <button type="button" className="banner-btn" onClick={() => go('admin', 'approvals')}>
-          <span>{waiting} tournament{waiting === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
-        </button>
-      )}
-      {d && (
-        <>
-          <section className="card section" aria-label="Matches scored this week">
-            <div className="small muted">Matches scored this week</div>
-            <div style={{ fontWeight: 700, fontSize: 34, lineHeight: 1.1 }}>{d.matchesWeek}</div>
-            <div className="small muted">{trend(d.weeks)}</div>
-            <ul aria-label="Matches scored per week" style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'grid', gridTemplateColumns: `repeat(${d.weeks.length}, minmax(0, 1fr))`, gap: 4, alignItems: 'end', height: 96 }}>
-              {d.weeks.map((w) => (
-                <li key={w.week} aria-label={`Week of ${weekLabel(w.week)}: ${w.matches} matches`} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
-                  <span aria-hidden="true" style={{ display: 'block', background: 'var(--accent)', borderRadius: 4, height: `${Math.max(2, (w.matches / max) * 80)}px` }} />
-                  <span aria-hidden="true" className="small muted" style={{ fontSize: 10, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>{weekLabel(w.week).split(' ')[0]}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-            <Tile label="Live now" value={d.live} onClick={() => go('admin', 'tournaments')} />
-            <Tile label="Coming up" value={d.upcoming} onClick={() => go('admin', 'tournaments')} />
-            <Tile label="Results & DUPR" value={d.finished} sub="Finished tournaments" onClick={() => go('admin', 'results')} />
-            <Tile label="To approve" value={waiting} onClick={() => go('admin', 'approvals')} />
-            <Tile label="Clubs" value={d.clubs} sub={`${d.verifiedClubs} verified`} onClick={() => go('admin', 'clubs')} />
-            <Tile label="Entries this week" value={d.entriesWeek} />
-            <Tile label="Accounts" value={d.accounts} sub={`${d.accountsWeek} new this week`} />
-          </div>
-          <p className="small muted" style={{ margin: 0 }}>Weeks start on Monday. The robot’s test club isn’t counted.</p>
-        </>
-      )}
-    </>
-  );
-}
 
 function Clubs({ go }: { go: Go }) {
   const b = eventsBackend();

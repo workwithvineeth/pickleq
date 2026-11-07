@@ -9,6 +9,7 @@ import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 import { Landing } from './Landing';
+import { WorkspaceNav, workspaceOf } from './Workspace';
 
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results' | 'club-player-studio';
 const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
@@ -83,19 +84,22 @@ export default function ClubApp() {
   const current = tab ?? (name === 'club-claim' ? 'club-player-studio' : name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
   // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
   if (route.name === 'home') return <><StagingStrip /><Landing go={clubGo} /></>;
+  // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
+  const ws = showNav && !NO_ACCOUNT.includes(name) ? workspaceOf({ ...route, name }) : null;
   return (
-    <div className={`app pq-brand${showNav ? ' has-side' : ''}`}>
+    <div className={`app pq-brand${showNav ? ' has-side' : ''}${ws ? ` pq-ws pq-ws-${ws}` : ''}`}>
       {/* At the top of the page, never floating over the sign-in form or the main buttons; no "works offline" popup. */}
       <StagingStrip />
       <UpdatePrompt offlineNotice={false} inline />
       <AccountStrip route={name} go={clubGo} />
       <SupportBanner route={name} />
+      {ws && <WorkspaceNav kind={ws} route={{ ...route, name }} go={clubGo} admin={admin} />}
       {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
       {name === 'club-results' && <ClubResultsTab go={clubGo} />}
       {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}
       {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>PaddleQ {appVersion} · build {buildId}</p>}
       {showNav && (
-        <nav className={`nav${tab ? '' : ' nav-sub'}`} aria-label="Main">
+        <nav className={`nav${tab ? '' : ' nav-sub'}${ws ? ' nav-ws' : ''}`} aria-label="Main">
           <div className="nav-brand" aria-hidden="true"><span className="nav-brand-tile"><BrandMark size={30} /></span><span><b>PaddleQ</b><small>{admin ? 'Platform admin' : 'For clubs'}</small></span></div>
           {TABS.map((t) => (
             <button key={t.id} type="button" className="nav-btn" aria-current={current === t.id ? 'page' : undefined} onClick={() => go(t.id)}>

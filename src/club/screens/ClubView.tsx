@@ -12,19 +12,27 @@ import { isAdmin, isApproved, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, 
 import { ClubHero, LogoPicker } from './Poster';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyDate } from '../dates';
+import { ClubHome, DayOfGuide } from './ClubHome';
 
-type Tab = 'events' | 'players' | 'squad' | 'members';
+type Tab = 'overview' | 'events' | 'players' | 'squad' | 'members' | 'profile' | 'guide';
+const TAB_IDS: Tab[] = ['overview', 'events', 'players', 'squad', 'members', 'profile', 'guide'];
 
-export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBack: () => void }) {
+/** One club. The route id is "<club id>" or "<club id>.<section>" so the workspace menu can open a section directly. */
+export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: Go; onBack: () => void }) {
   const b = backend();
+  const [clubId, sectionId] = routeId.split('.');
   const state = useLoad(async () => { if (!b) throw new Error('Open Club mode first'); return b.clubBundle(clubId); }, [b, clubId]);
-  const [tab, setTab] = useState<Tab>('events');
   const d = state.data;
   const staff = isStaff(d?.role);
+  const asked = (sectionId === 'tournaments' ? 'events' : sectionId) as Tab | undefined;
+  const tab: Tab = asked && TAB_IDS.includes(asked) && (staff || !['overview', 'squad', 'profile', 'guide'].includes(asked)) ? asked : staff ? 'overview' : 'events';
+  const setTab = (t: Tab) => go('club-view', `${clubId}.${t === 'events' ? 'tournaments' : t}`, { replace: true });
   const tabs: { value: Tab; label: string }[] = [
-    { value: 'events', label: 'Events' }, { value: 'players', label: 'Players' },
+    ...(staff ? [{ value: 'overview' as Tab, label: 'Overview' }] : []), { value: 'events', label: 'Tournaments' }, { value: 'players', label: 'Players' },
     ...(staff ? [{ value: 'squad' as Tab, label: 'Coach' }] : []), { value: 'members', label: 'Members' },
+    ...(staff ? [{ value: 'profile' as Tab, label: 'Club profile' }, { value: 'guide' as Tab, label: 'Day-of guide' }] : []),
   ];
+  const people: { value: Tab; label: string }[] = [{ value: 'members', label: 'Members & roles' }, { value: 'players', label: 'Players' }, ...(staff ? [{ value: 'squad' as Tab, label: 'Coach view' }] : [])];
   return (
     <main className="screen wide-ok" aria-labelledby="clubview-title">
       <Header id="clubview-title" title={d?.club.name ?? 'Club'} onBack={onBack} right={d && <RoleBadge role={d.role} />} />
@@ -32,14 +40,17 @@ export function ClubView({ clubId, go, onBack }: { clubId: string; go: Go; onBac
       <DemoNote b={b} />
       {d && (
         <>
-          <ClubHero b={b} clubId={d.club.id} club={d.club.name} city={d.club.city} logoUrl={d.club.logoUrl} canEdit={staff && !!b} onChanged={state.reload}
-            badge={d.club.trusted ? <span className="pq-badge">Trusted</span> : undefined} />
+          {(tab === 'events' || tab === 'profile') && <ClubHero b={b} clubId={d.club.id} club={d.club.name} city={d.club.city} logoUrl={d.club.logoUrl} canEdit={staff && !!b} onChanged={state.reload}
+            badge={d.club.trusted ? <span className="pq-badge">Trusted</span> : undefined} />}
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
+          {(tab === 'members' || tab === 'players' || tab === 'squad') && <Segmented label="People" value={tab} options={people} onChange={setTab} />}
+          {tab === 'overview' && <ClubHome d={d} go={go} />}
+          {tab === 'guide' && <DayOfGuide d={d} go={go} />}
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
-          {tab === 'events' && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} />}
+          {(tab === 'overview' || tab === 'events') && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} />}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
           {tab === 'squad' && staff && <Squad d={d} go={go} />}
-          {tab === 'members' && staff && b && <LogoPicker b={b} clubId={d.club.id} club={d.club.name} current={d.club.logoUrl} onChanged={state.reload} />}
+          {tab === 'profile' && staff && b && <LogoPicker b={b} clubId={d.club.id} club={d.club.name} current={d.club.logoUrl} onChanged={state.reload} />}
           {tab === 'members' && <Members d={d} go={go} reload={state.reload} />}
         </>
       )}
