@@ -8,6 +8,7 @@ import type { SupportSession } from '../club/backend';
 import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
+import { Landing } from './Landing';
 
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results' | 'club-player-studio';
 const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
@@ -80,6 +81,8 @@ export default function ClubApp() {
   // Desktop keeps the side menu on every signed-in screen (not on referee, desk or public pages); phones show tabs on tab screens only.
   const showNav = !!tab || !NO_ACCOUNT.includes(name);
   const current = tab ?? (name === 'club-claim' ? 'club-player-studio' : name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
+  // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
+  if (route.name === 'home') return <Landing go={clubGo} />;
   return (
     <div className={`app pq-brand${showNav ? ' has-side' : ''}`}>
       {/* At the top of the page, never floating over the sign-in form or the main buttons; no "works offline" popup. */}

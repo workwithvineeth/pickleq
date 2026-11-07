@@ -10,14 +10,20 @@ const SPLIT = fileURLToPath(new URL('../fixtures/google-form-split.csv', import.
 
 test.describe('PaddleQ app', () => {
   test('has its own tabs, and no personal-app tabs', async ({ page }) => {
+    // Signed out, paddleq.in opens on the public home page; Sign in leads to the sign-in page.
     await page.goto('./');
+    await expect(page.getByRole('heading', { level: 1, name: 'Every tournament, every result, in one place.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Find a tournament' })).toBeVisible();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/#\/club-signin/);
+    await page.goto('#/club');
     const nav = page.getByRole('navigation', { name: 'Main' });
     for (const t of ['Events', 'My club', 'Results']) await expect(nav.getByRole('button', { name: t })).toBeVisible();
     // The separate Tournaments tab is gone (Phase 3): tournaments live under My clubs.
     await expect(nav.getByRole('button', { name: 'Tournaments' })).toHaveCount(0);
     for (const t of ['Home', 'Train', 'Stats', 'Coach']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Log a match' })).toHaveCount(0);
-    // Signed out, paddleq.in opens on the sign-in page; the demo lives in the admin dashboard, not here.
+    // Signed out, My clubs is the sign-in page; the demo lives in the admin dashboard, not here.
     await expect(page.getByRole('heading', { name: 'PaddleQ', level: 1 })).toBeVisible();
     await expect(page.getByText('Out of the kitchen, into the stats.')).toBeVisible();
     await expect(page.getByRole('img', { name: 'PaddleQ logo' })).toBeVisible();
