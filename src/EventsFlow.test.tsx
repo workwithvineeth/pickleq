@@ -160,8 +160,8 @@ describe('Organiser: entries inbox and draw', () => {
     await user.click(screen.getByRole('button', { name: /PQ Demo Night/ }));
     await screen.findByRole('heading', { name: 'PQ Demo Night' });
     expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('On the board');
-    await user.click(screen.getByRole('button', { name: 'Entries inbox and draw' }));
-    await screen.findByRole('heading', { name: 'Entries inbox' });
+    await user.click(screen.getByRole('button', { name: 'Entries and draw' }));
+    await screen.findByRole('heading', { name: 'Entries' });
     const counts = screen.getByRole('region', { name: 'Men’s Doubles 3.5 entries' });
     expect(counts).toHaveTextContent('Accepted3 of 8');
     expect(counts).toHaveTextContent('To decide2');
@@ -176,7 +176,7 @@ describe('Organiser: entries inbox and draw', () => {
     expect(aditya).toBeUndefined(); // still to decide, so not in the Accepted list
 
     // Offline entry: adults only; phone optional.
-    await user.click(screen.getByText('+ Add Entry'));
+    await user.click(screen.getByRole('button', { name: '+ Add' }));
     await fillPerson(user, 'Player 1', { name: 'Desk One', phone: '', dupr: '3.2', age: '44', gender: 'Man' });
     await fillPerson(user, 'Player 2', { name: 'Desk Two', phone: '', dupr: '3.0', age: '16', gender: 'Man' });
     await user.click(screen.getByRole('button', { name: 'Add entry' }));
@@ -255,7 +255,7 @@ describe('Posting a tournament and approving it', () => {
     await user.click(screen.getByRole('button', { name: 'Post the listing' }));
     await screen.findByRole('heading', { name: 'Robot Listed Open' });
     expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('Listed');
-    expect(screen.queryByRole('button', { name: /Entries inbox/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Entries and draw' })).not.toBeInTheDocument();
   });
 });
 

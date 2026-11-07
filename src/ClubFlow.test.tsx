@@ -358,8 +358,9 @@ describe('Club mode', () => {
     await screen.findByText(/Message copied/);
     expect(writes[0]).toMatch(/^PQ Demo Open · Court \d+: .+ v .+ Please come to court \d+ now\.$/);
     // Entries page inside the desk link.
-    await user.click(screen.getByRole('button', { name: '+ Add Entry' }));
+    await user.click(screen.getByRole('button', { name: 'Entries' }));
     expect(await screen.findByRole('heading', { name: 'Entries' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '+ Add' }));
     expect(screen.getByRole('region', { name: 'Late entry' })).toBeInTheDocument();
     expect(window.location.hash).toBe(`#/desk/${token}~entries`);
     window.history.back();
@@ -390,7 +391,7 @@ describe('Club mode', () => {
     expect(within(check).getByText(/Draw made: \d+ matches/)).toBeInTheDocument();
     const run = screen.getByRole('navigation', { name: 'Run the tournament' });
     const names = within(run).getAllByRole('button').map((b) => b.textContent);
-    expect(names.slice(0, 3)).toEqual(['Desk view', 'Referee links', '+ Add Entry']);
+    expect(names.slice(0, 3)).toEqual(['Desk view', 'Referee links', 'Entries']);
     expect(within(run).queryByRole('button', { name: 'Mark as finished' })).not.toBeInTheDocument();
     const end = screen.getByRole('region', { name: 'When it’s over' });
     expect(within(end).getByRole('button', { name: 'Mark as finished' })).toBeInTheDocument();
@@ -443,8 +444,9 @@ describe('Club mode', () => {
     const players = new Map(before.players.map((p) => [p.id, p.name]));
     const semi = before.matches.find((m) => m.stage === 'sf' && m.status === 'scheduled') as ClubMatch;
     const out = semi.sideA.map((id) => players.get(id)).join(' / ');
-    await user.click(screen.getByRole('button', { name: '+ Add Entry' }));
+    await user.click(screen.getByRole('button', { name: 'Entries' }));
     await screen.findByRole('heading', { name: 'Entries' });
+    await user.click(screen.getByRole('button', { name: '+ Add' }));
     await user.click(within(screen.getByRole('group', { name: 'Event' })).getByRole('button', { name: 'Open Doubles' }));
     const card = await screen.findByLabelText(out);
     await user.click(within(card).getByRole('button', { name: 'Change' }));
@@ -460,9 +462,13 @@ describe('Club mode', () => {
     await user.click(screen.getByRole('button', { name: 'Add to the event' }));
     await screen.findByText('Knockouts have started, so new entries can’t join');
 
+    await user.click(within(screen.getByRole('group', { name: 'What are you adding?' })).getByRole('button', { name: 'New player' }));
     await user.type(screen.getByLabelText('Walk-in player name'), 'Wally Walkin');
     await user.click(screen.getByRole('button', { name: 'Add player' }));
-    await screen.findByText('Wally Walkin added to the club. Now enter them above.');
+    await screen.findByText('Wally Walkin added to the club. Now choose them as a late entry.');
+    // The panel switches back to Late entry, with the new player ready to choose.
+    const lateAgain = screen.getByLabelText('Late entry player') as HTMLSelectElement;
+    expect([...lateAgain.options].map((o) => o.text).join()).toMatch(/Wally Walkin/);
   });
 
   it('DUPR export: collects missing DUPR IDs and only exports matches that are ready', async () => {

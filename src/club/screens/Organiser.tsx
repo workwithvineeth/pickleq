@@ -13,6 +13,8 @@ import { formatRule, ManualScores, ScorePad } from './ScorePad';
 import { AccessCards } from './Access';
 import { useClubBackend, useDesk } from './deskContext';
 import { DivisionBody } from './Tournament';
+import { EntriesInbox } from './Inbox';
+import { AddPanel } from './AddPanel';
 
 /** Loads a tournament for an organiser screen, drawing any knockout round that's ready. */
 function useTournament(id: string, poll?: number) {
@@ -340,7 +342,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
       <div className="meta">
         {t.status === 'draft' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.updateTournament(t.id, { status: 'live' }), 'The tournament is live')}>Start tournament</button>}
         {!desk && <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>}
-        {(!desk || t.entryMode !== 'registration' || t.drawnAt) && <button type="button" className="btn btn-primary" onClick={() => go(t.entryMode === 'registration' && !t.drawnAt ? 'club-inbox' : 'club-entries', t.id)}>+ Add Entry</button>}
+        {(!desk || t.entryMode !== 'registration' || t.drawnAt) && <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>Entries</button>}
         <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Standings and draw</button>
       </div>
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
@@ -421,7 +423,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
 
 // ---------- Entries: withdraw, replace a player, late entry, walk-in players ----------
 
-export function Entries({ id, onBack }: { id: string; go?: Go; onBack: () => void }) {
+export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () => void }) {
   const { b, state } = useTournament(id);
   const [divId, setDivId] = useState<string | null>(null);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
@@ -431,6 +433,8 @@ export function Entries({ id, onBack }: { id: string; go?: Go; onBack: () => voi
   const pmap = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
   if (!d || !b) return shell('Entries', onBack, state);
   const t = d.tournament;
+  // One Entries screen (Phase 3): before the draw, players' registrations are the entries.
+  if (t.entryMode === 'registration' && !t.drawnAt && go) return <EntriesInbox id={id} go={go} onBack={onBack} />;
   const div = d.divisions.find((x) => x.id === divId) ?? d.divisions[0];
   if (!div) return shell('Entries', onBack, { error: 'This tournament has no events', loading: false });
   const entries = d.entries.filter((e) => e.divisionId === div.id).sort((a, x) => (a.pool ?? 0) - (x.pool ?? 0) || (a.seed ?? 0) - (x.seed ?? 0));
@@ -473,6 +477,7 @@ export function Entries({ id, onBack }: { id: string; go?: Go; onBack: () => voi
       {d.divisions.length > 1 && <Segmented label="Event" value={div.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setDivId(v); setOpenEntry(null); }} />}
       <p className="small muted" style={{ margin: 0 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} · {formatRule(div.format)}</p>
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+      <div className="pq-entry-grid">
       {entries.map((e) => {
         const out = e.status === 'withdrawn';
         const isOpen = openEntry === e.id;
@@ -486,8 +491,13 @@ export function Entries({ id, onBack }: { id: string; go?: Go; onBack: () => voi
           </section>
         );
       })}
-      <LateEntry kind={div.kind} free={free} busy={busy} onAdd={late} />
-      <WalkIn b={b} clubId={t.clubId} busy={busy} onAdded={(p) => { setMsg({ ok: true, text: `${p.name} added to the club. Now enter them above.` }); state.reload(); }} />
+      </div>
+      <AddPanel modes={[{ value: 'late', label: 'Late entry' }, { value: 'walkin', label: 'New player' }]}>
+        {(mode, { setMode }) => mode === 'late'
+          ? <LateEntry kind={div.kind} free={free} busy={busy} onAdd={late} />
+          : <WalkIn b={b} clubId={t.clubId} busy={busy} onAdded={(p) => { setMsg({ ok: true, text: `${p.name} added to the club. Now choose them as a late entry.` }); setMode('late'); state.reload(); }} />}
+      </AddPanel>
+      {t.entryMode === 'registration' && go && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-inbox', t.id)}>Registrations and payments</button>}
     </main>
   );
 }

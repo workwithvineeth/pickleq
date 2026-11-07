@@ -106,9 +106,11 @@ test.describe('Organiser screens (demo club)', () => {
 
   test('entries: walk-in player, withdraw a team, and late entry refused once knockouts start', async ({ page }) => {
     await openDemoEvent(page);
-    await page.getByRole('button', { name: '+ Add Entry' }).click();
+    await page.getByRole('button', { name: 'Entries', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Entries' })).toBeVisible();
     await page.getByRole('button', { name: 'Open Doubles' }).click();
+    await page.getByRole('button', { name: '+ Add', exact: true }).click();
+    await page.getByRole('button', { name: 'New player' }).click();
     await page.getByLabel('Walk-in player name').fill('Robot Walkin');
     await page.getByLabel('Walk-in player DUPR').fill('3.5');
     await page.getByRole('button', { name: 'Add player' }).click();

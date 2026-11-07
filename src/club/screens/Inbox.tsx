@@ -10,6 +10,7 @@ import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './commo
 import { eventShareLink, PersonFields } from './Events';
 import { PosterPicker } from './Poster';
 import { ImportEntries } from './Import';
+import { AddPanel } from './AddPanel';
 import { DayEstimateBox, divisionToDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { friendlyDate, friendlyDateTime } from '../dates';
 
@@ -36,9 +37,8 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
   const [editing, setEditing] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState('');
-  const [importing, setImporting] = useState(false);
   const d = state.data;
-  if (!d || !b) return <main className="screen" aria-labelledby="inbox-title"><Header id="inbox-title" title="Entries inbox" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  if (!d || !b) return <main className="screen" aria-labelledby="inbox-title"><Header id="inbox-title" title="Entries" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const t = d.t.tournament;
   const div = d.t.divisions.find((x) => x.id === divId) ?? d.t.divisions[0];
   const regs = d.regs.filter((r) => r.divisionId === div.id);
@@ -56,17 +56,16 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
 
   return (
     <main className="screen" aria-labelledby="inbox-title">
-      <Header id="inbox-title" title="Entries inbox" onBack={onBack} />
+      <Header id="inbox-title" title={drawn ? 'Registrations and payments' : 'Entries'} onBack={onBack} />
       <DemoNote b={b} />
       <p className="small muted" style={{ margin: 0 }}>{t.name} · {drawn ? 'Draw made' : t.registrationOpen ? 'Entries open' : 'Entries closed'}</p>
       {!drawn && (
         <div className="meta">
           <button type="button" className="btn btn-outline" disabled={busy || !isApproved(t)} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Open registration'}</button>
           {isApproved(t) && <button type="button" className="btn btn-outline" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>}
-          <button type="button" className="btn btn-primary" aria-expanded={importing} onClick={() => setImporting((x) => !x)}>Import entries</button>
         </div>
       )}
-      {!drawn && importing && <ImportEntries b={b} t={t} divisions={d.t.divisions} regs={d.regs} onClose={() => setImporting(false)} onDone={() => state.reload()} />}
+      {drawn && <button type="button" className="btn btn-outline" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-entries', t.id)}>Entries, withdrawals and late entries</button>}
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       {d.t.divisions.length > 1 && <Segmented label="Event" value={div.id} options={d.t.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setDivId(v); setEditing(null); }} />}
       <section className="card section" aria-label={`${div.name} entries`}>
@@ -77,11 +76,14 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         {(div.rules?.fee ?? 0) > 0 && <div className="row"><span>Accepted but not marked paid</span><b>{counts.unpaidAccepted}</b></div>}
       </section>
       {!drawn && (
-        <details className="card section">
-          <summary style={{ fontWeight: 600, cursor: 'pointer' }}>+ Add Entry</summary>
-          <p className="small muted" style={{ margin: 0 }}>For players who entered by phone or at the desk. A phone number is optional here.</p>
-          <EntryForm b={b} t={t} divisions={d.t.divisions} divisionId={div.id} busy={busy} offline onSave={(players, divisionId, extra) => run(() => b.addOfflineEntry({ tournamentId: t.id, divisionId, clubId: t.clubId, players, status: extra?.status ?? 'accepted', payment: extra?.payment ?? 'unpaid' }), `${players.map((p) => p.name).join(' / ')} added`)} />
-        </details>
+        <AddPanel modes={[{ value: 'one', label: 'Person or team' }, { value: 'import', label: 'Import a sheet' }]}>
+          {(mode, { close }) => mode === 'import'
+            ? <ImportEntries b={b} t={t} divisions={d.t.divisions} regs={d.regs} onClose={close} onDone={() => state.reload()} />
+            : <>
+              <p className="small muted" style={{ margin: 0 }}>For players who entered by phone or at the desk. A phone number is optional here.</p>
+              <EntryForm b={b} t={t} divisions={d.t.divisions} divisionId={div.id} busy={busy} offline onSave={(players, divisionId, extra) => run(() => b.addOfflineEntry({ tournamentId: t.id, divisionId, clubId: t.clubId, players, status: extra?.status ?? 'accepted', payment: extra?.payment ?? 'unpaid' }), `${players.map((p) => p.name).join(' / ')} added`)} />
+            </>}
+        </AddPanel>
       )}
       <Chips label="Show entries" value={filter} options={FILTERS} onChange={setFilter} />
       {shown.length === 0 && <p className="small muted" style={{ margin: 0 }}>No entries here.</p>}

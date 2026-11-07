@@ -117,7 +117,14 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.goto('#/club');
     await page.getByRole('region', { name: 'Your clubs' }).getByRole('button', { name: /PQ Demo Club/ }).click();
     await page.getByRole('button', { name: /PQ Demo Night/ }).click();
-    await page.getByRole('button', { name: 'Entries inbox and draw' }).click();
+    await page.getByRole('button', { name: /^Entries( and draw)?$/ }).click();
+    // One Entries screen: one "+ Add" with every way of adding entries.
+    await expect(page.getByRole('heading', { name: 'Entries', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: '+ Add', exact: true }).click();
+    const modes = page.getByRole('group', { name: 'What are you adding?' });
+    await expect(modes.getByRole('button', { name: 'Person or team' })).toBeVisible();
+    await expect(modes.getByRole('button', { name: 'Import a sheet' })).toBeVisible();
+    await page.getByRole('button', { name: 'Close', exact: true }).click();
     const robot = page.getByRole('region', { name: 'Robot Player / Robot Partner' });
     await robot.getByRole('button', { name: 'Accept' }).click();
     await expect(page.getByText('Robot Player / Robot Partner: accepted')).toBeVisible();

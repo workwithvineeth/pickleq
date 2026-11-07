@@ -54,8 +54,9 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByLabel('Show it on the PaddleQ events board').uncheck();
     await page.getByRole('button', { name: 'Save draft' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Split Form Cup' })).toBeVisible();
-    await page.getByRole('button', { name: 'Entries inbox and draw' }).click();
-    await page.getByRole('button', { name: 'Import entries' }).click();
+    await page.getByRole('button', { name: /^Entries( and draw)?$/ }).click();
+    await page.getByRole('button', { name: '+ Add', exact: true }).click();
+    await page.getByRole('button', { name: 'Import a sheet' }).click();
     const imp = page.getByRole('region', { name: 'Import entries' });
     await imp.getByLabel('Choose CSV file').setInputFiles(SPLIT);
     await imp.getByLabel('Every player is 18 or over (the sheet has no ages)').check();
@@ -88,9 +89,10 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByLabel('Show it on the PaddleQ events board').uncheck();
     await page.getByRole('button', { name: 'Save draft' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Form Cup' })).toBeVisible();
-    await page.getByRole('button', { name: 'Entries inbox and draw' }).click();
+    await page.getByRole('button', { name: /^Entries( and draw)?$/ }).click();
 
-    await page.getByRole('button', { name: 'Import entries' }).click();
+    await page.getByRole('button', { name: '+ Add', exact: true }).click();
+    await page.getByRole('button', { name: 'Import a sheet' }).click();
     const imp = page.getByRole('region', { name: 'Import entries' });
     await imp.getByLabel('Choose CSV file').setInputFiles(CSV);
     const preview = imp.getByRole('region', { name: 'Import preview' });

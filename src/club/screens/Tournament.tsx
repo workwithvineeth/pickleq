@@ -273,8 +273,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}
       {staff && !approved && (
         <nav className="meta" aria-label="Set up the tournament">
-          {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>Entries inbox</button>}
-          <button type="button" className="btn btn-primary" onClick={() => go(t.entryMode === 'registration' && !t.drawnAt ? 'club-inbox' : 'club-entries', t.id)}>+ Add Entry</button>
+          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>Entries</button>
         </nav>
       )}
       {staff && approved && (
@@ -282,8 +281,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           {t.status === 'draft' && <button type="button" className="btn btn-primary" onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
           <button type="button" className={`btn ${t.status === 'draft' ? 'btn-outline' : 'btn-primary'}`} onClick={() => go('club-desk', t.id)}>Desk view</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>
-          {t.entryMode === 'registration' && <button type="button" className="btn btn-outline" onClick={() => go('club-inbox', t.id)}>{t.drawnAt ? 'Entries inbox' : 'Entries inbox and draw'}</button>}
-          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>+ Add Entry</button>
+          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>{t.entryMode === 'registration' && !t.drawnAt ? 'Entries and draw' : 'Entries'}</button>
           {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>}
           {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-results-dupr', t.id)}>Results and DUPR</button>}
         </nav>
@@ -295,7 +293,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           <PromoStudio events={[{ id: t.id, name: t.name, club: d.club.name, startDate: t.startDate, startTime: t.startTime, courts: t.courts, slug: t.publicSlug }]} />
         </details>
       )}
-      {t.entryMode === 'registration' && !t.drawnAt && <p className="small muted" style={{ margin: 0 }}>Players are registering. The pools and schedule appear here once you make the draw in the entries inbox.</p>}
+      {t.entryMode === 'registration' && !t.drawnAt && <p className="small muted" style={{ margin: 0 }}>Players are registering. The pools and schedule appear here once you make the draw in Entries.</p>}
       {t.isPublic && approved && (
         <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={async () => setMsg(await shareLink(`${t.name} results`, link))}>
           <span>Share the results link (no login needed)</span><span>›</span>

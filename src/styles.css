@@ -595,3 +595,10 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-kit-tile { display: flex; flex-direction: column; gap: 6px; }
 .pq-kit-swatch { display: flex; flex-direction: column; gap: 2px; }
 .pq-kit-swatch > span:first-child { height: 56px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 4px; }
+
+/* One Entries screen (Phase 3): entry cards sit two across on laptops. */
+.pq-entry-grid { display: flex; flex-direction: column; gap: 10px; }
+@media (min-width: 900px) {
+  .pq-entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+}
+.pq-add > .btn { align-self: flex-start; }
