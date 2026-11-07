@@ -61,3 +61,27 @@ robot:
     when: on_failure
     expire_in: 7 days
     paths: [e2e/test-results/, e2e/playwright-report/, e2e/results.json, preview.log]
+
+# STAGING ONLY: fills the paddleq-staging Supabase project (xlviuobtfszwfmnwcjjr) with every migration and the fictional
+# demo data, through its staging-setup function (which only trusts this job's GitLab identity token on branch staging and
+# refuses to run on any other project). Runs on pushes to the staging branch that change migrations or the seed, or by hand.
+# STAGING_PASSWORD is a masked CI variable (the shared password of the …@example.com test accounts).
+staging-db:
+  stage: check
+  image: node:22-bookworm
+  timeout: 15m
+  rules:
+    - if: $CI_COMMIT_BRANCH == "staging" && $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == "staging"
+      changes: [supabase/migrations/**/*, scripts/staging/**/*, src/club/domain/sample*.ts]
+  id_tokens:
+    STAGING_ID_TOKEN:
+      aud: paddleq-staging
+  script:
+    - apt-get update -qq && apt-get install -y -qq fonts-dejavu-core > /dev/null
+    - mkdir -p /tmp/r && (cd /tmp/r && npm init -y > /dev/null && npm i --silent --no-audit --no-fund @resvg/resvg-js@2)
+    - npm ci --prefer-offline --no-audit --no-fund
+    - npx --yes esbuild@0.25 scripts/staging/seed.ts --bundle --platform=node --format=esm --outfile=/tmp/seed.mjs --log-level=warning --define:import.meta.env='{"VITE_CLUB":"on"}' --define:__APP_VERSION__='"staging"'
+    - SEED_IMAGES=/tmp/images.json node /tmp/seed.mjs > /tmp/seed.sql
+    - cp scripts/staging/render-images.mjs /tmp/r/ && node /tmp/r/render-images.mjs /tmp/images.json /tmp/png
+    - node scripts/staging/apply.mjs /tmp/seed.sql /tmp/png
