@@ -6,6 +6,7 @@ import { eventsBackend } from '../club/index';
 import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
+import { Landing } from './Landing';
 
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results';
 const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
@@ -35,6 +36,8 @@ export default function ClubApp() {
   const tab = name === 'club-view' ? 'club' : (TABS.map((t) => t.id) as RouteName[]).includes(name) ? (name as ClubTab) : null;
   // Top-level "back" in PaddleQ goes to the events board, never to the personal app.
   const clubGo: Go = (n, id, opts) => go(n === 'home' ? 'club' : n, id, opts);
+  // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
+  if (route.name === 'home') return <Landing go={clubGo} />;
   return (
     <div className="app pq-brand">
       {/* At the top of the page, never floating over the sign-in form or the main buttons; no "works offline" popup. */}
