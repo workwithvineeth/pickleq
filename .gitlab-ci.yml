@@ -1,0 +1,63 @@
+# PaddleQ checks on GitLab (replaces the GitHub club-checks workflow while GitHub is suspended).
+# Every push: app checks (typecheck, lint, unit tests) and every SQL check in supabase/tests on a fresh Postgres built from
+# supabase/migrations. The robot (Playwright, Android + iPhone, demo specs) runs on main and release branches, or by hand
+# ("Run pipeline"), to stay inside the free plan's 400 CI minutes a month. Server specs skip here (no server secrets in CI).
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages: [check, robot]
+
+default:
+  interruptible: true
+
+app:
+  stage: check
+  image: node:22-bookworm
+  timeout: 20m
+  cache:
+    key: { files: [package-lock.json] }
+    paths: [.npm/]
+  script:
+    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+    - npm run -s check
+
+database:
+  stage: check
+  image: postgres:16-bookworm
+  timeout: 15m
+  variables:
+    PG_BIN: /usr/lib/postgresql/16/bin
+  script:
+    - bash scripts/local-db/reset.sh
+    - DB_URL="postgresql://postgres@localhost:54322/postgres?host=/tmp" bash scripts/db-tests.sh
+
+robot:
+  stage: robot
+  image: mcr.microsoft.com/playwright:v1.63.0-noble
+  timeout: 30m
+  needs: [app]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH =~ /^release/
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - when: manual
+      allow_failure: true
+  cache:
+    key: { files: [package-lock.json, e2e/package-lock.json] }
+    paths: [.npm/]
+  script:
+    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+    - npm run build:club
+    - (npx vite preview --mode club --outDir dist/club --port 4173 --strictPort > preview.log 2>&1 &)
+    - cd e2e && npm ci --cache ../.npm --prefer-offline --no-audit --no-fund
+    - node -e "const go=async()=>{for(let i=0;i<60;i++){try{if((await fetch('http://localhost:4173/pickleq/club/preview/')).ok)return}catch{}await new Promise(r=>setTimeout(r,1000))}process.exit(1)};go()"
+    - PQ_BASE=http://localhost:4173/pickleq/club/preview/ npx playwright test || (node summary.mjs results.json; exit 1)
+    - node summary.mjs results.json
+  artifacts:
+    when: on_failure
+    expire_in: 7 days
+    paths: [e2e/test-results/, e2e/playwright-report/, e2e/results.json, preview.log]
