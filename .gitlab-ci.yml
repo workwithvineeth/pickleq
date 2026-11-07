@@ -65,7 +65,6 @@ robot:
 # STAGING ONLY: fills the paddleq-staging Supabase project (xlviuobtfszwfmnwcjjr) with every migration and the fictional
 # demo data, through its staging-setup function (which only trusts this job's GitLab identity token on branch staging and
 # refuses to run on any other project). Runs on pushes to the staging branch that change migrations or the seed, or by hand.
-# STAGING_PASSWORD is a masked CI variable (the shared password of the …@example.com test accounts).
 staging-db:
   stage: check
   image: node:22-bookworm

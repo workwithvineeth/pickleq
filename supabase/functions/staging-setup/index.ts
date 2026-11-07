@@ -45,6 +45,11 @@ Deno.serve(async (req) => {
     }
   }
   if (body.action === 'user') {
+    // The shared test-account password lives in the staging database only (public.staging_settings, no API access).
+    const db = postgres(Deno.env.get('SUPABASE_DB_URL')!, { max: 1, prepare: false });
+    const [row] = await db`select value from public.staging_settings where key = 'test_password'`.finally(() => db.end());
+    if (!row) return json({ error: 'No test password set' }, 500);
+    body.password = row.value;
     const sb = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
     const email = String(body.email).toLowerCase();
     const { data: found } = await sb.auth.admin.listUsers({ page: 1, perPage: 1000 });
