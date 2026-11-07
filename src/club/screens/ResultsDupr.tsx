@@ -9,6 +9,7 @@ import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resul
 import { ManualScores } from './ScorePad';
 import { ResultsHero } from './Brand';
 import { displayPlayerName, appLink, errorText, Header, Status, useLoad } from './common';
+import { ClaimLinks } from './studio/Claim';
 
 export const resultsDuprLink = (id: string) => appLink(`#/club-results-dupr/${id}`);
 type Edit = { singles?: string; doubles?: string; id?: string };
@@ -183,6 +184,8 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
         {[...new Set(data.entries.filter((e) => e.divisionId === div.id).flatMap((e) => e.playerIds))].map((pid) => player(pid, div, true))}
       </section>}
     </section>)}
+    {staff && b?.kind === 'server' && data.matches.some((m) => m.status === 'done') && <ClaimLinks tournament={data.tournament.name}
+      players={[...new Set(data.entries.flatMap((e) => e.playerIds))].map((pid) => pmap.get(pid)).filter((x): x is NonNullable<typeof x> => !!x && !x.sample)} />}
     <p className="pq-results-footer">Results from PaddleQ · paddleq.in · {TIE_BREAK_TEXT}</p>
   </main>;
 }

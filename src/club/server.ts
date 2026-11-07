@@ -1,4 +1,4 @@
-import type { StudioLog, StudioLogInput } from './playerStudio';
+import { cleanLog, cleanSession, logProblem, ratingProblem, sessionProblem, type RatingKind, type StudioRatingInput, type ClaimPreview, type FoundPlayer, type MyPlayer, type OfficialMatch, type StudioData, type StudioGoal, type StudioLog, type StudioLogInput, type StudioSession, type StudioSessionInput, type StudioSettings } from './playerStudio';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
@@ -107,6 +107,21 @@ const fromMatch = (m: NewMatchRow): Row => ({
   side_a: m.sideA, side_b: m.sideB, format: m.format, games: m.games, status: m.status, winner: m.winner ?? null, played_on: m.playedOn ?? null,
 });
 
+const num = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
+const toMyPlayer = (r: Row): MyPlayer => ({ playerId: String(r.player_id), name: String(r.name), club: String(r.club), claimedAt: String(r.claimed_at ?? ''), duprSingles: num(r.dupr_singles), duprDoubles: num(r.dupr_doubles) });
+const toPreview = (r: Row): ClaimPreview => ({
+  playerId: String(r.player_id), name: String(r.name), club: String(r.club ?? ''), matches: Number(r.matches ?? 0), wins: Number(r.wins ?? 0),
+  tournaments: ((r.tournaments as Row[] | null) ?? []).map((t) => ({ name: String(t.name), date: String(t.date) })),
+});
+const toOfficial = (r: Row): OfficialMatch => ({
+  id: String(r.id), club: String(r.club), tournament: String(r.tournament), tournamentId: String(r.tournament_id), division: s(r.division),
+  kind: (s(r.kind) as OfficialMatch['kind']) ?? undefined, stage: r.stage as OfficialMatch['stage'], playedOn: String(r.played_on), format: (r.format as OfficialMatch['format']) ?? {},
+  games: ((r.games as Row[] | null) ?? []).map((g) => ({ a: Number(g.a), b: Number(g.b), ...(g.points ? { points: String(g.points) } : {}) })),
+  winner: r.winner as 'A' | 'B', mySide: r.my_side as 'A' | 'B', me: String(r.me),
+  sideA: ((r.side_a as Row[] | null) ?? []).map((p) => ({ id: String(p.id), name: String(p.name) })),
+  sideB: ((r.side_b as Row[] | null) ?? []).map((p) => ({ id: String(p.id), name: String(p.name) })),
+});
+
 /** Turns server errors into short messages a person can act on. */
 function check<T>(res: { data: T; error: { message: string } | null }): T {
   if (res.error) {
@@ -139,14 +154,114 @@ export class ServerBackend implements ClubBackend {
   }
 
   async studioLogs(): Promise<StudioLog[]> {
-    return check(await this.sb.from('player_studio_logs').select('id,kind,played_on,opponents,partner,location,score_for,score_against,reflection,tags')
-      .order('played_on', { ascending: false })) as StudioLog[];
+    const rows = check(await this.sb.from('player_studio_logs')
+      .select('id,kind,played_on,opponents,partner,location,score_for,score_against,reflection,tags,match_type,games,energy,shot_ratings,setting,opponent_strength,created_at')
+      .order('played_on', { ascending: false }).order('created_at', { ascending: false })) as Row[];
+    return rows.map((r) => ({
+      id: String(r.id), kind: r.kind as StudioLog['kind'], played_on: String(r.played_on), opponents: String(r.opponents), partner: String(r.partner ?? ''),
+      location: String(r.location ?? ''), score_for: Number(r.score_for), score_against: Number(r.score_against), reflection: String(r.reflection ?? ''),
+      tags: (r.tags as StudioLog['tags']) ?? {}, match_type: (r.match_type as StudioLog['match_type']) ?? null, games: (r.games as StudioLog['games']) ?? [],
+      energy: r.energy == null ? null : Number(r.energy), shot_ratings: (r.shot_ratings as StudioLog['shot_ratings']) ?? {},
+      setting: (r.setting as StudioLog['setting']) ?? null, opponent_strength: (r.opponent_strength as StudioLog['opponent_strength']) ?? null, created_at: s(r.created_at),
+    }));
   }
 
   async saveStudioLog(input: StudioLogInput, id?: string): Promise<void> {
+    const bad = logProblem(input);
+    if (bad) throw new ClubError(bad);
     const table = this.sb.from('player_studio_logs');
-    const write = id ? table.update(input).eq('id', id) : table.insert(input);
+    const row = cleanLog(input);
+    const write = id ? table.update(row).eq('id', id) : table.insert(row);
     check(await write.select('id').single());
+  }
+
+  // ---------- Player Studio (Phase 3 Module 3): claim, official history, diary ----------
+
+  async studioData(): Promise<StudioData> {
+    const [players, official, logs, sessions, settings, ratings] = await Promise.all([
+      this.sb.rpc('studio_my_players'), this.sb.rpc('studio_official_history'), this.studioLogs(),
+      this.sb.from('player_studio_sessions').select('id,session_on,kind,minutes,intensity,drills,ratings,note,created_at').order('session_on', { ascending: false }).order('created_at', { ascending: false }),
+      this.sb.from('player_studio_settings').select('use_official,goals').maybeSingle(),
+      this.sb.from('player_studio_ratings').select('id,kind,value,rated_on').order('rated_on', { ascending: false }).order('created_at', { ascending: false }),
+    ]);
+    const st = check(settings) as Row | null;
+    return {
+      players: ((check(players) as Row[] | null) ?? []).map(toMyPlayer),
+      official: ((check(official) as Row[] | null) ?? []).map(toOfficial),
+      logs,
+      sessions: ((check(sessions) as Row[] | null) ?? []).map((r) => ({
+        id: String(r.id), session_on: String(r.session_on), kind: r.kind as StudioSession['kind'], minutes: Number(r.minutes), intensity: r.intensity == null ? null : Number(r.intensity),
+        drills: (r.drills as StudioSession['drills']) ?? [], ratings: (r.ratings as StudioSession['ratings']) ?? {}, note: String(r.note ?? ''), created_at: String(r.created_at),
+      })),
+      ratings: ((check(ratings) as Row[] | null) ?? []).map((r) => ({ id: String(r.id), kind: r.kind as RatingKind, value: Number(r.value), rated_on: String(r.rated_on) })),
+      settings: { useOfficial: st ? st.use_official !== false : true, goals: (st?.goals as StudioGoal[] | undefined) ?? [] },
+    };
+  }
+
+  async saveStudioRating(input: StudioRatingInput, id?: string) {
+    const bad = ratingProblem(input);
+    if (bad) throw new ClubError(bad);
+    const row = { kind: input.kind, value: Math.round(input.value * 1000) / 1000, rated_on: input.rated_on };
+    const table = this.sb.from('player_studio_ratings');
+    check(await (id ? table.update(row).eq('id', id) : table.insert(row)).select('id').single());
+  }
+
+  async deleteStudioRating(id: string) {
+    const gone = check(await this.sb.from('player_studio_ratings').delete().eq('id', id).select('id')) as Row[];
+    if (!gone.length) throw new ClubError('That reading is already gone');
+  }
+
+  async deleteStudioLog(id: string) {
+    const gone = check(await this.sb.from('player_studio_logs').delete().eq('id', id).select('id')) as Row[];
+    if (!gone.length) throw new ClubError('That match is already gone');
+  }
+
+  async saveStudioSession(input: StudioSessionInput, id?: string): Promise<void> {
+    const bad = sessionProblem(input);
+    if (bad) throw new ClubError(bad);
+    const row = cleanSession(input);
+    const table = this.sb.from('player_studio_sessions');
+    check(await (id ? table.update(row).eq('id', id) : table.insert(row)).select('id').single());
+  }
+
+  async deleteStudioSession(id: string) {
+    const gone = check(await this.sb.from('player_studio_sessions').delete().eq('id', id).select('id')) as Row[];
+    if (!gone.length) throw new ClubError('That session is already gone');
+  }
+
+  async saveStudioSettings(s: StudioSettings) {
+    const uid = await this.uid();
+    check(await this.sb.from('player_studio_settings').upsert({ user_id: uid, use_official: s.useOfficial, goals: s.goals.slice(0, 5), updated_at: new Date().toISOString() }));
+  }
+
+  /** Deletes every practice session, casual/practice match and DUPR reading you logged. Official results stay (they belong to the club). */
+  async deleteMyDiary() {
+    const uid = await this.uid();
+    check(await this.sb.from('player_studio_sessions').delete().eq('owner_id', uid));
+    check(await this.sb.from('player_studio_logs').delete().eq('owner_id', uid));
+    check(await this.sb.from('player_studio_ratings').delete().eq('owner_id', uid));
+  }
+
+  async claimPreview(token: string): Promise<ClaimPreview | { error: string; mine?: boolean }> {
+    const r = check(await this.sb.rpc('studio_claim_preview', { p_token: token })) as Row;
+    if (r.error) return { error: String(r.error), mine: !!r.mine };
+    return toPreview(r);
+  }
+
+  async foundPlayers(): Promise<FoundPlayer[]> {
+    return ((check(await this.sb.rpc('studio_found_players')) as Row[] | null) ?? []).map(toPreview);
+  }
+
+  async claimPlayer(token: string | null, playerId: string | null, useInStats: boolean) {
+    check(await this.sb.rpc('studio_claim', { p_token: token, p_player: playerId, p_use_in_stats: useInStats }));
+  }
+
+  async unclaimPlayer(playerId: string) { check(await this.sb.rpc('studio_unclaim', { p_player: playerId })); }
+
+  /** The organiser's private claim link for one player (made on first ask, reused after). */
+  async claimLink(playerId: string): Promise<{ claimed: true } | { claimed: false; token: string }> {
+    const r = check(await this.sb.rpc('studio_claim_link', { p_player: playerId })) as Row;
+    return r.claimed ? { claimed: true } : { claimed: false, token: String(r.token) };
   }
 
   async sendCode(email: string) {

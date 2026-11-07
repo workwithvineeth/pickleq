@@ -9,11 +9,12 @@ import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 
-type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results';
+type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results' | 'club-player-studio';
 const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
   { id: 'events', label: 'Events', icon: 'events' },
   { id: 'club', label: 'My clubs', icon: 'home' },
   { id: 'club-results', label: 'Results', icon: 'stats' },
+  { id: 'club-player-studio', label: 'Studio', icon: 'ball' },
 ];
 
 /** Screens without an account (referee court, desk PIN, public results and event pages): no account strip there. */
@@ -78,7 +79,7 @@ export default function ClubApp() {
   const clubGo: Go = (n, id, opts) => go(n === 'home' ? 'club' : n, id, opts);
   // Desktop keeps the side menu on every signed-in screen (not on referee, desk or public pages); phones show tabs on tab screens only.
   const showNav = !!tab || !NO_ACCOUNT.includes(name);
-  const current = tab ?? (name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
+  const current = tab ?? (name === 'club-claim' ? 'club-player-studio' : name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
   return (
     <div className={`app pq-brand${showNav ? ' has-side' : ''}`}>
       {/* At the top of the page, never floating over the sign-in form or the main buttons; no "works offline" popup. */}
