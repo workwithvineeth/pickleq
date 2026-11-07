@@ -7,7 +7,7 @@ import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents'
 import { pinProblem, randomPin as randomPinOf } from './pins';
 import { blobToDataUrl } from './poster';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
-import { digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
+import { cleanEmail, digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
 import { hasContactDetails, TESTIMONIAL_MAX, type Testimonial, type TestimonialStatus, isAdmin, isApproved, isStaff, NOT_APPROVED, PICK_NEEDS_TRUST, type Approval, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
 
 interface DemoState {
@@ -196,7 +196,7 @@ export class DemoBackend implements ClubBackend {
   async addPlayer(clubId: string, p: { name: string; duprSingles?: number; duprDoubles?: number }) {
     this.need(clubId, isStaff, 'Only coaches and admins can add players');
     if (!p.name.trim()) throw new ClubError('Enter the player’s name');
-    const row: ClubPlayer = { id: newId(), clubId, name: p.name.trim(), duprSingles: p.duprSingles, duprDoubles: p.duprDoubles, claimCode: newId().replace(/-/g, '').slice(0, 12), share: {} };
+    const row: ClubPlayer = { id: newId(), clubId, name: p.name.trim(), duprSingles: p.duprSingles, duprDoubles: p.duprDoubles, share: {} };
     this.s.players.push(row);
     this.save();
     return row;
@@ -895,7 +895,7 @@ export class DemoBackend implements ClubBackend {
     if (payment === 'claimed' && ((paymentRef ?? '').trim().length < 4)) throw new ClubError('Add the UPI reference number from your payment');
     const taken = this.regs().filter((r) => r.divisionId === d.id && (r.status === 'pending' || r.status === 'accepted')).length;
     const status = d.rules?.cap !== undefined && taken >= d.rules.cap ? 'waitlist' : 'pending';
-    const r: Registration = { id: newId(), tournamentId: t.id, divisionId: d.id, clubId: d.clubId, userId: u.id, source: 'online', players: players.map((p) => ({ ...p, name: p.name.trim(), phone: p.phone.trim(), duprId: p.duprId?.trim().toUpperCase() || undefined })), status, payment, paymentRef: paymentRef?.trim() || undefined, createdAt: new Date().toISOString() };
+    const r: Registration = { id: newId(), tournamentId: t.id, divisionId: d.id, clubId: d.clubId, userId: u.id, source: 'online', players: players.map((p) => ({ ...p, name: p.name.trim(), phone: p.phone.trim(), email: cleanEmail(p.email), duprId: p.duprId?.trim().toUpperCase() || undefined })), status, payment, paymentRef: paymentRef?.trim() || undefined, createdAt: new Date().toISOString() };
     this.regs().push(r);
     this.save();
     return { id: r.id, status: r.status };
@@ -943,7 +943,7 @@ export class DemoBackend implements ClubBackend {
     if (patch.status) r.status = patch.status;
     if (patch.payment) r.payment = patch.payment;
     if (patch.note !== undefined) r.note = patch.note?.trim() || undefined;
-    if (patch.players) r.players = patch.players;
+    if (patch.players) r.players = patch.players.map((p) => ({ ...p, email: cleanEmail(p.email) }));
     if (patch.divisionId) r.divisionId = patch.divisionId;
     this.save();
   }
@@ -954,7 +954,7 @@ export class DemoBackend implements ClubBackend {
     if (!d) throw new ClubError('That event doesn’t exist');
     const problem = entryProblem(d.kind, d.rules, e.players, false);
     if (problem) throw new ClubError(problem);
-    this.regs().push({ id: newId(), tournamentId: e.tournamentId, divisionId: e.divisionId, clubId: e.clubId, source: 'offline', players: e.players, status: e.status, payment: e.payment, createdAt: new Date().toISOString() });
+    this.regs().push({ id: newId(), tournamentId: e.tournamentId, divisionId: e.divisionId, clubId: e.clubId, source: 'offline', players: e.players.map((p) => ({ ...p, email: cleanEmail(p.email) })), status: e.status, payment: e.payment, createdAt: new Date().toISOString() });
     this.save();
   }
 
@@ -975,7 +975,7 @@ export class DemoBackend implements ClubBackend {
       if (problem) { out.problems.push({ row: i + 1, error: problem }); return; }
       const taken = this.regs().filter((r) => r.divisionId === d.id && (r.status === 'pending' || r.status === 'accepted')).length;
       const status = d.rules?.cap !== undefined && taken >= d.rules.cap ? 'waitlist' : x.status;
-      this.regs().push({ id: newId(), tournamentId: t.id, divisionId: d.id, clubId: d.clubId, source: 'offline', players: x.players.map((p) => ({ ...p, name: p.name.trim(), phone: p.phone.trim() })), status, payment: x.payment, createdAt: new Date().toISOString() });
+      this.regs().push({ id: newId(), tournamentId: t.id, divisionId: d.id, clubId: d.clubId, source: 'offline', players: x.players.map((p) => ({ ...p, name: p.name.trim(), phone: p.phone.trim(), email: cleanEmail(p.email) })), status, payment: x.payment, createdAt: new Date().toISOString() });
       out.added++;
       if (status === 'waitlist') out.waitlisted++;
     });

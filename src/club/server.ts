@@ -2,15 +2,17 @@ import { cleanLog, cleanSession, logProblem, ratingProblem, sessionProblem, type
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
-import { ClubError, type SupportSession, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type ClaimEmailOutcome, type ClaimEmailStatus, type ClaimStatus, type SupportSession, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
 import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
-import type { DrawPlan } from './registration';
+import { cleanEmail, type DrawPlan } from './registration';
 import type { Approval, Club, ClubMatch, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 import { isApproved, NOT_APPROVED, PICK_NEEDS_TRUST } from './types';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
+/** Roster columns the app may read (claim_code is server-only since Module 4). */
+const PLAYER_COLS = 'id,club_id,name,dupr_singles,dupr_doubles,dupr_id,user_id,share,sample,created_at,claimed_at';
 const s = (v: unknown) => (v === null || v === undefined ? undefined : String(v));
 const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
 
@@ -18,7 +20,7 @@ const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city
   hosting: (s(r.hosting) as Club['hosting']) ?? undefined, hostingReason: s(r.hosting_reason), hostingPhone: s(r.hosting_phone), trusted: !!r.trusted });
 const toPlayer = (r: Row): ClubPlayer => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), duprSingles: n(r.dupr_singles), duprDoubles: n(r.dupr_doubles),
-  duprId: s(r.dupr_id), userId: s(r.user_id), claimCode: s(r.claim_code), share: (r.share as Share) ?? {}, sample: !!r.sample,
+  duprId: s(r.dupr_id), userId: s(r.user_id), claimedAt: s(r.claimed_at), share: (r.share as Share) ?? {}, sample: !!r.sample,
 });
 const toTournament = (r: Row): ClubTournament => ({
   id: String(r.id), clubId: String(r.club_id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time).slice(0, 5),
@@ -35,8 +37,8 @@ const toTestimonial = (r: Row): Testimonial => ({
 });
 const toRules = (r: Row): DivisionRules => ({ maxDupr: n(r.max_dupr), ...(r.dupr_cap === 'average' ? { duprCap: 'average' as const } : {}), gender: (r.gender as DivisionRules['gender']) ?? 'open', minAge: n(r.min_age), cap: n(r.cap), fee: n(r.fee) });
 const fromRules = (r?: DivisionRules): Row => ({ max_dupr: r?.maxDupr ?? null, dupr_cap: r?.duprCap === 'average' ? 'average' : 'each', gender: r?.gender ?? 'open', min_age: r?.minAge ?? null, cap: r?.cap ?? null, fee: r?.fee ?? null });
-const toPerson = (p: Row): EntryPerson => ({ name: String(p.name ?? ''), phone: String(p.phone ?? ''), duprId: s(p.duprId), dupr: n(p.dupr), gender: (p.gender as EntryPerson['gender']) ?? '', age: n(p.age), ...(p.adult === true ? { adult: true } : {}) });
-const fromPerson = (p: EntryPerson): Row => ({ name: p.name.trim(), phone: p.phone.trim(), duprId: p.duprId?.trim().toUpperCase() || '', dupr: p.dupr ?? null, gender: p.gender, age: p.age ?? null, ...(p.adult && p.age === undefined ? { adult: true } : {}) });
+const toPerson = (p: Row): EntryPerson => ({ name: String(p.name ?? ''), phone: String(p.phone ?? ''), ...(p.email ? { email: String(p.email) } : {}), duprId: s(p.duprId), dupr: n(p.dupr), gender: (p.gender as EntryPerson['gender']) ?? '', age: n(p.age), ...(p.adult === true ? { adult: true } : {}) });
+const fromPerson = (p: EntryPerson): Row => ({ name: p.name.trim(), phone: p.phone.trim(), ...(p.email?.trim() ? { email: p.email.trim().toLowerCase() } : {}), duprId: p.duprId?.trim().toUpperCase() || '', dupr: p.dupr ?? null, gender: p.gender, age: p.age ?? null, ...(p.adult && p.age === undefined ? { adult: true } : {}) });
 const toRegistration = (r: Row): Registration => ({
   id: String(r.id), tournamentId: String(r.tournament_id), divisionId: String(r.division_id), clubId: String(r.club_id), userId: s(r.user_id),
   source: r.source === 'offline' ? 'offline' : 'online', players: ((r.players as Row[]) ?? []).map(toPerson), status: r.status as Registration['status'],
@@ -257,6 +259,49 @@ export class ServerBackend implements ClubBackend {
   }
 
   async unclaimPlayer(playerId: string) { check(await this.sb.rpc('studio_unclaim', { p_player: playerId })); }
+
+  // ---------- Module 4: player emails and emailed claim links (organisers) ----------
+
+  /** Emails and email status for a tournament's players. Staff only (the tables' own rules). */
+  async claimStatus(tournamentId: string, playerIds: string[]): Promise<ClaimStatus> {
+    const [emails, log] = await Promise.all([
+      playerIds.length ? this.sb.from('club_player_emails').select('player_id,email').in('player_id', playerIds) : Promise.resolve({ data: [], error: null }),
+      this.sb.from('claim_email_log').select('player_id,status,sent_to,created_at').eq('tournament_id', tournamentId).order('created_at', { ascending: false }),
+    ]);
+    const out: ClaimStatus = { emails: {}, emailed: {} };
+    for (const r of (check(emails) as Row[] | null) ?? []) out.emails[String(r.player_id)] = String(r.email);
+    for (const r of (check(log) as Row[] | null) ?? []) {
+      const pid = String(r.player_id ?? '');
+      if (pid && !out.emailed[pid]) out.emailed[pid] = { status: r.status as ClaimEmailStatus, sentTo: String(r.sent_to), at: String(r.created_at) };
+    }
+    return out;
+  }
+
+  async setPlayerEmail(clubId: string, playerId: string, email: string | null) {
+    const e = email?.trim().toLowerCase() || null;
+    if (e && !cleanEmail(e)) throw new ClubError('That isn’t an email address');
+    if (e) check(await this.sb.from('club_player_emails').upsert({ player_id: playerId, club_id: clubId, email: e }));
+    else check(await this.sb.from('club_player_emails').delete().eq('player_id', playerId));
+  }
+
+  /** Sends the claim link by email (Edge Function send-claim-email, through Brevo) to players with an email. */
+  async emailClaimLinks(tournamentId: string, playerIds?: string[]): Promise<ClaimEmailOutcome> {
+    const { data, error } = await this.sb.functions.invoke('send-claim-email', { body: { tournament_id: tournamentId, player_ids: playerIds ?? null } });
+    if (error) {
+      const ctx = (error as { context?: Response }).context;
+      const status = ctx?.status;
+      const body = ctx && typeof ctx.json === 'function' ? await ctx.json().catch(() => null) as Row | null : null;
+      if (body?.error) throw new ClubError(String(body.error));
+      if (status === 404) throw new ClubError('Emailing results isn’t switched on yet. Send the links on WhatsApp for now.');
+      throw new ClubError('Emails didn’t go out just now. Check your internet and try again.');
+    }
+    const r = (data ?? {}) as Row;
+    if (r.error) throw new ClubError(String(r.error));
+    return { sent: Number(r.sent ?? 0), failed: Number(r.failed ?? 0), skipped: Number(r.skipped ?? 0), limited: !!r.limited, test: !!r.test };
+  }
+
+  /** Undo a Player Studio claim (the wrong person claimed). Logged. */
+  async unlinkPlayer(playerId: string) { check(await this.sb.rpc('staff_unlink_player', { p_player: playerId })); }
 
   /** The organiser's private claim link for one player (made on first ask, reused after). */
   async claimLink(playerId: string): Promise<{ claimed: true } | { claimed: false; token: string }> {
@@ -490,7 +535,7 @@ export class ServerBackend implements ClubBackend {
     const [club, members, players, tournaments, matches, summaries] = await Promise.all([
       this.sb.from('clubs').select('*').eq('id', clubId).single(),
       this.sb.from('club_members').select('user_id, role').eq('club_id', clubId),
-      this.sb.from('club_players').select('*').eq('club_id', clubId).order('name'),
+      this.sb.from('club_players').select(PLAYER_COLS).eq('club_id', clubId).order('name'),
       this.sb.from('tournaments').select('*').eq('club_id', clubId).order('start_date', { ascending: false }),
       this.sb.from('club_matches').select('*').eq('club_id', clubId),
       this.sb.from('shared_summaries').select('*').eq('club_id', clubId),
@@ -518,7 +563,7 @@ export class ServerBackend implements ClubBackend {
   }
 
   async addPlayer(clubId: string, p: { name: string; duprSingles?: number; duprDoubles?: number }) {
-    const row = check(await this.sb.from('club_players').insert({ club_id: clubId, name: p.name.trim(), dupr_singles: p.duprSingles ?? null, dupr_doubles: p.duprDoubles ?? null }).select('*').single()) as Row;
+    const row = check(await this.sb.from('club_players').insert({ club_id: clubId, name: p.name.trim(), dupr_singles: p.duprSingles ?? null, dupr_doubles: p.duprDoubles ?? null }).select(PLAYER_COLS).single()) as Row;
     return toPlayer(row);
   }
 
@@ -547,7 +592,7 @@ export class ServerBackend implements ClubBackend {
       throw new ClubError('A platform draft must use player registration without existing entries');
     }
     for (const d of input.divisions) { const e = checkDivisionSetup(d, input.listingOnly ? 'registration' : mode); if (e) throw new ClubError(e); }
-    const ps = input.platformDraft ? [] : (check(await this.sb.from('club_players').select('*').eq('club_id', input.clubId)) as Row[]).map(toPlayer);
+    const ps = input.platformDraft ? [] : (check(await this.sb.from('club_players').select(PLAYER_COLS).eq('club_id', input.clubId)) as Row[]).map(toPlayer);
     const rows = buildTournamentRows(input, new Map(ps.map((p) => [p.id, p])), newId);
     const t = rows.tournament;
     const tournament = {
@@ -599,7 +644,7 @@ export class ServerBackend implements ClubBackend {
       this.sb.from('divisions').select('*').eq('tournament_id', id).order('sort'),
       this.sb.from('entries').select('*, divisions!inner(tournament_id)').eq('divisions.tournament_id', id),
       this.sb.from('club_matches').select('*').eq('tournament_id', id),
-      this.sb.from('club_players').select('*').eq('club_id', t.clubId),
+      this.sb.from('club_players').select(PLAYER_COLS).eq('club_id', t.clubId),
     ]);
     return {
       club: toClub(check(club) as Row), role: (check(role) as Row).role as Role, tournament: t,
@@ -623,7 +668,7 @@ export class ServerBackend implements ClubBackend {
     const [club, role, players, t, d] = await Promise.all([
       this.sb.from('clubs').select('*').eq('id', m.clubId).single(),
       this.sb.from('club_members').select('role').eq('club_id', m.clubId).eq('user_id', uid).single(),
-      this.sb.from('club_players').select('*').eq('club_id', m.clubId),
+      this.sb.from('club_players').select(PLAYER_COLS).eq('club_id', m.clubId),
       m.tournamentId ? this.sb.from('tournaments').select('*').eq('id', m.tournamentId).maybeSingle() : Promise.resolve({ data: null, error: null }),
       m.divisionId ? this.sb.from('divisions').select('name').eq('id', m.divisionId).maybeSingle() : Promise.resolve({ data: null, error: null }),
     ]);
@@ -729,12 +774,12 @@ export class ServerBackend implements ClubBackend {
 
   async myClubMatches(): Promise<MyClubMatches[]> {
     const uid = await this.uid();
-    const mine = (check(await this.sb.from('club_players').select('*').eq('user_id', uid)) as Row[]).map(toPlayer);
+    const mine = (check(await this.sb.from('club_players').select(PLAYER_COLS).eq('user_id', uid)) as Row[]).map(toPlayer);
     const out: MyClubMatches[] = [];
     for (const p of mine) {
       const [club, players, tournaments, a, b] = await Promise.all([
         this.sb.from('clubs').select('*').eq('id', p.clubId).single(),
-        this.sb.from('club_players').select('*').eq('club_id', p.clubId),
+        this.sb.from('club_players').select(PLAYER_COLS).eq('club_id', p.clubId),
         this.sb.from('tournaments').select('*').eq('club_id', p.clubId),
         this.sb.from('club_matches').select('*').eq('club_id', p.clubId).eq('status', 'done').contains('side_a', [p.id]),
         this.sb.from('club_matches').select('*').eq('club_id', p.clubId).eq('status', 'done').contains('side_b', [p.id]),
@@ -861,6 +906,9 @@ export class ServerBackend implements ClubBackend {
     if (t.drawnAt) throw new ClubError('The draw is already made');
     if (!isApproved(t)) throw new ClubError(NOT_APPROVED);
     check(await this.sb.from('club_players').insert(plan.players.map((p) => ({ id: p.id, club_id: p.clubId, name: p.name, dupr_singles: p.duprSingles ?? null, dupr_doubles: p.duprDoubles ?? null, dupr_id: p.duprId ?? null }))));
+    // Emails live in their own table (staff and the player only), never on the roster.
+    const emails = plan.players.filter((p) => p.email).map((p) => ({ player_id: p.id, club_id: p.clubId, email: p.email! }));
+    if (emails.length) check(await this.sb.from('club_player_emails').insert(emails));
     if (plan.timing) check(await this.sb.from('tournaments').update({ courts: plan.timing.courts, slot_minutes: plan.timing.slotMinutes, start_time: plan.timing.startTime }).eq('id', tournamentId));
     for (const d of plan.divisions) check(await this.sb.from('divisions').update({ pools: d.pools, advance: d.advance, format: formatJson(d) }).eq('id', d.id));
     check(await this.sb.from('entries').insert(plan.entries.map((e) => ({ id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed ?? null, pool: e.pool ?? null }))));

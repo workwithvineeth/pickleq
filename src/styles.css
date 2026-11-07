@@ -663,3 +663,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 /* Key–value tables (row labels in the body): plain labels, not maroon column heads. */
 .pq-brand .table tbody th { background: transparent; color: var(--text); border-color: var(--border); text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 600; text-align: left; }
 .pq-studio .table td { text-align: right; }
+.pq-claim-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.pq-claim-row .meta { justify-content: flex-end; }
+@media (max-width: 420px) { .pq-claim-row { grid-template-columns: minmax(0, 1fr); } .pq-claim-row .meta { justify-content: flex-start; } }

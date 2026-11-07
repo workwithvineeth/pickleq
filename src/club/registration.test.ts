@@ -114,7 +114,7 @@ describe('Registration flow (demo backend, same rules as the server)', () => {
     const md = night.divisions.find((d) => d.name.startsWith('Men'))!;
     for (const r of regs.filter((x) => x.status === 'pending')) await b.updateRegistration(r.id, { status: 'accepted', payment: 'paid' });
     await expect(b.addOfflineEntry({ tournamentId: t.id, divisionId: md.id, clubId, players: [P('Walk', '', 'm', 15, 3), P('In', '', 'm', 40, 3)], status: 'accepted', payment: 'venue' })).rejects.toThrow(/18 or over/);
-    await b.addOfflineEntry({ tournamentId: t.id, divisionId: md.id, clubId, players: [P('Walk', '', 'm', 25, 3), P('In', '', 'm', 40, 3)], status: 'accepted', payment: 'venue' });
+    await b.addOfflineEntry({ tournamentId: t.id, divisionId: md.id, clubId, players: [{ ...P('Walk', '', 'm', 25, 3), email: ' Walk@Example.TEST ' }, P('In', '', 'm', 40, 3)], status: 'accepted', payment: 'venue' });
     const now = await b.registrations(t.id);
     const counts = inboxCounts(now.filter((r) => r.divisionId === md.id), 8);
     expect(counts.accepted).toBe(6);
@@ -124,6 +124,9 @@ describe('Registration flow (demo backend, same rules as the server)', () => {
     const plan = planDraw(tb.tournament, tb.divisions, now, [{ divisionId: md.id, pools: 2, advance: 1 }], () => crypto.randomUUID());
     if (typeof plan === 'string') throw new Error(plan);
     expect(plan.players).toHaveLength(12);
+    // The email goes with the player to the roster (cleaned); players without one have none.
+    expect(plan.players.find((p) => p.name === 'Walk')?.email).toBe('walk@example.test');
+    expect(plan.players.find((p) => p.name === 'In')?.email).toBeUndefined();
     expect(plan.entries).toHaveLength(6);
     expect(plan.matches).toHaveLength(6); // two pools of 3: 3 matches each
     expect(plan.links).toHaveLength(6);
@@ -160,5 +163,17 @@ describe('Registration flow (demo backend, same rules as the server)', () => {
     await b.decideTournament(id, true);
     expect((await b.tournamentBundle(id)).tournament.listingStatus).toBe('approved');
     expect(await b.publicEvent((await b.tournamentBundle(id)).tournament.publicSlug)).not.toBeNull();
+  });
+});
+
+describe('player emails', () => {
+  it('cleans an email, refuses a bad one on the form, and carries it to the roster at the draw', async () => {
+    const { cleanEmail } = await import('./registration');
+    expect(cleanEmail('  Asha@Example.TEST ')).toBe('asha@example.test');
+    expect(cleanEmail('asha@')).toBeUndefined();
+    expect(cleanEmail('')).toBeUndefined();
+    const p = { ...P('Asha Rao', '9000000001', 'f', 30), email: 'asha@' };
+    expect(entryProblem('singles', undefined, [p], true)).toBe('Asha Rao: check the email address');
+    expect(entryProblem('singles', undefined, [{ ...p, email: '' }], true)).toBeNull();
   });
 });

@@ -109,7 +109,7 @@ describe('Referee PIN and desk access (same rules as the server, club_mode_18)',
     expect(d.desk).toBe(true);
     expect(d.tournament.id).toBe(t.id);
     expect(d.club.inviteCode).toBe('');
-    expect(d.players.every((p) => p.claimCode === undefined && p.userId === undefined && p.duprId === undefined)).toBe(true);
+    expect(d.players.every((p) => !('claimCode' in p) && p.userId === undefined && p.duprId === undefined)).toBe(true);
     for (let i = 0; i < 5; i++) await expect(b.deskOpen(deskToken, '000000')).rejects.toThrow('Wrong desk PIN');
     await expect(b.deskOpen(deskToken, '583920')).rejects.toThrow(/Too many wrong PINs/);
     await b.setDeskPin(t.id, '583920');

@@ -180,6 +180,11 @@ export interface PublicEvent {
 }
 
 /** One of your own entries, with its tournament. */
+/** Module 4: what Results & DUPR shows next to each player for claim links. */
+export type ClaimEmailStatus = 'queued' | 'sent' | 'failed' | 'test';
+export interface ClaimStatus { emails: Record<string, string>; emailed: Record<string, { status: ClaimEmailStatus; sentTo: string; at: string }> }
+export interface ClaimEmailOutcome { sent: number; failed: number; skipped: number; limited: boolean; test: boolean }
+
 export interface MyEntry {
   id: string;
   status: RegistrationStatus;

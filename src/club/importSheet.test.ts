@@ -118,3 +118,24 @@ describe('booking-platform export (one row per player, doubles paired by booking
     expect(pairBookingRows(rows).booking).toBe(false);
   });
 });
+
+describe('player emails in imports', () => {
+  it('reads the form’s email column as the player’s email, and a partner email column as the partner’s', () => {
+    const rows = parseTable(['Timestamp,Email address,Event,Name,Phone,Partner name,Partner phone,Partner email',
+      '1/11/2026,Kabir@Example.TEST ,Doubles,Kabir Sharma,9844101234,Isha Desai,9844105678,isha@example.test',
+      '1/11/2026,not-an-email,Singles,Dev Nair,9844108888,,,'].join('\n'));
+    const { map } = guessColumns(rows[0]);
+    expect(map).toMatchObject({ email: 1, partnerEmail: 7, name: 3, phone: 4 });
+    const out = buildImport(rows, map, [{ ...div('Singles', 'singles'), rules: { gender: 'open' } }, { ...div('Doubles', 'doubles'), rules: { gender: 'open' } }], settings, []);
+    expect(out[0].players.map((p) => p.email)).toEqual(['kabir@example.test', 'isha@example.test']);
+    // A bad address is dropped, not a reason to leave the player out.
+    expect(out[1].players[0].email).toBeUndefined();
+    expect(out[1].problem).toBeUndefined();
+  });
+  it('keeps each booking player’s own email when pairing doubles', () => {
+    const paired = pairBookingRows(parseTable(['bookingId,ticketName,name,phone,email', 'BK-1,Open Doubles,Isha Desai,9844105678,i@example.test', 'BK-1,Open Doubles,Arjun Varma,9844109999,a@example.test'].join('\n')));
+    const { map } = guessColumns(paired.rows[0]);
+    const out = buildImport(paired.rows, map, [{ ...div('d', 'doubles'), rules: { gender: 'open' } }], { doubles: 'd', adults: true, status: 'accepted', payment: 'venue' }, []);
+    expect(out[0].players.map((p) => p.email)).toEqual(['i@example.test', 'a@example.test']);
+  });
+});

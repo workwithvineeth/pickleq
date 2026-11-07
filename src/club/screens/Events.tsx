@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import type { Go } from '../../navigation';
 import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backend';
 import { clubMode } from '../config';
 import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBackend } from '../index';
-import { blankPerson, capText, entryProblem, rulesLine, upiLink } from '../registration';
+import { blankPerson, capText, cleanEmail, entryProblem, rulesLine, upiLink } from '../registration';
 import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { OrganiserCard, PosterImage } from './Poster';
@@ -217,6 +217,7 @@ export function PersonFields({ p, onChange, label }: { p: EntryPerson; onChange:
       <legend className="label" style={{ padding: 0 }}>{label}</legend>
       <input className="input" aria-label={`${label} name`} placeholder="Full name" autoComplete={label === 'You' ? 'name' : 'off'} maxLength={60} value={p.name} onChange={(e) => set({ name: e.target.value })} />
       <input className="input" aria-label={`${label} phone`} placeholder="Phone (WhatsApp)" inputMode="tel" autoComplete={label === 'You' ? 'tel' : 'off'} maxLength={18} value={p.phone} onChange={(e) => set({ phone: e.target.value })} />
+      <input className="input" type="email" aria-label={`${label} email`} placeholder="Email for results (optional)" inputMode="email" autoComplete={label === 'You' ? 'email' : 'off'} maxLength={254} value={p.email ?? ''} onChange={(e) => set({ email: e.target.value })} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
         <input className="input" aria-label={`${label} DUPR rating`} placeholder="DUPR rating" inputMode="decimal" value={rating} onChange={(e) => { const v = e.target.value.replace(/[^\d.]/g, ''); setRating(v); set({ dupr: v === '' ? undefined : Number(v) }); }} />
         <input className="input" aria-label={`${label} DUPR ID`} placeholder="DUPR ID" autoCapitalize="characters" maxLength={20} value={p.duprId ?? ''} onChange={(e) => set({ duprId: e.target.value })} />
@@ -238,6 +239,9 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   }, [slug]);
   const [me, setMe] = useState<EntryPerson>(savedMe);
   const [partner, setPartner] = useState<EntryPerson>(blankPerson);
+  // Your sign-in email is the natural one for your results; you can change it.
+  const accountEmail = cleanEmail(state.data?.user?.email);
+  useEffect(() => { if (accountEmail) setMe((m) => (m.email?.trim() ? m : { ...m, email: accountEmail })); }, [accountEmail]);
   const [pay, setPay] = useState<'venue' | 'claimed' | 'unpaid'>('venue');
   const [ref, setRef] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
@@ -323,7 +327,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
           )}
         </section>
       )}
-      <p className="small muted" style={{ margin: 0 }}>Your names, phone numbers, ages and DUPR details go to the organiser for this tournament only. Everyone must be 18 or over.</p>
+      <p className="small muted" style={{ margin: 0 }}>Your names, phone numbers, emails, ages and DUPR details go to the organiser for this tournament only. Emails are used only to send you your results. Everyone must be 18 or over.</p>
       {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
       <button type="button" className="btn btn-primary" disabled={busy} onClick={submit}>Send my entry</button>
     </main>

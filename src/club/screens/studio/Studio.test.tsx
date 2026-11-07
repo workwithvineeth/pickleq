@@ -19,6 +19,10 @@ const fixture = vi.hoisted(() => ({
   claimPlayer: vi.fn(async () => undefined),
   claimLink: vi.fn(async () => ({ claimed: false, token: 'a'.repeat(64) })),
   myEntries: vi.fn(async () => []),
+  claimStatus: vi.fn(async () => ({ emails: { p1: 'me@example.test' } as Record<string, string>, emailed: {} })),
+  emailClaimLinks: vi.fn(async () => ({ sent: 1, failed: 0, skipped: 0, limited: false, test: false })),
+  setPlayerEmail: vi.fn(async () => undefined),
+  unlinkPlayer: vi.fn(async () => undefined),
   remember: vi.fn(),
 }));
 vi.mock('../../index', () => ({
@@ -172,13 +176,43 @@ describe('Claim', () => {
     expect(screen.queryByRole('button', { name: 'Claim my matches' })).not.toBeInTheDocument();
   });
 
-  it('lets organisers send each player their own claim link', async () => {
+  const links = (players = [{ id: 'p1', clubId: 'c', name: 'Fixture Me', share: {} }, { id: 'p2', clubId: 'c', name: 'Linked Player', userId: 'u9', claimedAt: '2026-11-02T00:00:00Z', share: {} }, { id: 'p3', clubId: 'c', name: 'No Email', share: {} }]) =>
+    render(<ClaimLinks tournamentId="t1" clubId="c" tournament="Fixture Open" players={players} />);
+
+  it('lets organisers send each player their own claim link on WhatsApp', async () => {
     Object.assign(navigator, { clipboard: { writeText: vi.fn(async () => undefined) } });
-    render(<ClaimLinks tournament="Fixture Open" players={[{ id: 'p1', clubId: 'c', name: 'Fixture Me', share: {} }, { id: 'p2', clubId: 'c', name: 'Linked Player', userId: 'u9', share: {} }]} />);
+    links();
     expect(screen.getByText('Claimed')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Send claim link to Fixture Me' }));
     await waitFor(() => expect(fixture.claimLink).toHaveBeenCalledWith('p1'));
     expect(await screen.findByRole('status')).toHaveTextContent('Fixture Me: Message copied');
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(expect.stringContaining(`#/club-claim/${'a'.repeat(64)}`));
+  });
+
+  it('emails results only to unclaimed players with an email, and says what happened', async () => {
+    links();
+    fireEvent.click(await screen.findByRole('button', { name: 'Email results to 1 player' }));
+    await waitFor(() => expect(fixture.emailClaimLinks).toHaveBeenCalledWith('t1', ['p1']));
+    expect(await screen.findByRole('status')).toHaveTextContent('Emailed 1 player.');
+    expect(screen.getByText('1 of 3 have an email. Emails come from hello@paddleq.in.')).toBeInTheDocument();
+  });
+
+  it('shows the reason when email isn’t switched on yet', async () => {
+    fixture.emailClaimLinks.mockRejectedValueOnce(new Error('Emailing results isn’t switched on yet. Send the links on WhatsApp for now.'));
+    links();
+    fireEvent.click(await screen.findByRole('button', { name: 'Email results to 1 player' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('isn’t switched on yet');
+  });
+
+  it('adds a missing email, and undoes a wrong claim', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    links();
+    fireEvent.click(await screen.findByRole('button', { name: 'Add email for No Email' }));
+    fireEvent.change(screen.getByLabelText('Email for No Email', { selector: 'input' }), { target: { value: 'new@example.test' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(fixture.setPlayerEmail).toHaveBeenCalledWith('c', 'p3', 'new@example.test'));
+    fireEvent.click(screen.getByRole('button', { name: 'Undo Linked Player’s claim' }));
+    await waitFor(() => expect(fixture.unlinkPlayer).toHaveBeenCalledWith('p2'));
+    expect(await screen.findByRole('button', { name: 'Send claim link to Linked Player' })).toBeInTheDocument();
   });
 });

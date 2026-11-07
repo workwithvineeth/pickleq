@@ -3,7 +3,7 @@
  * paste as tab-separated text). Columns are guessed from their headings; the organiser confirms the guess. Nothing here
  * talks to the server: it only turns the sheet into entries and lists the problems.
  */
-import { capText, entryProblem, personKey } from './registration';
+import { capText, cleanEmail, entryProblem, personKey } from './registration';
 import type { Division, EntryPerson, Payment, PlayerGender, Registration } from './types';
 
 /** Parses CSV (with "quoted, fields" and "" escapes) or tab-separated rows. Empty rows are dropped. */
@@ -43,7 +43,8 @@ export function pairBookingRows(rows: string[][]): { rows: string[][]; pairs: nu
   const ii = h.findIndex((x) => /dupr.*id|duprnumber/.test(x));
   const gi = col(/gender|sex/);
   const ai = h.findIndex((x) => /^age$|age\b/.test(x));
-  const extra = ['Partner name', 'Partner phone', 'Partner DUPR rating', 'Partner DUPR ID', 'Partner gender', 'Partner age'];
+  const ei = col(/e-?mail/);
+  const extra = ['Partner name', 'Partner phone', 'Partner DUPR rating', 'Partner DUPR ID', 'Partner gender', 'Partner age', 'Partner email'];
   const out: string[][] = [[...rows[0], ...extra]];
   const byBooking = new Map<string, string[][]>();
   const order: (string[] | string)[] = [];
@@ -63,16 +64,17 @@ export function pairBookingRows(rows: string[][]): { rows: string[][]; pairs: nu
       const a = group[k], b = group[k + 1];
       if (b) pairs++;
       const bPhone = pick(b, pi);
-      out.push([...a, pick(b, ni), bPhone && bPhone === pick(a, pi) ? '' : bPhone, pick(b, di), pick(b, ii), pick(b, gi), pick(b, ai)]);
+      const bEmail = pick(b, ei);
+      out.push([...a, pick(b, ni), bPhone && bPhone === pick(a, pi) ? '' : bPhone, pick(b, di), pick(b, ii), pick(b, gi), pick(b, ai), bEmail && bEmail === pick(a, ei) ? '' : bEmail]);
     }
   }
   return { rows: out, pairs, booking: true };
 }
 
-export type Field = 'kind' | 'name' | 'phone' | 'gender' | 'age' | 'dupr' | 'duprId' | 'partnerName' | 'partnerPhone' | 'partnerGender' | 'partnerAge' | 'partnerDupr' | 'partnerDuprId' | 'paid';
+export type Field = 'kind' | 'name' | 'phone' | 'email' | 'gender' | 'age' | 'dupr' | 'duprId' | 'partnerName' | 'partnerPhone' | 'partnerEmail' | 'partnerGender' | 'partnerAge' | 'partnerDupr' | 'partnerDuprId' | 'paid';
 export const FIELD_LABEL: Record<Field, string> = {
-  kind: 'Singles or doubles', name: 'Player name', phone: 'Player phone', gender: 'Player gender', age: 'Player age', dupr: 'Player DUPR rating', duprId: 'Player DUPR ID',
-  partnerName: 'Partner name', partnerPhone: 'Partner phone', partnerGender: 'Partner gender', partnerAge: 'Partner age', partnerDupr: 'Partner DUPR rating', partnerDuprId: 'Partner DUPR ID',
+  kind: 'Singles or doubles', name: 'Player name', phone: 'Player phone', email: 'Player email', gender: 'Player gender', age: 'Player age', dupr: 'Player DUPR rating', duprId: 'Player DUPR ID',
+  partnerName: 'Partner name', partnerPhone: 'Partner phone', partnerEmail: 'Partner email', partnerGender: 'Partner gender', partnerAge: 'Partner age', partnerDupr: 'Partner DUPR rating', partnerDuprId: 'Partner DUPR ID',
   paid: 'Paid (yes/no)',
 };
 export const FIELDS = Object.keys(FIELD_LABEL) as Field[];
@@ -82,7 +84,7 @@ export type Mapping = Record<Field, number>;
 const isPartner = (h: string) => /partner|player\s*2|2nd\s*player|second\s*player|team\s*-?mate|player\s*two/.test(h);
 const isIdCol = (h: string) => /\bid\b|dupr\s*(id|number|no\b)|player\s*id/.test(h);
 
-/** Guesses which column holds what, from the headings. Timestamp and email columns are ignored. */
+/** Guesses which column holds what, from the headings. Timestamp columns are ignored; an email column is the player's (or partner's) email. */
 export function guessMapping(header: string[]): Mapping {
   return guessColumns(header).map;
 }
@@ -100,12 +102,13 @@ export function guessColumns(header: string[]): { map: Mapping; alt: Partial<Map
   let side: 'player' | 'partner' = 'player';
   header.forEach((raw, i) => {
     const h = raw.toLowerCase().replace(/\s+/g, ' ').trim();
-    if (/time\s*stamp|^email|e-mail|email address/.test(h)) return;
+    if (/time\s*stamp/.test(h)) return;
     if (/source\s*sheet|sourcesheet|booking\s*id|bookingid|order\s*id|orderid/.test(h)) return;
     if (/ticket|event\s*name|eventname|tournament/.test(h)) return take('kind', i);
     if (isPartner(h)) side = 'partner';
     else if (/player\s*(1|one)\b|\(you\)|\byour?\b/.test(h)) side = 'player';
     const partner = isPartner(h) || (side === 'partner' && /\s[2-9]$/.test(h));
+    if (/e-?mail/.test(h)) return take(partner ? 'partnerEmail' : 'email', i);
     if (/singles|doubles|are you playing|category|event|format/.test(h) && !/name|phone|dupr/.test(h)) return take('kind', i);
     if (/dupr|rating/.test(h)) return take(isIdCol(h) ? (partner ? 'partnerDuprId' : 'duprId') : (partner ? 'partnerDupr' : 'dupr'), i);
     if (/phone|mobile|whats\s*app|contact\s*(no|number)|\bcell\b/.test(h)) return take(partner ? 'partnerPhone' : 'phone', i);
@@ -170,7 +173,7 @@ export function buildImport(rows: string[][], map: Mapping, divisions: Division[
       const age = num(f('age'));
       const rawGender = gender(f('gender'));
       return {
-        name: f('name').replace(/\s+/g, ' ').slice(0, 60), phone: phone(f('phone')), duprId: f('duprId').replace(/[^A-Za-z0-9-]/g, '') || undefined,
+        name: f('name').replace(/\s+/g, ' ').slice(0, 60), phone: phone(f('phone')), ...(cleanEmail(f('email')) ? { email: cleanEmail(f('email')) } : {}), duprId: f('duprId').replace(/[^A-Za-z0-9-]/g, '') || undefined,
         dupr: (() => { const d = num(f('dupr')); return d !== undefined && d >= 1 && d <= 8 ? d : undefined; })(),
         // Open events don't need a gender; "x" means not given.
         gender: rawGender || (div && (div.rules?.gender ?? 'open') === 'open' ? 'x' : ''),

@@ -111,6 +111,11 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Send my entry' }).click();
     await expect(page.getByRole('alert')).toContainText('18 or over');
     await page.getByRole('group', { name: 'Partner', exact: true }).getByLabel('Partner age').fill('27');
+    // Emails are optional, but a typo is caught before sending.
+    await page.getByRole('group', { name: 'Partner', exact: true }).getByLabel('Partner email').fill('robot.partner@');
+    await page.getByRole('button', { name: 'Send my entry' }).click();
+    await expect(page.getByRole('alert')).toContainText('Robot Partner: check the email address');
+    await page.getByRole('group', { name: 'Partner', exact: true }).getByLabel('Partner email').fill('robot.partner@example.test');
     await page.getByRole('button', { name: 'Send my entry' }).click();
     await expect(page.getByText(/You’re entered in Men’s Doubles 3.5/)).toBeVisible();
 

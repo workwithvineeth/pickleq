@@ -50,7 +50,10 @@ export interface ClubPlayer {
   /** The player's DUPR ID, needed to send results to DUPR. */
   duprId?: string;
   userId?: string;
-  claimCode?: string;
+  /** When the player claimed this entry in Player Studio. */
+  claimedAt?: string;
+  /** Contact email (staff only; stored separately from the roster). */
+  email?: string;
   share: Share;
   sample?: boolean;
 }
@@ -163,6 +166,8 @@ export type PlayerGender = 'm' | 'f' | 'x';
 /** One person on an entry form. Phone is needed for online entries; offline entries may leave it empty. */
 export interface EntryPerson {
   name: string; phone: string; duprId?: string; dupr?: number; gender: PlayerGender | ''; age?: number;
+  /** Optional; used to email the player their results and claim link. Only the club's staff and the player see it. */
+  email?: string;
   /** No age given, but the organiser confirmed the player is 18 or over (imported entries only). */
   adult?: boolean;
 }

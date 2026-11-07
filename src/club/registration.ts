@@ -5,6 +5,13 @@ import type { ClubPlayer, ClubTournament, Division, DivisionKind, DivisionRules,
 export const ADULT_AGE = 18;
 const PHONE = /^\+?[0-9][0-9 -]{7,15}$/;
 const DUPR_ID = /^[A-Za-z0-9-]{3,20}$/;
+/** Same rule as the server's clean_email. */
+const EMAIL = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/;
+/** An email as stored (trimmed, lower case), or undefined when blank or not an address. */
+export function cleanEmail(v: string | undefined): string | undefined {
+  const e = (v ?? '').trim().toLowerCase();
+  return e && e.length <= 254 && EMAIL.test(e) ? e : undefined;
+}
 
 export const digits = (phone: string) => phone.replace(/\D/g, '');
 
@@ -23,6 +30,7 @@ export function entryProblem(kind: DivisionKind, rules: DivisionRules | undefine
     if (name.length < 1 || name.length > 60) return `Player ${i + 1}: enter their name`;
     if ((needPhone || p.phone.trim()) && !PHONE.test(p.phone.trim())) return `${name}: enter a phone number`;
     if (p.duprId?.trim() && !DUPR_ID.test(p.duprId.trim())) return `${name}: a DUPR ID is 3 to 20 letters or numbers`;
+    if (p.email?.trim() && !cleanEmail(p.email)) return `${name}: check the email address`;
     if (p.dupr !== undefined && (!Number.isFinite(p.dupr) || p.dupr < 1 || p.dupr > 8)) return `${name}: DUPR rating is a number between 1 and 8`;
     if (!p.gender) return `${name}: choose a gender`;
     if (p.age === undefined && !needPhone && p.adult) {
@@ -166,9 +174,10 @@ export function planDraw(t0: ClubTournament, divisions: Division[], regs: Regist
           if (div.kind === 'singles' && p.dupr !== undefined && known.duprSingles === undefined) known.duprSingles = p.dupr;
           if (div.kind === 'doubles' && p.dupr !== undefined && known.duprDoubles === undefined) known.duprDoubles = p.dupr;
           if (!known.duprId && duprId) known.duprId = duprId;
+          if (!known.email && cleanEmail(p.email)) known.email = cleanEmail(p.email);
           return known.id;
         }
-        const pl: ClubPlayer = { id: newId(), clubId: t.clubId, name: p.name.trim(), duprSingles: div.kind === 'singles' ? p.dupr : undefined, duprDoubles: div.kind === 'doubles' ? p.dupr : undefined, duprId, share: {} };
+        const pl: ClubPlayer = { id: newId(), clubId: t.clubId, name: p.name.trim(), duprSingles: div.kind === 'singles' ? p.dupr : undefined, duprDoubles: div.kind === 'doubles' ? p.dupr : undefined, duprId, ...(cleanEmail(p.email) ? { email: cleanEmail(p.email) } : {}), share: {} };
         players.push(pl);
         pmap.set(pl.id, pl);
         byPerson.set(key, pl);
@@ -198,4 +207,4 @@ export function planDraw(t0: ClubTournament, divisions: Division[], regs: Regist
 }
 
 /** An empty person for entry forms. */
-export const blankPerson = (): EntryPerson => ({ name: '', phone: '', duprId: '', dupr: undefined, gender: '', age: undefined });
+export const blankPerson = (): EntryPerson => ({ name: '', phone: '', email: '', duprId: '', dupr: undefined, gender: '', age: undefined });

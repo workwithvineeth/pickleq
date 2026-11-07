@@ -22,7 +22,7 @@ describe('server results projection and saving', () => {
     expect(fake.rpc).toHaveBeenCalledWith('tournament_results_bundle', { p_tournament: 'event' });
     expect(d.role).toBe('player'); expect(d.club.inviteCode).toBe('');
     expect(d.players[0]).toMatchObject({ duprSingles: 3.125, duprDoubles: 4.25, duprId: 'ABC123' });
-    expect(d.players[0].claimCode).toBeUndefined(); expect(d.players[0].userId).toBeUndefined();
+    expect('claimCode' in d.players[0]).toBe(false); expect(d.players[0].userId).toBeUndefined();
   });
   it('rejects a zero-row save rather than reporting success', async () => {
     fake.select.mockResolvedValue({ error: null, data: [] });
