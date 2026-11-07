@@ -12,6 +12,7 @@ import { Card, Evidence, plural, Seg, today, type SectionProps } from './shared'
 import { StudioMatches } from './StudioMatches';
 import { drillNames, StudioTrain } from './StudioTrain';
 import { StudioCoach, StudioStats } from './StudioInsights';
+import { RecapShare } from './Recap';
 
 export const STUDIO_SECTIONS = [
   { id: 'home', label: 'Home' }, { id: 'matches', label: 'Matches' }, { id: 'train', label: 'Train' },
@@ -95,6 +96,7 @@ function StudioHome({ data, go }: SectionProps) {
         <button type="button" className="btn btn-outline" onClick={() => go('club-player-studio', 'log')}>Log a match</button>
       </div>
     </section>
+    {data.official.length > 0 && <RecapShare data={data} />}
     {!claimed && <Card title="Claim your tournament results">
       <p className="small" style={{ margin: 0 }}>Open the claim link your organiser sent you (on WhatsApp or by email). Your official matches then show up here, read-only.</p>
     </Card>}

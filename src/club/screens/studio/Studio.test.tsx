@@ -71,6 +71,16 @@ describe('Player Studio', () => {
     expect(go).toHaveBeenCalledWith('club-claim', 'p.p2');
   });
 
+  it('Home offers a shareable recap of the latest tournament (your results only)', async () => {
+    render(<PlayerStudio section="home" go={vi.fn()} />);
+    const card = await screen.findByRole('region', { name: 'Share your recap' });
+    expect(within(card).getByText('Champion · Singles')).toBeInTheDocument();
+    expect(within(card).getByText(/No partner, opponent, phone or email/)).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Share' })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Save image' })).toBeInTheDocument();
+    expect(within(card).queryByText(/Fixture Rival/)).not.toBeInTheDocument();
+  });
+
   it('shows official matches read-only, with the games', async () => {
     const go = vi.fn();
     const { rerender } = render(<PlayerStudio section="matches" go={go} />);

@@ -33,17 +33,18 @@ export function LandingHero() {
   );
 }
 
-/** The same welcome on a public results page: PaddleQ's brand for players and spectators, linking to paddleq.in. */
+/** PaddleQ's brand strip on results and live-score pages: compact, so the scores start on the first screen. Links to paddleq.in. */
 export function ResultsHero({ label = 'LIVE SCORES' }: { label?: string }) {
   return (
-      <a href="https://paddleq.in/" className="pq-hero pq-hero-results" aria-label={`PaddleQ: ${label === 'RESULTS' ? 'tournament results' : 'live scores'}. Run your club’s tournament at paddleq.in`} style={{ textDecoration: 'none' }}>
+    <a href="https://paddleq.in/" className="pq-hero pq-hero-results" aria-label={`PaddleQ: ${label === 'RESULTS' ? 'tournament results' : 'live scores'}. Run your club’s tournament at paddleq.in`} style={{ textDecoration: 'none' }}>
       <span aria-hidden="true" className="pq-court" />
       <span aria-hidden="true" className="pq-court-mid" />
-      <span aria-hidden="true" className="pq-court-line" />
-      <BrandMark size={84} />
-      <span className="pq-wordmark" style={{ display: 'block' }}>PaddleQ</span>
-      <span className="pq-caption" style={{ display: 'block' }}>{CAPTION}</span>
-        <span className="pq-live-chip" style={{ display: 'inline-block', marginTop: 10, padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(243,235,221,.5)', color: '#F3EBDD', fontSize: 13, fontWeight: 600, letterSpacing: '.04em' }}>● {label}</span>
+      <BrandMark size={52} />
+      <span className="pq-hero-words">
+        <span className="pq-wordmark">PaddleQ</span>
+        <span className="pq-caption">{CAPTION}</span>
+      </span>
+      <span className="pq-live-chip">● {label}</span>
     </a>
   );
 }

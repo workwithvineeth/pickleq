@@ -82,10 +82,11 @@ export default function ClubApp() {
   const showNav = !!tab || !NO_ACCOUNT.includes(name);
   const current = tab ?? (name === 'club-claim' ? 'club-player-studio' : name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
   // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
-  if (route.name === 'home') return <Landing go={clubGo} />;
+  if (route.name === 'home') return <><StagingStrip /><Landing go={clubGo} /></>;
   return (
     <div className={`app pq-brand${showNav ? ' has-side' : ''}`}>
       {/* At the top of the page, never floating over the sign-in form or the main buttons; no "works offline" popup. */}
+      <StagingStrip />
       <UpdatePrompt offlineNotice={false} inline />
       <AccountStrip route={name} go={clubGo} />
       <SupportBanner route={name} />
@@ -106,4 +107,9 @@ export default function ClubApp() {
       )}
     </div>
   );
+}
+
+/** The staging site (VITE_STAGING=on) says so on every screen, so it's never mistaken for the live site. */
+function StagingStrip() {
+  return import.meta.env.VITE_STAGING === 'on' ? <p className="pq-staging" role="note">Staging site: test data only. Nothing here is real or live.</p> : null;
 }

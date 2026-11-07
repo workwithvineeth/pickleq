@@ -28,7 +28,9 @@ export function UpdatePrompt({ offlineNotice = true, inline = false }: { offline
     const worker = navigator.serviceWorker;
     // Club workers activate immediately. Keep the open page's update button visible even after activation.
     // Let the organiser choose when to reload so scoring and unsaved edits are preserved.
-    const ready = () => setNeedRefresh(true);
+    // On a first visit the worker takes control of a page it didn't control yet: that's not an update, so say nothing.
+    let hadController = !!worker.controller;
+    const ready = () => { if (hadController) setNeedRefresh(true); hadController = true; };
     worker.addEventListener('controllerchange', ready);
     return () => worker.removeEventListener('controllerchange', ready);
   }, [setNeedRefresh]);

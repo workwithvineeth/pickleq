@@ -8,9 +8,19 @@ afterEach(() => { pwaMockState.needRefresh = false; pwaMockState.offlineReady = 
 describe('UpdatePrompt', () => {
   it('offers an explicit update after a club worker activates without reloading unsaved work', () => {
     vi.stubEnv('VITE_CLUB_APP', 'on');
-    const worker = new EventTarget();
+    const worker = Object.assign(new EventTarget(), { controller: {} });
     vi.stubGlobal('navigator', { serviceWorker: worker });
     render(<UpdatePrompt offlineNotice={false} inline />);
+    expect(screen.queryByRole('button', { name: 'Update' })).not.toBeInTheDocument();
+    act(() => { worker.dispatchEvent(new Event('controllerchange')); });
+    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+  });
+  it('a first visit (the worker takes control for the first time) is not an update: no banner', () => {
+    vi.stubEnv('VITE_CLUB_APP', 'on');
+    const worker = Object.assign(new EventTarget(), { controller: null });
+    vi.stubGlobal('navigator', { serviceWorker: worker });
+    render(<UpdatePrompt offlineNotice={false} inline />);
+    act(() => { worker.dispatchEvent(new Event('controllerchange')); });
     expect(screen.queryByRole('button', { name: 'Update' })).not.toBeInTheDocument();
     act(() => { worker.dispatchEvent(new Event('controllerchange')); });
     expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();

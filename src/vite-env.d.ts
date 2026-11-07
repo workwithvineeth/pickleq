@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_DB_NAME?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_KEY?: string;
+  /** 'on' for the staging site (paddleq-staging database, fictional data): shows a strip so it's never mistaken for live. */
+  readonly VITE_STAGING?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;

@@ -19,7 +19,7 @@ export const ACCOUNTS = {
   member: { email: 'member@example.com', name: 'Diya Menon' },
 } as const;
 export const REFEREE_PIN = '4826';
-export const DESK_PIN = '7391';
+export const DESK_PIN = '739158';
 
 class Mem {
   private m = new Map<string, string>();
