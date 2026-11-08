@@ -260,7 +260,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
         <span style={{ display: 'block' }}>{m.namesB.join(' / ')}</span>
         <span className="small muted">{[m.slot !== undefined ? slotTime(t.startTime, m.slot, t.slotMinutes) : '', !view.court && (!pick || grpNow) && m.court ? `Court ${m.court}` : '', m.division, m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].filter(Boolean).join(' · ')}</span>
       </span>
-      <span className="small" style={{ textAlign: 'right' }}>{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : ''} <span className={m.status === 'live' ? 'pill pill-warn' : 'pill'}>{cta}</span></span>
+      <span className="small pq-score" style={{ textAlign: 'right' }}>{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : ''} <span className={m.status === 'live' ? 'pill pill-warn' : 'pill'}>{cta}</span></span>
     </button>
   );
   return (
@@ -283,7 +283,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
           {done.map((m) => (
             <div key={m.id} className="match-row">
               <span style={{ flex: 1 }}><span style={{ display: 'block', fontWeight: m.winner === 'A' ? 600 : 400 }}>{m.namesA.join(' / ')}</span><span style={{ display: 'block', fontWeight: m.winner === 'B' ? 600 : 400 }}>{m.namesB.join(' / ')}</span></span>
-              <span className="small">{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : 'Walkover'}</span>
+              <span className="small pq-score">{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : 'Walkover'}</span>
             </div>
           ))}
         </section>
@@ -358,7 +358,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
                   <div className="small muted">{matchLabel(m, d)}{m.slot !== undefined ? ` · ${slotTime(t.startTime, m.slot, t.slotMinutes)}` : ''}</div>
                   <div style={{ fontWeight: 600 }}>{names(m.sideA, pmap)}</div>
                   <div style={{ fontWeight: 600 }}>{names(m.sideB, pmap)}</div>
-                  {m.games.length > 0 && <div className="small">{m.games.map((g) => `${g.a}–${g.b}`).join(', ')}</div>}
+                  {m.games.length > 0 && <div className="small pq-score">{m.games.map((g) => `${g.a}–${g.b}`).join(', ')}</div>}
                   <div className="small muted">{formatRule(m.format)}</div>
                   {entering === m.id
                     ? <ManualScores format={m.format} nameA={names(m.sideA, pmap)} nameB={names(m.sideB, pmap)} busy={busy} onSave={(g) => saveFinal(m, g)} onCancel={() => setEntering(null)} />

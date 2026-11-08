@@ -67,7 +67,7 @@ function MatchLine({ m, players, onOpen }: { m: ClubMatch; players: Map<string, 
         <span style={{ display: 'block', fontWeight: m.winner === 'B' ? 600 : 400 }}>{names(m.sideB, players)}</span>
         <span className="small muted">{m.playedOn ?? ''}{m.stage !== 'friendly' ? ` · ${STAGE_LABEL[m.stage]}` : ''}</span>
       </span>
-      <span className="small" style={{ textAlign: 'right' }}>
+      <span className="small pq-score" style={{ textAlign: 'right' }}>
         {m.status === 'done' ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : m.status === 'live' ? <span className="pill pill-warn">Live {r.pointsA + r.pointsB > 0 ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : ''}</span> : <span className="pill">To play</span>}
       </span>
     </>

@@ -511,7 +511,7 @@ function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; 
         <span style={{ display: 'block', fontWeight: winner === 'B' ? 600 : 400 }}>{b}</span>
         <span className="small muted">{where}</span>
       </span>
-      <span className="small" style={{ textAlign: 'right' }}>
+      <span className="small pq-score" style={{ textAlign: 'right' }}>
         {m.status === 'void' ? <span className="pill">Cancelled</span> : m.status === 'done' && !m.entryB && !m.sideB.length && m.stage !== 'pool' ? 'Through (bye)' : m.status === 'done' && !m.games.length ? 'Walkover' : m.status === 'done' ? score : m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : onScore ? <span className="pill">Score</span> : <span className="pill">To play</span>}
       </span>
     </>
@@ -572,7 +572,7 @@ function MyMatches({ d }: { d: PublicTournament }) {
             <span style={{ display: 'block', fontWeight: 600 }}>vs {m.opponent}</span>
             <span className="small muted">{m.event}{m.court ? ` · Court ${m.court}` : ''}{m.time && m.status !== 'done' ? ` · ${m.time}` : ''}</span>
           </span>
-          <span className="small" style={{ textAlign: 'right' }}>
+          <span className="small pq-score" style={{ textAlign: 'right' }}>
             {m.status === 'done' ? <><span className={`pill${m.won ? ' pill-ok' : ''}`}>{m.won ? 'Won' : 'Lost'}</span> {m.score}</> : m.status === 'live' ? <span className="pill pill-warn">Live {m.score}</span> : <span className="pill">To play</span>}
           </span>
         </div>
@@ -689,7 +689,7 @@ function GroupedMatches({ d, divisionId }: { d: PublicTournament; divisionId: st
           <span style={{ display: 'block', fontWeight: m.winner === 'B' ? 700 : 400 }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
           {m.court ? <span className="small muted">Court {m.court}</span> : null}
         </span>
-        {m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : m.status === 'done' ? <span className="small" style={{ fontWeight: 600 }}>{score || 'Walkover'}</span> : <span className="pill">To play</span>}
+        {m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : m.status === 'done' ? <span className="small pq-score">{score || 'Walkover'}</span> : <span className="pill">To play</span>}
       </div>
     );
   };
