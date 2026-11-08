@@ -58,8 +58,8 @@ robot:
     - PQ_BASE=http://localhost:4173/pickleq/club/preview/ npx playwright test || (node summary.mjs results.json; exit 1)
     - node summary.mjs results.json
   artifacts:
-    when: on_failure
-    expire_in: 7 days
+    when: always
+    expire_in: 30 days
     paths: [e2e/test-results/, e2e/playwright-report/, e2e/results.json, preview.log]
 
 # STAGING ONLY: fills the paddleq-staging Supabase project (xlviuobtfszwfmnwcjjr) with every migration and the fictional

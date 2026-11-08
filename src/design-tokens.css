@@ -1,0 +1,65 @@
+/* PaddleQ design tokens · Maroon & Cream · v1 (9 Nov 2026)
+   Source: brand-guide.md (31 Oct) + liquid-glass round (9 Nov). Sign-off: Vineeth. */
+:root{
+  /* Semantic roles supplement the supplied reference palette. */
+  --pq-bg:var(--pq-cream); --pq-maroon-ui:var(--pq-maroon); --pq-maroon-text:var(--pq-maroon);
+  --pq-surface-raised:#EADFD0; --pq-tint:var(--pq-maroon-tint); --pq-error-text:var(--pq-error);
+  /* brand */
+  --pq-maroon:#7A1F2B; --pq-maroon-hi:#9B2E3E; --pq-maroon-lo:#5E1520;
+  --pq-cream:#F3EBDD; --pq-surface:#FFFDF8; --pq-ink:#1E1A17; --pq-muted:#6B625A;
+  --pq-line:#E4D9C8; --pq-maroon-light:#C9A9AE; --pq-maroon-tint:#F6E6E8;
+  /* signals: use sparingly */
+  --pq-ball:#D9F24A;      /* LIVE only: live dot, serve dot */
+  --pq-gold:#B8862B;      /* winners only: champions, game point, golden point */
+  --pq-gold-text:#8A6214; /* gold text on cream */
+  --pq-court:#2E6B45;     /* courts, seat maps, imagery; never buttons */
+  --pq-error:#C0392B;     /* field errors only */
+  --pq-on-maroon-muted:#E9CBCF; --pq-on-maroon-soft:#EAD8D2;
+  --pq-night:#1A0B0E;     /* hero / stream backgrounds */
+  /* type */
+  --pq-font-display:'Fraunces',Georgia,serif;           /* 600; italic 500 for emphasis */
+  --pq-font-score:'Archivo',system-ui,sans-serif;       /* font-stretch:68%; weight 800; tabular-nums */
+  --pq-font-body:'DM Sans',system-ui,sans-serif;        /* 400/500/700; labels = 700, tracked caps .16em */
+  /* shape */
+  --pq-radius-card:26px; --pq-radius-pill:999px; --pq-tap:44px;
+  /* liquid glass (light) */
+  --pq-glass-1:rgba(255,253,248,.74); --pq-glass-2:rgba(255,253,248,.40);
+  --pq-glass-blur:26px; --pq-glass-sat:175%;
+  --pq-glass-edge:rgba(255,255,255,.85); --pq-glass-shadow:rgba(70,12,22,.28); --pq-glass-inner:rgba(122,31,43,.10);
+}
+@media (prefers-color-scheme:dark){:root{
+  --pq-bg:#120709; --pq-surface:#30141B; --pq-surface-raised:#3C1C24; --pq-line:#65414A; --pq-tint:#4A2A2F; --pq-error-text:#F2B8B5; --pq-maroon-ui:#C25A68; --pq-maroon-text:#E79AA5; --pq-ink:#F3EBDD; --pq-muted:#BCAEA2;
+  --pq-glass-1:rgba(48,20,27,.62); --pq-glass-2:rgba(30,12,17,.38); --pq-glass-edge:rgba(255,255,255,.22); --pq-glass-shadow:rgba(0,0,0,.5);
+}}
+/* liquid glass panel */
+.pq-glass{position:relative;border-radius:var(--pq-radius-card);background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2));
+  -webkit-backdrop-filter:blur(var(--pq-glass-blur)) saturate(var(--pq-glass-sat));backdrop-filter:blur(var(--pq-glass-blur)) saturate(var(--pq-glass-sat));
+  box-shadow:inset 0 1px 1px var(--pq-glass-edge),inset 0 -14px 34px -16px var(--pq-glass-inner),0 24px 50px -26px var(--pq-glass-shadow)}
+.pq-glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.08) 34%,rgba(255,255,255,0) 60%,rgba(255,255,255,.55));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+/* primary button */
+.pq-btn{min-height:var(--pq-tap);border-radius:var(--pq-radius-pill);padding:0 24px;font:700 14px var(--pq-font-body);color:var(--pq-cream);border:0;
+  background:linear-gradient(180deg,var(--pq-maroon-hi),var(--pq-maroon) 55%,var(--pq-maroon-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -3px 8px rgba(0,0,0,.22)}
+/* score numerals */
+.pq-score{font-family:var(--pq-font-score);font-stretch:68%;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* Filled brand surfaces keep cream text: the lifted dark UI token is for outlines.
+   Use maroon-text for text on dark surfaces to retain readable contrast. */
+.pq-btn { display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+.pq-btn:focus-visible, .pq-chip:focus-visible { outline:3px solid var(--pq-maroon-text); outline-offset:3px; }
+.pq-btn:disabled, .pq-chip:disabled { opacity:.55; cursor:default; }
+.pq-chip { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:var(--pq-tap); min-width:var(--pq-tap); padding:6px 14px; border:1px solid var(--pq-line); border-radius:var(--pq-radius-pill); background:var(--pq-surface); color:var(--pq-ink); font:500 14px var(--pq-font-body); }
+.pq-chip[aria-pressed='true'] { background:var(--pq-maroon); border-color:var(--pq-maroon); color:var(--pq-cream); }
+.pq-live-dot { display:inline-block; flex:none; width:8px; height:8px; border-radius:50%; background:var(--pq-ball); box-shadow:0 0 0 2px var(--pq-maroon); }
+/* Plain glass is available explicitly for low-end devices. No hardware probing
+   or animation is needed; unsupported blur also gets an opaque surface. */
+.pq-glass-plain, [data-pq-effects='off'] .pq-glass { background:var(--pq-surface); -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none; }
+.pq-glass-plain::before, [data-pq-effects='off'] .pq-glass::before { display:none; }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .pq-glass { background:var(--pq-surface); }
+}
+@media (prefers-reduced-motion:reduce), (prefers-reduced-transparency:reduce), (update:slow) {
+  .pq-glass { background:var(--pq-surface); -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none; }
+  .pq-glass::before { display:none; }
+}

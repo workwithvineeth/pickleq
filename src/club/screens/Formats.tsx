@@ -124,7 +124,7 @@ export function DayEstimateBox({ events, courts, slotMinutes, startTime, finishB
   const longGames = events.some((e) => e.entries >= 2) && slotMinutes < 30 && usable.length > 0;
   if (!usable.length) return <p className="small muted" style={{ margin: 0 }}>The time estimate appears once an event has 2 or more entries.</p>;
   return (
-    <section className={`card section`} aria-label="Time estimate" style={{ borderLeft: `4px solid ${late ? 'var(--bad, #b3261e)' : 'var(--ok, #2f6b3a)'}` }}>
+    <section className={`card section`} aria-label="Time estimate" style={{ borderLeft: `4px solid ${late ? 'var(--pq-error-text)' : 'var(--pq-court)'}` }}>
       <b>About {est.matches} matches · finishes around {clockText(est.endMinutes)} on {courts} {courts === 1 ? 'court' : 'courts'}</b>
       <p className="small muted" style={{ margin: 0 }}>From {clockText(minutesOf(startTime))}, {slotMinutes} minutes a match. Only a guide: it assumes different players in each event and no delays.</p>
       <Field label="Finish by (optional)"><input className="input" type="time" aria-label="Finish by" value={finishBy} onChange={(e) => onFinishBy(e.target.value)} /></Field>

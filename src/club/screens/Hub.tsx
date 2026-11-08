@@ -252,7 +252,7 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
     <section className="pq-next" aria-label="Next tournament">
       <div className="pq-row-split">
         <span className="pq-next-kicker">{t.status === 'live' ? 'LIVE NOW' : 'NEXT TOURNAMENT'}</span>
-        <span className="small" style={{ color: '#EAD8D2' }}>{n.club}</span>
+        <span className="small" style={{ color: 'var(--pq-on-maroon-soft)' }}>{n.club}</span>
       </div>
       <div>
         <h2>{t.name}</h2>
