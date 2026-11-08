@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
 /// <reference types="vitest/config" />
 import { readFileSync } from 'node:fs';
@@ -11,12 +12,15 @@ import { VitePWA } from 'vite-plugin-pwa';
  * the dev server needs inline scripts.
  */
 export function cspFor(clubServer?: string): string {
+  const script = readFileSync(new URL('./index.html', import.meta.url), 'utf8').match(/<script id="pq-theme-init">([\s\S]*?)<\/script>/)?.[1];
+  if (!script) throw new Error('Theme bootstrap missing');
+  const hash = createHash('sha256').update(script).digest('base64');
   // Club mode talks to its own server (and its live-update socket) only on the Club test site.
   // …and, when an organiser picks a password, HaveIBeenPwned's range API (only 5 hash characters are sent).
   const club = clubServer ? ` ${clubServer} ${clubServer.replace(/^https:/, 'wss:')} https://api.pwnedpasswords.com` : '';
   return [
     "default-src 'self'",
-    "script-src 'self' https://www.youtube.com https://s.ytimg.com",
+    "script-src 'self' 'sha256-" + hash + "' https://www.youtube.com https://s.ytimg.com",
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: https://i.ytimg.com${clubServer ? ` ${clubServer}` : ''}`,
     "font-src 'self' data:",
