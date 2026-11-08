@@ -19,6 +19,11 @@ describe('truthful live court chip', () => {
     hidden = false; await act(async () => { document.dispatchEvent(new Event('visibilitychange')); }); expect(result.current.count).toBe(0);
     unmount(); expect(vi.getTimerCount()).toBe(0);
   });
+  it('discovers play starting in a public draft without a route change', async () => {
+    vi.useFakeTimers(); tournament.mockResolvedValueOnce({ ...score, status: 'draft' }).mockResolvedValueOnce(score);
+    const { result } = renderHook(() => useLiveBadge('public-draft', true)); await act(async () => {}); expect(result.current.count).toBe(0);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30000); }); expect(result.current.count).toBe(2);
+  });
   it('makes no global count request when a club has no public live event', async () => {
     const { result } = renderHook(() => useLiveBadge(undefined, true)); await act(async () => {});
     expect(result.current.count).toBe(0); expect(events).not.toHaveBeenCalled(); expect(tournament).not.toHaveBeenCalled();

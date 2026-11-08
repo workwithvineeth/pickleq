@@ -163,7 +163,7 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
   if (kind === 'admin' && !admin) g.groups = [];
   const active = activeKey(kind, route);
   const current = c.tournaments?.find((x) => x.id === c.tournamentId);
-  const live = useLiveBadge(current?.isPublic && current.status === 'live' ? current.publicSlug : undefined, kind === 'club');
+  const live = useLiveBadge(current?.isPublic ? current.publicSlug : undefined, kind === 'club');
   const open = (i: Item) => { if (i.to) go(i.to[0], i.to[1]); };
   return (
     <>

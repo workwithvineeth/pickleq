@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkspaceNav } from './Workspace';
-const { bundle } = vi.hoisted(() => ({ bundle: vi.fn() }));
+const { bundle, publicRead } = vi.hoisted(() => ({ bundle: vi.fn(), publicRead: vi.fn() }));
 vi.mock('../club/index', () => {
-  const backend = { clubBundle: bundle, currentUser: async () => ({ email: 'alex@example.test' }), publicTournament: async () => null, publicEvents: async () => [], signOut: vi.fn() };
+  const backend = { clubBundle: bundle, currentUser: async () => ({ email: 'alex@example.test' }), publicTournament: publicRead, publicEvents: async () => [], signOut: vi.fn() };
   return { backend: () => backend, eventsBackend: () => backend };
 });
-beforeEach(() => { sessionStorage.clear(); });
+beforeEach(() => { sessionStorage.clear(); publicRead.mockResolvedValue(null); });
 afterEach(() => { vi.clearAllMocks(); });
 describe('workspace permissions and routes', () => {
   it('keeps members limited to overview, tournaments and people', async () => {
@@ -22,6 +22,11 @@ describe('workspace permissions and routes', () => {
     const go = vi.fn(); bundle.mockResolvedValue({ club: { id: 'c', name: 'Cedar Paddle Club' }, role: 'owner', tournaments: [] });
     render(<WorkspaceNav kind="club" route={{ name: 'club-view', id: 'c' }} go={go} admin={false} />); await act(async () => {});
     fireEvent.click(screen.getAllByRole('button', { name: 'Create tournament' })[0]); expect(go).toHaveBeenCalledWith('club-tournament-new', 'c');
+  });
+  it('subscribes to a public draft so the chip can appear when play starts remotely', async () => {
+    bundle.mockResolvedValue({ club: { id: 'c', name: 'Cedar Paddle Club' }, role: 'owner', tournaments: [{ id: 't', name: 'Tomorrow Open', startDate: '9999-01-01', status: 'draft', isPublic: true, publicSlug: 'public-draft' }] });
+    render(<WorkspaceNav kind="club" route={{ name: 'club-view', id: 'c' }} go={vi.fn()} admin={false} />); await act(async () => {});
+    expect(publicRead).toHaveBeenCalledWith('public-draft');
   });
   it('does not reveal admin sections before admin permission is known', async () => {
     render(<WorkspaceNav kind="admin" route={{ name: 'admin', id: 'overview' }} go={vi.fn()} admin={false} />); await act(async () => {});
