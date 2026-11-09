@@ -69,6 +69,8 @@ export default defineConfig(({ mode }) => {
   return {
     base,
     define: {
+      // One home showcase setting; ON for staging, OFF by default elsewhere.
+      __HOME_SHOWCASE__: JSON.stringify((env.VITE_HOME_SHOWCASE ?? (env.VITE_STAGING === 'on' ? 'on' : 'off')) === 'on'),
       __APP_VERSION__: JSON.stringify(pkg.version),
       // Short build code shown in Settings, so you can tell whether a phone has the latest version.
       __BUILD_ID__: JSON.stringify(buildId()),

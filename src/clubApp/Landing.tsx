@@ -1,216 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Go } from '../navigation';
-import { eventsBackend, serverBackend } from '../club/index';
-import { inLaunchCity } from '../club/config';
-import type { PublicEvent } from '../club/backend';
-import { PosterImage } from '../club/screens/Poster';
-import { useLoad } from '../club/screens/common';
-
-/**
- * The public home page at paddleq.in for visitors who aren't signed in (signed-in people go straight to My clubs).
- * Everything on it is real: upcoming events, live tournaments, recent results and club names come from the board.
- * A section with nothing to show is left out. No invented numbers or quotes.
- */
-export function Landing({ go }: { go: Go }) {
-  const [checked, setChecked] = useState(false);
-  const goRef = useRef(go);
-  goRef.current = go;
-  useEffect(() => {
-    let on = true;
-    eventsBackend().currentUser().then((u) => {
-      if (!on) return;
-      if (u) goRef.current('club', undefined, { replace: true });
-      else setChecked(true);
-    }, () => { if (on) setChecked(true); });
-    return () => { on = false; };
-  }, []);
-  const state = useLoad(async () => {
-    const server = serverBackend();
-    if (!server) return { live: [], upcoming: [], past: [] };
-    const [events, past] = await Promise.all([server.publicEvents().catch(() => []), server.recentResults().catch(() => [])]);
-    const sorted = events.filter((e) => inLaunchCity(e.city)).sort((a, b) => a.startDate.localeCompare(b.startDate) || a.startTime.localeCompare(b.startTime));
-    return { live: sorted.filter((e) => e.status === 'live'), upcoming: sorted.filter((e) => e.status !== 'live').slice(0, 6), past: past.filter((e) => inLaunchCity(e.city)).slice(0, 4) };
-  }, []);
-  useEffect(() => {
-    const prev = document.title;
-    document.title = 'PaddleQ · Pickleball tournaments, live scores and results in Hyderabad';
-    return () => { document.title = prev; };
-  }, []);
-  if (!checked) return <div className="pq-landing" aria-busy="true" />;
-  const d = state.data;
-  const live = d?.live ?? [];
-  const upcoming = d?.upcoming ?? [];
-  const past = d?.past ?? [];
-  const clubs = [...new Set([...live, ...upcoming, ...past].map((e) => e.club).filter(Boolean))].slice(0, 8);
-  const feature = live[0] ?? upcoming[0];
-  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  return (
-    <div className="pq-landing">
-      <header className="pq-l-top">
-        <div className="pq-l-wrap pq-l-top-row">
-          <button type="button" className="pq-l-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="PaddleQ home">
-            <img src={`${import.meta.env.BASE_URL}icons/club.svg`} alt="" width={40} height={40} />
-            <span>PaddleQ</span>
-          </button>
-          <nav aria-label="Site" className="pq-l-nav">
-            <button type="button" onClick={() => go('events')}>Events</button>
-            <button type="button" onClick={() => scrollTo('results')}>Results</button>
-            <button type="button" onClick={() => scrollTo('studio')}>Player Studio</button>
-            <button type="button" onClick={() => scrollTo('clubs')}>For clubs</button>
-          </nav>
-          <button type="button" className="pq-l-btn pq-l-btn-outline pq-l-signin" onClick={() => go('club-signin')}>Sign in</button>
-        </div>
-      </header>
-
-      <main>
-        <section className="pq-l-wrap pq-l-hero" aria-labelledby="pq-l-title">
-          <div className="pq-l-hero-text">
-            <span className="pq-l-kicker">HYDERABAD PICKLEBALL</span>
-            <h1 id="pq-l-title">Every tournament, every result, in one place.</h1>
-            <p className="pq-l-lead">Find your next event and enter in a minute. Follow live scores court by court. Keep your results and practice diary in Player Studio. Free for players.</p>
-            <div className="pq-l-actions">
-              <button type="button" className="pq-l-btn pq-l-btn-primary" onClick={() => go('events')}>Find a tournament</button>
-              <button type="button" className="pq-l-btn pq-l-btn-outline" onClick={() => scrollTo('clubs')}>Run your tournament</button>
-            </div>
-          </div>
-          {feature && <FeatureCard e={feature} live={feature.status === 'live'} go={go} />}
-        </section>
-
-        {upcoming.length > 0 && (
-          <section id="events" className="pq-l-band" aria-labelledby="pq-l-events">
-            <div className="pq-l-wrap pq-l-stack">
-              <div className="pq-l-head">
-                <div><span className="pq-l-kicker">COMING UP</span><h2 id="pq-l-events">Tournaments you can enter</h2></div>
-                <button type="button" className="pq-l-link" onClick={() => go('events')}>See all events →</button>
-              </div>
-              <div className="pq-l-grid">
-                {upcoming.map((e) => <EventCard key={e.slug} e={e} go={go} />)}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {past.length > 0 && (
-          <section id="results" className="pq-l-wrap pq-l-stack pq-l-section" aria-labelledby="pq-l-results">
-            <div className="pq-l-head">
-              <div><span className="pq-l-kicker">JUST FINISHED</span><h2 id="pq-l-results">Recent results</h2></div>
-              <button type="button" className="pq-l-link" onClick={() => go('events')}>All events →</button>
-            </div>
-            <div className="pq-l-grid pq-l-grid-2">
-              {past.map((e) => (
-                <button key={e.slug} type="button" className="pq-l-result" aria-label={`${e.name} results`} onClick={() => go('results', e.slug)}>
-                  <span className="pq-l-result-name">{e.name}</span>
-                  <span className="pq-l-muted">{longDate(e.startDate)} · {e.club}</span>
-                  <span className="pq-l-muted">{e.divisions.map((x) => x.name).join(' · ')}</span>
-                  <span className="pq-l-link-text">Full draw and scores →</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className="pq-l-wrap pq-l-paths pq-l-section" aria-label="For players and for clubs">
-          <article id="studio" className="pq-l-studio" aria-labelledby="pq-l-studio-h">
-            <span className="pq-l-kicker pq-l-kicker-light">FOR PLAYERS · FREE</span>
-            <h2 id="pq-l-studio-h">Player Studio</h2>
-            <p>Your official tournament results, a private practice diary, your DUPR history, and coach notes that say what’s measured and what’s only your own estimate.</p>
-            <div className="pq-l-actions">
-              <button type="button" className="pq-l-btn pq-l-btn-cream" onClick={() => go('club-player-studio')}>Open Player Studio</button>
-            </div>
-          </article>
-          <article id="clubs" className="pq-l-clubs" aria-labelledby="pq-l-clubs-h">
-            <span className="pq-l-kicker">FOR CLUBS AND ORGANISERS</span>
-            <h2 id="pq-l-clubs-h">Run match day from your phone</h2>
-            <ol className="pq-l-steps">
-              <li><span aria-hidden="true">1</span><div><b>Create</b><p>Events, entry fee, UPI and DUPR caps. Players enter online, or you add them yourself.</p></div></li>
-              <li><span aria-hidden="true">2</span><div><b>Draw</b><p>Pools, knockouts and a court schedule, made for you.</p></div></li>
-              <li><span aria-hidden="true">3</span><div><b>Run it live</b><p>Referees score on their phones, the desk sees every court, and results publish themselves.</p></div></li>
-            </ol>
-            <div className="pq-l-actions">
-              <button type="button" className="pq-l-btn pq-l-btn-primary" onClick={() => go('club-new')}>Start your club, free</button>
-              <button type="button" className="pq-l-btn pq-l-btn-outline" onClick={() => go('demo')}>Try the demo club</button>
-            </div>
-            <button type="button" className="pq-l-link" onClick={() => go('events-post')}>Just want to list an event? Post it on the board for free →</button>
-          </article>
-        </section>
-
-        <section className="pq-l-trust" aria-label="Clubs and privacy">
-          <div className="pq-l-wrap pq-l-trust-grid">
-            {clubs.length > 0 && (
-              <div>
-                <b>Clubs running events on PaddleQ</b>
-                <ul className="pq-l-chips">{clubs.map((c) => <li key={c}>{c}</li>)}</ul>
-              </div>
-            )}
-            <div><b>Private by default</b><p>Your diary is yours; clubs never see it. Phone numbers and emails stay with the organiser.</p></div>
-            <div><b>Works with your DUPR</b><p>Enter with your DUPR rating and ID, and organisers export results for DUPR.</p></div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="pq-l-footer">
-        <div className="pq-l-wrap pq-l-footer-row">
-          <span className="pq-l-footer-brand">PaddleQ</span>
-          <span>Made in Hyderabad for the pickleball community.</span>
-          <a href="mailto:hello@paddleq.in">hello@paddleq.in</a>
-        </div>
-      </footer>
-    </div>
-  );
+import {useEffect,useRef,useState} from 'react';
+import type {Go} from '../navigation';
+import {eventsBackend,serverBackend} from '../club/index';
+import {inLaunchCity} from '../club/config';
+import type {PublicEvent} from '../club/backend';
+import {useLoad} from '../club/screens/common';
+import {courtMatches,isMatchPoint,matchView,winChance} from '../club/liveView';
+import {LiveCourtCard,type LiveCourtCardData} from '../club/screens/LiveCourtCard';
+import {chooseTheme,currentTheme,subscribeTheme} from '../theme';
+import './home.css';
+type HomeCourt=LiveCourtCardData&{slug:string;club:string;round:string;sample?:boolean};
+export const homeShowcase=()=>__HOME_SHOWCASE__;
+const asset=(name:string)=>import.meta.env.BASE_URL+'prototype6/'+name;
+const samples:HomeCourt[]=[
+{court:1,teamA:'Alex / Sam',teamB:'Robin / Taylor',pointsA:9,pointsB:7,category:'Men’s doubles · Semifinal',status:'live',chance:62,watching:2318,slug:'pq-demo-central-s8',club:'Cedar Paddle Club',round:'Semifinal',sample:true},
+{court:2,teamA:'Jamie / Morgan',teamB:'Casey / Quinn',pointsA:10,pointsB:8,category:'Mixed doubles · Final',status:'live',chance:76,matchPoint:true,watching:884,slug:'pq-demo-central-s8',club:'Cedar Paddle Club',round:'Final',sample:true},
+{court:3,teamA:'Riley / Drew',teamB:'Avery / Jordan',pointsA:6,pointsB:7,category:'Women’s doubles · Pool A',status:'live',chance:44,watching:412,slug:'pq-demo-central-s8',club:'Cedar Paddle Club',round:'Pool A',sample:true}];
+const sampleEvents=[['13','NOV','Finals Night','Cedar Paddle Club · 7 pm','Enter'],['15','NOV','Sunday Social','Rally Yard · 8 am','Join'],['18','NOV','Under the lights','Kitchen Garden · 6 pm','Book']];
+export function Landing({go}:{go:Go}){
+const[checked,setChecked]=useState(false),[night,setNight]=useState(currentTheme()!=='light'),[intro,setIntro]=useState(false),ref=useRef(go);ref.current=go;const showcase=homeShowcase();
+useEffect(()=>subscribeTheme(()=>setNight(currentTheme()!=='light')),[]);
+useEffect(()=>{let on=true;eventsBackend().currentUser().then(u=>{if(on){if(u)ref.current('club',undefined,{replace:true});else setChecked(true);}},()=>{if(on)setChecked(true);});return()=>{on=false;};},[]);
+useEffect(()=>{const prev=document.title;document.title='PaddleQ · Every point. Live. · Hyderabad pickleball';let timer:ReturnType<typeof setTimeout>|undefined;try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&!sessionStorage.getItem('pq-home-intro')){sessionStorage.setItem('pq-home-intro','1');setIntro(true);timer=setTimeout(()=>setIntro(false),900);}}catch{/* skip intro if storage unavailable */}return()=>{document.title=prev;clearTimeout(timer);};},[]);
+const state=useLoad(async()=>{const server=serverBackend();if(!server)return{events:[]as PublicEvent[],past:[]as PublicEvent[],courts:[]as HomeCourt[]};const[events,past]=await Promise.all([server.publicEvents().catch(()=>[]),server.recentResults().catch(()=>[])]);const city=events.filter(e=>inLaunchCity(e.city)).sort((a,b)=>a.startDate.localeCompare(b.startDate)||a.startTime.localeCompare(b.startTime));const matches=await Promise.all(city.filter(e=>e.status==='live'&&e.results).slice(0,4).map(async e=>{const d=await server.publicTournament(e.slug).catch(()=>null);return d?courtMatches(d).filter(c=>c.match.status==='live').map(({court,match})=>{const v=matchView(d,match);return{court,teamA:v.a,teamB:v.b,pointsA:v.pointsA,pointsB:v.pointsB,category:v.division?.name??d.name,status:'live'as const,chance:winChance(d,match),matchPoint:isMatchPoint(d,match),slug:e.slug,club:d.club,round:d.name};}):[];}));return{events:city,past:past.filter(e=>inLaunchCity(e.city)).slice(0,4),courts:matches.flat().slice(0,6)};},[]);
+const courts:HomeCourt[]=showcase?samples:state.data?.courts??[],events=state.data?.events??[],past=state.data?.past??[],feature=courts[0],upcoming=events.filter(e=>e.status!=='live').slice(0,4),clubs=showcase?['Cedar Paddle Club','Rally Yard','Kitchen Garden','Baseline Social']:[...new Set([...events,...past].map(e=>e.club).filter(Boolean))].slice(0,4);
+const watch=(c?:HomeCourt)=>c?go('results',c.slug+'?court='+c.court):go('events');const scroll=(id:string)=>document.getElementById(id)?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
+if(!checked)return <div className="pq-home" aria-busy="true"/>;
+return <div className="pq-home pq-proto">{intro&&<div className="pq-home-intro" aria-hidden="true"><img src={import.meta.env.BASE_URL+'icons/club.svg'} alt=""/><span>PaddleQ</span></div>}
+<header className="pq-home-nav"><a className="pq-home-logo" href="#/home" aria-label="PaddleQ home"><img src={import.meta.env.BASE_URL+'icons/club.svg'} width="38" height="38" alt=""/>PaddleQ</a><nav aria-label="Site">{[['live','Watch live'],['players','Players'],['clubs','For clubs'],['home-events','Events'],['pocket','The app']].map(([id,label])=><button type="button" key={id} onClick={()=>scroll(id)}>{label}</button>)}</nav><div className="pq-home-nav-actions"><button type="button" className="home-theme" aria-label={night?'Switch to Day':'Switch to Night'} onClick={()=>chooseTheme(night?'light':'dark')}>{night?'☀ Day':'☾ Night'}</button><button type="button" className="home-btn home-primary" onClick={()=>watch(feature)}>Watch now</button><button type="button" className="home-signin" onClick={()=>go('club-signin')}>Sign in</button></div></header>
+<main><section className="photo home-hero" aria-labelledby="home-title"><img className="ph" src={asset('under-lights.webp')} alt="" fetchPriority="high"/><div className="home-hero-copy"><span className="home-chip"><i className="pq-live-dot"/>{feature?courts.length+' matches live in Hyderabad right now':'Club pickleball · Hyderabad'}</span>{showcase&&<span className="home-sample">Staging showcase · sample players and numbers</span>}<h1 id="home-title">Every point.<br/> <em>Live.</em></h1><p>PaddleQ runs club pickleball like pro sport. From the first entry to the final point, your whole club is here.</p><div className="home-actions"><button type="button" className="home-btn home-primary" onClick={()=>watch(feature)}>Watch a match →</button><button type="button" className="home-btn home-outline" onClick={()=>go('club-new')}>Run your club on PaddleQ</button></div><span className="home-tagline">Out of the kitchen, into the stats.</span></div><svg className="home-court-lines" viewBox="0 0 500 500" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="2"><rect x="40" y="20" width="420" height="450"/><path d="M40 245H460M40 175H460M40 315H460M250 20V175M250 315V470"/><circle cx="250" cy="245" r="86"/></g></svg>
+{feature?<aside className="lgd home-score-sticker" aria-label="Live now"><div className="home-score-label"><span className="home-chip">● LIVE · Court {feature.court}</span><span>{feature.round}</span></div>{[feature.teamA,feature.teamB].map((team,i)=><div className="home-score-row" key={team}><b>{i===0&&feature.sample&&<i className="pq-live-dot"/>}{team}</b><strong className="n">{i===0?feature.pointsA:feature.pointsB}</strong></div>)}<p>{feature.club}{feature.watching!==undefined?' · '+feature.watching.toLocaleString('en-IN')+' watching':''}</p><div className="home-score-label"><span>{feature.sample?'Call ':'In play '}{feature.pointsA} · {feature.pointsB}{feature.sample?' · 2 · Game 3 to 11':''}</span><button type="button" onClick={()=>watch(feature)}>Watch →</button></div></aside>:upcoming[0]&&<aside className="lgd home-score-sticker" aria-label="Next tournament"><span className="cap">Next up</span><h2>{upcoming[0].name}</h2><p>{upcoming[0].club} · {upcoming[0].startDate}</p><button className="home-btn home-primary" type="button" onClick={()=>go('event',upcoming[0].slug)}>See and enter</button></aside>}</section>
+{courts.length>0&&<div className="home-ticker" aria-label="Live score ticker">{courts.map(c=><button type="button" key={c.slug+c.court} onClick={()=>watch(c)}><span>● Court {c.court}</span>{c.teamA}<b className="n">{c.pointsA} – {c.pointsB}</b>{c.teamB}</button>)}</div>}
+<section id="live" className="home-wrap home-section" aria-labelledby="home-live"><div className="home-heading"><div><span className="cap">01 · Live now</span><h2 id="home-live">Scores that feel live.</h2></div><button type="button" className="home-link" onClick={()=>go('events')}>All courts →</button></div>{courts.length>0?<div className="home-live-grid">{courts.map((c,i)=><LiveCourtCard key={c.slug+c.court} data={c} photo={['group-play.webp','woman-hit.jpg','ball-court.jpg'][i%3]} onWatch={()=>watch(c)}/>)}</div>:<div className="lg home-next"><p>No courts live right now.</p>{upcoming.map(e=><button type="button" className="home-link" key={e.slug} onClick={()=>go('event',e.slug)}>{e.name} · {e.startDate} →</button>)}<button type="button" className="home-btn home-primary" onClick={()=>go('events')}>Find a tournament</button></div>}</section>
+<section id="players" className="home-wrap home-section home-player" aria-labelledby="home-player"><div className="home-player-copy"><span className="cap">02 · Player Studio</span><h2 id="home-player">Your game,<br/> on record.</h2><p>Your results, your DUPR journey, your private practice diary. One place to see the player you’re becoming.</p>{showcase&&<div className="home-stat-grid">{[['4.62','DUPR doubles'],['24','Matches played'],['68%','Win rate'],['+0.18','This month']].map(([n,label],i)=><div className="lg" key={label}><strong className="n">{n}</strong><span>{label}</span><svg viewBox="0 0 120 28" aria-hidden="true"><path d={'M0 25L20 '+(20+i)+'L40 22L60 12L80 15L100 4L120 1'} fill="none" stroke="currentColor" strokeWidth="2"/></svg></div>)}</div>}<div className="home-actions"><button type="button" className="home-btn home-primary" onClick={()=>go('club-player-studio')}>Open player card</button><button type="button" className="home-btn home-outline" onClick={()=>go('club-player-studio')}>Claim your results</button></div></div>{showcase&&<div className="photo home-player-photo"><img className="ph" src={asset('pb-man.jpg')} loading="lazy" alt="Illustrative pickleball player, not a real PaddleQ profile"/><span className="home-chip">Player of the week · sample</span><div className="lgd"><span className="home-chip">DUPR · 4.62</span><h3>Alex Reed</h3><p>Sample player · Cedar Paddle Club</p></div></div>}{showcase&&<div className="home-player-deck" role="region" aria-label="Sample player cards">{['Alex Reed','Jamie Park','Robin Lee','Casey Lane'].map((n,i)=><article className="lg" key={n}><span className="home-initials">{n.split(' ').map(w=>w[0]).join('')}</span><b>{n}</b><strong className="n">{['4.62','4.28','3.91','4.10'][i]}</strong><small>Sample · DUPR doubles</small></article>)}</div>}</section>
+<section id="clubs" className="home-wrap home-section" aria-labelledby="home-club"><div className="home-heading"><div><span className="cap">03 · For clubs</span><h2 id="home-club">Your club,<br/> on the big stage.</h2></div><p>Every score carries your name.<br/> Every match becomes part of your story.</p></div><div className="home-club-panel"><div className="photo home-venue-photo"><img className="ph" src={asset('court-day.jpg')} loading="lazy" alt="Pickleball courts in daylight"/><div><span className="cap">Venue report</span><h3>{showcase?'Cedar Paddle Club':'Your club. Every court.'}</h3></div></div>{showcase&&<div className="home-venue-stats">{[['621','Points live'],['48','Matches'],['126','Players'],['6','Courts']].map(([n,l])=><div className="lg" key={l}><strong className="n">{n}</strong><span>{l}</span></div>)}</div>}</div><button type="button" className="home-report-bar" onClick={()=>go(showcase?'demo':'club')}>See the full venue report →</button><div className="home-benefits">{[['01','Your name on every score','Your club identity, from draw to final.'],['02','A TV board for the venue','Every court, up on the big screen.'],['03','Posts that make themselves','Turn your results into club stories.'],['04','DUPR in one click','Export the matches you’ve scored.']].map(([n,h,p])=><article className="lg" key={n}><span className="cap">{n}</span><h3>{h}</h3><p>{p}</p></article>)}</div></section>
+<section className="home-matchday-band"><div className="home-wrap home-section"><span className="cap">04 · From first entry to final post</span><h2>Match day, handled.</h2><div className="home-step-strip">{['Entries','Draws','Referee scoring','Desk & TV board','Social posts'].map((label,i)=><article key={label}><span className="home-step-num n">0{i+1}<span aria-hidden="true">→</span></span><div className={'home-mini mini-'+i} aria-hidden="true">{i===0?<><i/>Alex / Sam<i/>Robin / Taylor<i/>Jamie / Morgan</>:i===1?<div className="mini-bracket">A ─┐<br/> B ─┘──┐<br/> C ─┐　 │<br/> D ─┘──┘</div>:i===2?<><span>COURT 1</span><b className="n">9　7</b><small>IN PLAY</small></>:i===3?<div className="mini-desk">{[1,2,3,4].map(n=><span key={n}>C{n}<b className="n">{n+4}–{n+2}</b></span>)}</div>:<><small>FINALS</small><b>Champions.</b><span className="n">11 – 7</span></>}</div><h3>{label}</h3></article>)}</div><button type="button" className="home-btn home-primary" onClick={()=>go('club-new')}>Start your club, free</button></div></section>
+<section className="home-wrap home-section home-city" aria-labelledby="home-city"><div><span className="cap">05 · Hyderabad</span><h2 id="home-city">The city’s home<br/> of pickleball.</h2></div><p>From early rallies to late-night finals.<br/> Find your court. Find your people.</p><div className="photo home-city-main"><img className="ph" src={asset('court-night.jpg')} loading="lazy" alt="Outdoor pickleball courts under lights"/><div className="home-club-tiles">{clubs.map(c=><button type="button" className="lgd" key={c} onClick={()=>go('events')}>{c}<span>Hyderabad ↗</span></button>)}</div></div><div className="home-city-small"><img src={asset('clapping.webp')} loading="lazy" alt="Courtside crowd cheering"/><img src={asset('paddle-balls.webp')} loading="lazy" alt="Pickleball paddles and balls"/></div></section>
+<section id="home-events" className="home-wrap home-section" aria-labelledby="home-events-title"><div className="home-heading"><div><span className="cap">06 · Events</span><h2 id="home-events-title">Where to play this week.</h2></div><button type="button" className="home-link" onClick={()=>go('events')}>All events →</button></div><div className="home-events-grid">{showcase&&<div className="photo home-finals"><img className="ph" src={asset('arena-night.jpg')} loading="lazy" alt="Illustrative arena under lights"/><span className="home-ticket">Tickets on sale</span><div><span className="cap">Staging preview · display only</span><h3>Finals Night.</h3><p>13 Nov · Cedar Paddle Club · Under the lights.</p><span className="home-btn home-primary">Get seats from ₹499</span><button type="button" className="home-link" onClick={()=>watch(feature)}>Or watch it live →</button></div></div>}<div className="home-event-list">{showcase?sampleEvents.map(([day,month,name,detail,action])=><article key={name}><span className="home-event-date"><b className="n">{day}</b>{month}</span><div><h3>{name}</h3><p>{detail} · Sample event</p></div><button type="button" className="home-btn home-outline" onClick={()=>go('events')}>{action}</button></article>):upcoming.length?upcoming.map(e=><EventRow key={e.slug} e={e} go={go}/>):<p>Find the next match on the events board.</p>}{!showcase&&past.map(e=><button type="button" className="home-past" key={e.slug} aria-label={e.name+' results'} onClick={()=>go('results',e.slug)}>{e.name}<span>{e.club} · Full draw and scores →</span></button>)}</div></div></section>
+<section id="pocket" className="home-pocket-band"><div className="home-wrap home-section home-pocket"><div><span className="cap">07 · PaddleQ, wherever you play</span><h2>The whole club<br/> in your pocket.</h2><p>Enter a tournament. Follow your friends.<br/> Score a match. Make it a club night.</p><div className="home-actions"><button type="button" className="home-btn home-primary" onClick={()=>go('club')}>Open the app</button><button type="button" className="home-btn home-outline" onClick={()=>go('club')}>Referee mode</button></div></div><div className="home-phone lg" aria-label="App home preview"><div className="home-phone-notch"/><div className="home-phone-header"><b>PaddleQ</b><span>●</span></div><p className="cap">{showcase?'Cedar Paddle Club':'Your club'}</p><h3>Overview</h3><div className="photo home-phone-court"><img className="ph" src={asset('court-day.jpg')} loading="lazy" alt=""/><div className="lgd"><span className="cap">Courts live</span>{showcase?<b className="n">9　7</b>:<b>Your match, live.</b>}</div></div><div className="home-phone-tiles"><span className="lg">Tournaments</span><span className="lg">Results</span></div><div className="home-phone-tabs">Overview　Draws　Desk　Studio</div></div></div></section>
+</main><footer className="home-wrap home-footer"><div><a className="pq-home-logo" href="#/home"><img src={import.meta.env.BASE_URL+'icons/club.svg'} width="38" height="38" alt=""/>PaddleQ</a><p>Out of the kitchen, into the stats.</p></div><span>Made in Hyderabad · <a href="mailto:hello@paddleq.in">hello@paddleq.in</a></span></footer></div>;
 }
-
-const longDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-
-function spotsText(e: PublicEvent): string | null {
-  if (!e.registrationOpen) return e.entryMode === 'registration' ? 'Entries closed' : null;
-  const caps = e.divisions.map((x) => x.rules.cap).filter((c): c is number => typeof c === 'number');
-  if (e.listing === 'run' && caps.length === e.divisions.length && caps.length > 0) {
-    const left = e.divisions.reduce((n, x) => n + Math.max(0, (x.rules.cap ?? 0) - x.taken), 0);
-    return left > 0 ? `${left} spot${left === 1 ? '' : 's'} left` : 'Waitlist open';
-  }
-  return 'Entries open';
-}
-
-function EventCard({ e, go }: { e: PublicEvent; go: Go }) {
-  const d = new Date(`${e.startDate}T00:00:00`);
-  const spots = spotsText(e);
-  return (
-    <article className="pq-l-event">
-      <button type="button" className="pq-l-event-top" onClick={() => go('event', e.slug)} aria-label={e.name}>
-        {e.posterUrl ? <PosterImage src={e.posterUrl} name={e.name} /> : (
-          <span className="pq-l-poster">
-            <span className="pq-l-date"><b>{d.getDate()}</b><span>{d.toLocaleDateString('en-IN', { month: 'short' }).toUpperCase()}</span></span>
-            <span className="pq-l-poster-name">{e.name}</span>
-          </span>
-        )}
-      </button>
-      <div className="pq-l-event-body">
-        {e.posterUrl && <b className="pq-l-event-name">{e.name}</b>}
-        <span className="pq-l-muted">{longDate(e.startDate)} · {e.club}{e.city ? ` · ${e.city}` : ''}</span>
-        <span>{e.divisions.map((x) => x.name).join(' · ')}</span>
-        <div className="pq-l-event-foot">
-          {spots && <span className="pq-l-pill">{spots}</span>}
-          <button type="button" className="pq-l-btn pq-l-btn-primary pq-l-btn-sm" onClick={() => go('event', e.slug)}>{e.registrationOpen ? 'Enter' : 'Details'}</button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function FeatureCard({ e, live, go }: { e: PublicEvent; live: boolean; go: Go }) {
-  return (
-    <aside className="pq-l-feature" aria-label={live ? 'Live now' : 'Next tournament'}>
-      <div className="pq-l-feature-head">
-        <span className={live ? 'pq-l-badge' : 'pq-l-badge pq-l-badge-soft'}>{live ? 'LIVE NOW' : 'NEXT UP'}</span>
-        <span className="pq-l-muted">{longDate(e.startDate)}</span>
-      </div>
-      {e.posterUrl && <PosterImage src={e.posterUrl} name={e.name} />}
-      <h2 className="pq-l-feature-name">{e.name}</h2>
-      <span className="pq-l-muted">{e.club}{e.venue ? ` · ${e.venue}` : ''}{e.city ? `, ${e.city}` : ''}</span>
-      <span>{e.divisions.map((x) => x.name).join(' · ')}</span>
-      <button type="button" className="pq-l-btn pq-l-btn-primary" onClick={() => go(live && e.results ? 'results' : 'event', e.slug)}>
-        {live ? 'Follow live scores' : e.registrationOpen ? 'See and enter' : 'See details'}
-      </button>
-    </aside>
-  );
-}
+function EventRow({e,go}:{e:PublicEvent;go:Go}){const date=new Date(e.startDate+'T00:00:00'),caps=e.divisions.map(d=>d.rules.cap),left=caps.length&&caps.every(c=>typeof c==='number')?e.divisions.reduce((n,d)=>n+Math.max(0,(d.rules.cap??0)-d.taken),0):null;return <article><span className="home-event-date"><b className="n">{date.getDate()}</b>{date.toLocaleDateString('en-IN',{month:'short'})}</span><div><h3>{e.name}</h3><p>{e.club} · {e.startTime}</p>{e.registrationOpen&&left!==null&&<small>{left} spots left</small>}</div><button type="button" className="home-btn home-outline" onClick={()=>go('event',e.slug)}>{e.registrationOpen?'Enter':'Details'}</button></article>}

@@ -17,3 +17,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** Staging home samples only; production defaults OFF. */
+declare const __HOME_SHOWCASE__: boolean;

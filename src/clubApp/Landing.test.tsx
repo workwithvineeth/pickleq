@@ -1,65 +1,14 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PublicEvent } from '../club/backend';
-import { Landing } from './Landing';
-
-const fx = vi.hoisted(() => ({
-  user: null as { id: string; email: string } | null,
-  events: [] as unknown[],
-  past: [] as unknown[],
-}));
-vi.mock('../club/index', () => ({
-  eventsBackend: () => ({ currentUser: async () => fx.user }),
-  serverBackend: () => ({ publicEvents: async () => fx.events, recentResults: async () => fx.past }),
-}));
-
-const ev = (over: Partial<PublicEvent>): PublicEvent => ({
-  slug: 'e1', name: 'Fixture Smash', startDate: '2026-11-16', startTime: '08:00', city: 'Hyderabad', club: 'Fixture Club', listing: 'run', status: 'registration',
-  entryMode: 'registration', registrationOpen: true, results: false, drawn: false,
-  divisions: [{ id: 'd1', name: 'Doubles 3.5', kind: 'doubles', rules: { gender: 'open', cap: 8 }, taken: 5 }], ...over,
-} as PublicEvent);
-
-beforeEach(() => { fx.user = null; fx.events = []; fx.past = []; });
-
-describe('Home page', () => {
-  it('sends signed-in people straight to My clubs', async () => {
-    fx.user = { id: 'u1', email: 'x@example.test' };
-    const go = vi.fn();
-    render(<Landing go={go} />);
-    await waitFor(() => expect(go).toHaveBeenCalledWith('club', undefined, { replace: true }));
-    expect(screen.queryByRole('heading', { name: /Every tournament/ })).not.toBeInTheDocument();
-  });
-
-  it('shows visitors real upcoming events, live tournaments, results and the clubs behind them', async () => {
-    fx.events = [ev({}), ev({ slug: 'live1', name: 'Live Fixture Open', status: 'live', results: true, club: 'Live Club' })];
-    fx.past = [ev({ slug: 'p1', name: 'Past Fixture Cup', status: 'done', club: 'Past Club' })];
-    const go = vi.fn();
-    render(<Landing go={go} />);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Every tournament, every result, in one place.' })).toBeInTheDocument();
-    const live = await screen.findByRole('complementary', { name: 'Live now' });
-    fireEvent.click(within(live).getByRole('button', { name: 'Follow live scores' }));
-    expect(go).toHaveBeenCalledWith('results', 'live1');
-    const coming = screen.getByRole('region', { name: 'Tournaments you can enter' });
-    expect(within(coming).getByText('3 spots left')).toBeInTheDocument();
-    fireEvent.click(within(coming).getByRole('button', { name: 'Enter' }));
-    expect(go).toHaveBeenCalledWith('event', 'e1');
-    fireEvent.click(screen.getByRole('button', { name: 'Past Fixture Cup results' }));
-    expect(go).toHaveBeenCalledWith('results', 'p1');
-    expect(within(screen.getByRole('region', { name: 'Clubs and privacy' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Live Club', 'Fixture Club', 'Past Club']);
-  });
-
-  it('leaves out sections with nothing to show, and still offers both paths', async () => {
-    const go = vi.fn();
-    render(<Landing go={go} />);
-    await screen.findByRole('heading', { level: 1 });
-    expect(screen.queryByRole('region', { name: 'Tournaments you can enter' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recent results' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Find a tournament' }));
-    expect(go).toHaveBeenCalledWith('events');
-    fireEvent.click(screen.getByRole('button', { name: 'Start your club, free' }));
-    expect(go).toHaveBeenCalledWith('club-new');
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(go).toHaveBeenCalledWith('club-signin');
-  });
+import {fireEvent,render,screen,waitFor,within} from '@testing-library/react';
+import {beforeEach,describe,expect,it,vi} from 'vitest';
+import type {PublicEvent,PublicTournament} from '../club/backend';
+import {Landing} from './Landing';
+const fx=vi.hoisted(()=>({user:null as {id:string;email:string}|null,events:[]as unknown[],past:[]as unknown[],tournament:null as PublicTournament|null}));
+vi.mock('../club/index',()=>({eventsBackend:()=>({currentUser:async()=>fx.user}),serverBackend:()=>({publicEvents:async()=>fx.events,recentResults:async()=>fx.past,publicTournament:async()=>fx.tournament})}));
+const ev=(over:Partial<PublicEvent>):PublicEvent=>({slug:'e1',name:'Fixture Smash',startDate:'2026-11-16',startTime:'08:00',city:'Hyderabad',club:'Fixture Club',listing:'run',status:'registration',entryMode:'registration',registrationOpen:true,results:false,drawn:false,divisions:[{id:'d1',name:'Doubles 3.5',kind:'doubles',rules:{gender:'open',cap:8},taken:5}],...over}as PublicEvent);
+beforeEach(()=>{fx.user=null;fx.events=[];fx.past=[];fx.tournament=null;vi.stubGlobal('__HOME_SHOWCASE__',false);sessionStorage.clear()});
+describe('Court Green home',()=>{
+it('keeps the signed-in redirect',async()=>{fx.user={id:'u1',email:'x@example.test'};const go=vi.fn();render(<Landing go={go}/>);await waitFor(()=>expect(go).toHaveBeenCalledWith('club',undefined,{replace:true}));expect(screen.queryByRole('heading',{level:1})).not.toBeInTheDocument()});
+it('uses public events and results, never stock-photo profiles or invented totals in production',async()=>{fx.events=[ev({}),ev({slug:'away',name:'Away event',city:'Delhi'})];fx.past=[ev({slug:'past',name:'Past Fixture Cup',status:'done'})];const go=vi.fn();render(<Landing go={go}/>);await screen.findByRole('heading',{level:1,name:'Every point. Live.'});const coming=await screen.findByRole('region',{name:'Where to play this week.'});expect(within(coming).getByText('3 spots left')).toBeInTheDocument();fireEvent.click(within(coming).getByRole('button',{name:'Enter'}));expect(go).toHaveBeenCalledWith('event','e1');fireEvent.click(screen.getByRole('button',{name:'Past Fixture Cup results'}));expect(go).toHaveBeenCalledWith('results','past');expect(screen.queryByText('Away event')).not.toBeInTheDocument();expect(screen.queryByText('Alex Reed')).not.toBeInTheDocument();expect(screen.queryByText('621')).not.toBeInTheDocument();expect(screen.queryByText('Tickets on sale')).not.toBeInTheDocument()});
+it('offers working visitor paths when public data is empty',async()=>{const go=vi.fn();render(<Landing go={go}/>);await screen.findByRole('heading',{level:1});expect(screen.queryByRole('complementary')).not.toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Watch a match →'}));expect(go).toHaveBeenCalledWith('events');fireEvent.click(screen.getByRole('button',{name:'Start your club, free'}));expect(go).toHaveBeenCalledWith('club-new');fireEvent.click(screen.getByRole('button',{name:'Sign in'}));expect(go).toHaveBeenCalledWith('club-signin')});
+it('shows the complete sample showcase only under its build setting, and never offers ticket checkout',async()=>{vi.stubGlobal('__HOME_SHOWCASE__',true);const go=vi.fn();render(<Landing go={go}/>);await screen.findByRole('heading',{level:1});expect(screen.getByText('Alex Reed',{selector:'h3'})).toBeInTheDocument();expect(screen.getByRole('region',{name:'Sample player cards'})).toBeInTheDocument();expect(screen.getByText('Tickets on sale')).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Get seats from ₹499'})).not.toBeInTheDocument();const live=screen.getByRole('complementary',{name:'Live now'});fireEvent.click(within(live).getByRole('button',{name:'Watch →'}));expect(go).toHaveBeenCalledWith('results','pq-demo-central-s8?court=1');expect(screen.getByText('Win chance (est.) 62%')).toBeInTheDocument()});
 });

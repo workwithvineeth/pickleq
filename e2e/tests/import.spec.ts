@@ -12,8 +12,8 @@ test.describe('PaddleQ app', () => {
   test('has its own tabs, and no personal-app tabs', async ({ page }) => {
     // Signed out, paddleq.in opens on the public home page; Sign in leads to the sign-in page.
     await page.goto('./');
-    await expect(page.getByRole('heading', { level: 1, name: 'Every tournament, every result, in one place.' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Find a tournament' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Every point. Live.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Watch a match →' })).toBeVisible();
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/#\/club-signin/);
     await page.goto('#/club');
