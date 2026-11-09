@@ -1,3 +1,5 @@
+import { LiveCourts } from './LiveCourts';
+import { usePublicScores } from './usePublicScores';
 import { EventPhotoHeader, TournamentEntrySummary } from './MatchdayHeader';
 import { PublicScoreAnnouncement } from './PublicScoreAnnouncement';
 import { isBronzeMatch } from '../resultsReport';
@@ -584,42 +586,31 @@ function MyMatches({ d }: { d: PublicTournament }) {
 
 /** Public results: no login, names and scores only. Refreshes every 20 seconds while the tournament is live. */
 export function Results({ slug, onBack }: { slug: string; onBack: () => void }) {
-  const [tick, setTick] = useState(0);
-  const state = useLoad<PublicTournament | null>(async () => {
-    let lastError: unknown = null;
-    for (const src of await publicSourcesFor(slug)) {
-      try { const r = await src.publicTournament(slug); if (r) return r; } catch (e) { lastError = e; }
-    }
-    if (lastError) throw lastError;
-    return null;
-  }, [slug, tick]);
+  const [publicSlug,query]=slug.split('?');
+  const requestedCourt=Number(new URLSearchParams(query).get('court'))||undefined;
+  const state=usePublicScores(publicSlug);
   const [div, setDiv] = useState<string | null>(null);
   const [view, setView] = useState<View>('pools');
   const logo = useLoad(async () => {
-    for (const src of await publicSourcesFor(slug)) {
-      try { const r = await src.publicClubLogo(slug); if (r) return r; } catch { /* next place */ }
+    for (const src of await publicSourcesFor(publicSlug)) {
+      try { const r = await src.publicClubLogo(publicSlug); if (r) return r; } catch { /* next place */ }
     }
     return null;
-  }, [slug]);
+  }, [publicSlug]);
   const d = state.data;
-  useEffect(() => {
-    if (d?.status !== 'live') return;
-    const h = window.setInterval(() => setTick((x) => x + 1), 20000);
-    return () => window.clearInterval(h);
-  }, [d?.status]);
   const division = d?.divisions.find((x) => x.id === div) ?? d?.divisions[0];
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="results-title">
-      <ResultsHero />
-      <PublicScoreAnnouncement slug={slug} data={d} />
-      <Header id="results-title" title={d?.name ?? 'Results'} onBack={onBack} />
+    <main className={"screen wide-ok pq-matchday pq-proto"+(d?.status==='live'?' pq-live-results':'')} aria-labelledby="results-title">
+      {d?.status!=='live'&&<ResultsHero />}
+      <PublicScoreAnnouncement slug={publicSlug} data={d} />
+      <div className="pq-live-event-heading"><Header id="results-title" title={d?.name ?? 'Results'} onBack={onBack} /></div>
       <Status error={state.error} loading={state.loading && !d} />
       {!state.loading && !d && !state.error && <p className="muted">These results aren’t available. The link may be turned off.</p>}
       {d && division && (
         <>
-          <ClubLogo src={logo.data?.logoUrl} club={d.club} />
+          {d.status!=='live'&&<ClubLogo src={logo.data?.logoUrl} club={d.club} />}
           <p className="small muted" style={{ margin: 0 }}>{d.club} · {friendlyDate(d.startDate)}{d.status === 'live' ? ' · Live, updates every 20 seconds' : d.status === 'done' ? ' · Finished' : ''}</p>
-          <OnCourtNow d={d} />
+          {d.status==='live'&&<LiveCourts key={publicSlug+':'+(requestedCourt??'default')} d={d} initialCourt={requestedCourt}/>}
           <MyMatches d={d} />
           {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
           <Segmented label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
@@ -635,42 +626,10 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
             }}
             divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')}
           />}
-          <p className="small muted" style={{ margin: 0 }}>Live scores by <a href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>PaddleQ</a> · run your club’s tournament at paddleq.in</p>
+          <p className="small muted" style={{ margin: 0 }}>Live scores by <a aria-label={d.status==='live'?'PaddleQ: live scores. Run your club’s tournament at paddleq.in':undefined} href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>PaddleQ</a> · run your club’s tournament at paddleq.in</p>
         </>
       )}
     </main>
-  );
-}
-
-/** Public results: what's on each court right now, with the live score. */
-function OnCourtNow({ d }: { d: PublicTournament }) {
-  if (d.status !== 'live') return null;
-  const names = new Map(d.entries.map((e) => [e.id, e.names.join(' / ')]));
-  const divs = new Map(d.divisions.map((x) => [x.id, x]));
-  const courts = [...new Set(d.matches.map((m) => m.court).filter((c): c is number => !!c))].sort((a, b) => a - b);
-  if (!courts.length) return null;
-  return (
-    <section className="card section" aria-label="On court now">
-      <h2 style={{ fontSize: 18, margin: 0 }}>On court now</h2>
-      {courts.map((c) => {
-        const m = d.matches.find((x) => x.court === c && x.status === 'live');
-        const dv = m ? divs.get(m.divisionId ?? '') : undefined;
-        const g = m?.games[m.games.length - 1];
-        return (
-          <div key={c} className="match-row" aria-label={`Court ${c}`}>
-            <span style={{ fontWeight: 700, minWidth: 64 }}>Court {c}</span>
-            {m ? (
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'block' }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
-                <span style={{ display: 'block' }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
-                <span className="small muted">{[dv?.kind === 'doubles' ? 'Doubles' : 'Singles', m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].join(' · ')}</span>
-              </span>
-            ) : <span className="small muted" style={{ flex: 1 }}>Waiting for the next match</span>}
-            {m && <span className="pill pill-warn" style={{ fontSize: 16 }}>{g ? `${g.a}–${g.b}` : 'Live'}</span>}
-          </div>
-        );
-      })}
-    </section>
   );
 }
 

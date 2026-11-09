@@ -23,3 +23,5 @@ import '../prototype6.css';
 import '../club/matchday.css';
 
 import '../court-skin.css';
+
+import '../club/live-view.css';
