@@ -42,7 +42,7 @@ export function DeskApp({ id, go }: { id: string; go: Go }) {
   if (!pin || (check.error && !opened)) {
     return <DeskSignIn token={token} problem={pin ? check.error : null} onOpened={(p, s, tid) => { writePin(token, p); setSrc(s); setOpened({ tournamentId: tid }); setPin(p); }} />;
   }
-  if (!session || !opened) return <main className="screen" aria-labelledby="desk-wait"><Header id="desk-wait" title="Desk" /><Status error={check.error} loading /></main>;
+  if (!session || !opened) return <main className="screen pq-matchday pq-proto" aria-labelledby="desk-wait"><Header id="desk-wait" title="Desk" /><Status error={check.error} loading /></main>;
 
   const home = () => go('desk', token);
   // The desk screens ask for organiser pages by name; inside a desk link they map to the desk's own pages.
@@ -76,7 +76,7 @@ function DeskSignIn({ token, problem, onOpened }: { token: string; problem: stri
   }
   const club = label.data?.club;
   return (
-    <main className="screen" aria-labelledby="desk-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="desk-title">
       <Header id="desk-title" title={club ? `${club} Desk` : 'Tournament desk'} />
       <section className="card section" aria-label="Desk sign-in">
         <div className="row" style={{ justifyContent: 'flex-start', gap: 10 }}>
@@ -114,10 +114,10 @@ function StandingsBody({ b, id, view, setView, div, setDiv, onBack }: { b: ClubB
   const state = useLoad(async () => { if (!b) throw new Error('Open the desk first'); return b.tournamentBundle(id); }, [b, id]);
   const d = state.data;
   const pmap = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
-  if (!d) return <main className="screen wide-ok" aria-labelledby="ds-title"><Header id="ds-title" title="Standings and draw" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  if (!d) return <main className="screen wide-ok pq-matchday pq-proto" aria-labelledby="ds-title"><Header id="ds-title" title="Standings and draw" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const division = d.divisions.find((x) => x.id === div) ?? d.divisions[0];
   return (
-    <main className="screen wide-ok" aria-labelledby="ds-title">
+    <main className="screen wide-ok pq-matchday pq-proto" aria-labelledby="ds-title">
       <Header id="ds-title" title="Standings and draw" onBack={onBack} />
       {d.divisions.length > 1 && <Segmented label="Event" value={division?.id ?? ''} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
       <Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} />
@@ -131,7 +131,7 @@ function StandingsBody({ b, id, view, setView, div, setDiv, onBack }: { b: ClubB
 /** Desk links shared before 31 Oct 2026 (#/helper/<results slug>) no longer open anything. */
 export function OldDeskLink({ go }: { go: Go }) {
   return (
-    <main className="screen" aria-labelledby="old-desk-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="old-desk-title">
       <Header id="old-desk-title" title="Tournament desk" onBack={() => go('events')} />
       <section className="card section" aria-label="The desk has a new link">
         <p style={{ margin: 0 }}>The desk now has its own link and its own desk PIN.</p>

@@ -27,7 +27,7 @@ export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBa
   const state = useLoad(async () => { if (!b) throw new Error('Open Club mode first'); return b.matchBundle(matchId); }, [b, matchId]);
   const d = state.data;
   const players = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
-  if (!d || !b) return <main className="screen" aria-labelledby="score-title"><Header id="score-title" title="Score" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  if (!d || !b) return <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="score-title"><Header id="score-title" title="Score" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const m = d.match;
   const title = m.stage === 'friendly' ? 'Club match' : `${d.divisionName ?? ''} ${STAGE_LABEL[m.stage]}`.trim();
   const send = (patch: ScorePatch) => b.saveScore(matchId, patch);
@@ -41,7 +41,7 @@ export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBa
     onBack();
   }
   return (
-    <main className="screen" aria-labelledby="score-title">
+    <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="score-title">
       <Header id="score-title" title={title || 'Score'} onBack={onBack} />
       <DemoNote b={b} />
       {m.court && <p className="small" style={{ margin: 0, fontWeight: 600 }}>Court {m.court}</p>}

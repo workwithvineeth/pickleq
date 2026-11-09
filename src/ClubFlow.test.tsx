@@ -220,7 +220,7 @@ describe('Club mode', () => {
     await openEvent(user);
     await user.click(screen.getByRole('button', { name: 'Referee links' }));
     await screen.findByRole('heading', { name: 'Referee links' });
-    await user.click(screen.getByRole('button', { name: 'Make a link for each court (6)' }));
+    await user.click(screen.getByRole('button', { name: 'Create referee links (6)' }));
     await screen.findByText('Made 6 court links');
     await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
     await screen.findByText('Made an any-court link');
@@ -255,7 +255,7 @@ describe('Club mode', () => {
     const user = userEvent.setup();
     await openEvent(user);
     await user.click(screen.getByRole('button', { name: 'Referee links' }));
-    await user.click(await screen.findByRole('button', { name: 'Make a link for each court (6)' }));
+    await user.click(await screen.findByRole('button', { name: 'Create referee links (6)' }));
     await screen.findByText('Made 6 court links');
     const c1 = demoState().scorerLinks.find((l: { court?: number }) => l.court === 1);
     await user.click(within(screen.getByLabelText('Court 1 referee link')).getByRole('button', { name: 'Turn off' }));
@@ -270,7 +270,7 @@ describe('Club mode', () => {
     const user = userEvent.setup();
     await openEvent(user);
     await user.click(screen.getByRole('button', { name: 'Referee links' }));
-    await user.click(await screen.findByRole('button', { name: 'Make a link for each court (6)' }));
+    await user.click(await screen.findByRole('button', { name: 'Create referee links (6)' }));
     await screen.findByText('Made 6 court links');
     await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
     await screen.findByText('Made an any-court link');
@@ -387,11 +387,12 @@ describe('Club mode', () => {
     const user = userEvent.setup();
     await openEvent(user);
     const check = await screen.findByRole('region', { name: 'Ready for the day?' });
-    expect(within(check).getByText(/No referee links yet/)).toBeInTheDocument();
+    expect(within(check).getByText(/Referee links not created/)).toBeInTheDocument();
     expect(within(check).getByText(/Draw made: \d+ matches/)).toBeInTheDocument();
     const run = screen.getByRole('navigation', { name: 'Run the tournament' });
     const names = within(run).getAllByRole('button').map((b) => b.textContent);
-    expect(names.slice(0, 3)).toEqual(['Desk view', 'Referee links', 'Entries']);
+    expect(names.slice(0, 2)).toEqual(['Desk view', 'Referee links']);
+    expect(within(screen.getByRole('navigation',{name:'Tournament sections'})).getByRole('button',{name:'Entries'})).toBeInTheDocument();
     expect(within(run).queryByRole('button', { name: 'Mark as finished' })).not.toBeInTheDocument();
     const end = screen.getByRole('region', { name: 'When it’s over' });
     expect(within(end).getByRole('button', { name: 'Mark as finished' })).toBeInTheDocument();
@@ -399,7 +400,7 @@ describe('Club mode', () => {
     const all = screen.getAllByRole('button');
     expect(all.indexOf(within(end).getByRole('button', { name: 'Mark as finished' }))).toBeGreaterThan(all.indexOf(within(run).getByRole('button', { name: 'Desk view' })));
     expect(document.body.textContent).not.toMatch(/\b20\d\d-\d\d-\d\d\b/);
-    await user.click(within(check).getByRole('button', { name: 'Open referee links' }));
+    await user.click(within(check).getByRole('button', { name: 'Create referee links' }));
     expect(await screen.findByRole('heading', { name: 'Referee links' })).toBeInTheDocument();
   });
 

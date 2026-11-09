@@ -1,3 +1,4 @@
+import { DeskNeedsYou } from './MatchdayHeader';
 import { useEffect, useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
@@ -81,7 +82,7 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
   const url = (l: ScorerLink) => appLink(`#/court/${l.token}`);
 
   return (
-    <main className="screen" aria-labelledby="links-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="links-title">
       <Header id="links-title" title="Referee links" onBack={onBack} />
       <DemoNote b={b} />
       <p className="small muted" style={{ margin: 0 }}>
@@ -90,7 +91,7 @@ export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () =>
       <AccessCards b={b} tournamentId={t.id} name={t.name} finished={t.status === 'done'} />
       <h2 style={{ fontSize: 18 }}>Court links</h2>
       <div className="meta">
-        {missing.length > 0 && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, missing), `Made ${missing.length} court link${missing.length > 1 ? 's' : ''}`)}>{have.size ? `Add links for ${missing.length} more court${missing.length > 1 ? 's' : ''}` : `Make a link for each court (${t.courts})`}</button>}
+        {missing.length > 0 && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, missing), `Made ${missing.length} court link${missing.length > 1 ? 's' : ''}`)}>{have.size ? `Add links for ${missing.length} more court${missing.length > 1 ? 's' : ''}` : `Create referee links (${t.courts})`}</button>}
         {!have.has(0) && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, [null]), 'Made an any-court link')}>Add an any-court link</button>}
       </div>
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
@@ -188,7 +189,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   const title = view ? (view.court ? `Court ${view.court}` : 'Scoring') : 'Referee';
   if (!pin || !view || !src) {
     return (
-      <main className="screen" aria-labelledby="court-title">
+      <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
         <Header id="court-title" title={title} onBack={onBack} />
         <p className="small muted" style={{ margin: 0 }}>Referee: type the referee PIN the organiser gave you to score this court’s matches. No account needed.</p>
         <Field label="PIN">
@@ -206,7 +207,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   if (current) {
     const a = current.namesA.join(' / '), bn = current.namesB.join(' / ');
     return (
-      <main className="screen" aria-labelledby="court-title">
+      <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
         <Header id="court-title" title={`${current.division ?? ''} ${current.stage === 'pool' ? `Pool ${poolLetter(current.pool)}` : STAGE_LABEL[current.stage]}`.trim()} onBack={() => { setOpen(null); setTick((x) => x + 1); }} />
         {current.court && <p className="small" style={{ margin: 0, fontWeight: 600 }}>Court {current.court}</p>}
         <ScorePad
@@ -244,7 +245,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   const done = mine.filter((m) => m.status === 'done').reverse();
   if (anyCourt && !pick) {
     return (
-      <main className="screen" aria-labelledby="court-title">
+      <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
         <Header id="court-title" title="Which court are you on?" onBack={onBack} />
         <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}</p>
         <section className="section" aria-label="Choose your court">
@@ -264,7 +265,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
     </button>
   );
   return (
-    <main className="screen" aria-labelledby="court-title">
+    <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
       <Header id="court-title" title={anyCourt && pick ? `Court ${pick}` : title} onBack={onBack} />
       <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}{t.status === 'draft' ? ' · not started yet' : ''}</p>
       {anyCourt && pick && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setPick(null)}>Change court</button>}
@@ -335,10 +336,11 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
   }
 
   return (
-    <main className="screen wide-ok" aria-labelledby="desk-title">
-      <Header id="desk-title" title={`${t.name} · Desk`} onBack={onBack} />
+    <main className="screen wide-ok pq-matchday pq-proto pq-desk" aria-labelledby="desk-title">
+      <header className="ptl"><div><p className="cap">Match-day desk · {d.club.name} · {new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</p><h1 id="desk-title" className="screen-title" aria-label={t.name+" · Desk"}>The desk</h1></div><button type="button" className="btn btn-outline" onClick={onBack}>Back</button></header>
       <DemoNote b={b} />
-      <p className="small muted" style={{ margin: 0 }}>{played} of {real.length} matches played · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'} · refreshes every 8 seconds</p>
+      {real.length>0&&<section className="pq-desk-summary pq-glass" aria-label="Match-day progress"><b>Tonight’s progress</b><span className="pill pq-score">{played} of {real.length} done</span><progress aria-label="Matches completed" max={real.length || 1} value={played} />{real.some(m=>m.slot!==undefined) && <span className="small muted">Planned finish ~{slotTime(t.startTime,Math.max(...real.map(m=>m.slot??0))+1,t.slotMinutes)}</span>}</section>}
+      {real.length>0?<p className="small muted" style={{ margin: 0 }}>{played} of {real.length} matches played · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'} · refreshes every 8 seconds</p>:<p className="small muted" role="status">No matches scheduled yet. Open entries to make the draw.</p>}
       <div className="meta">
         {t.status === 'draft' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.updateTournament(t.id, { status: 'live' }), 'The tournament is live')}>Start tournament</button>}
         {!desk && <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>}
@@ -346,20 +348,17 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
         <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Standings and draw</button>
       </div>
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
-      <section aria-label="Courts" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+      <section className="pq-courts-grid" aria-label="Courts" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
         {board.map(({ court, now, next }) => {
           const m = now ?? next;
           const call = !now && !next ? nextMatchToCall(active, court) : undefined;
           return (
             <div key={court} className="card section" aria-label={`Court ${court}`}>
-              <div className="row"><h3 style={{ fontSize: 18 }}>Court {court}</h3>{now ? <span className="pill pill-warn">Playing</span> : next ? <span className="pill">Next</span> : <span className="pill">Free</span>}</div>
+              <div className="row"><h3 style={{ fontSize: 18 }}>Court {court}</h3>{now ? <span className="pill"><i className="pq-live-dot" aria-hidden="true" /> LIVE</span> : next ? <span className="pill">Next</span> : <span className="pill">Free</span>}</div>
               {m && (
                 <>
                   <div className="small muted">{matchLabel(m, d)}{m.slot !== undefined ? ` · ${slotTime(t.startTime, m.slot, t.slotMinutes)}` : ''}</div>
-                  <div style={{ fontWeight: 600 }}>{names(m.sideA, pmap)}</div>
-                  <div style={{ fontWeight: 600 }}>{names(m.sideB, pmap)}</div>
-                  {m.games.length > 0 && <div className="small pq-score">{m.games.map((g) => `${g.a}–${g.b}`).join(', ')}</div>}
-                  <div className="small muted">{formatRule(m.format)}</div>
+                  <div className="pq-desk-team"><b>{names(m.sideA,pmap)}</b>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.a}</b>}</div><div className="pq-desk-team"><span>{names(m.sideB,pmap)}</span>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.b}</b>}</div><div className="small muted">{formatRule(m.format)}</div>
                   {entering === m.id
                     ? <ManualScores format={m.format} nameA={names(m.sideA, pmap)} nameB={names(m.sideB, pmap)} busy={busy} onSave={(g) => saveFinal(m, g)} onCancel={() => setEntering(null)} />
                     : walkover === m.id
@@ -389,24 +388,15 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
           );
         })}
       </section>
-      <section className="section" aria-label="Up next">
-        <h2 style={{ fontSize: 18 }}>Up next</h2>
+      <div className="pq-desk-bottom"><section className="section pq-queue pq-glass" aria-label="Up next">
+        <h2 style={{ fontSize: 24 }}>Queue</h2><p className="small muted">Call 10 min early · Call the teams using the court card.</p>
         {queue.length === 0 && <p className="small muted" style={{ margin: 0 }}>No matches waiting.{t.status === 'live' ? ' Knockouts are drawn automatically when the pools finish.' : ''}</p>}
-        {queue.map((m) => (
-          <div key={m.id} className="match-row">
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: 'block' }}>{who(m)}</span>
-              <span className="small muted">{matchLabel(m, d)}{m.slot !== undefined ? ` · ${slotTime(t.startTime, m.slot, t.slotMinutes)}` : ''}</span>
-            </span>
-            <label className="small" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              Court
-              <select className="input" style={{ width: 'auto', padding: '6px 8px' }} aria-label={`Court for ${who(m)}`} value={m.court ?? ''} disabled={busy} onChange={(e) => moveTo(m, Number(e.target.value))}>
-                {Array.from({ length: t.courts }, (_, i) => i + 1).map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </label>
-          </div>
-        ))}
+        {queue.length>0&&<div role="table" aria-label="Match queue" className="pq-queue-table">
+          <div role="row" className="pq-queue-row pq-queue-head"><span role="columnheader">Match</span><span role="columnheader">Category and time</span><span role="columnheader">Court</span></div>
+          {queue.map(m=><div role="row" className="pq-queue-row" key={m.id}><b role="cell">{who(m)}</b><span role="cell" className="small muted">{matchLabel(m,d)}{m.slot!==undefined?" · "+slotTime(t.startTime,m.slot,t.slotMinutes):""}</span><span role="cell"><label className="small">Court <select className="input" aria-label={"Court for "+who(m)} value={m.court??""} disabled={busy} onChange={e=>moveTo(m,Number(e.target.value))}>{Array.from({length:t.courts},(_,i)=>i+1).map(c=><option key={c} value={c}>{c}</option>)}</select></label></span></div>)}
+        </div>}
       </section>
+      {!desk && <DeskNeedsYou b={b} d={d} go={go} />}</div>
       <details className="card" style={{ padding: 10 }}>
         <summary>Pool tables</summary>
         {d.divisions.filter((x) => x.shape !== 'ko').map((x) => (
@@ -471,7 +461,7 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
   }
 
   return (
-    <main className="screen" aria-labelledby="entries-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="entries-title">
       <Header id="entries-title" title="Entries" onBack={onBack} />
       <DemoNote b={b} />
       {d.divisions.length > 1 && <Segmented label="Event" value={div.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setDivId(v); setOpenEntry(null); }} />}
@@ -481,12 +471,15 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
       {entries.map((e) => {
         const out = e.status === 'withdrawn';
         const isOpen = openEntry === e.id;
+        const ratings=e.playerIds.map(id=>div.kind==='doubles'?pmap.get(id)?.duprDoubles:pmap.get(id)?.duprSingles);
+        const average=ratings.length&&ratings.every((v):v is number=>typeof v==='number')?ratings.reduce((a,b)=>a+b,0)/ratings.length:undefined;
         return (
           <section key={e.id} className="card section" aria-label={names(e.playerIds, pmap)} style={out ? { opacity: 0.6 } : undefined}>
             <div className="row">
               <span><b>{names(e.playerIds, pmap)}</b> <span className="small muted">Pool {poolLetter(e.pool)} · seed {e.seed ?? '–'}</span></span>
               {out ? <span className="pill">Withdrawn</span> : <button type="button" className="link-btn" aria-expanded={isOpen} onClick={() => setOpenEntry(isOpen ? null : e.id)}>{isOpen ? 'Close' : 'Change'}</button>}
             </div>
+            <div className="pq-entry-meta"><span>{div.name}</span>{average!==undefined&&<span>Avg DUPR <b className="pq-score">{average.toFixed(2)}</b></span>}<span>{out?"Withdrawn":"Active"}</span></div>
             {isOpen && !out && <EntryActions e={e} pmap={pmap} free={free} busy={busy} onWithdraw={() => withdraw(e)} onReplace={(o, n) => replace(e, o, n)} />}
           </section>
         );
@@ -613,7 +606,7 @@ export function DuprExport({ id, onBack }: { id: string; go?: Go; onBack: () => 
   }
 
   return (
-    <main className="screen" aria-labelledby="dupr-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="dupr-title">
       <Header id="dupr-title" title="Send to DUPR" onBack={onBack} />
       <DemoNote b={b} />
       <section className="card section" aria-label="Ready for DUPR">

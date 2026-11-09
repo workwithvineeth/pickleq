@@ -38,7 +38,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const d = state.data;
-  if (!d || !b) return <main className="screen" aria-labelledby="inbox-title"><Header id="inbox-title" title="Entries" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  if (!d || !b) return <main className="screen pq-matchday pq-proto" aria-labelledby="inbox-title"><Header id="inbox-title" title="Entries" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const t = d.t.tournament;
   const div = d.t.divisions.find((x) => x.id === divId) ?? d.t.divisions[0];
   const regs = d.regs.filter((r) => r.divisionId === div.id);
@@ -55,7 +55,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
   const drawn = !!t.drawnAt;
 
   return (
-    <main className="screen" aria-labelledby="inbox-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="inbox-title">
       <Header id="inbox-title" title={drawn ? 'Registrations and payments' : 'Entries'} onBack={onBack} />
       <DemoNote b={b} />
       <p className="small muted" style={{ margin: 0 }}>{t.name} · {drawn ? 'Draw made' : t.registrationOpen ? 'Entries open' : 'Entries closed'}</p>
@@ -87,9 +87,10 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
       )}
       <Chips label="Show entries" value={filter} options={FILTERS} onChange={setFilter} />
       {shown.length === 0 && <p className="small muted" style={{ margin: 0 }}>No entries here.</p>}
-      {shown.map((r) => (
-        <section key={r.id} className="card section" aria-label={who(r)} style={r.status === 'rejected' || r.status === 'withdrawn' ? { opacity: 0.65 } : undefined}>
-          <div className="row"><b>{who(r)}</b><span className={`pill${r.status === 'accepted' ? ' pill-ok' : r.status === 'pending' ? ' pill-warn' : ''}`}>{REG_STATUS_LABEL[r.status]}</span></div>
+      <div className="pq-entry-records">{shown.map((r, index) => (
+        <section key={r.id} className="card section pq-entry-record" aria-label={who(r)} style={r.status === 'rejected' || r.status === 'withdrawn' ? { opacity: 0.65 } : undefined}>
+          <div className="row"><b><span className="pq-score">{index + 1}.</span> {who(r)}</b><span className={`pill${r.status === 'accepted' ? ' pill-ok' : r.status === 'pending' ? ' pill-warn' : ''}`}>{REG_STATUS_LABEL[r.status]}</span></div>
+          <div className="pq-entry-meta"><span>{div.name}</span><span>Avg DUPR {r.players.every(p => p.dupr !== undefined) ? (r.players.reduce((n,p)=>n+(p.dupr??0),0)/r.players.length).toFixed(2) : "—"}</span><span>{PAYMENT_LABEL[r.payment]}</span></div>
           {r.players.map((p, i) => (
             <div key={i} className="small" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <span>{person(p)}</span>
@@ -122,7 +123,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
           )}
           {editing === r.id && <EntryForm b={b} t={t} divisions={d.t.divisions} start={r} busy={busy} onCancel={() => setEditing(null)} onSave={(players, divisionId) => run(() => b.updateRegistration(r.id, { players, divisionId }), `${players.map((p) => p.name).join(' / ')} updated`)} />}
         </section>
-      ))}
+      ))}</div>
       <Draw b={b} t={t} divisions={d.t.divisions} regs={d.regs} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
     </main>
   );

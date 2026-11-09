@@ -4,7 +4,9 @@ import { expect, type Locator } from '@playwright/test';
  * every ancestor gradient stop; use the worst resulting ratio, not a token-only check.
  * Scope is the app frame (no photographs behind its text). */
 export async function assertContrast(locator: Locator, kind: 'text' | 'border' | 'outline' | 'signal' = 'text') {
-  const report = await locator.evaluate((element, mode) => {
+  await locator.first().waitFor({ state: 'attached' });
+  // Read one DOM snapshot so responsive menus cannot shift positional locators mid-check.
+  const reports = await locator.evaluateAll((elements, mode) => elements.map(element => {
     type Color = [number, number, number, number];
     const parse = (value: string): Color => {
       if (value === 'transparent') return [0, 0, 0, 0];
@@ -38,6 +40,7 @@ export async function assertContrast(locator: Locator, kind: 'text' | 'border' |
     const ratios = bgs.map(bg => { const a = lum(blend(fg, bg)), b = lum(bg); return (Math.max(a, b) + .05) / (Math.min(a, b) + .05); });
     const large = parseFloat(style.fontSize) >= 24 || (parseFloat(style.fontSize) >= 18.66 && Number(style.fontWeight) >= 700);
     return { ratio: Math.min(...ratios), required: mode === 'text' ? large ? 3 : 4.5 : 3, label: element.getAttribute('aria-label') || element.textContent?.trim().slice(0, 65), foreground: style.color };
-  }, kind);
-  expect(report.ratio, JSON.stringify({ kind, ...report })).toBeGreaterThanOrEqual(report.required);
+  }), kind);
+  expect(reports.length, 'At least one contrast target').toBeGreaterThan(0);
+  for (const report of reports) expect(report.ratio, JSON.stringify({ kind, ...report })).toBeGreaterThanOrEqual(report.required);
 }

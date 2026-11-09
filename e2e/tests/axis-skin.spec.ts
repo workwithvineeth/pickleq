@@ -4,6 +4,7 @@ for(const skin of ['axis','maroon'])for(const theme of ['light','dark'])test('sk
  await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));
  await page.addInitScript(()=>{Object.defineProperty(navigator,'deviceMemory',{get:()=>8});Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>8});});
  await page.goto('#/demo');await page.getByLabel('Your name in the demo').fill('Alex');await page.getByRole('button',{name:'Open PQ Demo Club'}).click();
+ await expect(page.getByRole('heading',{name:'Overview',exact:true})).toBeVisible();
  const header=page.getByRole('banner',{name:'Where you are'});
  for(const width of [390,1440]){
   await page.setViewportSize({width,height:900});await page.emulateMedia({colorScheme:theme==='light'?'dark':'light'});
@@ -15,7 +16,7 @@ for(const skin of ['axis','maroon'])for(const theme of ['light','dark'])test('sk
   await expect(page.locator('html')).toHaveAttribute('data-skin',skin);
   const expected=skin==='axis'?(theme==='dark'?'rgb(6, 8, 11)':'rgb(242, 242, 236)'):(theme==='dark'?'rgb(18, 7, 9)':'rgb(243, 235, 221)');
   expect(await page.evaluate(()=>getComputedStyle(document.body).backgroundColor)).toBe(expected);
-  for(const el of await page.locator('.pill:visible,.badge:visible,.pq-tag:visible,.btn-primary:visible,.pq-mini-btn:visible,.pq-ws-item:not(:disabled):visible,.pq-theme-switch button:visible').all())await assertContrast(el);
+  await assertContrast(page.locator('.pill:visible,.badge:visible,.pq-tag:visible,.btn-primary:visible,.pq-mini-btn:visible,.pq-ws-item:not(:disabled):visible,.pq-theme-switch button:visible'));
   const title=page.locator('#clubview-title');
   expect(await title.evaluate(el=>getComputedStyle(el).fontFamily)).toContain(skin==='axis'?'Archivo':'Fraunces');
   if(skin==='axis'){expect(await title.evaluate(el=>getComputedStyle(el).fontWeight)).toBe('800');expect(await title.evaluate(el=>getComputedStyle(el).fontStretch)).toBe('66%');}

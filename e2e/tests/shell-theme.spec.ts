@@ -18,7 +18,8 @@ async function demo(page: import('@playwright/test').Page) {
 }
 
 test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots', async ({ page }) => {
-  test.setTimeout(300_000);
+  // Twenty full-page renders need a separate Windows WebKit budget; interactions still use 15 seconds.
+  test.setTimeout(600_000);
   const cspErrors: string[] = [];
   page.on('console', msg => { if (/Refused to execute inline script|Content Security Policy.*script/.test(msg.text())) cspErrors.push(msg.text()); });
   await demo(page);
@@ -34,7 +35,7 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
     await expect(page.locator('html')).toHaveAttribute('data-theme', choice);
     expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(expected);
     expect(await page.locator('meta[name="theme-color"]').first().getAttribute('content')).toBe(expected === 'rgb(18, 7, 9)' ? '#120709' : '#F3EBDD');
-    for (const button of await header.locator('.pq-theme-switch button:visible').all()) await assertContrast(button);
+    await assertContrast(header.locator('.pq-theme-switch button:visible'));
     await assertContrast(header.locator('.pq-theme-switch button[aria-pressed="true"]:visible'), 'border');
     if (width < 870) await header.locator('.pq-theme-settings').evaluate(el => el.removeAttribute('open'));
     const rail = page.getByRole('navigation', { name: 'Club / Organiser menu' });
@@ -42,7 +43,7 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
     if(width<600)await header.getByLabel('Account menu').click();
     if (width >= 870) {
       expect(await rail.evaluate(el => el.getBoundingClientRect().width)).toBe(width < 1100 ? 88 : 248);
-      for (const text of await rail.locator('.pq-ws-item:not(:disabled), .pq-ws-glabel:visible, .pq-ws-brand b:visible').all()) if (await text.isVisible()) await assertContrast(text);
+      await assertContrast(rail.locator('.pq-ws-item:not(:disabled):visible, .pq-ws-glabel:visible, .pq-ws-brand b:visible'));
       await assertContrast(rail.locator('[aria-current="page"]'), 'border');
     } else {
       const strip = page.getByRole('navigation', { name: 'Club / Organiser sections' });
@@ -55,15 +56,15 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
       await strip.getByRole('button', { name: 'Overview', exact: true }).click();
       await strip.evaluate(el => { el.scrollLeft = 0; });
       await assertContrast(strip.locator('[aria-current="page"]'));
-      for (const item of await page.getByRole('navigation', { name: 'Main', exact: true }).getByRole('button').all()) await assertContrast(item);
+      await assertContrast(page.getByRole('navigation', { name: 'Main', exact: true }).getByRole('button'));
     }
-    for (const text of await header.locator('.pq-ws-identity strong, .pq-ws-product, .pq-ws-crumb, .pq-shell-live:visible').all()) await assertContrast(text);
+    await assertContrast(header.locator('.pq-ws-identity strong, .pq-ws-product, .pq-ws-crumb, .pq-shell-live:visible'));
     const live = header.locator('.pq-shell-live');
     if (await live.count()) { await expect(live).toContainText(/court.*live/i); await assertContrast(live.locator('.pq-live-dot'), 'signal'); }
-    for (const badge of await page.locator('.pill:visible, .badge:visible, .pq-tag:visible').all()) await assertContrast(badge);
+    await assertContrast(page.locator('.pill:visible, .badge:visible, .pq-tag:visible'));
     expect(await page.evaluate(() => document.documentElement.scrollWidth), width + ' ' + mode).toBeLessThanOrEqual(width);
     await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ path: test.info().outputPath('T14-' + width + '-' + mode + '.png'), fullPage: true });
+    await page.screenshot({ timeout: 60_000, animations: 'disabled', path: test.info().outputPath('T14-' + width + '-' + mode + '.png'), fullPage: true });
   }
   expect(cspErrors).toEqual([]);
   await page.reload(); await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -110,7 +111,7 @@ test('live chip uses public demo courts, has readable labels and opens existing 
   for (const choice of ['Light', 'Dark']) {
     await header.getByRole('button', { name: choice, exact: true }).click();
     await assertContrast(live); await assertContrast(live, 'border'); await assertContrast(live.locator('.pq-live-dot'), 'signal');
-    await page.screenshot({ path: test.info().outputPath('T14-live-' + choice + '.png'), fullPage: true });
+    await page.screenshot({ timeout: 60_000, animations: 'disabled', path: test.info().outputPath('T14-live-' + choice + '.png'), fullPage: true });
   }
   await live.click(); await expect(page).toHaveURL(/results\/pq-demo-open/);
   await expect(page.getByRole('heading', { name: 'PQ Demo Open', exact: true })).toBeVisible();

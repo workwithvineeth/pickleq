@@ -1,3 +1,4 @@
+import { EventPhotoHeader, TournamentEntrySummary } from './MatchdayHeader';
 import { PublicScoreAnnouncement } from './PublicScoreAnnouncement';
 import { isBronzeMatch } from '../resultsReport';
 import { ResultsHero } from './Brand';
@@ -104,7 +105,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   }
 
   return (
-    <main className="screen" aria-labelledby="tnew-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="tnew-title">
       <Header id="tnew-title" title="New tournament" onBack={onBack} />
       <Status error={club.error} loading={club.loading && !club.data} />
       <Field label="How do players enter?">
@@ -247,7 +248,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmDone, setConfirmDone] = useState(false);
   const d = state.data;
-  if (!d) return <main className="screen wide-ok" aria-labelledby="t-title"><Header id="t-title" title="Tournament" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  if (!d) return <main className="screen wide-ok pq-matchday pq-proto" aria-labelledby="t-title"><Header id="t-title" title="Tournament" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const staff = isStaff(d.role);
   const t = d.tournament;
   const approved = isApproved(t);
@@ -263,10 +264,11 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   // Round-robin-only events that are fully played: offer knockouts (TPC follow-up, Phase 3).
   const rrDone = d.divisions.filter((x) => x.advance === 0 && x.shape !== 'ko' && d.matches.some((m) => m.divisionId === x.id && m.stage === 'pool') && poolsComplete(x.id, d.matches) && !d.matches.some((m) => m.divisionId === x.id && m.stage !== 'pool' && m.status !== 'void'));
   return (
-    <main className="screen wide-ok" aria-labelledby="t-title">
-      <Header id="t-title" title={t.name} onBack={onBack} />
+    <main className="screen wide-ok pq-matchday pq-proto" aria-labelledby="t-title">
+      <div className="pq-tournament-heading"><EventPhotoHeader id="t-title" title={t.name} poster={t.posterUrl} status={t.cancelledAt ? "Cancelled" : t.status === "live" ? "Live" : t.status === "done" ? "Finished" : t.registrationOpen ? "Entries open" : "Entries closed"} date={t.startDate} time={t.startTime} venue={t.venue} onBack={onBack} /><TournamentEntrySummary d={d} b={b} go={go} /></div>
+      {!staff&&<PosterImage src={t.posterUrl} name={t.name} size="thumb" />}
       <DemoNote b={b} />
-      {!staff && <PosterImage src={t.posterUrl} name={t.name} />}
+
       <ClubLogo src={d.club.logoUrl} club={d.club.name} />
       <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {friendlyDate(t.startDate)} · from {friendlyTime(t.startTime)} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
       {t.cancelledAt && <div role="status" className="msg msg-bad">This tournament was cancelled{t.cancelReason ? `: ${t.cancelReason}` : ''}.</div>}
@@ -282,7 +284,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           {t.status === 'draft' && <button type="button" className="btn btn-primary" onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
           <button type="button" className={`btn ${t.status === 'draft' ? 'btn-outline' : 'btn-primary'}`} onClick={() => go('club-desk', t.id)}>Desk view</button>
           <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>
-          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>{t.entryMode === 'registration' && !t.drawnAt ? 'Entries and draw' : 'Entries'}</button>
+
           {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>}
           {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-results-dupr', t.id)}>Results and DUPR</button>}
         </nav>
@@ -303,7 +305,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {staff && approved && !t.isPublic && <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: true }, 'Results link is on')}>Turn on the results link</button>}
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
       {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
-      <Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} />
+      <nav className="pq-tournament-tabs" aria-label="Tournament sections">{staff && approved && <button type="button" className="btn btn-outline" onClick={() => go("club-entries",t.id)}>{t.entryMode === "registration" && !t.drawnAt ? "Entries and draw" : "Entries"}</button>}<Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} /></nav>
       <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />
       {staff && approved && t.status === 'live' && rrDone.map((x) => {
         const teams = d.entries.filter((e) => e.divisionId === x.id && e.status !== 'withdrawn').length;
@@ -368,7 +370,7 @@ function Preflight({ b, d, go }: { b: ClubBackend; d: TournamentBundle; go: Go }
   const all = done === items.length;
   const fix = (x: PreflightItem) => x.fix && (
     <button type="button" className="link-btn" onClick={() => go(x.fix === 'inbox' ? 'club-inbox' : x.fix === 'links' ? 'club-scorers' : 'club-entries', t.id)}>
-      {x.fix === 'inbox' ? 'Open the entries inbox' : x.fix === 'links' ? 'Open referee links' : 'Open entries'}
+      {x.fix === 'inbox' ? 'Open the entries inbox' : x.fix === 'links' ? 'Create referee links' : 'Open entries'}
     </button>
   );
   return (
@@ -444,7 +446,7 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<
   const ko = matches.filter((m) => m.stage !== 'pool' && !isBronzeMatch(m)).sort((a, b) => (a.round ?? 0) - (b.round ?? 0) || (a.bracketPos ?? 0) - (b.bracketPos ?? 0));
   const rounds = [...new Set(ko.map((m) => m.round ?? 1))];
   return (
-    <section className="section" aria-label="Knockouts">
+    <section className="section pq-knockout" aria-label="Knockouts">
       {division.advance === 0 && division.shape !== 'ko' && <p className="small muted">This event has no knockouts.</p>}
       {division.advance > 0 && ko.length === 0 && <p className="small muted">Knockouts are drawn once every pool match is finished.</p>}
       {rounds.map((r) => {
@@ -519,7 +521,7 @@ function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; 
   );
   return onScore && m.status !== 'done' && m.status !== 'void'
     ? <button type="button" className="match-row" aria-label={`Score ${a} against ${b}`} onClick={() => onScore(m.id)}>{body}</button>
-    : <div className="match-row">{body}</div>;
+    : <div className="match-row">{body}{m.stage === "final" && m.status === "done" && winner && <span className="pq-champion">Champion · {winner === "A" ? a : b}</span>}</div>;
 }
 
 const MY_NAME = 'pq-my-name';
@@ -609,7 +611,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
   }, [d?.status]);
   const division = d?.divisions.find((x) => x.id === div) ?? d?.divisions[0];
   return (
-    <main className="screen" aria-labelledby="results-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="results-title">
       <ResultsHero />
       <PublicScoreAnnouncement slug={slug} data={d} />
       <Header id="results-title" title={d?.name ?? 'Results'} onBack={onBack} />

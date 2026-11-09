@@ -49,7 +49,7 @@ export function preflight(x: PreflightInput): PreflightItem[] {
   const have = courts.filter((c) => x.linkCourts.includes(c)).length;
   out.push(anyCourt || have === t.courts
     ? { key: 'links', ok: true, text: anyCourt && have < t.courts ? 'Referee links: an any-court link is ready' : `Referee links for all ${t.courts} court${t.courts === 1 ? '' : 's'}` }
-    : { key: 'links', ok: false, text: have === 0 ? 'No referee links yet' : `Referee links for ${have} of ${t.courts} courts`, fix: 'links' });
+    : { key: 'links', ok: false, text: have === 0 ? 'Referee links not created' : `Referee links for ${have} of ${t.courts} courts`, fix: 'links' });
 
   out.push(x.pins
     ? { key: 'pins', ok: true, text: 'Referee PIN and desk PIN are set (tell them by voice, separately)' }

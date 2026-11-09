@@ -143,24 +143,25 @@ export function ScorePad(p: ScorePadProps) {
       {fmt.bestOf > 1 && <p className="small" style={{ margin: 0 }}>Games: {nameA} {result.gamesA} – {result.gamesB} {nameB}</p>}
       {!manual && p.canScore && (
         <>
-          {golden && <div role="status" className="golden-banner">Golden point · next point wins</div>}
+
           <div className="score-grid">
             <button type="button" className="score-tap score-tap-a" aria-label={`Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || busy}>
               <span className="small">{nameA}</span>
               <span className="big">{cur.a}</span>
-              <span className="small muted">Tap for a point</span>
+              <span className="small muted">Tap if they won the point</span>
             </button>
+            {(golden || gp) && <div role="status" className="pq-gamepoint-strip">{golden ? "GOLDEN POINT" : "GAME POINT"}<small>{golden ? "Golden point · next point wins" : "Game point: " + (gp === "A" ? nameA : nameB)}</small></div>}
             <button type="button" className="score-tap score-tap-b" aria-label={`Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || busy}>
               <span className="small">{nameB}</span>
               <span className="big">{cur.b}</span>
-              <span className="small muted">Tap for a point</span>
+              <span className="small muted">Tap if they won the point</span>
             </button>
           </div>
           <p className={`small${gp ? ' pq-gamepoint' : ''}`} style={{ margin: 0, minHeight: 20 }} aria-live="polite">
-            {gp ? `Game point: ${gp === 'A' ? nameA : nameB}` : !golden && Math.abs(lead) >= thr ? `${lead > 0 ? nameA : nameB} lead by ${Math.abs(lead)}` : ''}
+            {!gp && !golden && Math.abs(lead) >= thr ? `${lead > 0 ? nameA : nameB} lead by ${Math.abs(lead)}` : ''}
           </p>
           <div className="sticky-actions" style={{ position: 'static' }}>
-            <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || (!cur.points.length && (cur.a !== 0 || cur.b !== 0 || !games[games.length - 2]?.points.length))}>Undo Last Point</button>
+            <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || (!cur.points.length && (cur.a !== 0 || cur.b !== 0 || !games[games.length - 2]?.points.length))}>Undo</button>
             {curOver && !matchOver && <button type="button" className="btn btn-primary" onClick={() => update([...games, { points: '', a: 0, b: 0 }])}>Start game {games.length + 1}</button>}
             {matchOver && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => finish(games)}>Save result</button>}
           </div>

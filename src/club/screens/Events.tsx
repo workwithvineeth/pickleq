@@ -1,3 +1,4 @@
+import { EventPhotoHeader } from './MatchdayHeader';
 import { useEffect, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import type { Go } from '../../navigation';
@@ -76,7 +77,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
   for (const e of shown) byDay.set(e.startDate, [...(byDay.get(e.startDate) ?? []), e]);
 
   return (
-    <main className="screen" aria-labelledby="events-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="events-title">
       <Header id="events-title" title="Events" right={<button type="button" className="btn btn-outline" style={{ padding: '8px 12px' }} onClick={() => go('my-entries')}>My entries</button>} />
       {b.kind === 'demo' && clubMode() === 'demo' && <DemoNote b={b} />}
       <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on PaddleQ, or contact them for listed events.</p>
@@ -140,7 +141,7 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
   const e = state.data?.event;
   if (!e) {
     return (
-      <main className="screen" aria-labelledby="event-title">
+      <main className="screen pq-matchday pq-proto" aria-labelledby="event-title">
         <Header id="event-title" title="Tournament" onBack={onBack} />
         <Status error={state.error} loading={state.loading} />
         {!state.loading && !state.error && <p className="muted">This tournament isn’t available. The organiser may have taken it down. A tournament made in the demo club only opens on the phone that made it.</p>}
@@ -149,10 +150,11 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
   }
   const where = [e.venue, e.city].filter(Boolean).join(', ');
   return (
-    <main className="screen" aria-labelledby="event-title">
-      <Header id="event-title" title={e.name} onBack={onBack} />
+    <main className="screen pq-matchday pq-proto" aria-labelledby="event-title">
+      <EventPhotoHeader id="event-title" title={e.name} poster={e.posterUrl} status={e.status === "live" ? "Live" : e.status === "done" ? "Finished" : e.registrationOpen ? "Entries open" : "Entries closed"} date={e.startDate} time={e.startTime} venue={e.venue} onBack={onBack} />
+      <PosterImage src={e.posterUrl} name={e.name} size="thumb" />
       {state.data?.src.kind === 'demo' && <DemoNote b={state.data.src} />}
-      <PosterImage src={e.posterUrl} name={e.name} />
+
       <OrganiserCard club={e.club} logoUrl={logo.data?.logoUrl} />
       <section className="card section" aria-label="When and where">
         <div style={{ fontWeight: 600 }}>{dayLabel(e.startDate)} · from {timeLabel(e.startTime)}</div>
@@ -249,7 +251,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   const d = e?.divisions.find((x) => x.id === divId);
   if (!found || !e || !d) {
     return (
-      <main className="screen" aria-labelledby="enter-title">
+      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
         <Header id="enter-title" title="Enter" onBack={onBack} />
         <Status error={state.error} loading={state.loading} />
         {!state.loading && !state.error && <p className="muted">This event isn’t taking entries.</p>}
@@ -261,7 +263,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
 
   if (done) {
     return (
-      <main className="screen" aria-labelledby="enter-title">
+      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
         <Header id="enter-title" title="Entry sent" onBack={() => go('event', slug)} />
         <div role="status" className="msg msg-ok">{done === 'waitlist' ? `${d.name} is full, so you’re on the waitlist. The organiser will tell you if a place opens.` : `You’re entered in ${d.name}. The organiser will confirm your entry.`}</div>
         <p className="small muted" style={{ margin: 0 }}>Status: {REG_STATUS_LABEL[done]}. Follow it in My entries.</p>
@@ -271,7 +273,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   }
   if (!e.registrationOpen) {
     return (
-      <main className="screen" aria-labelledby="enter-title">
+      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
         <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
         <p className="muted">Entries for this tournament are closed.</p>
       </main>
@@ -279,7 +281,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   }
   if (!state.data?.user) {
     return (
-      <main className="screen" aria-labelledby="enter-title">
+      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
         <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
         <section className="card section">
           <p style={{ margin: 0 }}>Sign in with your email to enter. It takes a minute, and you come straight back here.</p>
@@ -305,7 +307,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   }
 
   return (
-    <main className="screen" aria-labelledby="enter-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
       <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
       <p className="small muted" style={{ margin: 0 }}>{e.name} · {dayLabel(e.startDate)} · {rulesLine(d.kind, d.rules)}</p>
       <PersonFields label="You" p={me} onChange={setMe} />
@@ -345,7 +347,7 @@ export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
     try { await b.withdrawMyEntry(x.id); setMsg(`Withdrawn from ${x.division}`); setConfirm(null); state.reload(); } catch (e) { setMsg(errorText(e)); }
   }
   return (
-    <main className="screen" aria-labelledby="mine-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="mine-title">
       <Header id="mine-title" title="My entries" onBack={onBack} />
       <DemoNote b={b.kind === 'demo' ? b : null} />
       <Status error={state.error} loading={state.loading && !state.data} />
@@ -391,7 +393,7 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
   }, [b]);
   const clubs = state.data;
   return (
-    <main className="screen" aria-labelledby="post-title">
+    <main className="screen pq-matchday pq-proto" aria-labelledby="post-title">
       <Header id="post-title" title="Post a tournament" onBack={onBack} />
       <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
         <li><b>List it</b> (free): it shows on the board, and players contact you to enter.</li>

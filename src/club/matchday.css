@@ -1,0 +1,83 @@
+
+.pq-matchday{min-width:0}
+.pq-matchday :is(.card,.match-row){background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2));border:1px solid var(--pq-line);border-radius:22px;box-shadow:0 8px 28px var(--pq-tint);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);color:var(--pq-ink)}
+.pq-matchday .match-row{padding:16px;gap:12px;overflow-wrap:anywhere;min-width:0}
+.pq-matchday :is(.btn,.link-btn,summary,select,.segmented button,.chips button){min-height:44px}
+.pq-matchday .btn-outline{background:var(--pq-glass-1);color:var(--pq-ink);border-color:var(--pq-muted)}
+.pq-matchday :is(.msg,.notice){border-radius:16px}
+.pq-matchday .pool-table :is(td,th):not(:nth-child(2)){font-family:var(--pq-font-score);font-variant-numeric:tabular-nums}
+.pq-tournament-heading{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:stretch}
+.pq-event-photo{position:relative;min-height:300px;overflow:hidden;border-radius:26px;isolation:isolate;background:var(--pq-maroon);color:var(--pq-cream);display:flex;align-items:flex-end}
+.pq-event-photo>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.pq-event-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(40,8,16,.96),rgba(60,10,24,.5));z-index:-1}
+.pq-event-photo-content{width:100%;padding:28px}
+.pq-event-photo .header{background:transparent!important;box-shadow:none;padding:16px 0;margin:0;border-radius:0}
+.pq-event-photo .screen-title{color:var(--pq-cream)!important;font:600 clamp(30px,4vw,48px)/1.05 var(--pq-font-display)!important}
+.pq-event-photo :is(.icon-btn,p){color:var(--pq-cream)}
+.pq-event-photo p{margin:0;font-size:14px;line-height:1.6}
+.pq-event-status{display:inline-flex;padding:6px 12px;border-radius:999px;background:var(--pq-cream);color:var(--pq-maroon);font-weight:700;font-size:12px}
+.pq-entry-summary{display:flex;flex-direction:column;gap:14px;padding:24px;min-width:0}
+.pq-entry-summary p{margin:0;font-size:13px;color:var(--pq-muted)}
+.pq-entry-summary>.btn{color:var(--pq-ink)}
+.pq-entry-summary>.btn-primary{color:var(--pq-cream)}
+.pq-entry-ring{margin:auto;width:140px;height:140px;border-radius:50%;background:conic-gradient(var(--pq-maroon-text) var(--entry-progress),var(--pq-line) 0);padding:8px}
+.pq-entry-ring>span{background:var(--pq-surface);width:100%;height:100%;border-radius:50%;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:5px;font-size:15px}
+.pq-entry-ring b{font-size:36px}
+.pq-entry-ring small{flex-basis:100%;text-align:center;color:var(--pq-muted)}
+.pq-tournament-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.pq-tournament-tabs .segmented{flex:1}
+.pq-knockout{display:flex;flex-direction:row;align-items:center;gap:24px;max-width:100%;overflow-x:auto;padding:12px 18px 20px 0;scroll-snap-type:x proximity;mask-image:linear-gradient(to right,#000 calc(100% - 12px),transparent)}
+.pq-knockout>div{flex:0 0 280px;scroll-snap-align:start}
+.pq-knockout>p{flex:0 0 240px}
+.pq-champion{display:inline-flex;gap:6px;background:var(--pq-gold);color:var(--pq-ink);border-radius:999px;padding:6px 12px;font:700 12px var(--pq-font-body)}
+.pq-desk-summary{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:20px}
+.pq-desk-summary p{margin:0;font-size:13px;color:var(--pq-muted);flex:1 1 260px}
+.pq-desk-summary progress{flex:1 0 100%;width:100%;accent-color:var(--pq-maroon-text);height:10px}
+.pq-desk .pq-courts-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))!important}
+.pq-desk .pq-courts-grid .pq-score{font-size:44px;line-height:1.1}
+.pq-desk .pq-queue{padding:20px}
+.pq-desk .pq-queue .match-row{margin:10px 0;flex-wrap:wrap}
+.pq-entry-records{display:grid;gap:12px}
+.pq-entry-record{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;padding:20px;align-items:start}
+.pq-entry-record>.meta,.pq-entry-record>.section{grid-column:1/-1}
+.pq-entry-record .row{flex-wrap:wrap;gap:8px}
+.pq-entry-meta{display:flex;gap:14px;flex-wrap:wrap;grid-column:1/-1;font-size:12px;color:var(--pq-muted)}
+.pq-referee .score-grid{display:flex;flex-direction:column;gap:0;border-radius:24px;overflow:hidden;min-height:65svh}
+.pq-referee .score-tap{min-height:29svh;padding:24px 16px;border:0;border-radius:0;box-shadow:none;touch-action:manipulation;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.pq-referee .score-tap-a{background:var(--pq-maroon)!important;color:var(--pq-cream)!important}
+.pq-referee .score-tap-b{background:var(--pq-cream)!important;color:var(--pq-ink)!important}
+.pq-referee .score-tap :is(.small,.muted){color:inherit;font-size:14px;opacity:1}
+.pq-referee .score-tap .big{font:800 clamp(96px,26vw,160px)/.95 var(--pq-font-score);font-stretch:68%;font-variant-numeric:tabular-nums}
+.pq-referee .score-tap:focus-visible{outline:4px solid var(--pq-ball);outline-offset:-6px}
+.pq-referee .pq-gamepoint-strip{text-align:center;padding:12px;background:var(--pq-gold);color:var(--pq-ink);font:800 18px var(--pq-font-body)}
+.pq-referee .pq-gamepoint-strip small{display:block;font-weight:500;font-size:12px}
+.pq-referee .sticky-actions{display:flex;gap:12px}
+.pq-referee .sticky-actions button{flex:1}
+@media(max-width:869px){.pq-tournament-heading{grid-template-columns:1fr 1fr}}
+@media(max-width:599px){.pq-tournament-heading{grid-template-columns:1fr}.pq-event-photo{min-height:240px}.pq-event-photo-content{padding:20px}.pq-entry-summary{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:16px}.pq-entry-summary>.pq-entry-ring{grid-row:span 3}.pq-entry-summary>.btn{grid-column:1/-1}.pq-entry-record{grid-template-columns:1fr;padding:16px}.pq-matchday .pool-table{font-size:11px!important}.pq-matchday .pool-table :is(th,td){padding:7px 3px}.app.pq-brand.pq-ws>.pq-referee{padding:8px 12px 100px}.pq-referee .score-grid{min-height:68svh}}
+[data-pq-effects="off"] .pq-matchday :is(.card,.match-row){backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--pq-surface)}
+@media(prefers-reduced-motion:reduce),(prefers-reduced-transparency:reduce),(update:slow){.pq-matchday :is(.card,.match-row){backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--pq-surface)}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.pq-matchday :is(.card,.match-row){background:var(--pq-surface)}}
+
+.pq-desk-bottom{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start}.pq-desk-needs{padding:20px}.pq-referee .score-tap-b .big{color:var(--pq-ink)}.pq-referee .score-tap-a .big{color:var(--pq-cream)}@media(max-width:599px){.pq-desk-bottom{grid-template-columns:1fr}.app.pq-brand.pq-ws .pq-referee>.header:first-child{margin:0;padding:12px;border-radius:18px}}
+.pq-tournament-heading{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}.pq-event-photo{grid-column:span 8;min-height:340px;border-radius:28px;display:block;background:var(--pq-hero)}.pq-entry-summary{grid-column:span 4}
+.pq-event-photo-content{padding:24px;min-height:340px;display:flex;flex-direction:column;justify-content:space-between;gap:60px}.pq-event-photo .screen-title{font-size:clamp(44px,5vw,74px)!important;font-weight:var(--pq-display-weight)!important;line-height:var(--pq-display-line-height)!important;color:var(--pq-hero-text)!important}.pq-event-photo p{color:var(--pq-hero-text)}.pq-event-photo .icon-btn{background:var(--pq-surface);color:var(--pq-ink);border:1px solid var(--pq-muted);border-radius:50%}.pq-event-photo .chip{align-self:flex-start}.pq-event-photo::before{background:var(--pq-blob-1)}
+.pq-matchday .pq-entry-summary{display:flex;flex-direction:column;min-height:340px;justify-content:space-between;background:var(--pq-hero);color:var(--pq-hero-text);padding:22px;border-radius:28px}.pq-entry-summary h2{font-size:22px;margin:0}.pq-entry-summary p{color:var(--pq-hero-text);font-size:14px}.pq-entry-summary .btn-outline{color:var(--pq-hero-text);background:var(--pq-hero);border-color:var(--pq-hero-muted)}.pq-entry-summary>.btn-primary{color:var(--pq-on-brand)}.pq-entry-ring{width:120px;height:120px;background:conic-gradient(var(--pq-maroon) var(--entry-progress),rgba(255,255,255,.18) 0)}.pq-entry-ring>span{background:var(--pq-hero);color:var(--pq-hero-text)}.pq-entry-ring small{color:var(--pq-hero-muted)}
+.pq-matchday .card,.pq-matchday .pq-desk-needs{border-radius:28px;background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2));box-shadow:inset 0 1px 1px var(--pq-glass-edge),0 24px 50px -26px var(--pq-glass-shadow)}
+.pq-desk .ptl{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}.pq-desk .ptl .cap{margin:0 0 6px}.pq-desk .ptl .screen-title{font-size:clamp(38px,4.8vw,66px);line-height:var(--pq-display-line-height);margin:0}.pq-desk-summary{padding:16px 22px;border-radius:28px;font-size:13px}.pq-desk-summary .pill{font-size:12px}.pq-desk-summary progress{height:9px;order:5}
+.pq-desk .pq-courts-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important}.pq-desk-team{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;margin-top:6px}.pq-desk .pq-desk-team .pq-score{font:800 36px/1 var(--pq-font-score);font-stretch:68%;color:var(--pq-maroon-text);flex:none}.pq-desk-bottom{grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}.pq-desk .pq-queue .match-row{border-radius:0;background:none;box-shadow:none;border:0;border-bottom:1px solid var(--pq-line)}
+.pq-referee .score-tap-a{background:linear-gradient(180deg,var(--pq-maroon-hi),var(--pq-maroon))!important;color:var(--pq-on-brand)!important}.pq-referee .score-tap-b{background:var(--pq-cream)!important;color:var(--pq-hero)!important}:root[data-skin=axis] .pq-referee .score-tap-b{background:#141A21!important;color:#F3F2EC!important}.pq-referee .score-tap .big{color:inherit!important;font-size:clamp(96px,28vw,160px);font-weight:800;font-stretch:64%;line-height:.85}.pq-referee .score-tap .small{color:inherit}.pq-referee .sticky-actions{background:var(--pq-hero);padding:10px;border-radius:0 0 24px 24px}.pq-referee .sticky-actions button{min-height:44px}
+@media(max-width:1180px){.pq-desk .pq-courts-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.pq-tournament-heading{grid-template-columns:repeat(2,minmax(0,1fr))}.pq-event-photo,.pq-entry-summary{grid-column:auto}}
+@media(max-width:599px){.pq-tournament-heading,.pq-desk-bottom{grid-template-columns:1fr}.pq-desk .pq-courts-grid{grid-template-columns:1fr!important}.pq-entry-summary{min-height:340px}.pq-matchday .input{min-width:0}.pq-matchday .meta{flex-wrap:wrap}}
+
+.app.pq-ws:has(.pq-referee .score-grid)>:is(.pq-ws-top,.pq-ws-tabs,.nav){display:none!important}.app.pq-ws:has(.pq-referee .score-grid)>.pq-referee{padding-top:12px}.pq-referee .score-grid{min-height:70svh}.pq-referee .score-tap{min-height:30svh}
+
+.pq-referee .sticky-actions{position:fixed!important;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:680px;z-index:50}.pq-referee:has(.score-grid){padding-bottom:110px!important}.pq-referee .pq-gamepoint:empty{display:none}
+
+.pq-desk .pq-queue{display:block}.pq-queue-table{width:100%}.pq-queue-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.4fr) minmax(80px,.6fr);gap:12px;align-items:center;padding:12px 8px;border-bottom:1px solid var(--pq-line);font-size:14px}.pq-queue-head{font-size:11.5px;font-weight:700;color:var(--pq-muted);letter-spacing:.1em;text-transform:uppercase}.pq-queue-row select{width:auto;min-width:60px;min-height:44px}.pq-referee .pq-gamepoint-strip,.pq-champion{color:#1E1A17}@media(max-width:599px){.pq-queue-head{display:none}.pq-queue-row{grid-template-columns:minmax(0,1fr) 80px;gap:8px}.pq-queue-row>[role=cell]:first-child{grid-column:1}.pq-queue-row>[role=cell]:nth-child(2){grid-column:1}.pq-queue-row>[role=cell]:last-child{grid-column:2;grid-row:1/span 2}}
+
+.pq-referee .score-tap:focus-visible{outline-color:currentColor}.pq-proto .pq-entry-summary::after{background:linear-gradient(180deg,rgba(6,8,11,.76),rgba(6,8,11,.65),rgba(6,8,11,.9))}
+
+.pq-referee .score-tap:focus-visible{outline:3px solid var(--pq-ink);outline-offset:-7px;box-shadow:inset 0 0 0 4px currentColor}
+
+.pq-entry-statline{display:flex;align-items:center;gap:20px}.pq-entry-statline .pq-entry-ring{margin:0;flex:none}.pq-entry-ring b{font-size:34px}.pq-entry-details{min-width:0;display:grid;gap:6px;font-size:14px}.pq-entry-actions{display:flex;gap:8px;flex-wrap:wrap}.pq-entry-summary .ch{margin:0}.pq-entry-summary h2{color:var(--pq-hero-text)}

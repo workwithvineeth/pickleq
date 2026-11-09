@@ -24,7 +24,7 @@ test.describe('Organiser screens (demo club)', () => {
     await openDemoEvent(page);
     const check = page.getByRole('region', { name: 'Ready for the day?' });
     await expect(check).toBeVisible();
-    await expect(check.getByText(/No referee links yet/)).toBeVisible();
+    await expect(check.getByText(/Referee links not created/)).toBeVisible();
     const run = page.getByRole('navigation', { name: 'Run the tournament' });
     await expect(run.getByRole('button').first()).toHaveText('Desk view');
     await expect(page.getByRole('region', { name: 'When it’s over' }).getByRole('button', { name: 'Mark as finished' })).toBeVisible();
@@ -33,7 +33,7 @@ test.describe('Organiser screens (demo club)', () => {
       await page.setViewportSize({ width: w, height: 760 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `tournament page at ${w}`).toBeLessThanOrEqual(w);
     }
-    await check.getByRole('button', { name: 'Open referee links' }).click();
+    await check.getByRole('button', { name: 'Create referee links' }).click();
     await expect(page.getByRole('heading', { name: 'Referee links' })).toBeVisible();
   });
 
@@ -82,7 +82,7 @@ test.describe('Organiser screens (demo club)', () => {
     await page.getByRole('button', { name: 'Desk view' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Open · Desk' })).toBeVisible();
     for (const c of [1, 2, 3]) await expect(page.getByLabel(`Court ${c}`, { exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Up next' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Queue' })).toBeVisible();
     await page.getByRole('button', { name: 'Enter result' }).first().click();
     const form = page.getByRole('region', { name: 'Final scores' });
     const inputs = form.getByRole('textbox');
