@@ -1,3 +1,4 @@
+import { artworkPalette, currentSkin, SKINS } from '../skin';
 /** Posters: shrinking a photo on the phone before upload, and drawing the demo's made-up posters. */
 
 export const POSTER_MAX_WIDTH = 1080;
@@ -49,6 +50,7 @@ function motif(m: PosterDesign['motif'], c: string): string {
 
 /** A made-up poster for the demo, as an SVG picture (portrait 4:5). */
 export function samplePoster(d: PosterDesign): string {
+  if(currentSkin()==="axis"){const art=artworkPalette();d={...d,bg:art.hero,ink:art.chalk,accent:d.motif==="court"?art.court:d.motif==="trophy"?art.gold:art.brand};}
   const words = d.title.split(' ');
   const lines: string[] = [];
   for (const w of words) { const last = lines[lines.length - 1]; if (last && (last + ' ' + w).length <= 16) lines[lines.length - 1] = `${last} ${w}`; else lines.push(w); }
@@ -69,6 +71,7 @@ export interface LogoDesign { initials: string; bg: string; ink: string; accent:
 
 /** A made-up club logo for the demo, as a square SVG picture. */
 export function sampleLogo(d: LogoDesign): string {
+  if(currentSkin()==="axis"&&d.bg.toUpperCase()===SKINS.maroon.brand){const art=artworkPalette();d={...d,bg:art.brand,ink:art.onBrand,accent:art.onBrand};}
   const badge = d.shape === 'shield'
     ? `<path d="M256 40l176 56v132c0 112-76 196-176 244C156 424 80 340 80 228V96z" fill="${d.bg}" stroke="${d.accent}" stroke-width="14"/>`
     : d.shape === 'ball'

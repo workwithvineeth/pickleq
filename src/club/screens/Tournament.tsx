@@ -562,7 +562,7 @@ function MyMatches({ d }: { d: PublicTournament }) {
       {next && (
         <div className="pq-next" style={{ padding: 16, gap: 6 }} aria-label="Your next match" role="group">
           <span className="pq-next-kicker">{next.status === 'live' ? 'ON COURT NOW' : 'YOUR NEXT MATCH'}</span>
-          <b style={{ fontSize: 20, color: '#F3EBDD' }}>{next.court ? `Court ${next.court}` : 'Court to be called'}{next.time ? ` · ${next.time}` : ''}</b>
+          <b style={{ fontSize: 20, color: 'var(--pq-on-brand)' }}>{next.court ? `Court ${next.court}` : 'Court to be called'}{next.time ? ` · ${next.time}` : ''}</b>
           <span className="pq-next-meta">vs {next.opponent}</span>
           <span className="pq-next-meta">{next.event}</span>
         </div>

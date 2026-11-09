@@ -1,0 +1,31 @@
+
+/* T16 roles, typography and contrast only; staging screen layouts are unchanged. */
+:root[data-skin="axis"] .pq-brand{--win-bg:var(--pq-tint);--win-fg:var(--pq-maroon-text);--loss-bg:var(--pq-surface-raised);--loss-fg:var(--pq-muted)}
+:root[data-skin="axis"] :is(h1,h2,h3,h4,.pq-band-name,.pq-player-name,.pq-flow-title,.pq-ws-identity strong,.pq-l-title):not(.pq-wordmark){
+ font-family:var(--pq-font-display)!important;font-weight:var(--pq-display-weight)!important;text-transform:var(--pq-display-transform);font-stretch:var(--pq-display-stretch)!important;letter-spacing:var(--pq-display-spacing);line-height:var(--pq-display-line-height)!important;
+}
+.pq-wordmark,.pq-ws-brand b,.pq-l-logo b,.nav-brand b{font-family:var(--pq-wordmark-font)!important;font-weight:600!important;font-stretch:100%!important;text-transform:none!important;letter-spacing:-.02em}
+:root[data-skin="axis"] :is(.pq-hero,.pq-l-hero,.pq-band,.pq-flow){background:var(--pq-hero);color:var(--pq-hero-text);--pq-logo-ink:var(--pq-maroon);--pq-logo-cutout:var(--pq-hero)}
+:root[data-skin="axis"] :is(.pq-hero,.pq-band,.pq-flow) :is(.pq-wordmark,.pq-band-name,.pq-flow-title){color:var(--pq-hero-text)}
+:root[data-skin="axis"] :is(.pq-hero,.pq-band,.pq-flow) :is(.pq-caption,.pq-band-kick,.pq-story-text,.pq-flow-sub,p){color:var(--pq-hero-muted)}
+:root[data-skin="axis"] :is(.pq-hero .pq-live-chip){color:var(--pq-hero-text)}
+:root[data-skin="axis"] :is(.pq-l-btn-cream,.pq-band .btn-cream){background:linear-gradient(180deg,var(--pq-maroon-hi),var(--pq-maroon),var(--pq-maroon-lo));color:var(--pq-on-brand);border-color:var(--pq-maroon-ui)}
+:root[data-skin="axis"] .pq-brand .score-tap-b{background:#141A21;color:#F3F2EC;border-color:var(--pq-maroon-ui)}
+:root[data-skin="axis"] .pq-brand .score-tap-b :is(.big,.muted){color:#F3F2EC}
+:root[data-skin="axis"] .pq-brand .score-tap-b:active{background:#1F2933}
+:root[data-skin="axis"] .pq-brand .msg-bad{color:var(--pq-error-text)}
+/* A role badge uses its own opaque surface, including on the phone's title band. */
+.app.pq-brand .screen>.header:first-child .pill{background:var(--pq-surface-raised);color:var(--pq-ink)}
+.app.pq-brand .pq-shell-live{background:var(--pq-hero);color:var(--pq-hero-text);border-color:var(--pq-maroon-ui)}
+.pq-shell-live .pq-live-dot{box-shadow:0 0 0 2px var(--pq-hero)}
+.pq-skin-control{display:flex;flex-direction:column;gap:8px;margin-top:14px;font:700 13px var(--pq-font-body);color:var(--pq-ink)}
+.pq-skin-control select{min-height:44px;width:100%;background:var(--pq-surface);color:var(--pq-ink);border:1px solid var(--pq-muted);border-radius:12px;padding:0 12px;font:500 14px var(--pq-font-body)}
+.pq-skin-control select:focus-visible,.pq-skin-settings>summary:focus-visible{outline:3px solid var(--pq-maroon-text);outline-offset:3px}
+.pq-skin-settings{position:relative}.pq-skin-settings>summary{min-height:44px;display:flex;align-items:center;padding:0 12px;list-style:none;cursor:pointer;border:1px solid var(--pq-muted);border-radius:999px;font:700 12px var(--pq-font-body)}
+.pq-skin-settings>summary::-webkit-details-marker{display:none}.pq-skin-settings .pq-theme-panel{min-width:240px}
+@media(max-width:869px){.pq-skin-settings{display:none}}
+
+/* Inverse update buttons pair with the filled brand, not the text accent. */
+.toast-inline button{background:var(--on-solid);color:var(--solid)}
+
+.pq-tag-live{background:var(--pq-hero);color:var(--pq-hero-text)}.pq-tag-live::before{content:'';display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--pq-ball)}.pq-live-chip .pq-live-dot{margin-right:6px}

@@ -1,6 +1,6 @@
 /* PaddleQ design tokens · Maroon & Cream · v1 (9 Nov 2026)
    Source: brand-guide.md (31 Oct) + liquid-glass round (9 Nov). Sign-off: Vineeth. */
-:root{
+:root, :root[data-skin="maroon"]{
   /* Semantic roles supplement the supplied reference palette. */
   --pq-bg:var(--pq-cream); --pq-maroon-ui:var(--pq-maroon); --pq-maroon-text:var(--pq-maroon);
   --pq-surface-raised:#EADFD0; --pq-tint:var(--pq-maroon-tint); --pq-error-text:var(--pq-error);
@@ -45,7 +45,7 @@
   background:linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.08) 34%,rgba(255,255,255,0) 60%,rgba(255,255,255,.55));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
 /* primary button */
-.pq-btn{min-height:var(--pq-tap);border-radius:var(--pq-radius-pill);padding:0 24px;font:700 14px var(--pq-font-body);color:var(--pq-cream);border:0;
+.pq-btn{min-height:var(--pq-tap);border-radius:var(--pq-radius-pill);padding:0 24px;font:700 14px var(--pq-font-body);color:var(--pq-on-brand);border:0;
   background:linear-gradient(180deg,var(--pq-maroon-hi),var(--pq-maroon) 55%,var(--pq-maroon-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -3px 8px rgba(0,0,0,.22)}
 /* score numerals */
 .pq-score{font-family:var(--pq-font-score);font-stretch:68%;font-weight:800;font-variant-numeric:tabular-nums}
@@ -56,7 +56,7 @@
 .pq-btn:focus-visible, .pq-chip:focus-visible { outline:3px solid var(--pq-maroon-text); outline-offset:3px; }
 .pq-btn:disabled, .pq-chip:disabled { opacity:.55; cursor:default; }
 .pq-chip { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:var(--pq-tap); min-width:var(--pq-tap); padding:6px 14px; border:1px solid var(--pq-line); border-radius:var(--pq-radius-pill); background:var(--pq-surface); color:var(--pq-ink); font:500 14px var(--pq-font-body); }
-.pq-chip[aria-pressed='true'] { background:var(--pq-maroon); border-color:var(--pq-maroon); color:var(--pq-cream); }
+.pq-chip[aria-pressed='true'] { background:var(--pq-maroon); border-color:var(--pq-maroon); color:var(--pq-on-brand); }
 .pq-live-dot { display:inline-block; flex:none; width:8px; height:8px; border-radius:50%; background:var(--pq-ball); box-shadow:0 0 0 2px var(--pq-maroon); }
 /* Plain glass is available explicitly for low-end devices. No hardware probing
    or animation is needed; unsupported blur also gets an opaque surface. */
@@ -69,3 +69,36 @@
   .pq-glass { background:var(--pq-surface); -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none; }
   .pq-glass::before { display:none; }
 }
+
+/* T16 · Prototype 6 [data-skin=axis], values copied without palette substitutions.
+   Legacy role names remain aliases so the staging layouts need no rebuild here. */
+:root {
+ --pq-on-brand:#F3EBDD;--pq-hero-text:#F3EBDD;--pq-hero-muted:#D9CCBE;--pq-hero:#1A0B0E;--pq-hero-2:#2A1218;
+ --pq-display-weight:600;--pq-display-transform:none;--pq-display-spacing:-.035em;--pq-display-stretch:100%;--pq-display-line-height:.92;
+ --pq-wordmark-font:'Fraunces',Georgia,serif;--pq-shadow-tint:rgba(122,31,43,.16);
+}
+:root[data-skin="axis"] {
+ --pq-maroon:#D7FF3B;--pq-maroon-hi:#E6FF7A;--pq-maroon-lo:#B9E21C;--pq-on-brand:#0B0F04;
+ --pq-hero:#06080B;--pq-hero-2:#0E1319;--pq-hero-text:#F3F2EC;--pq-hero-muted:#A9B2BC;--pq-hero-accent:#D7FF3B;
+ --pq-blob-1:#1C3A2A;--pq-blob-2:#D7FF3B;--pq-blob-3:#2A6B4A;--pq-blob-4:#3A4652;
+ --pq-font-display:'Archivo',system-ui,sans-serif;--pq-display-weight:800;--pq-display-transform:uppercase;--pq-display-spacing:-.01em;--pq-display-stretch:66%;--pq-display-line-height:.86;
+ --pq-bg:#F2F2EC;--pq-cream:#F3F2EC;--pq-surface:#FFFFFF;--pq-surface-raised:#E5E8E4;--pq-ink:#0D1116;--pq-muted:#5A636C;
+ --pq-line:rgba(13,17,22,.1);--pq-maroon-text:#3F6B00;--pq-maroon-ui:#3F6B00;--pq-tint:rgba(120,170,0,.1);--pq-maroon-light:#B8C0C8;--pq-maroon-tint:rgba(120,170,0,.1);
+ --pq-glass-1:rgba(255,255,255,.7);--pq-glass-2:rgba(255,255,255,.38);--pq-glass-edge:rgba(255,255,255,.9);--pq-glass-shadow:rgba(10,20,10,.22);--pq-glass-inner:rgba(80,120,0,.08);
+ --pq-ball:#D7FF3B;--pq-court:#3D78FF;--pq-error:#FF5A4E;--pq-error-text:#B6261C;--pq-night:#06080B;
+ --pq-on-maroon-muted:#0B0F04;--pq-on-maroon-soft:#0B0F04;--pq-shadow-tint:rgba(10,20,10,.16);
+}
+:root[data-skin="axis"][data-theme="dark"] {
+ --pq-bg:#06080B;--pq-surface:#0D1116;--pq-surface-raised:#141A21;--pq-ink:#F3F2EC;--pq-muted:#A9B2BC;
+ --pq-line:rgba(255,255,255,.1);--pq-maroon-text:#D7FF3B;--pq-maroon-ui:#D7FF3B;--pq-tint:rgba(215,255,59,.1);--pq-maroon-light:#4A5560;
+ --pq-glass-1:rgba(30,38,46,.6);--pq-glass-2:rgba(14,19,25,.36);--pq-glass-edge:rgba(255,255,255,.2);--pq-glass-shadow:rgba(0,0,0,.55);--pq-glass-inner:rgba(255,255,255,.03);--pq-error-text:#FF8F86;
+}
+@media(prefers-color-scheme:dark){
+ :root[data-skin="axis"]:is([data-theme="auto"],:not([data-theme])) {
+ --pq-bg:#06080B;--pq-surface:#0D1116;--pq-surface-raised:#141A21;--pq-ink:#F3F2EC;--pq-muted:#A9B2BC;
+ --pq-line:rgba(255,255,255,.1);--pq-maroon-text:#D7FF3B;--pq-maroon-ui:#D7FF3B;--pq-tint:rgba(215,255,59,.1);--pq-maroon-light:#4A5560;
+ --pq-glass-1:rgba(30,38,46,.6);--pq-glass-2:rgba(14,19,25,.36);--pq-glass-edge:rgba(255,255,255,.2);--pq-glass-shadow:rgba(0,0,0,.55);--pq-glass-inner:rgba(255,255,255,.03);--pq-error-text:#FF8F86;
+ }
+}
+
+:root{--pq-chalk-rgb:243,235,221;--pq-brand-rgb:122,31,43;--pq-hero-rgb:26,11,14}:root[data-skin="axis"]{--pq-chalk-rgb:243,242,236;--pq-brand-rgb:215,255,59;--pq-hero-rgb:6,8,11}

@@ -1,3 +1,4 @@
+import { useSkin } from '../../../components/ThemeSwitch';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { friendlyDate } from '../../dates';
 import { buildRecaps, recapCaption } from '../../recap';
@@ -6,6 +7,7 @@ import type { StudioData } from '../../playerStudio';
 
 /** Player Studio → Home: a shareable recap image of one tournament (your name, club and results only). */
 export function RecapShare({ data }: { data: StudioData }) {
+  const skin=useSkin();
   const recaps = useMemo(() => buildRecaps(data.official), [data.official]);
   const [key, setKey] = useState(recaps[0]?.key ?? '');
   const [img, setImg] = useState<string>();
@@ -22,7 +24,7 @@ export function RecapShare({ data }: { data: StudioData }) {
     setImg(undefined);
     drawRecap(cv, r, name).then(() => { if (live) setImg(cv.toDataURL('image/png')); }).catch(() => { if (live) setMsg({ ok: false, text: 'This browser can’t make the image. Try Chrome or Safari.' }); });
     return () => { live = false; };
-  }, [r, name]);
+  }, [r, name, skin]);
 
   if (!r) return null;
   const file = async () => new File([await canvasBlob(canvas.current!)], `${r.tournament.replace(/[^\w-]+/g, '-')}-recap.png`, { type: 'image/png' });
