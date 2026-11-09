@@ -36,7 +36,7 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
     if (await themeButton.getAttribute('aria-pressed') !== 'true') await themeButton.click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', choice);
     expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(expected);
-    expect(await page.locator('meta[name="theme-color"]').first().getAttribute('content')).toBe(expected === 'rgb(18, 7, 9)' ? '#120709' : '#F3EBDD');
+    await expect(page.locator('meta[name="theme-color"]') .first()).toHaveAttribute('content', expected === 'rgb(18, 7, 9)' ? '#120709' : '#F3EBDD');
     await assertContrast(header.locator('.pq-theme-switch button:visible'));
     await assertContrast(header.locator('.pq-theme-switch button[aria-pressed="true"]:visible'), 'border');
     if (width < 870) await header.locator('.pq-theme-settings').evaluate(el => el.removeAttribute('open'));
