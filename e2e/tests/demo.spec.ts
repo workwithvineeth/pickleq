@@ -70,6 +70,7 @@ test.describe('Organiser screens (demo club)', () => {
     await expect(page.getByRole('heading', { name: 'PQ Demo Open · Desk' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Referee links' })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), 'desk at 320').toBeLessThanOrEqual(320);
+    await page.getByText('More', { exact: true }).first().click();
     await page.getByRole('button', { name: 'Walkover…' }).first().click();
     await page.getByRole('region', { name: 'Walkover or retired' }).getByRole('button', { name: /go through$/ }).first().click();
     await expect(page.getByText(/win by walkover|the other side retired/)).toBeVisible();
@@ -83,6 +84,7 @@ test.describe('Organiser screens (demo club)', () => {
     await expect(page.getByRole('heading', { name: 'PQ Demo Open · Desk' })).toBeVisible();
     for (const c of [1, 2, 3]) await expect(page.getByLabel(`Court ${c}`, { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Queue' })).toBeVisible();
+    await page.getByText('More', { exact: true }).first().click();
     await page.getByRole('button', { name: 'Enter result' }).first().click();
     const form = page.getByRole('region', { name: 'Final scores' });
     const inputs = form.getByRole('textbox');

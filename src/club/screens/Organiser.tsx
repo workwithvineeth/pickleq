@@ -358,7 +358,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
               {m && (
                 <>
                   <div className="small muted">{matchLabel(m, d)}{m.slot !== undefined ? ` · ${slotTime(t.startTime, m.slot, t.slotMinutes)}` : ''}</div>
-                  <div className="pq-desk-team"><b>{names(m.sideA,pmap)}</b>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.a}</b>}</div><div className="pq-desk-team"><span>{names(m.sideB,pmap)}</span>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.b}</b>}</div><div className="small muted">{formatRule(m.format)}</div>
+                  <div className="pq-desk-team"><b>{names(m.sideA,pmap)}</b>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.a}</b>}</div><div className="pq-desk-team"><span>{names(m.sideB,pmap)}</span>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.b}</b>}</div><div className="small muted">{formatRule(m.format)}</div><progress className="pq-court-progress" aria-label="Game progress" max={m.format.pointsTo} value={Math.min(m.format.pointsTo,Math.max(m.games.at(-1)?.a??0,m.games.at(-1)?.b??0))} />{now && next && <p className="small muted">Next: {who(next)}</p>}
                   {entering === m.id
                     ? <ManualScores format={m.format} nameA={names(m.sideA, pmap)} nameB={names(m.sideB, pmap)} busy={busy} onSave={(g) => saveFinal(m, g)} onCancel={() => setEntering(null)} />
                     : walkover === m.id
@@ -370,10 +370,10 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
                         </section>
                       : <div className="meta">
                         <button type="button" className="btn btn-primary" onClick={() => go('club-score', m.id)}>Score</button>
-                        <button type="button" className="btn btn-outline" onClick={() => setEntering(m.id)}>Enter result</button>
+                        <details className="pq-court-more"><summary>More</summary><div className="pq-court-menu"><button type="button" className="btn btn-outline" onClick={() => setEntering(m.id)}>Enter result</button>
                         <button type="button" className="btn btn-outline" onClick={() => setWalkover(m.id)}>Walkover…</button>
                         <button type="button" className="btn btn-outline" aria-label={`Call ${who(m)} to court ${court}`}
-                          onClick={async () => setMsg(await shareText(`${t.name} · Court ${court}: ${names(m.sideA, pmap)} v ${names(m.sideB, pmap)} (${matchLabel(m, d)}). Please come to court ${court} now.`))}>Call to court</button>
+                          onClick={async () => setMsg(await shareText(`${t.name} · Court ${court}: ${names(m.sideA, pmap)} v ${names(m.sideB, pmap)} (${matchLabel(m, d)}). Please come to court ${court} now.`))}>Call to court</button></div></details>
                       </div>}
                 </>
               )}
@@ -420,6 +420,7 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const d = state.data;
+  const payments=useLoad(async()=>b && d?.tournament.entryMode==='registration'?b.registrations(id):null,[b,id,d?.tournament.entryMode]);
   const pmap = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
   if (!d || !b) return shell('Entries', onBack, state);
   const t = d.tournament;
@@ -467,20 +468,18 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
       {d.divisions.length > 1 && <Segmented label="Event" value={div.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setDivId(v); setOpenEntry(null); }} />}
       <p className="small muted" style={{ margin: 0 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} · {formatRule(div.format)}</p>
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
-      <div className="pq-entry-grid">
-      {entries.map((e) => {
+      <div className="pq-entry-grid" role="table" aria-label="Entries"><div className="pq-entry-table-head" role="row"><span role="columnheader">#</span><span role="columnheader">Team</span><span role="columnheader">Category</span><span role="columnheader">Avg DUPR</span><span role="columnheader">Status</span><span role="columnheader">Actions</span></div>
+      {entries.map((e,i) => {
         const out = e.status === 'withdrawn';
         const isOpen = openEntry === e.id;
         const ratings=e.playerIds.map(id=>div.kind==='doubles'?pmap.get(id)?.duprDoubles:pmap.get(id)?.duprSingles);
         const average=ratings.length&&ratings.every((v):v is number=>typeof v==='number')?ratings.reduce((a,b)=>a+b,0)/ratings.length:undefined;
         return (
-          <section key={e.id} className="card section" aria-label={names(e.playerIds, pmap)} style={out ? { opacity: 0.6 } : undefined}>
-            <div className="row">
-              <span><b>{names(e.playerIds, pmap)}</b> <span className="small muted">Pool {poolLetter(e.pool)} · seed {e.seed ?? '–'}</span></span>
-              {out ? <span className="pill">Withdrawn</span> : <button type="button" className="link-btn" aria-expanded={isOpen} onClick={() => setOpenEntry(isOpen ? null : e.id)}>{isOpen ? 'Close' : 'Change'}</button>}
-            </div>
-            <div className="pq-entry-meta"><span>{div.name}</span>{average!==undefined&&<span>Avg DUPR <b className="pq-score">{average.toFixed(2)}</b></span>}<span>{out?"Withdrawn":"Active"}</span></div>
-            {isOpen && !out && <EntryActions e={e} pmap={pmap} free={free} busy={busy} onWithdraw={() => withdraw(e)} onReplace={(o, n) => replace(e, o, n)} />}
+          <section key={e.id} className="pq-entry-table-row" role="row" aria-label={names(e.playerIds,pmap)} style={out?{opacity:.6}:undefined}>
+            <span role="cell" className="pq-score">{i+1}</span><div role="cell" className="pq-entry-team"><span className="pq-entry-avatar" aria-hidden="true">{names(e.playerIds,pmap).split(/\s+/).filter(Boolean).slice(0,2).map(n=>n[0]).join('')}</span><div><b>{names(e.playerIds,pmap)}</b><small>Pool {poolLetter(e.pool)} · seed {e.seed??'—'}</small></div></div>
+            <span role="cell" data-label="Category">{div.name}</span><span role="cell" data-label="Avg DUPR" className="pq-score">{average?.toFixed(2)??'Not recorded'}</span><span role="cell"><span className="pill">{out?'Withdrawn':'Active'}</span>{payments.data?.find(r=>r.entryId===e.id)?.payment==='paid'&&<span className="pill pill-ok">Paid</span>}</span>
+            <span role="cell">{!out&&<button type="button" className="link-btn" aria-expanded={isOpen} onClick={()=>setOpenEntry(isOpen?null:e.id)}>{isOpen?'Close':'Change'}</button>}</span>
+            {isOpen&&!out&&<div role="cell" className="pq-entry-expanded"><EntryActions e={e} pmap={pmap} free={free} busy={busy} onWithdraw={()=>withdraw(e)} onReplace={(o,n)=>replace(e,o,n)} /></div>}
           </section>
         );
       })}

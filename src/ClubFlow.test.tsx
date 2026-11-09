@@ -347,6 +347,7 @@ describe('Club mode', () => {
     expect(document.body.textContent).not.toMatch(/\+91|98\d{8}|@/);
     // A walkover from the desk is saved through the desk link.
     const before = demoState().matches.filter((m: { status: string }) => m.status === 'done').length;
+    await user.click(screen.getAllByText('More', {exact:true})[0]);
     await user.click(screen.getAllByRole('button', { name: 'Walkover…' })[0]);
     await user.click(within(screen.getByRole('region', { name: 'Walkover or retired' })).getAllByRole('button', { name: /go through$/ })[0]);
     await screen.findByText(/win by walkover|the other side retired/);
@@ -425,7 +426,8 @@ describe('Club mode', () => {
     await user.click(screen.getByRole('button', { name: 'Desk view' }));
     await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' });
     for (let c = 1; c <= 6; c++) expect(screen.getByLabelText(`Court ${c}`)).toBeInTheDocument();
-    const card = screen.getAllByRole('button', { name: 'Enter result' })[0].closest('[aria-label^="Court"]') as HTMLElement;
+    const card = screen.getAllByText('More',{exact:true})[0].closest('[aria-label^="Court"]') as HTMLElement;
+    await user.click(within(card).getByText('More',{exact:true}));
     await user.click(within(card).getByRole('button', { name: 'Enter result' }));
     const boxes = within(card).getAllByRole('textbox');
     await user.type(boxes[0], '11'); await user.type(boxes[1], '10');

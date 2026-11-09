@@ -19,7 +19,7 @@ import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
-import { friendlyDate, friendlyTime } from '../dates';
+import { friendlyDate } from '../dates';
 import { preflight, type PreflightItem } from '../preflight';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -265,15 +265,16 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   const rrDone = d.divisions.filter((x) => x.advance === 0 && x.shape !== 'ko' && d.matches.some((m) => m.divisionId === x.id && m.stage === 'pool') && poolsComplete(x.id, d.matches) && !d.matches.some((m) => m.divisionId === x.id && m.stage !== 'pool' && m.status !== 'void'));
   return (
     <main className="screen wide-ok pq-matchday pq-proto" aria-labelledby="t-title">
-      <div className="pq-tournament-heading"><EventPhotoHeader id="t-title" title={t.name} poster={t.posterUrl} status={t.cancelledAt ? "Cancelled" : t.status === "live" ? "Live" : t.status === "done" ? "Finished" : t.registrationOpen ? "Entries open" : "Entries closed"} date={t.startDate} time={t.startTime} venue={t.venue} onBack={onBack} /><TournamentEntrySummary d={d} b={b} go={go} /></div>
+      <div className="pq-event-layout"><div className="pq-event-main"><EventPhotoHeader id="t-title" title={t.name} poster={t.posterUrl} status={t.cancelledAt ? "Cancelled" : t.status === "live" ? "Live" : t.status === "done" ? "Finished" : t.registrationOpen ? "Entries open" : "Entries closed"} date={t.startDate} time={t.startTime} club={d.club.name} logoUrl={d.club.logoUrl} venue={t.venue} onBack={onBack} />
+      {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
+      <nav className="pq-tournament-tabs" aria-label="Tournament sections">{staff && approved && <button type="button" className="btn btn-outline" onClick={() => go("club-entries",t.id)}>{t.entryMode === "registration" && !t.drawnAt ? "Entries and draw" : "Entries"}</button>}<Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} /></nav>
+      <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />
+</div><aside className="pq-event-sidebar"><TournamentEntrySummary d={d} b={b} go={go} />{staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}</aside></div>
       {!staff&&<PosterImage src={t.posterUrl} name={t.name} size="thumb" />}
       <DemoNote b={b} />
 
-      <ClubLogo src={d.club.logoUrl} club={d.club.name} />
-      <p className="small muted" style={{ margin: 0 }}>{d.club.name} · {friendlyDate(t.startDate)} · from {friendlyTime(t.startTime)} · {t.courts} courts · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'}</p>
       {t.cancelledAt && <div role="status" className="msg msg-bad">This tournament was cancelled{t.cancelReason ? `: ${t.cancelReason}` : ''}.</div>}
       {staff && b && <ApprovalCard b={b} t={t} onChanged={state.reload} />}
-      {staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}
       {staff && !approved && (
         <nav className="meta" aria-label="Set up the tournament">
           <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>Entries</button>
@@ -304,9 +305,6 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       )}
       {staff && approved && !t.isPublic && <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: true }, 'Results link is on')}>Turn on the results link</button>}
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
-      {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
-      <nav className="pq-tournament-tabs" aria-label="Tournament sections">{staff && approved && <button type="button" className="btn btn-outline" onClick={() => go("club-entries",t.id)}>{t.entryMode === "registration" && !t.drawnAt ? "Entries and draw" : "Entries"}</button>}<Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} /></nav>
-      <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />
       {staff && approved && t.status === 'live' && rrDone.map((x) => {
         const teams = d.entries.filter((e) => e.divisionId === x.id && e.status !== 'withdrawn').length;
         return (

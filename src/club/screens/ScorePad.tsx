@@ -146,18 +146,18 @@ export function ScorePad(p: ScorePadProps) {
 
           <div className="score-grid">
             <button type="button" className="score-tap score-tap-a" aria-label={`Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || busy}>
-              <span className="small">{nameA}</span>
+              <span className="small pq-referee-name">{nameA}</span>
               <span className="big">{cur.a}</span>
               <span className="small muted">Tap if they won the point</span>
             </button>
             {(golden || gp) && <div role="status" className="pq-gamepoint-strip">{golden ? "GOLDEN POINT" : "GAME POINT"}<small>{golden ? "Golden point · next point wins" : "Game point: " + (gp === "A" ? nameA : nameB)}</small></div>}
             <button type="button" className="score-tap score-tap-b" aria-label={`Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || busy}>
-              <span className="small">{nameB}</span>
+              <span className="small pq-referee-name">{nameB}</span>
               <span className="big">{cur.b}</span>
               <span className="small muted">Tap if they won the point</span>
             </button>
           </div>
-          <p className={`small${gp ? ' pq-gamepoint' : ''}`} style={{ margin: 0, minHeight: 20 }} aria-live="polite">
+          <p className={`small pq-referee-lead${gp ? ' pq-gamepoint' : ''}`} style={{ margin: 0, minHeight: 20 }} aria-live="polite">
             {!gp && !golden && Math.abs(lead) >= thr ? `${lead > 0 ? nameA : nameB} lead by ${Math.abs(lead)}` : ''}
           </p>
           <div className="sticky-actions" style={{ position: 'static' }}>
@@ -178,7 +178,7 @@ export function ScorePad(p: ScorePadProps) {
         </section>
       )}
       {manual && p.canScore && <ManualScores format={fmt} nameA={nameA} nameB={nameB} onSave={finish} onCancel={() => setManual(false)} busy={busy} />}
-      {!manual && p.canScore && !matchOver && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setManual(true)}>Enter final scores instead</button>}
+      {!manual && p.canScore && !matchOver && <button type="button" className="link-btn pq-manual-score-link" style={{ alignSelf: 'flex-start' }} onClick={() => setManual(true)}>Enter final scores instead</button>}
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
       <p className="small muted" style={{ margin: 0 }}>
         Scoring point by point lets PaddleQ spot comebacks and lost leads (a {thr}-point lead in games to {fmt.pointsTo}, or game point).

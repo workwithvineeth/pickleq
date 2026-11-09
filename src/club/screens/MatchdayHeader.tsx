@@ -5,7 +5,7 @@ import { isApproved, isStaff } from '../types';
 import { friendlyDate, friendlyTime } from '../dates';
 import { Header, useLoad } from './common';
 const courtPhoto=import.meta.env.BASE_URL+'prototype6/court-night.jpg';
-export function EventPhotoHeader({id,title,status,date,time,venue,onBack}: {id:string;title:string;poster?:string;status:string;date:string;time:string;venue?:string;onBack:()=>void}) { return <section className="photo pq-event-photo"><div className="ph" style={{backgroundImage:"url("+courtPhoto+")"}}/><div className="pq-event-photo-content"><span className="chip b">{status}</span><div><Header id={id} title={title} onBack={onBack}/><p>{[friendlyDate(date),friendlyTime(time),venue].filter(Boolean).join(" · ")}</p></div></div></section>; }
+export function EventPhotoHeader({id,title,status,date,time,venue,onBack,club,logoUrl}: {id:string;title:string;poster?:string;status:string;date:string;time:string;venue?:string;club?:string;logoUrl?:string;onBack:()=>void}) { return <section className="photo pq-event-photo"><div className="ph" style={{backgroundImage:"url("+courtPhoto+")"}}/><div className="pq-event-photo-content"><div className="pq-event-topline"><span className="pq-event-club">{logoUrl && <img src={logoUrl} alt="" />}{club}</span><span className="chip b">{status}</span></div><div><Header id={id} title={title} onBack={onBack}/><p>{[friendlyDate(date),friendlyTime(time),venue].filter(Boolean).join(" · ")}</p></div></div></section>; }
 export function TournamentEntrySummary({d,b,go}: {d:TournamentBundle;b:ClubBackend|null;go:Go}) {
  const t=d.tournament,staff=isStaff(d.role),registration=t.entryMode==='registration';
  const regs=useLoad(async()=>b&&staff&&registration?b.registrations(t.id):null,[b,t.id,staff,registration]);
@@ -13,7 +13,7 @@ export function TournamentEntrySummary({d,b,go}: {d:TournamentBundle;b:ClubBacke
  const cap=d.divisions.every(v=>v.rules?.cap!==undefined)?d.divisions.reduce((n,v)=>n+(v.rules?.cap??0),0):undefined;
  const paid=regs.data?.filter(r=>r.payment==='paid'&&!['rejected','withdrawn'].includes(r.status));
  const total=paid?.reduce((n,r)=>n+(d.divisions.find(v=>v.id===r.divisionId)?.rules?.fee??0),0);
- const percent=accepted!==undefined&&cap?Math.min(100,accepted/cap*100):0;
+ const percent=accepted!==undefined&&cap?Math.min(100,accepted/cap*100):100;
  return <aside className="photo pq-entry-summary" aria-label="Entry summary">
   <div className="ph" style={{backgroundImage:"url("+import.meta.env.BASE_URL+"prototype6/ball-court.jpg)"}}/>
   <div className="ch"><h2>Entries</h2></div>

@@ -99,6 +99,7 @@ test.describe('Pickleball Central Season 8 (demo sample)', () => {
     await openSeason8(page);
     await page.getByRole('button', { name: 'Desk view' }).click();
     await expect(page.getByRole('heading', { name: 'Pickleball Central Season 8 · Desk' })).toBeVisible();
+    await page.getByText('More', { exact: true }).first().click();
     await page.getByRole('button', { name: 'Walkover…' }).first().click();
     await page.getByRole('region', { name: 'Walkover or retired' }).getByRole('button', { name: /go through/ }).first().click();
     await expect(page.getByText(/win by walkover|win: the other side retired/)).toBeVisible();
