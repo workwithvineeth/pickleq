@@ -4,7 +4,7 @@ import { eventsBackend, rememberReturn, serverBackend } from '../../index';
 import { friendlyDate } from '../../dates';
 import { fmtRating } from '../../../domain/record';
 import {
-  ALL_TIME, GOAL_LABEL, goalProgress, homeStory, ratingHistory, ratingPrefill, studioCoach, studioStats,
+  opponentsOf, scoreText, stageText, ALL_TIME, GOAL_LABEL, goalProgress, homeStory, ratingHistory, ratingPrefill, studioCoach, studioStats,
   type GoalKind, type RatingKind, type StudioData, type StudioGoal,
 } from '../../playerStudio';
 import { errorText, Header, Status, useLoad } from '../common';
@@ -13,7 +13,8 @@ import { StudioMatches } from './StudioMatches';
 import { drillNames, StudioTrain } from './StudioTrain';
 import { StudioCoach, StudioStats } from './StudioInsights';
 import { RecapShare } from './Recap';
-import { Intro, Kpi, Panel } from '../Dash';
+import { Panel } from '../Dash';
+import './studio-green.css';
 
 export const STUDIO_SECTIONS = [
   { id: 'home', label: 'Home' }, { id: 'matches', label: 'Matches' }, { id: 'train', label: 'Train' },
@@ -33,7 +34,7 @@ export function PlayerStudio({ section, go }: { section: string; go: Go }) {
   const navId = current === 'log' || current === 'official' ? 'matches' : current === 'practice' ? 'train' : current;
   const d = state.data;
   return (
-    <main className="screen wide-ok pq-studio" aria-labelledby="studio-title">
+    <main className="screen wide-ok pq-studio pq-proto" aria-labelledby="studio-title">
       <Header id="studio-title" title="Player Studio" />
       <Status loading={state.loading && !d} error={state.error} />
       {!b && <p className="small muted">Player Studio needs the PaddleQ server. It isn’t available in the demo club.</p>}
@@ -95,60 +96,45 @@ function StudioHome({ data, go }: SectionProps) {
   const form = off.slice(0, 4).map((o) => (o.winner === o.mySide ? 'W' : 'L'));
   const pointsFor = off.reduce((n, o) => n + o.games.reduce((m, g) => m + (o.mySide === 'A' ? g.a : g.b), 0), 0);
   const initials = (me?.name ?? 'Me').split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const history=ratingHistory('doubles',data).slice().reverse();
+  const ratingPath=history.map((r,i)=>(i?'L':'M')+(40+i/Math.max(1,history.length-1)*580)+','+(190-(r.value-1)/7*160)).join(' ');
   return <>
-    <Intro kicker="PaddleQ Player Studio" sub="Your official tournament results, your progress and your practice, in one calm place." />
-    <div className="pq-panels">
-      <section className="pq-panel" aria-label="You">
-        <div className="pq-player-head">
-          <span className="pq-player-ini" aria-hidden="true">{initials}</span>
-          <div style={{ minWidth: 0 }}>
-            <span className="pq-kick" style={{ margin: 0 }}>Player Studio{me ? ` · ${me.club}` : ''}</span>
-            <div className="pq-player-name">{me?.name ?? 'Your Player Studio'}</div>
-            <div className="small muted">{[me?.club, kinds.join(' · ') || undefined, claimed ? 'Official results claimed' : 'Results not claimed yet'].filter(Boolean).join(' · ')}</div>
-          </div>
-        </div>
-        <section className="pq-band pq-band-tall" aria-label="Your latest">
-          <div style={{ minWidth: 0 }}>
-            <div className="pq-band-kick">PADDLEQ · OUT OF THE KITCHEN, INTO THE STATS.</div>
-            <div className="pq-band-name">Good to see you on court.</div>
-            <p className="pq-story-text" style={{ margin: '6px 0 14px' }}>{homeStory(data)}</p>
-            <div className="pq-actions">
-              <button type="button" className="btn-cream" onClick={() => go('club-player-studio', 'matches')}>Explore recent matches</button>
-              <button type="button" className="btn-cream" onClick={() => go('club-player-studio', 'practice')}>Log practice</button>
-              <button type="button" className="btn-cream" onClick={() => go('club-player-studio', 'log')}>Log a match</button>
-            </div>
+    <div className="pq-studio-home pq-proto">
+      <div className="pq-studio-hero-grid">
+        <section className="photo pq-studio-hero" aria-label="You">
+          <img className="ph" src={import.meta.env.BASE_URL+'prototype6/court-night.jpg'} alt="" />
+          <div className="pq-studio-hero-copy">
+            <div className="pq-studio-badges"><span className="chip b">Player Studio</span>{claimed&&<span className="chip">Official results claimed</span>}<span className="pq-studio-initials" aria-hidden="true">{initials}</span></div>
+            <h2 className="pq-studio-name">{me?.name ?? 'Your Player Studio'}</h2>
+            <p>{[me?.club,kinds.join(' · ')].filter(Boolean).join(' · ')}</p>
+            {(st.doublesRating!==undefined||st.singlesRating!==undefined)&&<div className="lgd pq-studio-rating" aria-label="Your recorded DUPR">{st.doublesRating!==undefined&&<div><span className="cap">DUPR doubles</span><strong className="n">{fmtRating(st.doublesRating)}</strong></div>}{st.singlesRating!==undefined&&<div><span className="cap">DUPR singles</span><strong className="n">{fmtRating(st.singlesRating)}</strong></div>}</div>}
+            <p className="pq-studio-story">{homeStory(data)}</p>
+            <div className="pq-studio-actions"><button type="button" className="btn btn-primary" onClick={()=>go('club-player-studio','matches')}>Explore recent matches</button><button type="button" className="btn btn-outline" onClick={()=>go('club-player-studio','practice')}>Log practice</button><button type="button" className="btn btn-outline" onClick={()=>go('club-player-studio','log')}>Log a match</button></div>
           </div>
         </section>
-      </section>
-      <Panel title="Season snapshot">
-        <div className="pq-snap"><span>Official matches</span><b>{off.length}</b></div>
-        <div className="pq-snap"><span>Wins</span><b>{wins}</b></div>
-        <div className="pq-snap"><span>Win rate</span><b>{off.length ? `${((100 * wins) / off.length).toFixed(1)}%` : '—'}</b></div>
-        <div className="pq-snap"><span>Formats</span><b>{kinds.join(' · ') || '—'}</b></div>
-        <div className="pq-snap"><span>Singles DUPR</span><b>{st.singlesRating !== undefined ? fmtRating(st.singlesRating) : '—'}</b></div>
-        <div className="pq-snap"><span>Doubles DUPR</span><b>{st.doublesRating !== undefined ? fmtRating(st.doublesRating) : '—'}</b></div>
-      </Panel>
+        {off.length>0&&<Panel title="Season snapshot">
+          <span className="cap">Official results · all time</span>
+          <div className="pq-snap"><span>Win rate</span><b className="n">{((100*wins)/off.length).toFixed(1)}%</b></div>
+          <div className="pq-snap"><span>Official matches</span><b className="n">{off.length}</b></div>
+          <div className="pq-snap"><span>Wins</span><b className="n">{wins}</b></div>
+          <div className="pq-snap"><span>Points for</span><b className="n">{pointsFor}</b></div>
+          {st.singlesRating!==undefined&&<div className="pq-snap"><span>Singles DUPR</span><b>{fmtRating(st.singlesRating)}</b></div>}
+          {st.doublesRating!==undefined&&<div className="pq-snap"><span>Doubles DUPR</span><b>{fmtRating(st.doublesRating)}</b></div>}
+          <button type="button" className="pq-studio-form" aria-label={'Recent form: '+form.join(' · ')} onClick={()=>go('club-player-studio','matches')}><span className="cap">Recent form</span><span>{form.map((f,i)=><i key={i} className={'pq-form-'+f}>{f}</i>)}</span><small>Last four official matches →</small></button>
+        </Panel>}
+      </div>
+      <div className="pq-studio-detail-grid">
+        {history.length>1&&<section className="lg card pq-studio-chart" aria-label="Rating over time"><div className="ch"><h2>Rating over time</h2><span className="chip">Doubles · recorded</span></div><svg viewBox="0 0 640 220" role="img" aria-label="Recorded doubles DUPR over time"><g stroke="currentColor" opacity=".15">{[40,100,160].map(y=><path key={y} d={'M40 '+y+'H620'}/>)}</g><path d={ratingPath+' L620 190L40 190Z'} fill="var(--pq-tint)"/><path d={ratingPath} fill="none" stroke="var(--pq-ball)" strokeWidth="3"/>{history.map((r,i)=><circle key={r.id} cx={40+i/(history.length-1)*580} cy={190-(r.value-1)/7*160} r="4" fill="var(--pq-ball)"><title>{r.date+' · '+fmtRating(r.value)}</title></circle>)}</svg><div className="pq-studio-chart-labels"><span>{friendlyDate(history[0].date)} · {fmtRating(history[0].value)}</span><span>{friendlyDate(history[history.length-1].date)} · {fmtRating(history[history.length-1].value)}</span></div><button type="button" className="link-btn" onClick={()=>go('club-player-studio','profile')}>Your DUPR readings →</button></section>}
+        {st.ratings.length>0&&<Card title="Strengths & work-ons" action={<Evidence measured={false}/>}><div className="pq-studio-strengths">{st.ratings.map(r=><div key={r.shot}><div><span>{r.shot}</span><b>{r.average} / 5</b></div><div className="pq-studio-meter" role="img" aria-label={r.shot+' self-rating '+r.average+' out of 5'}><i style={{width:r.average/5*100+'%'}}/></div></div>)}</div><p className="small muted">Your shot estimates from the diary, not measured technique.</p></Card>}
+        {coach&&<Card title="One thing to look at" action={<Evidence measured={coach.evidence==='measured'}/>}><p style={{margin:0}}>{coach.text}</p><button type="button" className="link-btn" onClick={()=>go('club-player-studio','coach')}>All coach notes</button></Card>}
+        {off.length>0&&<Card title="Recent matches"><div className="pq-studio-recent">{off.slice(0,5).map(o=><button type="button" key={o.id} aria-label={'Open '+o.tournament+' '+stageText(o)} onClick={()=>go('club-player-studio','official.'+o.id)}><span className={'pq-studio-result '+(o.winner===o.mySide?'won':'lost')}>{o.winner===o.mySide?'W':'L'}</span><span><b>{opponentsOf(o)}</b><small>{o.tournament} · {stageText(o)} · {friendlyDate(o.playedOn)}</small></span><strong className="n">{scoreText(o)}</strong></button>)}</div><button type="button" className="link-btn" onClick={()=>go('club-player-studio','matches')}>All matches →</button></Card>}
+        <Card title="Your private diary"><p className="small muted">Your practice and casual games stay yours.</p>{data.sessions.length>0&&<div className="pq-studio-diary-count"><b className="n">{plural(st.streak,'day')}</b><span>practice streak · {st.weekMinutes} min this week</span></div>}<div className="meta"><button type="button" className="btn btn-outline" onClick={()=>go('club-player-studio','train')}>Open diary</button><button type="button" className="btn btn-primary" onClick={()=>go('club-player-studio','practice')}>Log practice</button></div></Card>
+        {next.data&&<Card title="Next event"><p><b>{next.data.tournament}</b> · {next.data.division}</p><p className="small muted">{next.data.club} · {friendlyDate(next.data.startDate)}{next.data.status!=='accepted'?' · waiting for the organiser':''}</p><button type="button" className="link-btn" onClick={()=>go('my-entries')}>My entries</button></Card>}
+      </div>
+      {off.length>0&&<RecapShare data={data}/>}
+      {!claimed&&<Card title="Claim your tournament results"><p className="small">Open the claim link your organiser sent you (on WhatsApp or by email). Your official matches then show up here, read-only.</p></Card>}
+      <Goals data={data}/>
     </div>
-    <div className="pq-kpis">
-      <Kpi label="Recent form" value={form.length ? form.join(' · ') : '—'} sub="Last four official matches" onClick={() => go('club-player-studio', 'matches')} />
-      <Kpi label="Points for" value={pointsFor} sub="Official scores only" onClick={() => go('club-player-studio', 'stats')} />
-      <Kpi label="Practice streak" value={plural(st.streak, 'day')} sub={`${st.weekMinutes} min this week`} onClick={() => go('club-player-studio', 'train')} />
-      <Kpi label="Upcoming events" value={next.data ? 1 : 0} sub={next.data ? `${next.data.tournament} · ${friendlyDate(next.data.startDate)}` : 'Find one on the Events board'} onClick={() => go(next.data ? 'my-entries' : 'events')} />
-    </div>
-    {data.official.length > 0 && <RecapShare data={data} />}
-    {!claimed && <Card title="Claim your tournament results">
-      <p className="small" style={{ margin: 0 }}>Open the claim link your organiser sent you (on WhatsApp or by email). Your official matches then show up here, read-only.</p>
-    </Card>}
-    <Goals data={data} />
-    {coach && <Card title="One thing to look at" action={<Evidence measured={coach.evidence === 'measured'} />}>
-      <p style={{ margin: 0 }}>{coach.text}</p>
-      <button type="button" className="link-btn" onClick={() => go('club-player-studio', 'coach')}>All coach notes</button>
-    </Card>}
-    {next.data && <Card title="Next event">
-      <p style={{ margin: 0 }}><b>{next.data.tournament}</b> · {next.data.division}</p>
-      <p className="small muted" style={{ margin: 0 }}>{next.data.club} · {friendlyDate(next.data.startDate)}{next.data.status !== 'accepted' ? ' · waiting for the organiser' : ''}</p>
-      <button type="button" className="link-btn" onClick={() => go('my-entries')}>My entries</button>
-    </Card>}
   </>;
 }
 
