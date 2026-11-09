@@ -37,11 +37,11 @@ describe('theme preference and pre-paint bootstrap', () => {
     const meta = document.createElement('meta'); meta.name = 'theme-color'; meta.dataset.themeTest = '1'; document.head.append(meta);
     const run = new Function('localStorage', 'matchMedia', 'document', script);
     run({ getItem: () => 'light' }, () => ({ matches: true }), document);
-    expect(document.documentElement.dataset.theme).toBe('light'); expect(meta.content).toBe('#F2F2EC');
+    expect(document.documentElement.dataset.theme).toBe('light'); expect(meta.content).toBe('#2B6E4B');
     run({ getItem: () => 'dark' }, () => ({ matches: false }), document);
-    expect(document.documentElement.dataset.theme).toBe('dark'); expect(meta.content).toBe('#07090C');
+    expect(document.documentElement.dataset.theme).toBe('dark'); expect(meta.content).toBe('#06140D');
     run({ getItem: () => { throw Error('private mode'); } }, () => ({ matches: true }), document);
     expect(document.documentElement.dataset.theme).toBe('dark'); expect(document.documentElement.style.colorScheme).toBe('dark');
-    applyTheme('light'); expect(meta.content).toBe('#F2F2EC');
+    applyTheme('light'); expect(meta.content).toBe('#2B6E4B');
   });
 });

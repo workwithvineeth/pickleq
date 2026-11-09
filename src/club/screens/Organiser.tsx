@@ -354,7 +354,7 @@ export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => voi
           const call = !now && !next ? nextMatchToCall(active, court) : undefined;
           return (
             <div key={court} className="card section" aria-label={`Court ${court}`}>
-              <div className="row"><h3 style={{ fontSize: 18 }}>Court {court}</h3>{now ? <span className="pill"><i className="pq-live-dot" aria-hidden="true" /> LIVE</span> : next ? <span className="pill">Next</span> : <span className="pill">Free</span>}</div>
+              <div className="row"><h3 style={{ fontSize: 18 }}>Court {court}</h3>{now ? <span className="pill pq-live-badge"><i className="pq-live-dot" aria-hidden="true" /> LIVE</span> : next ? <span className="pill">Next</span> : <span className="pill">Free</span>}</div>
               {m && (
                 <>
                   <div className="small muted">{matchLabel(m, d)}{m.slot !== undefined ? ` · ${slotTime(t.startTime, m.slot, t.slotMinutes)}` : ''}</div>

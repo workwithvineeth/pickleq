@@ -49,17 +49,17 @@ const fmtDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(
 
 /** Draws the card onto `canvas` (sized to 1080 × 1350). Waits for the brand fonts first. */
 export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: string): Promise<void> {
- const art=artworkPalette(),axis=currentSkin()==="axis";
+ const art=artworkPalette(),skin=currentSkin(),axis=skin!=="maroon";
  const {hero:MAROON,deep:DEEP,chalk:CREAM,surface:SURFACE,ink:INK,muted:MUTED,opponent:SOFT,line:LINE}=art;
  const headingWeight=axis?800:600;
- const DISPLAY=axis?'"PaddleQ Axis Display", Arial, sans-serif':"Fraunces, Georgia, serif";
+ const DISPLAY=skin==='court'?'Archivo, Arial, sans-serif':axis?'"PaddleQ Axis Display", Arial, sans-serif':"Fraunces, Georgia, serif";
   try { await Promise.all([document.fonts.load(`${headingWeight} 96px ${DISPLAY}`), document.fonts.load('800 92px "PaddleQ Axis Score"'), document.fonts.load(`600 34px ${BODY}`), document.fonts.load(`400 28px ${BODY}`)]); } catch { /* fall back to system fonts */ }
   canvas.width = RECAP_W; canvas.height = RECAP_H;
   const c = canvas.getContext('2d');
   if (!c) throw new Error('This browser can’t make images');
   c.fillStyle = MAROON; c.fillRect(0, 0, RECAP_W, RECAP_H);
   // Faint court lines, like the app's maroon headers.
-  c.strokeStyle = axis?'rgba(243,242,236,.12)':'rgba(243,235,221,.12)'; c.lineWidth = 3;
+  c.strokeStyle = skin==='court'?'rgba(241,244,234,.12)':axis?'rgba(243,242,236,.12)':'rgba(243,235,221,.12)'; c.lineWidth = 3;
   roundRect(c, 40, 40, RECAP_W - 80, RECAP_H - 80, 18); c.stroke();
   c.beginPath(); c.moveTo(40, 600); c.lineTo(RECAP_W - 40, 600); c.stroke();
 
@@ -68,7 +68,7 @@ export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: strin
   c.fillStyle = CREAM; c.font = '600 54px Fraunces, Georgia, serif'; c.textBaseline = 'middle'; c.fillText('PaddleQ', 188, 128);
   c.font = `600 24px ${BODY}`;
   const chip = 'TOURNAMENT RECAP'; const cw = c.measureText(chip).width + 44;
-  c.strokeStyle = axis?'rgba(243,242,236,.55)':'rgba(243,235,221,.55)'; c.lineWidth = 2; roundRect(c, RECAP_W - 80 - cw, 104, cw, 48, 24); c.stroke();
+  c.strokeStyle = skin==='court'?'rgba(241,244,234,.55)':axis?'rgba(243,242,236,.55)':'rgba(243,235,221,.55)'; c.lineWidth = 2; roundRect(c, RECAP_W - 80 - cw, 104, cw, 48, 24); c.stroke();
   c.fillStyle = CREAM; c.fillText(chip, RECAP_W - 80 - cw + 22, 129);
 
   // Tournament and player.
@@ -94,13 +94,13 @@ export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: strin
 
   // Numbers card.
   const top = 640;
-  c.fillStyle = CREAM; roundRect(c, 80, top, RECAP_W - 160, 230, 28); c.fill();
+  c.fillStyle = skin==='court'?SURFACE:CREAM; roundRect(c, 80, top, RECAP_W - 160, 230, 28); c.fill();
   const cols = [[`${r.won}–${r.lost}`, 'Won–lost'], [`${pct(r.pointsFor, r.pointsAgainst)}%`, 'Points won'], [String(r.played), r.played === 1 ? 'Match' : 'Matches']];
   const colW = (RECAP_W - 160) / 3;
   cols.forEach(([v, label], i) => {
     const cx = 80 + colW * i + colW / 2;
     c.textAlign = 'center';
-    c.fillStyle = MAROON; c.font = `${headingWeight} 92px ${axis?'"PaddleQ Axis Score", Arial, sans-serif':DISPLAY}`; c.fillText(v, cx, top + 128);
+    c.fillStyle = skin==='court'?CREAM:MAROON; c.font = `${headingWeight} 92px ${axis?'"PaddleQ Axis Score", Arial, sans-serif':DISPLAY}`; c.fillText(v, cx, top + 128);
     c.fillStyle = MUTED; c.font = `600 26px ${BODY}`; c.fillText(label.toUpperCase(), cx, top + 180);
     if (i) { c.fillStyle = LINE; c.fillRect(80 + colW * i, top + 40, 2, 150); }
   });
@@ -120,7 +120,7 @@ export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: strin
     const Y = (v: number) => gy + gh - ((v - lo) / span) * gh;
     c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.moveTo(gx, Y(0)); c.lineTo(gx + gw, Y(0)); c.stroke();
     c.beginPath(); c.moveTo(X(0), Y(0)); r.lead.forEach((v, i) => c.lineTo(X(i), Y(v))); c.lineTo(X(r.lead.length - 1), Y(0)); c.closePath();
-    c.fillStyle = axis?"rgba(215,255,59,.1)":"rgba(122,31,43,.12)"; c.fill();
+    c.fillStyle = skin==='court'?"rgba(217,242,74,.1)":axis?"rgba(215,255,59,.1)":"rgba(122,31,43,.12)"; c.fill();
     c.strokeStyle = MAROON; c.lineWidth = 5; c.lineJoin = 'round'; c.beginPath(); r.lead.forEach((v, i) => (i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)))); c.stroke();
     c.fillStyle = MAROON; c.beginPath(); c.arc(X(r.lead.length - 1), Y(r.lead[r.lead.length - 1]), 9, 0, Math.PI * 2); c.fill();
   }

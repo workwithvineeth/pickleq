@@ -4,6 +4,7 @@ test('T1 fonts, targets, phone glass and screenshot evidence', async ({ page }) 
   test.setTimeout(300_000);
   await page.addInitScript(() => {
     localStorage.setItem('pq-theme','auto');
+    localStorage.setItem('pq-skin','maroon'); // T1's original 26px glass contract; Court Night/Day is covered by court-skin.spec.
     Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
     Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
   });

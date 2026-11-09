@@ -68,8 +68,8 @@ function wrap(text: string, maxChars: number, maxLines = 3) {
 
 /** Builds the artwork as an SVG string (fonts not embedded; use `promoSvgWithFonts` for downloads). */
 export function promoSvg(p: PromoInput): string {
-  const art=artworkPalette(); const axis=currentSkin()==="axis";
-  const FD=axis?'font-family="Archivo, Arial, sans-serif" style="font-weight:800;font-stretch:66%;text-transform:uppercase;letter-spacing:-.01em"':WORDMARK;
+  const art=artworkPalette(); const skin=currentSkin(); const axis=skin!=="maroon";
+  const FD=skin==="court"?'font-family="Archivo, Arial, sans-serif" style="font-weight:800;font-stretch:100%;letter-spacing:-.045em"':axis?'font-family="Archivo, Arial, sans-serif" style="font-weight:800;font-stretch:66%;text-transform:uppercase;letter-spacing:-.01em"':WORDMARK;
   const t = PROMO_TEMPLATES.find((x) => x.id === p.template) ?? PROMO_TEMPLATES[0];
   const W = t.w, H = t.h, pad = W * 0.07;
   const wide = p.template === 'whatsapp';

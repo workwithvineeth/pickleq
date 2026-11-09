@@ -1,17 +1,17 @@
 <!doctype html>
-<html lang="en" data-skin="axis">
+<html lang="en" data-skin="court" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#F2F2EC" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#07090C" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#06140D" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#06140D" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="%VITE_APP_NAME%" />
     <link rel="icon" type="image/png" href="icons/%VITE_ICON%-192.png" />
     <link rel="apple-touch-icon" href="icons/%VITE_ICON%-apple-180.png" />
-    <script id="pq-theme-init">(function(){var t='dark',k='axis',saved=false;try{var s=localStorage.getItem('pq-theme');if(s==='light'||s==='dark'||s==='auto'){t=s;saved=true;}if(localStorage.getItem('pq-skin')==='maroon'){k='maroon';if(!saved)t='auto';}}catch(e){}var d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;var c=k==='axis'?(d?'#07090C':'#F2F2EC'):(d?'#120709':'#F3EBDD');r.dataset.skin=k;r.dataset.theme=t;r.style.colorScheme=d?'dark':'light';r.style.backgroundColor=c;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=c;});})();</script>
+    <script id="pq-theme-init">(function(){var t='dark',k='court',saved=false;try{var p=localStorage.getItem('pq-skin');if(p==='court'||p==='axis'||p==='maroon')k=p;var s=localStorage.getItem('pq-theme');if(s==='light'||s==='dark'||s==='auto'){t=s;saved=true;}if(k==='maroon'&&!saved)t='auto';}catch(e){}var d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;var c=k==='court'?(d?'#06140D':'#2B6E4B'):k==='axis'?(d?'#07090C':'#F2F2EC'):(d?'#120709':'#F3EBDD');r.dataset.skin=k;r.dataset.theme=t;r.style.colorScheme=d?'dark':'light';r.style.backgroundColor=c;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=c;});})();</script>
     <title>%VITE_APP_NAME%</title>
   </head>
   <body>

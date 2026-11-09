@@ -12,7 +12,7 @@ export function effectiveTheme(choice: ThemeChoice, dark: boolean): 'light' | 'd
   return choice === 'auto' ? dark ? 'dark' : 'light' : choice;
 }
 function storedTheme(): ThemeChoice {
-  const fallback=currentSkin()==='axis'?'dark':'auto';
+  const fallback=currentSkin()==='maroon'?'auto':'dark';
   try { return readTheme(window.localStorage,fallback); } catch { return fallback; }
 }
 export function currentTheme(): ThemeChoice {
@@ -39,14 +39,14 @@ export function subscribeTheme(listener: () => void) {
 }
 /** Installed once by the entrypoint, not once per visible switch. */
 export function initializeTheme() {
-  try { document.documentElement.dataset.skin=readSkin(window.localStorage); } catch { document.documentElement.dataset.skin="axis"; }
+  try { document.documentElement.dataset.skin=readSkin(window.localStorage); } catch { document.documentElement.dataset.skin="court"; }
   applyTheme(storedTheme());
   const query = window.matchMedia('(prefers-color-scheme: dark)');
   const onDeviceChange = () => applyTheme(currentTheme());
-  const onStorage = (e: StorageEvent) => { if (e.key === SKIN_KEY || e.key === null) { try { document.documentElement.dataset.skin=readSkin(window.localStorage); } catch { document.documentElement.dataset.skin='axis'; } } if (e.key === THEME_KEY || e.key === SKIN_KEY || e.key === null) applyTheme(storedTheme()); };
+  const onStorage = (e: StorageEvent) => { if (e.key === SKIN_KEY || e.key === null) { try { document.documentElement.dataset.skin=readSkin(window.localStorage); } catch { document.documentElement.dataset.skin='court'; } } if (e.key === THEME_KEY || e.key === SKIN_KEY || e.key === null) applyTheme(storedTheme()); };
   query.addEventListener?.('change', onDeviceChange);
   window.addEventListener('storage', onStorage);
   return () => { query.removeEventListener?.('change', onDeviceChange); window.removeEventListener('storage', onStorage); };
 }
 
-export function chooseSkin(skin:SkinChoice) { let saved:SkinChoice=skin;try{window.localStorage.setItem(SKIN_KEY,skin);}catch{saved='axis';}document.documentElement.dataset.skin=saved;applyTheme(currentTheme()); }
+export function chooseSkin(skin:SkinChoice) { let saved:SkinChoice=skin;try{window.localStorage.setItem(SKIN_KEY,skin);}catch{saved='court';}document.documentElement.dataset.skin=saved;applyTheme(currentTheme()); }

@@ -22,5 +22,5 @@ export function ThemeControls({showSkin=false}:{showSkin?:boolean}) {
   </>;
 }
 
-export function useSkin(){return useSyncExternalStore(subscribeTheme,currentSkin,()=> 'axis' as const);}
-function SkinSwitch(){const skin=useSkin();return <label className="pq-skin-control">Colour skin<select aria-label="Colour skin" value={skin} onChange={e=>chooseSkin(e.target.value as SkinChoice)}><option value="axis">AXIS</option><option value="maroon">Maroon &amp; Cream</option></select></label>;}
+export function useSkin(){return useSyncExternalStore(subscribeTheme,currentSkin,()=> 'court' as const);}
+function SkinSwitch(){const skin=useSkin();return <label className="pq-skin-control">Colour skin<select aria-label="Colour skin" value={skin} onChange={e=>chooseSkin(e.target.value as SkinChoice)}><option value="court">Court Green</option><option value="axis">AXIS</option><option value="maroon">Maroon &amp; Cream</option></select></label>;}

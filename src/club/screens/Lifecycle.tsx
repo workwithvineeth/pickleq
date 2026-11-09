@@ -82,7 +82,7 @@ export function SupportOpenButton({ b, clubId, tournamentId, reason, go, label =
   return (
     <>
       <button type="button" className={`btn ${primary ? 'btn-primary' : 'btn-outline'}`} disabled={busy} onClick={() => void open()}>{label}</button>
-      {err && <span role="alert" className="small" style={{ color: '#C0392B' }}>{err}</span>}
+      {err && <span role="alert" className="small" style={{ color: 'var(--pq-error-text)' }}>{err}</span>}
     </>
   );
 }

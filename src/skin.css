@@ -1,7 +1,7 @@
 
 /* T16 roles, typography and contrast only; staging screen layouts are unchanged. */
 :root[data-skin="axis"] .pq-brand{--win-bg:var(--pq-tint);--win-fg:var(--pq-maroon-text);--loss-bg:var(--pq-surface-raised);--loss-fg:var(--pq-muted)}
-:root[data-skin="axis"] :is(h1,h2,h3,h4,.pq-band-name,.pq-player-name,.pq-flow-title,.pq-ws-identity strong,.pq-l-title):not(.pq-wordmark){
+:root:is([data-skin="axis"],[data-skin="court"]) :is(h1,h2,h3,h4,.pq-band-name,.pq-player-name,.pq-flow-title,.pq-ws-identity strong,.pq-l-title):not(.pq-wordmark){
  font-family:var(--pq-font-display)!important;font-weight:var(--pq-display-weight)!important;text-transform:var(--pq-display-transform);font-stretch:var(--pq-display-stretch)!important;letter-spacing:var(--pq-display-spacing);line-height:var(--pq-display-line-height)!important;
 }
 .pq-wordmark,.pq-ws-brand b,.pq-l-logo b,.nav-brand b{font-family:var(--pq-wordmark-font)!important;font-weight:600!important;font-stretch:100%!important;text-transform:none!important;letter-spacing:-.02em}

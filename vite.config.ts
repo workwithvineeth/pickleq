@@ -89,8 +89,8 @@ export default defineConfig(({ mode }) => {
           scope: base,
           display: 'standalone',
           orientation: 'portrait',
-          background_color: isClubApp ? '#07090C' : '#F3EBDD',
-          theme_color: isClubApp ? '#07090C' : isLive || isClub ? '#7A1F2B' : '#9A6B1E',
+          background_color: isClubApp ? '#06140D' : '#F3EBDD',
+          theme_color: isClubApp ? '#06140D' : isLive || isClub ? '#7A1F2B' : '#9A6B1E',
           icons: [
             { src: `icons/${icon}-192.png`, sizes: '192x192', type: 'image/png' },
             { src: `icons/${icon}-512.png`, sizes: '512x512', type: 'image/png' },
