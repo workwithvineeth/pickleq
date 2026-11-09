@@ -9,9 +9,7 @@ for(const skin of ['axis','maroon'])for(const theme of ['light','dark'])test('sk
   await page.setViewportSize({width,height:900});await page.emulateMedia({colorScheme:theme==='light'?'dark':'light'});
   if(width<600)await header.locator('.pq-account-menu').evaluate(el=>el.setAttribute('open',''));
   if(width<870)await header.locator('.pq-theme-settings').evaluate(el=>el.setAttribute('open',''));
-  else await header.locator('.pq-skin-settings').evaluate(el=>el.setAttribute('open',''));
-  await header.getByLabel('Colour skin').filter({visible:true}).selectOption(skin);
-  if(width>=870)await header.locator('.pq-skin-settings').evaluate(el=>el.removeAttribute('open'));
+  if(width<870)await header.getByLabel('Colour skin').filter({visible:true}).selectOption(skin);
   await header.getByRole('button',{name:theme==='light'?'Light':'Dark',exact:true}).filter({visible:true}).click();
   if(width<870)await header.locator('.pq-theme-settings').evaluate(el=>el.removeAttribute('open'));
   await expect(page.locator('html')).toHaveAttribute('data-skin',skin);

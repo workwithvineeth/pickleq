@@ -10,8 +10,12 @@ test('overview has real live courts, compact phone frame, account settings and e
   const overviewUrl=page.url();
   const live=page.getByRole('region',{name:'Live now'});
   await expect(live).toBeVisible();
-  await expect(live.locator('.pq-overview-court:visible')).toHaveCount(3);
+  await expect(live.locator('.pq-overview-court:visible')).toHaveCount(4);
   await expect(live.locator('.pq-overview-court').first().locator('.pq-score')).toHaveCount(2);
+  const card=live.locator('.pq-overview-court').first();
+  expect(await card.locator('.tmr').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(15);
+  expect(await card.locator('.pq-score').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(40);
+  expect(await live.locator('.pq-overview-courts').evaluate(el=>el.scrollWidth>el.clientWidth)).toBeTruthy();
   expect((await live.boundingBox())!.y).toBeLessThan(350);
   expect((await page.getByRole('banner',{name:'Where you are'}).boundingBox())!.height).toBeLessThanOrEqual(64);
   expect((await page.getByRole('navigation',{name:'Club / Organiser sections'}).boundingBox())!.height).toBeLessThanOrEqual(48);

@@ -196,10 +196,10 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
           <button type="button" className="pq-ws-item" aria-label="Events board" title="Events board" onClick={() => go('events')}><span className="pq-ws-glyph" aria-hidden="true">◈</span><span className="pq-ws-label">Events board</span></button>
         </div>
       </nav>
-      <WorkspaceTop title={kind === 'club' ? c.club ?? 'Club' : g.title} area={kind === 'club' ? current?.name ?? g.area : g.area} workspace={g.title} identityHeading={kind==='club'&&active==='overview'&&c.staff!==false} live={live} go={go} />
+      <WorkspaceTop showSkin={kind==='admin'} title={kind === 'club' ? c.club ?? 'Club' : g.title} area={kind === 'club' ? current?.name ?? g.area : g.area} workspace={g.title} identityHeading={kind==='club'&&active==='overview'&&c.staff!==false} live={live} go={go} />
       <nav className="pq-ws-tabs" tabIndex={0} onFocusCapture={(e) => { if (e.target !== e.currentTarget) e.target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); }} aria-label={`${g.title} sections`}>
         {g.groups.flatMap((grp) => grp.items).map((i) => (
-          <button key={i.key} type="button" aria-current={active === i.key ? 'page' : undefined} disabled={!i.to} onClick={() => open(i)}>{i.label}</button>
+          <button key={i.key} type="button" aria-current={active === i.key ? 'page' : undefined} disabled={!i.to} aria-label={i.label} onClick={() => open(i)}>{i.key==='create'?'New':i.label}</button>
         ))}
       </nav>
     </>
@@ -207,7 +207,7 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
 }
 
 /** Laptop top bar: where you are, and your account with Sign out. */
-function WorkspaceTop({ title, area, workspace, identityHeading, live, go }: { title: string; area: string; workspace: string; identityHeading:boolean; live: { count: number; slug?: string }; go: Go }) {
+function WorkspaceTop({ title, area, workspace, identityHeading, live, go, showSkin }: { showSkin:boolean; title: string; area: string; workspace: string; identityHeading:boolean; live: { count: number; slug?: string }; go: Go }) {
   const [email, setEmail] = useState<string | null>(null);
   useEffect(() => { let on = true; eventsBackend().currentUser().then((u) => { if (on) setEmail(u?.email ?? null); }, () => undefined); return () => { on = false; }; }, []);
   const [compact,setCompact]=useState(()=>window.matchMedia('(max-width:599px)').matches);
@@ -221,7 +221,7 @@ function WorkspaceTop({ title, area, workspace, identityHeading, live, go }: { t
       <div className="pq-ws-identity"><span className="pq-ws-product">PaddleQ · {workspace}</span><strong role={identityHeading?"heading":undefined} aria-level={identityHeading?2:undefined}>{title}</strong><span className="pq-ws-crumb">{area}</span></div>
       <details className="pq-account-menu" open={!compact||accountOpen} onToggle={e=>{if(compact)setAccountOpen(e.currentTarget.open);}} onKeyDown={e=>{if(e.key==="Escape")setAccountOpen(false);}}><summary aria-label="Account menu">{initials}</summary><div className="pq-ws-actions">
         {live.count > 0 && <button type="button" className="pq-shell-live" onClick={() => live.slug ? go('results', live.slug) : go('club-results')}><i className="pq-live-dot" aria-hidden="true" /><span><b className="pq-score">{live.count}</b> {live.count === 1 ? 'court live' : 'courts live'}</span></button>}
-        <ThemeControls />
+        <ThemeControls showSkin={showSkin} />
         {email && <button type="button" className="pq-ws-signout" onClick={() => void signOut()}>Sign out</button>}
         <span className="pq-ws-avatar" aria-hidden="true">{initials}</span>
       </div></details>

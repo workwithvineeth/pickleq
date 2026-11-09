@@ -37,26 +37,24 @@ export function ClubHome({ d, go }: { d: ClubBundle; go: Go }) {
   const liveMatches = d.matches.filter(m => m.status === 'live' && live.some(t => t.id === m.tournamentId));
   const players = new Map(d.players.map(p => [p.id,p]));
   const focus = live[0] ?? upcoming[0] ?? finished[0];
-  const countValue = (n: number) => counts.data ? n : '—';
   return <div className="pq-dash pq-overview pq-proto">
     <p className="pq-overview-greeting">{hello()}{counts.data?.name ? ', ' + counts.data.name : ''} · {live.length} {live.length === 1 ? 'event' : 'events'} live</p>
     <section className="pq-overview-strip pq-glass" aria-label="Club details">
       <span className="pq-band-logo">{d.club.logoUrl ? <img src={d.club.logoUrl} alt="" /> : initials(d.club.name)}</span>
-      <span>{[d.club.trusted ? 'Trusted club' : d.club.city, d.members.length + ' members'].filter(Boolean).join(' · ')}</span>
+      <span>{[d.club.trusted ? 'Trusted club' : d.club.city, d.members.length + ' members'].filter(Boolean).join(' · ')}</span>{b?.kind==='demo'&&<span className="pq-demo-inline" role="note" title="Demo club. Sample players and scores. Nothing is shared."><span className="pq-demo-long">Demo club. Sample players and scores. Nothing is shared.</span><span className="pq-demo-short">Demo club</span></span>}
     </section>
     {liveMatches.length > 0 && <section className="pq-overview-live" aria-label="Live now"><div className="ch"><h2>Live now</h2><span className="cap">{liveMatches.length} courts in play</span></div>
       <div className="pq-overview-courts">{liveMatches.map((m,i) => {
         const t=live.find(t=>t.id===m.tournamentId)!, game=m.games.at(-1);
-        return <article className={"photo court pq-overview-court"+(i>=3?" pq-overview-extra":"")} key={m.id}>
-          <div className="ph" style={{backgroundImage:"url("+import.meta.env.BASE_URL+"prototype6/"+["pb-man.jpg","woman-hit.jpg","court-night.jpg"][i%3]+")"}} />
+        return <article className="photo court pq-overview-court" key={m.id}>
+          <div className="ph" style={{backgroundImage:"url("+import.meta.env.BASE_URL+"prototype6/"+["court-night.jpg","court-day.jpg","under-lights.jpg","arena-night.jpg"][i%4]+")"}} />
           <div className="pq-overview-court-head"><span className="chip b"><i className="pq-live-dot" aria-hidden="true" />Court {m.court??"—"}</span><span className="cap">{t.name}</span></div>
           <div className="pq-overview-court-body lgd"><div className="cap">{STAGE_LABEL[m.stage]}</div>
             <div className="tmr"><b>{names(m.sideA,players)}</b><b className="n pq-score">{game?.a??0}</b></div>
             <div className="tmr"><span>{names(m.sideB,players)}</span><b className="n pq-score">{game?.b??0}</b></div>
-            {t.isPublic && <button type="button" className="pq-mini-btn" onClick={()=>go("results",t.publicSlug)}>Watch →</button>}
+            {t.isPublic && <button type="button" className="pq-watch-link" onClick={()=>go("results",t.publicSlug)}>Watch →</button>}
           </div></article>;
       })}</div>
-      {liveMatches.length>3 && <button type="button" className="pq-mini-btn pq-overview-all" onClick={()=>go(live[0].isPublic?"results":"club-desk",live[0].isPublic?live[0].publicSlug:live[0].id)}>All courts →</button>}
     </section>}
     <div className="pq-overview-middle">
       <Panel title="Needs you" action={<span className="pq-overview-count pq-score">{counts.data ? needs : '—'}</span>}>
@@ -65,24 +63,21 @@ export function ClubHome({ d, go }: { d: ClubBundle; go: Go }) {
         {counts.data && needs === 0 && <p className="small muted">Nothing needs you right now.</p>}
         {claims.length > 0 && <Row title="Payments to verify" tag={claims.length} tagKind="action" right={<MiniBtn onClick={() => go('club-inbox',claims[0].tournamentId)}>Verify</MiniBtn>} />}
         {pending.length > 0 && <Row title="Entries to decide" tag={pending.length} tagKind="action" right={<MiniBtn onClick={() => go('club-inbox',pending[0].tournamentId)}>Review</MiniBtn>} />}
-        {missing.map(x => <Row key={x.t.id} title="Referee links not created" sub={x.t.name} tag={x.count} tagKind="action" right={<MiniBtn onClick={() => go('club-scorers',x.t.id)}>Create referee links</MiniBtn>} />)}
+        {missing.length > 0 && <Row title="Referee links not created" sub={missing.length + (missing.length === 1 ? " tournament" : " tournaments")} tag={missing.reduce((n,x)=>n+x.count,0)} tagKind="action" right={<MiniBtn onClick={() => go('club-scorers',missing[0].t.id)}>Create</MiniBtn>} />}
       </Panel>
       <div className="pq-kpis">
         <Kpi label="Events this season" value={open.length} sub={live.length + ' live · ' + upcoming.length + ' upcoming'} onClick={() => go('club-view',d.club.id+'.tournaments')} />
-        <Kpi label="Entries to review" value={countValue(pending.length)} sub="Waiting for your decision" onClick={pending[0] ? () => go('club-inbox',pending[0].tournamentId) : undefined} />
-        <Kpi label="Payments to verify" value={countValue(claims.length)} sub="Check payment before confirming" onClick={claims[0] ? () => go('club-inbox',claims[0].tournamentId) : undefined} />
-        <Kpi label="Courts on deck" value={live.reduce((n,t)=>n+t.courts,0)} sub={liveMatches.length + ' courts live'} onClick={live[0] ? () => go('club-desk',live[0].id) : undefined} />
+        <Kpi label="Matches scored" value={d.matches.filter(m=>m.status==='done'&&m.games.length>0).length} sub="Finished club matches" />
+        <Kpi label="Courts live" value={liveMatches.length} sub="In play right now" onClick={live[0] ? () => go('club-desk',live[0].id) : undefined} />
+        <Kpi label="Players" value={d.players.length} sub="On the club roster" onClick={() => go('club-view',d.club.id+'.players')} />
       </div>
     </div>
     <div className="pq-overview-bottom">
-      <Panel title="Your tournaments" action={staff && <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new',d.club.id)}>Create tournament</button>}>
+      <Panel title="Your tournaments" action={staff && <div className="pq-overview-actions">{focus && <><button className="btn btn-outline" type="button" onClick={() => go('club-inbox',focus.id)}>Entries inbox</button><button className="btn btn-outline" type="button" onClick={() => go('club-desk',focus.id)}>Open the desk</button></>}<button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new',d.club.id)}>Create tournament</button></div>}>
         {[...live,...upcoming,...pastDrafts,...finished].map(t => <Row key={t.id} title={t.name} sub={friendlyDate(t.startDate)+' · '+friendlyTime(t.startTime)+' · '+t.courts+' courts'} tag={t.status==='live'?'Live':t.status==='done'?'Finished':t.startDate<today?'Draft':'Upcoming'} tagKind={t.status==='live'?'live':t.status==='done'?'plain':'ready'} onClick={() => go('club-tournament',t.id)} />)}
         {open.length === 0 && <p className="small muted">No tournaments yet. Create your first one.</p>}
       </Panel>
-      {staff && focus && <Panel title="Quick actions"><div className="pq-overview-quick">
-        <button className="btn btn-outline pq-glass" type="button" onClick={() => go('club-inbox',focus.id)}>Entries inbox</button>
-        <button className="btn btn-outline pq-glass" type="button" onClick={() => go('club-desk',focus.id)}>Open the desk</button>
-      </div></Panel>}
+
     </div>
   </div>;
 }

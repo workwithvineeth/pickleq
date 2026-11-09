@@ -262,6 +262,7 @@ test.describe('Club testimonials (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
     await page.setViewportSize({ width: 320, height: 640 });
+    await page.getByText('Rate PaddleQ', { exact: true }).click();
     const card = page.getByRole('region', { name: 'Share your experience' });
     await card.getByRole('button', { name: '5 stars' }).click();
     await card.getByLabel('Your words').fill('Our referees picked it up in five minutes. Players loved the live results.');
@@ -287,6 +288,7 @@ test.describe('Club testimonials (demo club on the phone)', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 
     await page.goto(clubUrl);
+    await page.getByText('Rate PaddleQ', { exact: true }).click();
     const mine = page.getByRole('region', { name: 'Testimonial from Robot Owner' });
     await expect(mine).toContainText('Approved · ★ Featured');
     await mine.getByRole('button', { name: 'Withdraw' }).click();

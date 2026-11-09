@@ -11,10 +11,10 @@ export function ThemeSwitch() {
 }
 
 /** The same setting in the top bar on laptops and a Settings disclosure on phones. No new route. */
-export function ThemeControls() {
+export function ThemeControls({showSkin=false}:{showSkin?:boolean}) {
   return <>
     <div className="pq-theme-desktop"><ThemeSwitch /></div>
-    <details className="pq-skin-settings"><summary>Skin</summary><div className="pq-theme-panel pq-glass"><SkinSwitch /></div></details>
+    {showSkin && <details className="pq-skin-settings"><summary>Skin</summary><div className="pq-theme-panel pq-glass"><SkinSwitch /></div></details>}
     <details className="pq-theme-settings">
       <summary>Settings</summary>
       <div className="pq-theme-panel pq-glass"><h2>Theme</h2><ThemeSwitch /><p>Auto follows your device.</p><SkinSwitch /></div>

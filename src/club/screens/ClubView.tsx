@@ -37,7 +37,7 @@ export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: 
     <main className={"screen wide-ok"+(tab==="overview"?" pq-overview-screen":"")} aria-labelledby="clubview-title">
       <Header id="clubview-title" title={tab==='overview'&&isClubApp()?'Overview':d?.club.name ?? 'Club'} onBack={tab==='overview'&&isClubApp()?undefined:onBack} right={d && <RoleBadge role={d.role} />} />
       <Status error={state.error} loading={state.loading && !d} />
-      <DemoNote b={b} />
+      {tab !== 'overview' && <DemoNote b={b} />}
       {d && (
         <>
           {(tab === 'events' || tab === 'profile') && <ClubHero b={b} clubId={d.club.id} club={d.club.name} city={d.club.city} logoUrl={d.club.logoUrl} canEdit={staff && !!b} onChanged={state.reload}
@@ -47,7 +47,7 @@ export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: 
           {tab === 'overview' && <ClubHome d={d} go={go} />}
           {tab === 'guide' && <DayOfGuide d={d} go={go} />}
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
-          {(tab === 'overview' || tab === 'events') && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} />}
+          {(tab === 'overview' || tab === 'events') && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <details className="pq-rating-card"><summary>Rate PaddleQ</summary><TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} /></details>}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
           {tab === 'squad' && staff && <Squad d={d} go={go} />}
           {tab === 'profile' && staff && b && <LogoPicker b={b} clubId={d.club.id} club={d.club.name} current={d.club.logoUrl} onChanged={state.reload} />}
