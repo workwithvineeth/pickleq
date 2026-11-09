@@ -15,10 +15,11 @@ async function demo(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
   await expect(page.getByRole('heading', { name: 'PQ Demo Club', exact: true })).toBeVisible();
   await expect(page.getByRole('banner', { name: 'Where you are' }).locator('strong')).toHaveText('PQ Demo Club');
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
 }
 
 test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots', async ({ page }) => {
-  // Twenty full-page renders need a separate Windows WebKit budget; interactions still use 15 seconds.
+  // CI owns screenshot evidence. Locally keep all twenty theme/layout/contrast checks without duplicate renders.
   test.setTimeout(600_000);
   const cspErrors: string[] = [];
   page.on('console', msg => { if (/Refused to execute inline script|Content Security Policy.*script/.test(msg.text())) cspErrors.push(msg.text()); });
@@ -31,7 +32,8 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
     const header = page.getByRole('banner', { name: 'Where you are' });
     if(width<600)await header.locator('.pq-account-menu').evaluate(el=>el.setAttribute('open',''));
     if (width < 870) { await header.locator('.pq-theme-settings').evaluate(el => el.setAttribute('open', '')); }
-    await header.getByRole('button', { name: choice === 'auto' ? 'Auto' : mode, exact: true }).click();
+    const themeButton = header.getByRole('button', { name: choice === 'auto' ? 'Auto' : mode, exact: true });
+    if (await themeButton.getAttribute('aria-pressed') !== 'true') await themeButton.click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', choice);
     expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(expected);
     expect(await page.locator('meta[name="theme-color"]').first().getAttribute('content')).toBe(expected === 'rgb(18, 7, 9)' ? '#120709' : '#F3EBDD');
@@ -64,7 +66,7 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
     await assertContrast(page.locator('.pill:visible, .badge:visible, .pq-tag:visible'));
     expect(await page.evaluate(() => document.documentElement.scrollWidth), width + ' ' + mode).toBeLessThanOrEqual(width);
     await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ timeout: 60_000, animations: 'disabled', path: test.info().outputPath('T14-' + width + '-' + mode + '.png'), fullPage: true });
+    if (process.env.CI) await page.screenshot({ timeout: 60_000, animations: 'disabled', path: test.info().outputPath('T14-' + width + '-' + mode + '.png'), fullPage: true });
   }
   expect(cspErrors).toEqual([]);
   await page.reload(); await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -111,7 +113,7 @@ test('live chip uses public demo courts, has readable labels and opens existing 
   for (const choice of ['Light', 'Dark']) {
     await header.getByRole('button', { name: choice, exact: true }).click();
     await assertContrast(live); await assertContrast(live, 'border'); await assertContrast(live.locator('.pq-live-dot'), 'signal');
-    await page.screenshot({ timeout: 60_000, animations: 'disabled', path: test.info().outputPath('T14-live-' + choice + '.png'), fullPage: true });
+    if (process.env.CI) await page.screenshot({ timeout: 60_000, animations: 'disabled', path: test.info().outputPath('T14-live-' + choice + '.png'), fullPage: true });
   }
   await live.click(); await expect(page).toHaveURL(/results\/pq-demo-open/);
   await expect(page.getByRole('heading', { name: 'PQ Demo Open', exact: true })).toBeVisible();
