@@ -29,8 +29,7 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+:root[data-theme="dark"] {
     --bg: var(--pq-bg);
     --card: var(--pq-surface);
     --card-2: var(--pq-surface-raised);
@@ -52,6 +51,31 @@
     --shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
+
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) {
+    --bg: var(--pq-bg);
+    --card: var(--pq-surface);
+    --card-2: var(--pq-surface-raised);
+    --text: var(--pq-ink);
+    --muted: var(--pq-muted);
+    --nav-idle: var(--pq-muted);
+    --accent: var(--pq-maroon-text);
+    --accent-soft: var(--pq-tint);
+    --on-accent: var(--pq-cream);
+    --solid: var(--pq-maroon);
+    --on-solid: var(--pq-cream);
+    --win-bg: #34421F;
+    --win-fg: #C9DBA8;
+    --loss-bg: #3A322C;
+    --loss-fg: #C2B6AA;
+    --warn-bg: #4A3A1C;
+    --warn-fg: #F0D49B;
+    --border: var(--pq-line);
+    --shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+
 }
 
 * { box-sizing: border-box; }
@@ -149,7 +173,10 @@ textarea.input { padding: 10px 12px; min-height: 84px; resize: vertical; }
 .msg { font-size: 14px; font-weight: 500; }
 .msg-ok { color: var(--win-fg); }
 .msg-bad { color: var(--pq-error-text); }
-@media (prefers-color-scheme: dark) { .msg-bad { color: #F2B8B5; } }
+:root[data-theme="dark"] .msg-bad { color: #F2B8B5; }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) .msg-bad { color: #F2B8B5; }
+}
 .notice { border-radius: 14px; padding: 12px 14px; font-size: 14px; }
 .notice-ok { background: var(--win-bg); color: var(--win-fg); }
 .notice-warn { background: var(--warn-bg); color: var(--warn-fg); }
@@ -164,7 +191,10 @@ textarea.input { padding: 10px 12px; min-height: 84px; resize: vertical; }
 .pill-warn { background: var(--warn-bg); color: var(--warn-fg); }
 .pill-ok { background: var(--win-bg); color: var(--win-fg); }
 .pill-bad { background: var(--loss-bg); color: var(--pq-error-text); }
-@media (prefers-color-scheme: dark) { .pill-bad { color: #F2B8B5; } }
+:root[data-theme="dark"] .pill-bad { color: #F2B8B5; }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) .pill-bad { color: #F2B8B5; }
+}
 .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 .kv { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 15px; }
 .kv:first-child { border-top: none; }
@@ -173,7 +203,10 @@ textarea.input { padding: 10px 12px; min-height: 84px; resize: vertical; }
 
 /* Charts: colours validated for colour-blind separation on both surfaces */
 :root { --chart-1: #A3333F; --chart-2: #B08A3E; --chart-grid: #E8DCC6; --chart-axis: var(--pq-muted); }
-@media (prefers-color-scheme: dark) { :root { --chart-1: #DB6575; --chart-2: #B48D3B; --chart-grid: #3A322C; --chart-axis: #A08F80; } }
+:root[data-theme="dark"] { --chart-1: #DB6575; --chart-2: #B48D3B; --chart-grid: #3A322C; --chart-axis: #A08F80; }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) { --chart-1: #DB6575; --chart-2: #B48D3B; --chart-grid: #3A322C; --chart-axis: #A08F80; }
+}
 .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .kpi { background: var(--card); border-radius: 16px; padding: 12px; }
 .kpi .v { font-family: var(--pq-font-score); font-stretch: 68%; font-variant-numeric: tabular-nums; font-size: 24px; font-weight: 800; line-height: 1.2; }
@@ -280,7 +313,10 @@ a { color: var(--accent); text-underline-offset: 3px; }
 
 /* Club button at the top of Home (Club builds only): maroon pill in the Paddle Q style. */
 :root { --club: var(--pq-maroon); --on-club: var(--pq-cream); }
-@media (prefers-color-scheme: dark) { :root { --club:var(--pq-maroon); --on-club:var(--pq-cream); } }
+:root[data-theme="dark"] { --club:var(--pq-maroon); --on-club:var(--pq-cream); }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) { --club:var(--pq-maroon); --on-club:var(--pq-cream); }
+}
 .club-pill { position: relative; height: 44px; padding: 0 16px 0 12px; border-radius: 22px; border: none; background: var(--club); color: var(--on-club); display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: 0.3px; box-shadow: 0 2px 8px var(--pq-glass-shadow); cursor: pointer; }
 .club-pill:active { transform: translateY(1px); box-shadow: 0 1px 4px var(--pq-glass-shadow); }
 .club-pill:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -463,11 +499,17 @@ a { color: var(--accent); text-underline-offset: 3px; }
 /* ---------- PaddleQ design audit (31 Oct 2026): brand colours and tap targets, club app only ---------- */
 /* Brand: no leftover green. "Good" states (saved, Won, Paid, Through) are maroon tints; W is a solid maroon chip, L stays grey. */
 .pq-brand { --win-bg: var(--pq-tint); --win-fg: var(--pq-maroon); }
-@media (prefers-color-scheme: dark) { .pq-brand { --win-bg: #4A2A2F; --win-fg: #E7AAB2; } }
+:root[data-theme="dark"] .pq-brand { --win-bg: #4A2A2F; --win-fg: #E7AAB2; }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) .pq-brand { --win-bg: #4A2A2F; --win-fg: #E7AAB2; }
+}
 .pq-brand .result-w { background: var(--solid); color: var(--on-solid); }
 /* Errors use the brand's error red (field errors only), brighter than maroon so they never look like branding. */
 .pq-brand .msg-bad { color: var(--pq-error-text); }
-@media (prefers-color-scheme: dark) { .pq-brand .msg-bad { color: #F2B8B5; } }
+:root[data-theme="dark"] .pq-brand .msg-bad { color: #F2B8B5; }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) .pq-brand .msg-bad { color: #F2B8B5; }
+}
 /* Every tap target at least 44 px. */
 .pq-brand .seg button { min-height: 44px; }
 .pq-brand .chip { min-height: 44px; min-width: 44px; }
@@ -485,7 +527,10 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-brand .score-tap-b:active { background: #EADFD0; }
 .pq-brand .golden-banner { background: #B8862B; color: #2A1E06; }
 .pq-brand .pq-gamepoint { background: #F5E3C4; color: #6B4A12; border-left: 4px solid #B8862B; border-radius: 8px; padding: 6px 10px; font-weight: 700; }
-@media (prefers-color-scheme: dark) { .pq-brand .pq-gamepoint { background: #4A3A1C; color: #F0D49B; } }
+:root[data-theme="dark"] .pq-brand .pq-gamepoint { background: #4A3A1C; color: #F0D49B; }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) .pq-brand .pq-gamepoint { background: #4A3A1C; color: #F0D49B; }
+}
 
 @media print { .pq-brand .no-print, .pq-brand nav { display: none !important; } .pq-brand .pq-hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 .pq-result-player { display: flex; flex-direction: column; gap: 3px; overflow-wrap: anywhere; min-width: 0; margin: 6px 0; }
@@ -600,7 +645,10 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .app.pq-brand .toast { left: calc(50% + 124px); }
 }
 .pq-brand .btn.pq-danger { color: var(--pq-error-text); border-color: #E8B9B2; }
-@media (prefers-color-scheme: dark) { .pq-brand .btn.pq-danger { color: #F2B8B5; border-color: #7A3B35; } }
+:root[data-theme="dark"] .pq-brand .btn.pq-danger { color: #F2B8B5; border-color: #7A3B35; }
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) .pq-brand .btn.pq-danger { color: #F2B8B5; border-color: #7A3B35; }
+}
 .pq-brand .btn.pq-danger-solid { background: var(--pq-error-text); color: #FFFFFF; border-color: var(--pq-error-text); }
 .pq-support { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--pq-maroon); color: var(--pq-cream); font-size: 14px; }
 .pq-support .link-btn { color: var(--pq-cream); }
@@ -840,7 +888,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-ws-admin .pq-ws-tabs, .pq-ws-studio .pq-ws-tabs { display: none; }
 .pq-ws [aria-label='Club sections'] { display: none !important; }
 
-@media (min-width: 760px) {
+@media (min-width: 870px) {
   .pq-ws .nav.nav-ws, .pq-ws .pq-ws-tabs, .pq-ws > .pq-account { display: none !important; }
   /* Laptops: the side menu replaces each screen's own section switcher. */
   .pq-ws [aria-label='Admin sections'], .pq-ws .pq-studio-nav { display: none !important; }

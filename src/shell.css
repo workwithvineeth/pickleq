@@ -1,0 +1,109 @@
+/* T14 shell. Screen layouts remain in styles.css. */
+.pq-theme-switch { display:inline-flex; gap:4px; padding:4px; border:1px solid var(--pq-muted); border-radius:999px; box-shadow:none; }
+.pq-theme-switch::before { display:none; }
+.pq-theme-switch button { min-height:44px; min-width:50px; padding:0 12px; border:2px solid transparent; border-radius:999px; background:transparent; color:var(--pq-ink); font:700 12px var(--pq-font-body); }
+.pq-theme-switch button[aria-pressed='true'] { background:var(--pq-maroon); color:var(--pq-cream); border-color:var(--pq-maroon-ui); }
+.pq-theme-settings { position:relative; display:none; }
+.pq-theme-settings summary { min-height:44px; padding:0 14px; border:1px solid var(--pq-muted); border-radius:999px; display:flex; align-items:center; cursor:pointer; color:var(--pq-ink); background:var(--pq-surface); font:700 12px var(--pq-font-body); list-style:none; }
+.pq-theme-settings summary::-webkit-details-marker { display:none; }
+.pq-theme-panel { position:absolute; right:0; top:calc(100% + 8px); min-width:230px; padding:18px; z-index:40; border:1px solid var(--pq-muted); background:var(--pq-surface); }
+.pq-theme-panel h2 { font-size:22px; margin-bottom:12px; color:var(--pq-ink); }
+.pq-theme-panel p { font-size:12px; color:var(--pq-muted); margin:12px 0 0; }
+.pq-app-preferences { display:flex; justify-content:flex-end; padding:12px 16px; }
+.pq-ws-item:focus-visible, .pq-ws-tabs button:focus-visible, .pq-studio-nav button:focus-visible,
+.pq-theme-switch button:focus-visible, .pq-theme-settings summary:focus-visible,
+.pq-shell-live:focus-visible, .pq-ws-signout:focus-visible, .pq-ws-pick select:focus-visible,
+.pq-brand .nav-btn:focus-visible { outline:3px solid var(--pq-maroon-text); outline-offset:3px; }
+.app.pq-brand.pq-ws { background:radial-gradient(ellipse at top left,var(--pq-tint),transparent 45%),var(--bg); min-width:0; }
+.app.pq-brand .pq-ws-top { background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2)); display:flex; position:relative; align-items:center; flex-wrap:wrap; gap:14px; min-height:112px; padding:20px 32px; border-radius:0; border:0; border-bottom:1px solid var(--pq-line); color:var(--pq-ink); z-index:8; }
+.pq-ws-identity { display:flex; flex-direction:column; gap:4px; flex:1; min-width:180px; }
+.pq-ws-product { font:700 10px var(--pq-font-body); color:var(--pq-muted); letter-spacing:.06em; }
+.pq-ws-identity strong { font:600 27px/1.1 var(--pq-font-display); color:var(--pq-ink); overflow-wrap:anywhere; }
+.pq-ws-identity .pq-ws-crumb { font-size:12px; color:var(--pq-muted); overflow-wrap:anywhere; white-space:normal; }
+.pq-ws-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.pq-shell-live { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border:2px solid var(--pq-maroon-ui); padding:0 12px; background:var(--pq-maroon); color:var(--pq-cream); border-radius:999px; font:700 12px var(--pq-font-body); white-space:nowrap; }
+.pq-shell-live .pq-score { font-size:16px; }
+.app.pq-brand .pq-ws-signout { min-height:44px; border:1px solid var(--pq-muted); background:var(--pq-surface); color:var(--pq-ink); border-radius:999px; }
+.app.pq-brand .pq-ws-top-tile { width:36px; height:36px; flex:none; border-radius:10px; background:var(--pq-maroon); }
+.app.pq-brand .pq-ws-avatar { width:36px; height:36px; flex:none; background:var(--pq-maroon); color:var(--pq-cream); }
+.pq-ws-tabs, .pq-studio-nav, [aria-label='Admin sections'] {
+  min-width:0; max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; scroll-padding-inline:18px; scrollbar-width:thin;
+}
+.pq-ws-tabs > button, .pq-studio-nav > button, [aria-label='Admin sections'] > button {
+  flex:0 0 auto; white-space:nowrap; text-overflow:clip; overflow:visible; min-height:44px; min-width:max-content;
+}
+.pq-ws-tabs > button[aria-current='page'] { background:var(--pq-maroon); color:var(--pq-cream); border:2px solid var(--pq-maroon-ui); }
+.pq-ws-tabs:focus-visible { outline:3px solid var(--pq-maroon-text); outline-offset:-3px; }
+@media (min-width:870px) {
+  .app.pq-brand.pq-ws { padding-left:248px; }
+  .app.pq-brand.pq-ws > .screen, .app.pq-brand.pq-ws > main { max-width:1240px; margin:0; padding:28px 32px 64px; }
+  .app.pq-brand.pq-ws .screen > .header:first-child { background:transparent; margin:0 0 4px; padding:0; border-radius:0; min-height:0; box-shadow:none; }
+  .app.pq-brand.pq-ws .screen > .header:first-child .screen-title { color:var(--text); font-size:40px; line-height:1.1; font-weight:700; }
+  .app.pq-brand .pq-ws-side { background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2)); display:flex; flex-direction:column; position:fixed; inset:0 auto 0 0; width:248px; overflow-y:auto; padding:20px 12px; border-radius:0 26px 26px 0; border-right:1px solid var(--pq-line); color:var(--pq-ink); z-index:20; scrollbar-width:thin; }
+  .app.pq-brand .pq-ws-brand { border-bottom:1px solid var(--pq-line); padding:4px 8px 18px; }
+  .app.pq-brand .pq-ws-brand b { color:var(--pq-maroon-text); font-size:23px; }
+  .app.pq-brand .pq-ws-brand small, .app.pq-brand .pq-ws-area, .app.pq-brand .pq-ws-glabel { color:var(--pq-muted); }
+  .app.pq-brand .pq-ws-tile { background:var(--pq-maroon); border-color:var(--pq-maroon); width:44px; height:44px; flex:none; }
+  .app.pq-brand .pq-ws-clubname { color:var(--pq-ink); }
+  .app.pq-brand .pq-ws-item { color:var(--pq-ink); font-size:14px; min-height:44px; border:2px solid transparent; }
+  .app.pq-brand .pq-ws-item:hover:not(:disabled) { background:var(--pq-tint); }
+  .app.pq-brand .pq-ws-item[aria-current='page'] { background:var(--pq-maroon); border-color:var(--pq-maroon-ui); color:var(--pq-cream); }
+  .app.pq-brand .pq-ws-pick { color:var(--pq-muted); }
+  .app.pq-brand .pq-ws-pick select { background:var(--pq-surface); border-color:var(--pq-muted); color:var(--pq-ink); min-height:44px; }
+  .app.pq-brand .pq-ws-foot { border-color:var(--pq-line); }
+  .app.pq-brand .pq-ws-foot .pq-ws-item { min-height:44px; }
+  .pq-ws .pq-ws-tabs, .pq-ws .nav.nav-ws, .pq-ws > .pq-account { display:none !important; }
+  .pq-ws .pq-studio-nav { display:none !important; }
+}
+@media (min-width:870px) and (max-width:1099px) {
+  .app.pq-brand.pq-ws { padding-left:88px; }
+  .app.pq-brand .pq-ws-side { width:88px; padding:16px 10px; }
+  .pq-ws-side .pq-ws-brand { padding:0 0 12px; justify-content:center; gap:0; }
+  .pq-ws-side .pq-ws-brand > span:last-child, .pq-ws-side .pq-ws-area, .pq-ws-side .pq-ws-clubname,
+  .pq-ws-side .pq-ws-glabel, .pq-ws-side .pq-ws-pick, .pq-ws-side .pq-ws-label { display:none; }
+  .app.pq-brand .pq-ws-item { justify-content:center; padding:0; min-height:48px; }
+  .app.pq-brand .pq-ws-glyph { font-size:21px; }
+  .pq-ws-side .pq-ws-group { margin-top:8px; }
+  .app.pq-brand .pq-ws-top { padding:20px 24px; }
+  .app.pq-brand .pq-ws-avatar { display:none; }
+  .app.pq-brand.has-side:not(.pq-ws) { padding-left:88px; }
+  .app.pq-brand:not(.pq-ws) .nav { width:88px; }
+  .app.pq-brand:not(.pq-ws) .nav .nav-btn span, .app.pq-brand:not(.pq-ws) .nav-brand > span:last-child { display:none; }
+}
+@media (max-width:869px) {
+  .app.pq-brand.pq-ws, .app.pq-brand.has-side { padding-left:0; max-width:none; }
+  .app.pq-brand .pq-ws-side { display:none; }
+  .app.pq-brand .pq-ws-top { padding:16px; gap:10px; min-height:0; }
+  .pq-ws-identity { min-width:0; flex-basis:calc(100% - 50px); }
+  .pq-ws-identity strong { font-size:26px; }
+  .pq-ws-actions { width:100%; gap:8px; }
+  .app.pq-brand .pq-ws-avatar { margin-left:auto; }
+  .pq-theme-desktop { display:none; }
+  .pq-theme-settings { display:block; }
+  .pq-ws .pq-ws-tabs { display:flex; width:100%; padding:8px 28px 8px 16px; margin:0; background:var(--bg); mask-image:linear-gradient(to right,#000 calc(100% - 14px),transparent); }
+  .pq-ws .pq-ws-tabs:focus-within { mask-image:none; }
+  .pq-ws-admin .pq-ws-tabs, .pq-ws-studio .pq-ws-tabs { display:none; }
+  .app.pq-brand.pq-ws > .screen, .app.pq-brand.pq-ws > main { padding:18px 16px 120px; margin:0; width:100%; }
+  .app.pq-brand.pq-ws .screen > .header:first-child { background:var(--pq-maroon); margin:calc(-18px - var(--safe-top)) -16px 4px; padding:calc(16px + var(--safe-top)) 16px 16px; border-radius:0 0 24px 24px; }
+  .app.pq-brand.pq-ws .screen > .header:first-child .screen-title { color:var(--pq-cream); font-size:28px; }
+  .app.pq-brand .nav, .app.pq-brand .nav.nav-sub, .app.pq-brand.pq-ws .nav.nav-ws {
+    display:grid !important; position:fixed; top:auto; bottom:calc(8px + var(--safe-bottom)); left:50%; transform:translateX(-50%); width:calc(100% - 24px); max-width:620px; height:auto;
+    grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); grid-template-columns:none; grid-auto-rows:auto; padding:6px 4px; gap:0; border:1px solid var(--pq-muted); border-radius:22px; z-index:25;
+  }
+  .app.pq-brand .nav-brand { display:none; }
+  .app.pq-brand .nav-btn { min-height:54px; flex-direction:column; justify-content:center; gap:3px; font-size:11px; color:var(--pq-muted); padding:4px 0; border:2px solid transparent; border-radius:18px; }
+  .app.pq-brand .nav-btn[aria-current='page'] { background:var(--pq-maroon); color:var(--pq-cream); border-color:var(--pq-maroon-ui); }
+  .app.pq-brand .nav-btn[aria-current='page'] svg { background:transparent; padding:0; box-sizing:border-box; }
+  .pq-ws .pq-studio-nav { display:flex !important; }
+}
+
+/* The workspace top bar provides the single account exit at every width. */
+.pq-ws > .pq-account { display:none; }
+
+@media(max-width:869px){.pq-ws-actions,.pq-app-preferences{position:relative}.pq-theme-settings{position:static}.pq-theme-panel{left:0;right:auto;top:calc(100% + 8px);width:min(280px,100%);min-width:0;max-width:100%}}
+.app.pq-brand .pq-ws-avatar,.app.pq-brand .pq-ws-top-tile{display:inline-flex;align-items:center;justify-content:center}.app.pq-brand .pq-ws-avatar{border-radius:50%;font:700 12px var(--pq-font-body)}
+
+.app.pq-brand .nav.pq-glass { background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2)); }
+[data-pq-effects="off"] .app.pq-brand :is(.pq-ws-top,.pq-ws-side,.nav.pq-glass) { background:var(--pq-surface); }
+@media(prefers-reduced-motion:reduce),(prefers-reduced-transparency:reduce),(update:slow){.app.pq-brand :is(.pq-ws-top,.pq-ws-side,.nav.pq-glass){background:var(--pq-surface)}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.app.pq-brand :is(.pq-ws-top,.pq-ws-side,.nav.pq-glass){background:var(--pq-surface)}}

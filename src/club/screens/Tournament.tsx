@@ -1,3 +1,4 @@
+import { PublicScoreAnnouncement } from './PublicScoreAnnouncement';
 import { isBronzeMatch } from '../resultsReport';
 import { ResultsHero } from './Brand';
 import { Fragment, useEffect, useMemo, useState } from 'react';
@@ -610,6 +611,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
   return (
     <main className="screen" aria-labelledby="results-title">
       <ResultsHero />
+      <PublicScoreAnnouncement slug={slug} data={d} />
       <Header id="results-title" title={d?.name ?? 'Results'} onBack={onBack} />
       <Status error={state.error} loading={state.loading && !d} />
       {!state.loading && !d && !state.error && <p className="muted">These results aren’t available. The link may be turned off.</p>}

@@ -1,3 +1,4 @@
+import { ThemeSwitch } from '../components/ThemeSwitch';
 import { useState } from 'react';
 import { Chips, Field } from '../components/Controls';
 import { checkNewPin, LOCK_AFTER, lockAfter, pinEnabled, removePin, setLockAfter, setPin, tryPin, type LockAfter } from '../lock/pin';
@@ -34,6 +35,7 @@ export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
           <span>Club mode</span><span>›</span>
         </button>
       )}
+      <section className="card section" aria-label="Theme"><h2>Theme</h2><ThemeSwitch /><p className="small muted">Auto follows your device.</p></section>
       <AppLock />
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('help')}>
         <span>How to use PICKLEQ</span><span>›</span>

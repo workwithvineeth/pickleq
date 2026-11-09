@@ -1,3 +1,4 @@
+import { ThemeControls } from '../components/ThemeSwitch';
 import { useEffect, useState } from 'react';
 import { Icon, type IconName } from '../components/Icon';
 import { UpdatePrompt } from '../components/UpdatePrompt';
@@ -93,16 +94,17 @@ export default function ClubApp() {
       <UpdatePrompt offlineNotice={false} inline />
       <AccountStrip route={name} go={clubGo} />
       <SupportBanner route={name} />
+      {!ws && showNav && <div className="pq-app-preferences" aria-label="App settings"><ThemeControls /></div>}
       {ws && <WorkspaceNav kind={ws} route={{ ...route, name }} go={clubGo} admin={admin} />}
       {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
       {name === 'club-results' && <ClubResultsTab go={clubGo} />}
       {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}
       {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>PaddleQ {appVersion} · build {buildId}</p>}
       {showNav && (
-        <nav className={`nav${tab ? '' : ' nav-sub'}${ws ? ' nav-ws' : ''}`} aria-label="Main">
+        <nav className={`nav pq-glass${tab ? '' : ' nav-sub'}${ws ? ' nav-ws' : ''}`} aria-label="Main">
           <div className="nav-brand" aria-hidden="true"><span className="nav-brand-tile"><BrandMark size={30} /></span><span><b>PaddleQ</b><small>{admin ? 'Platform admin' : 'For clubs'}</small></span></div>
           {TABS.map((t) => (
-            <button key={t.id} type="button" className="nav-btn" aria-current={current === t.id ? 'page' : undefined} onClick={() => go(t.id)}>
+            <button key={t.id} type="button" className="nav-btn" aria-label={t.id === 'club' && admin ? 'Clubs' : t.label} title={t.id === 'club' && admin ? 'Clubs' : t.label} aria-current={current === t.id ? 'page' : undefined} onClick={() => go(t.id)}>
               <Icon name={t.icon} />
               <span>{t.id === 'club' && admin ? 'Clubs' : t.label}</span>
             </button>
