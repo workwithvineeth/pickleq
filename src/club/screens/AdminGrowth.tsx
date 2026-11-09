@@ -1,3 +1,5 @@
+import { artworkPalette, currentSkin, SKINS } from '../../skin';
+import { useSkin } from '../../components/ThemeSwitch';
 import { useState } from 'react';
 import { eventsBackend } from '../index';
 import { Status, useLoad } from './common';
@@ -7,23 +9,16 @@ import { PromoStudio, type PromoEvent } from './PromoStudio';
 import type { Go } from '../../navigation';
 import { BrandMark } from './Brand';
 
-const LOGO_FILES: { id: string; label: string; use: string; bg: string; tile: 'maroon' | 'cream' }[] = [
-  { id: 'maroon-tile', label: 'App icon · maroon', use: 'Instagram, YouTube and WhatsApp profile, app icon', bg: '#F3EBDD', tile: 'maroon' },
-  { id: 'cream-tile', label: 'Cream tile', use: 'On maroon or dark photos', bg: '#7A1F2B', tile: 'cream' },
-];
-const COLOURS: [string, string, string][] = [
-  ['Maroon', '#7A1F2B', 'Brand colour: buttons, side menu, title bands, LIVE'], ['Cream', '#F3EBDD', 'Background; text on maroon'], ['Card', '#FBF7F0', 'Cards and panels'],
-  ['Ink', '#2B1D17', 'Text on cream, scores'], ['Muted', '#6E5E52', 'Hints and labels on cream'], ['Line', '#E3D5BF', 'Borders and dividers'],
-  ['Pink-cream', '#E9CBCF', 'Small text on maroon (never grey)'], ['Light maroon', '#C9A9AE', 'Opponent bars in momentum charts'],
-  ['Gold', '#B8862B', 'Only golden point, warnings, unpaid'], ['Error', '#C0392B', 'Only errors, never branding'],
-];
 function logoSvg(tile: 'maroon' | 'cream') {
-  const bg = tile === 'maroon' ? '#7A1F2B' : '#F3EBDD', fg = tile === 'maroon' ? '#F3EBDD' : '#7A1F2B';
+  const art=artworkPalette(); const bg=tile==='maroon'?art.brand:art.hero,fg=tile==='maroon'?art.onBrand:art.chalk;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024"><rect width="512" height="512" rx="112" fill="${bg}"/><svg x="66.6" y="66.6" width="378.9" height="378.9" viewBox="0 0 260 260"><g transform="rotate(-28 130 130)"><rect x="72" y="16" width="116" height="150" rx="54" fill="${fg}"/><rect x="119" y="160" width="22" height="14" fill="${fg}"/><rect x="113" y="170" width="34" height="80" rx="12" fill="${fg}" fill-opacity="0.6"/><path transform="translate(89.75 124) scale(0.052 -0.052)" d="${Q_PATH}" fill="${bg}"/></g><circle cx="212" cy="54" r="24" fill="${fg}"/></svg></svg>`;
 }
 
 /** Admin → Brand kit and promotion studio: the official logos and colours, and event artwork that fills itself in. */
 export function BrandClubKits({ go }: { go: Go }) {
+  useSkin(); const art=artworkPalette();
+  const LOGO_FILES=[{id:"primary-tile",label:"App icon · "+SKINS[currentSkin()].name,use:"Profile and app icon",bg:art.brand,tile:"maroon" as const},{id:"reverse-tile",label:"Reversed mark",use:"On dark photos and panels",bg:art.hero,tile:"cream" as const}];
+  const COLOURS=[["Brand",art.brand,"Buttons and highlights"],["Chalk",art.chalk,"Text on dark panels"],["Night",art.hero,"Hero and stream backgrounds"],["Ink",art.ink,"Text on light panels"],["Muted",art.muted,"Secondary text"],["Court",art.court,"Court graphics"],["Text accent",art.brandText,"Text on light panels"],["Line",art.line,"Borders and dividers"],["Gold",art.gold,"Winners and game point"],["Alert",art.error,"Errors only"]];
   const b = eventsBackend();
   const state = useLoad(() => b.adminTournaments(), [b]);
   const events: PromoEvent[] = (state.data ?? []).filter((t) => !t.isTest).map((t) => ({ id: t.id, name: t.name, club: t.club, startDate: t.startDate, startTime: t.startTime, slug: t.slug }));
@@ -52,7 +47,7 @@ export function BrandClubKits({ go }: { go: Go }) {
           <div key={h} className="pq-kit-swatch"><span style={{ background: h }} /><b>{n}</b><span className="small">{h}</span><span className="small muted">{u}</span></div>
         ))}
       </div>
-      <p className="small" style={{ margin: 0 }}>Headings: <b style={{ fontFamily: 'var(--font-display)' }}>Fraunces 600</b>. Everything else: DM Sans. On maroon, text is cream; on cream, text is ink with maroon for headings, links and scores.</p>
+      <p className="small" style={{ margin: 0 }}>Headings: <b style={{ fontFamily: 'var(--font-display)' }}>{currentSkin()==="axis"?"Archivo 800 · 66%":"Fraunces 600"}</b>. Everything else: DM Sans. Filled brand buttons use their paired foreground; text, borders and charts follow the selected skin.</p>
     </section>
     <section className="card section" aria-label="Promotion studio">
       <h2 style={{ fontSize: 18 }}>Promotion studio</h2>

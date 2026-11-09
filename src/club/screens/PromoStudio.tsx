@@ -1,3 +1,4 @@
+import { useSkin } from '../../components/ThemeSwitch';
 import { useMemo, useState } from 'react';
 import { downloadBlob, promoPng, promoSvg, promoSvgWithFonts, PROMO_TEMPLATES, type PromoTemplate } from '../promoArt';
 import { friendlyDate, friendlyTime } from '../dates';
@@ -7,6 +8,7 @@ export interface PromoEvent { id: string; name: string; club: string; startDate:
 
 /** Promotion studio (Phase 3): pick a format and an event; the artwork fills itself in; edit the words; download PNG or SVG. */
 export function PromoStudio({ events, initialId }: { events: PromoEvent[]; initialId?: string }) {
+  useSkin();
   const [tpl, setTpl] = useState<PromoTemplate>('launch');
   const [id, setId] = useState(initialId ?? events[0]?.id ?? '');
   const ev = events.find((e) => e.id === id) ?? events[0];

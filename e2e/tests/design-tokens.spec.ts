@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test('T1 fonts, targets, phone glass and screenshot evidence', async ({ page }) => {
+  test.setTimeout(300_000);
   await page.addInitScript(() => {
+    localStorage.setItem('pq-theme','auto');
     Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
     Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
   });

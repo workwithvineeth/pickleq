@@ -9,12 +9,12 @@ export function BrandMark({ size = 120, label }: { size?: number; label?: string
   return (
     <svg width={size} height={size} viewBox="0 0 260 260" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} className="pq-mark">
       <g transform="rotate(-28 130 130)">
-        <rect x="72" y="16" width="116" height="150" rx="54" fill="#F3EBDD" />
-        <rect x="119" y="160" width="22" height="14" fill="#F3EBDD" />
-        <rect x="113" y="170" width="34" height="80" rx="12" fill="#F3EBDD" fillOpacity="0.6" />
-        <path transform="translate(89.75 124) scale(0.052 -0.052)" d={Q_PATH} fill="#7A1F2B" />
+        <rect x="72" y="16" width="116" height="150" rx="54" fill="var(--pq-logo-ink, var(--pq-on-brand))" />
+        <rect x="119" y="160" width="22" height="14" fill="var(--pq-logo-ink, var(--pq-on-brand))" />
+        <rect x="113" y="170" width="34" height="80" rx="12" fill="var(--pq-logo-ink, var(--pq-on-brand))" fillOpacity="0.6" />
+        <path transform="translate(89.75 124) scale(0.052 -0.052)" d={Q_PATH} fill="var(--pq-logo-cutout, var(--pq-maroon))" />
       </g>
-      <circle cx="212" cy="54" r="24" fill="#F3EBDD" />
+      <circle cx="212" cy="54" r="24" fill="var(--pq-logo-ink, var(--pq-on-brand))" />
     </svg>
   );
 }
@@ -44,7 +44,7 @@ export function ResultsHero({ label = 'LIVE SCORES' }: { label?: string }) {
         <span className="pq-wordmark">PaddleQ</span>
         <span className="pq-caption">{CAPTION}</span>
       </span>
-      <span className="pq-live-chip">● {label}</span>
+      <span className="pq-live-chip"><i className="pq-live-dot" aria-hidden="true" />{label}</span>
     </a>
   );
 }

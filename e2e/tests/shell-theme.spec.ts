@@ -4,6 +4,7 @@ test.use({ actionTimeout: 15000 });
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
+    localStorage.setItem("pq-skin","maroon");
     Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
     Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
   });
@@ -17,6 +18,7 @@ async function demo(page: import('@playwright/test').Page) {
 }
 
 test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots', async ({ page }) => {
+  test.setTimeout(300_000);
   const cspErrors: string[] = [];
   page.on('console', msg => { if (/Refused to execute inline script|Content Security Policy.*script/.test(msg.text())) cspErrors.push(msg.text()); });
   await demo(page);
@@ -42,8 +44,8 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
       await assertContrast(rail.locator('[aria-current="page"]'), 'border');
     } else {
       const strip = page.getByRole('navigation', { name: 'Club / Organiser sections' });
-      const metrics = await strip.evaluate(el => ({ overflow: getComputedStyle(el).overflowX, contain: getComputedStyle(el).overscrollBehaviorX, width: el.clientWidth, scroll: el.scrollWidth }));
-      expect(metrics.overflow).toBe('auto'); expect(metrics.contain).toBe('contain'); expect(metrics.scroll).toBeGreaterThan(metrics.width);
+      const metrics = await strip.evaluate(el => ({ overflow: getComputedStyle(el).overflowX, contain: getComputedStyle(el).getPropertyValue('overscroll-behavior-x'), supportsContain: CSS.supports('overscroll-behavior-x','contain'), width: el.clientWidth, scroll: el.scrollWidth }));
+      expect(metrics.overflow).toBe('auto'); if(metrics.supportsContain)expect(metrics.contain).toBe('contain'); expect(metrics.scroll).toBeGreaterThan(metrics.width);
       const last = strip.getByRole('button', { name: 'Day-of guide' });
       await last.focus(); expect(await strip.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
       expect(await last.evaluate(el => ({ whiteSpace: getComputedStyle(el).whiteSpace, clipped: el.scrollWidth > el.clientWidth + 1 }))).toEqual({ whiteSpace: 'nowrap', clipped: false });

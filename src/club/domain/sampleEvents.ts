@@ -1,3 +1,4 @@
+import { SKINS } from '../../skin';
 import type { Format } from '../../domain/types';
 import { drawRows } from '../plan';
 import { sampleLogo, samplePoster, type PosterDesign } from '../poster';
@@ -46,7 +47,7 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
     logoUrl: sampleLogo({ initials: 'NC', bg: '#E8F1E4', ink: '#1E3A1A', accent: '#3E8E41', shape: 'shield' }) };
   // A new club whose first tournament waits for PaddleQ's approval: shows Admin → Approvals in the demo.
   const courtyard: Club = { id: id(), name: 'PQ Demo Courtyard Club', city: 'Pune', inviteCode: 'pqdemo0005', settings: {}, trusted: false, hostingPhone: '+91 9000044444', hostingNote: 'Two outdoor courts in Baner. We plan a monthly doubles night.',
-    logoUrl: sampleLogo({ initials: 'CC', bg: '#F6E6E8', ink: '#7A1F2B', accent: '#7A1F2B', shape: 'circle' }) };
+    logoUrl: sampleLogo({ initials: 'CC', bg: '#F6E6E8', ink: SKINS.maroon.brand, accent: SKINS.maroon.brand, shape: 'circle' }) };
   const riverside: Club = { id: id(), name: 'PQ Demo Riverside Club', city: 'Bengaluru', inviteCode: 'pqdemo0004', settings: {}, verified: true,
     logoUrl: sampleLogo({ initials: 'RC', bg: '#14304A', ink: '#FFFFFF', accent: '#FF9F43', shape: 'ball' }) };
   const poster = (t: Pick<ClubTournament, 'name' | 'startDate' | 'startTime' | 'venue' | 'city'>, look: Omit<PosterDesign, 'title' | 'date' | 'place'>) =>
@@ -106,7 +107,7 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
   const courtNight = t({ clubId: courtyard.id, name: 'PQ Demo Courtyard Doubles Night', startDate: day(10), startTime: '18:00', publicSlug: 'pq-demo-courtyard', venue: 'Demo Courtyard Courts, Baner',
     city: 'Pune', about: 'A made-up monthly doubles night, waiting for PaddleQ’s approval.', entryMode: 'registration', registrationOpen: true, upiId: 'courtyard@demo', listing: 'run',
     listingStatus: 'pending', courts: 2, approval: 'submitted', approvalExpected: 24, approvalRequestedAt: new Date(today.getTime() - 2 * 3600_000).toISOString() },
-  { tag: 'Doubles night', bg: '#F6E6E8', ink: '#7A1F2B', accent: '#7A1F2B', motif: 'paddles' });
+  { tag: 'Doubles night', bg: '#F6E6E8', ink: SKINS.maroon.brand, accent: SKINS.maroon.brand, motif: 'paddles' });
 
   const div = (tt: ClubTournament, name: string, kind: Division['kind'], sort: number, rules: Division['rules']): Division =>
     ({ id: id(), tournamentId: tt.id, clubId: tt.clubId, name, kind, format: FORMAT, koFormat: KO, pools: 1, advance: 0, sort, rules });
@@ -191,12 +192,12 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
   }
   for (const m of rd.matches) matches.push({ ...m, slot: (m.slot ?? 0) + doublesSlot, updatedAt: stamp });
 
-  const openPoster = samplePoster({ title: 'Demo Open', date: 'Live today', place: 'PQ Demo Courts, Hyderabad', tag: 'Club championship', bg: '#7A1F2B', ink: '#FFF6EC', accent: '#F3C77A', motif: 'court' });
+  const openPoster = samplePoster({ title: 'Demo Open', date: 'Live today', place: 'PQ Demo Courts, Hyderabad', tag: 'Club championship', bg: SKINS.maroon.brand, ink: '#FFF6EC', accent: '#F3C77A', motif: 'court' });
   return {
     clubs: [friends, newbie, riverside, courtyard],
     tournaments: [s8, diwali, monsoon, night, social, women, ladder, corporate, smash, seniors, mixer, courtNight],
     divisions: [s8s, s8d, dd, ms, md, mx, s35, soc, ws, wd, lad, corp, smo, smx, sen, mix, cnd],
     entries, matches, registrations, openPoster,
-    demoLogo: sampleLogo({ initials: 'PQ', bg: '#7A1F2B', ink: '#F3EBDD', accent: '#F3C77A', shape: 'circle' }),
+    demoLogo: sampleLogo({ initials: 'PQ', bg: SKINS.maroon.brand, ink: SKINS.maroon.chalk, accent: '#F3C77A', shape: 'circle' }),
   };
 }

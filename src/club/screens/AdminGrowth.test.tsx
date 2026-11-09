@@ -22,7 +22,7 @@ it('shows editable artwork and isolates fictional numbers from real mode', async
   backend.isPlatformAdmin.mockResolvedValue(true);
   const props = { go: vi.fn(), onBack: vi.fn() };
   const view = render(<AdminDashboard section="branding" {...props} />);
-  expect(await screen.findByRole('button', { name: 'Download App icon · maroon (SVG)' })).toBeTruthy();
+  expect(await screen.findByRole('button', { name: 'Download App icon · AXIS (SVG)' })).toBeTruthy();
   // The promotion studio fills the artwork from the event, and the poster carries a real QR code.
   expect((await screen.findByLabelText('Headline') as HTMLInputElement).value).toBe('Winter Smash Open');
   fireEvent.click(screen.getByRole('radio', { name: /A4 poster with QR/ }));

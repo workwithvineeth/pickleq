@@ -3,8 +3,8 @@ import indexHtml from '../index.html?raw';
 import { applyTheme, chooseTheme, effectiveTheme, initializeTheme, persistTheme, readTheme, THEME_KEY } from './theme';
 
 let stop: (() => void) | undefined;
-beforeEach(() => { localStorage.clear(); delete document.documentElement.dataset.theme; });
-afterEach(() => { stop?.(); stop = undefined; vi.restoreAllMocks(); document.documentElement.removeAttribute('data-theme'); document.documentElement.removeAttribute('style'); document.querySelectorAll('[data-theme-test]').forEach(el => el.remove()); });
+beforeEach(() => { localStorage.clear(); delete document.documentElement.dataset.theme; delete document.documentElement.dataset.skin; });
+afterEach(() => { stop?.(); stop = undefined; vi.restoreAllMocks(); document.documentElement.removeAttribute('data-theme'); document.documentElement.removeAttribute('data-skin'); document.documentElement.removeAttribute('style'); document.querySelectorAll('[data-theme-test]').forEach(el => el.remove()); });
 describe('theme preference and pre-paint bootstrap', () => {
   it('uses Auto for missing, invalid or unreadable storage', () => {
     expect(readTheme({ getItem: () => null })).toBe('auto');
@@ -25,6 +25,7 @@ describe('theme preference and pre-paint bootstrap', () => {
     let change: (() => void) | undefined;
     const remove = vi.fn();
     vi.spyOn(window, 'matchMedia').mockImplementation(() => ({ get matches() { return dark; }, addEventListener: (_: string, fn: () => void) => { change = fn; }, removeEventListener: remove } as unknown as MediaQueryList));
+    localStorage.setItem(THEME_KEY,'auto');
     stop = initializeTheme(); expect(document.documentElement.style.colorScheme).toBe('light');
     dark = true; change?.(); expect(document.documentElement.style.colorScheme).toBe('dark');
     chooseTheme('light'); change?.(); expect(document.documentElement.style.colorScheme).toBe('light');
@@ -36,11 +37,11 @@ describe('theme preference and pre-paint bootstrap', () => {
     const meta = document.createElement('meta'); meta.name = 'theme-color'; meta.dataset.themeTest = '1'; document.head.append(meta);
     const run = new Function('localStorage', 'matchMedia', 'document', script);
     run({ getItem: () => 'light' }, () => ({ matches: true }), document);
-    expect(document.documentElement.dataset.theme).toBe('light'); expect(meta.content).toBe('#F3EBDD');
+    expect(document.documentElement.dataset.theme).toBe('light'); expect(meta.content).toBe('#F2F2EC');
     run({ getItem: () => 'dark' }, () => ({ matches: false }), document);
-    expect(document.documentElement.dataset.theme).toBe('dark'); expect(meta.content).toBe('#120709');
+    expect(document.documentElement.dataset.theme).toBe('dark'); expect(meta.content).toBe('#07090C');
     run({ getItem: () => { throw Error('private mode'); } }, () => ({ matches: true }), document);
-    expect(document.documentElement.dataset.theme).toBe('auto'); expect(document.documentElement.style.colorScheme).toBe('dark');
-    applyTheme('light'); expect(meta.content).toBe('#F3EBDD');
+    expect(document.documentElement.dataset.theme).toBe('dark'); expect(document.documentElement.style.colorScheme).toBe('dark');
+    applyTheme('light'); expect(meta.content).toBe('#F2F2EC');
   });
 });

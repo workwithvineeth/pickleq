@@ -265,7 +265,7 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
         {isApproved(t) && <button type="button" className="pq-next-btn" onClick={() => go('club-scorers', t.id)}>{icon('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7')}Referee links</button>}
         {isApproved(t) && <button type="button" className="pq-next-btn" onClick={async () => setMsg(await shareLink(`${t.name}: live results`, appLink(`#/results/${t.publicSlug}`)))}>{icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13')}Share results</button>}
       </div>
-      {msg && <div role="status" className="small" style={{ color: '#F3EBDD' }}>{msg}</div>}
+      {msg && <div role="status" className="small" style={{ color: 'var(--pq-on-brand)' }}>{msg}</div>}
       {pins && isApproved(t) && <PinPair b={b} tournamentId={t.id} access={pins} onChanged={(p) => setPins({ ...pins, ...p })} light />}
     </section>
   );

@@ -4,3 +4,7 @@
 @font-face { font-family:'DM Sans'; src:url('./fonts/dm-400.woff2') format('woff2'); font-weight:400;  font-display:swap; }
 @font-face { font-family:'DM Sans'; src:url('./fonts/dm-500.woff2') format('woff2'); font-weight:500;  font-display:swap; }
 @font-face { font-family:'DM Sans'; src:url('./fonts/dm-700.woff2') format('woff2'); font-weight:700;  font-display:swap; }
+
+/* Canvas instances keep Archivo axes equal to the CSS display and score roles. */
+@font-face{font-family:'PaddleQ Axis Display';src:url('./fonts/archivo.woff2') format('woff2');font-weight:800;font-variation-settings:'wdth' 66,'wght' 800;font-display:swap}
+@font-face{font-family:'PaddleQ Axis Score';src:url('./fonts/archivo.woff2') format('woff2');font-weight:800;font-variation-settings:'wdth' 68,'wght' 800;font-display:swap}
