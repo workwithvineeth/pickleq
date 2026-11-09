@@ -189,14 +189,14 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
           </div>
         ))}
         <div className="pq-ws-foot" role="group" aria-label="Switch">
-          <div className="pq-ws-glabel">SWITCH</div>
+          <div className="pq-ws-glabel">Switch club</div>
           {kind !== 'admin' && admin && <button type="button" className="pq-ws-item" aria-label="Platform admin" title="Platform admin" onClick={() => go('admin', 'overview')}><span className="pq-ws-glyph" aria-hidden="true">◫</span><span className="pq-ws-label">Platform admin</span></button>}
           {kind !== 'club' && <button type="button" className="pq-ws-item" aria-label={admin ? 'All clubs' : 'My clubs'} title={admin ? 'All clubs' : 'My clubs'} onClick={() => go('club')}><span className="pq-ws-glyph" aria-hidden="true">♧</span><span className="pq-ws-label">{admin ? 'All clubs' : 'My clubs'}</span></button>}
           {kind !== 'studio' && <button type="button" className="pq-ws-item" aria-label="Player Studio" title="Player Studio" onClick={() => go('club-player-studio')}><span className="pq-ws-glyph" aria-hidden="true">♙</span><span className="pq-ws-label">Player Studio</span></button>}
           <button type="button" className="pq-ws-item" aria-label="Events board" title="Events board" onClick={() => go('events')}><span className="pq-ws-glyph" aria-hidden="true">◈</span><span className="pq-ws-label">Events board</span></button>
         </div>
       </nav>
-      <WorkspaceTop title={kind === 'club' ? c.club ?? 'Club' : g.title} area={kind === 'club' ? current?.name ?? g.area : g.area} workspace={g.title} live={live} go={go} />
+      <WorkspaceTop title={kind === 'club' ? c.club ?? 'Club' : g.title} area={kind === 'club' ? current?.name ?? g.area : g.area} workspace={g.title} identityHeading={kind==='club'&&active==='overview'&&c.staff!==false} live={live} go={go} />
       <nav className="pq-ws-tabs" tabIndex={0} onFocusCapture={(e) => { if (e.target !== e.currentTarget) e.target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); }} aria-label={`${g.title} sections`}>
         {g.groups.flatMap((grp) => grp.items).map((i) => (
           <button key={i.key} type="button" aria-current={active === i.key ? 'page' : undefined} disabled={!i.to} onClick={() => open(i)}>{i.label}</button>
@@ -207,21 +207,24 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
 }
 
 /** Laptop top bar: where you are, and your account with Sign out. */
-function WorkspaceTop({ title, area, workspace, live, go }: { title: string; area: string; workspace: string; live: { count: number; slug?: string }; go: Go }) {
+function WorkspaceTop({ title, area, workspace, identityHeading, live, go }: { title: string; area: string; workspace: string; identityHeading:boolean; live: { count: number; slug?: string }; go: Go }) {
   const [email, setEmail] = useState<string | null>(null);
   useEffect(() => { let on = true; eventsBackend().currentUser().then((u) => { if (on) setEmail(u?.email ?? null); }, () => undefined); return () => { on = false; }; }, []);
+  const [compact,setCompact]=useState(()=>window.matchMedia('(max-width:599px)').matches);
+  const [accountOpen,setAccountOpen]=useState(false);
+  useEffect(()=>{const q=window.matchMedia('(max-width:599px)');const change=()=>setCompact(q.matches);q.addEventListener?.('change',change);return()=>q.removeEventListener?.('change',change);},[]);
   const initials = (email ?? 'PQ').replace(/@.*/, '').split(/[._-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]).join('').toUpperCase() || 'PQ';
   async function signOut() { await eventsBackend().signOut().catch(() => undefined); go('club', undefined, { replace: true }); }
   return (
     <header className="pq-ws-top pq-glass" aria-label="Where you are">
       <span className="pq-ws-top-tile" aria-hidden="true"><BrandMark size={22} /></span>
-      <div className="pq-ws-identity"><span className="pq-ws-product">PaddleQ · {workspace}</span><strong>{title}</strong><span className="pq-ws-crumb">{area}</span></div>
-      <div className="pq-ws-actions">
+      <div className="pq-ws-identity"><span className="pq-ws-product">PaddleQ · {workspace}</span><strong role={identityHeading?"heading":undefined} aria-level={identityHeading?2:undefined}>{title}</strong><span className="pq-ws-crumb">{area}</span></div>
+      <details className="pq-account-menu" open={!compact||accountOpen} onToggle={e=>{if(compact)setAccountOpen(e.currentTarget.open);}} onKeyDown={e=>{if(e.key==="Escape")setAccountOpen(false);}}><summary aria-label="Account menu">{initials}</summary><div className="pq-ws-actions">
         {live.count > 0 && <button type="button" className="pq-shell-live" onClick={() => live.slug ? go('results', live.slug) : go('club-results')}><i className="pq-live-dot" aria-hidden="true" /><span><b className="pq-score">{live.count}</b> {live.count === 1 ? 'court live' : 'courts live'}</span></button>}
         <ThemeControls />
         {email && <button type="button" className="pq-ws-signout" onClick={() => void signOut()}>Sign out</button>}
         <span className="pq-ws-avatar" aria-hidden="true">{initials}</span>
-      </div>
+      </div></details>
     </header>
   );
 }

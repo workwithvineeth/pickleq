@@ -34,8 +34,8 @@ export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: 
   ];
   const people: { value: Tab; label: string }[] = [{ value: 'members', label: 'Members & roles' }, { value: 'players', label: 'Players' }, ...(staff ? [{ value: 'squad' as Tab, label: 'Coach view' }] : [])];
   return (
-    <main className="screen wide-ok" aria-labelledby="clubview-title">
-      <Header id="clubview-title" title={d?.club.name ?? 'Club'} onBack={onBack} right={d && <RoleBadge role={d.role} />} />
+    <main className={"screen wide-ok"+(tab==="overview"?" pq-overview-screen":"")} aria-labelledby="clubview-title">
+      <Header id="clubview-title" title={tab==='overview'&&isClubApp()?'Overview':d?.club.name ?? 'Club'} onBack={tab==='overview'&&isClubApp()?undefined:onBack} right={d && <RoleBadge role={d.role} />} />
       <Status error={state.error} loading={state.loading && !d} />
       <DemoNote b={b} />
       {d && (
@@ -85,7 +85,7 @@ function Events({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void }
   return (
     <>
       <section className="section" aria-label="Tournaments">
-        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', d.club.id)}>+ Create Tournament</button>}</div>
+        <div className="header"><h2 style={{ fontSize: 18 }}>Tournaments</h2>{staff && <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', d.club.id)}>Create tournament</button>}</div>
         {d.tournaments.length === 0 && <p className="small muted">No tournaments yet.</p>}
         {d.tournaments.map((t) => (
           <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>

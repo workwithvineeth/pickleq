@@ -28,6 +28,7 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
     const expected = mode === 'Auto-dark' || mode === 'Dark' ? 'rgb(18, 7, 9)' : 'rgb(243, 235, 221)';
     await page.setViewportSize({ width, height: 900 }); await page.emulateMedia({ colorScheme: device, reducedMotion: 'no-preference' });
     const header = page.getByRole('banner', { name: 'Where you are' });
+    if(width<600)await header.locator('.pq-account-menu').evaluate(el=>el.setAttribute('open',''));
     if (width < 870) { await header.locator('.pq-theme-settings').evaluate(el => el.setAttribute('open', '')); }
     await header.getByRole('button', { name: choice === 'auto' ? 'Auto' : mode, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', choice);
@@ -38,6 +39,7 @@ test('shell matrix: themes, scroll strip, WCAG contrast and twenty screenshots',
     if (width < 870) await header.locator('.pq-theme-settings').evaluate(el => el.removeAttribute('open'));
     const rail = page.getByRole('navigation', { name: 'Club / Organiser menu' });
     await expect(rail).toBeVisible({ visible: width >= 870 });
+    if(width<600)await header.getByLabel('Account menu').click();
     if (width >= 870) {
       expect(await rail.evaluate(el => el.getBoundingClientRect().width)).toBe(width < 1100 ? 88 : 248);
       for (const text of await rail.locator('.pq-ws-item:not(:disabled), .pq-ws-glabel:visible, .pq-ws-brand b:visible').all()) if (await text.isVisible()) await assertContrast(text);
@@ -117,6 +119,7 @@ test('live chip uses public demo courts, has readable labels and opens existing 
 
 test('phone Settings and its theme choices work with the keyboard', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 }); await demo(page);
+  await page.getByLabel('Account menu').click();
   const settings = page.getByRole('banner', { name: 'Where you are' }).locator('.pq-theme-settings');
   await settings.locator('summary').focus(); await page.keyboard.press('Enter'); await expect(settings).toHaveAttribute('open', '');
   await page.keyboard.press('Tab'); await expect(settings.getByRole('button', { name: 'Auto', exact: true })).toBeFocused();

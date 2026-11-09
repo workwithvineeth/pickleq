@@ -132,6 +132,8 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   await page.getByLabel('Phone number', { exact: true }).fill('9876543210');
   await page.getByRole('button', { name: 'Create club', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Fixture Club', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp('#/club-view/'+cid));
+  await expect(page.getByRole('heading',{name:'Overview',exact:true})).toBeVisible();
   expect(calls).toContain('/rest/v1/rpc/request_hosting');
   // Club hosting approval is retired. Signing in again must retain immediate setup access.
   await page.goto('#/club-signin');
@@ -140,7 +142,9 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   await expect(page.getByRole('button', { name: 'Create a club', exact: true })).toBeVisible();
   await page.goto(`#/club-view/${cid}`);
   await expect(page.getByRole('heading', { name: 'Fixture Club', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '+ Create Tournament', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp('#/club-view/'+cid));
+  await expect(page.getByRole('heading',{name:'Overview',exact:true})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Your tournaments'}).getByRole('button', { name: 'Create tournament', exact: true })).toBeVisible();
   expect(calls).toContain('/auth/v1/signup'); expect(calls).toContain('/auth/v1/verify'); expect(calls).toContain('/auth/v1/token');
   expect(calls).not.toContain('/rest/v1/rpc/admin_set_club_hosting');
 });

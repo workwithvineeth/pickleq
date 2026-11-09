@@ -7,6 +7,7 @@ for(const skin of ['axis','maroon'])for(const theme of ['light','dark'])test('sk
  const header=page.getByRole('banner',{name:'Where you are'});
  for(const width of [390,1440]){
   await page.setViewportSize({width,height:900});await page.emulateMedia({colorScheme:theme==='light'?'dark':'light'});
+  if(width<600)await header.locator('.pq-account-menu').evaluate(el=>el.setAttribute('open',''));
   if(width<870)await header.locator('.pq-theme-settings').evaluate(el=>el.setAttribute('open',''));
   else await header.locator('.pq-skin-settings').evaluate(el=>el.setAttribute('open',''));
   await header.getByLabel('Colour skin').filter({visible:true}).selectOption(skin);

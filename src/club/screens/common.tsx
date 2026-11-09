@@ -52,7 +52,7 @@ export function RoleBadge({ role }: { role: Role }) {
 
 export function DemoNote({ b }: { b: ClubBackend | null }) {
   if (b?.kind !== 'demo') return null;
-  return <div className="notice notice-warn small">Demo club on this phone. Nothing here is sent anywhere, and the names are made up.</div>;
+  return <div className="notice pq-demo-note small">Demo club. Sample players and scores. Nothing is shared.</div>;
 }
 
 export function displayPlayerName(name: string): string {

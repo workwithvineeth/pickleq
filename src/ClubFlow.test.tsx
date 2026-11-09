@@ -56,7 +56,7 @@ describe('Club mode', () => {
   it('opens the PQ Demo Club demo with its roster, tournament and coach view', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    expect(screen.getByText(/Demo club on this phone/)).toBeInTheDocument();
+    expect(screen.getByText(/Demo club\. Sample players and scores/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /PQ Demo Open/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Players' }));
     expect(await screen.findByRole('heading', { name: '56 players' })).toBeInTheDocument();
@@ -178,7 +178,7 @@ describe('Club mode', () => {
   it('creates a tournament: seeds by rating into pools and schedules every match', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    await user.click(screen.getByRole('button', { name: '+ Create Tournament' }));
+    await user.click(within(screen.getByRole('region',{name:'Your tournaments'})).getByRole('button', { name: 'Create tournament' }));
     await screen.findByRole('heading', { name: 'New tournament' });
     await user.type(screen.getByLabelText('Tournament name'), 'Friday Ladder');
     await user.click(within(screen.getByRole('group', { name: 'Courts' })).getByRole('button', { name: '2' }));
@@ -493,7 +493,7 @@ describe('Club mode', () => {
   it('every event chooses golden point or win by 2, and the choice reaches scoring', async () => {
     const user = userEvent.setup();
     await openDemo(user);
-    await user.click(screen.getByRole('button', { name: '+ Create Tournament' }));
+    await user.click(within(screen.getByRole('region',{name:'Your tournaments'})).getByRole('button', { name: 'Create tournament' }));
     await screen.findByRole('heading', { name: 'New tournament' });
     expect(within(screen.getByRole('group', { name: 'Event 1 scoring' })).getByRole('button', { name: 'Golden point' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Golden point: at 10–10 the next point wins.')).toBeInTheDocument();

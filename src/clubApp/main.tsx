@@ -17,3 +17,5 @@ createRoot(document.getElementById('root')!).render(
 );
 
 import '../skin.css';
+
+import '../prototype6.css';

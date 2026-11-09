@@ -203,7 +203,7 @@ test.describe('Create freely, go live with approval (demo club on the phone)', (
     await expect(page.getByLabel('Country code')).toHaveValue('+91');
     await page.getByLabel('Phone number').fill('98765 43210');
     await page.getByRole('button', { name: 'Create club' }).click();
-    await page.getByRole('button', { name: '+ Create Tournament' }).click();
+    await page.getByRole('region',{name:'Your tournaments'}).getByRole('button', { name: 'Create tournament',exact:true }).click();
     await expect(page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'I pick them' })).toHaveCount(0);
     await page.getByLabel('Tournament name').fill('Robot Yard Open');
     await page.getByLabel('City').fill('Pune');

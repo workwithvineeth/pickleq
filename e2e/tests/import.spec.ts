@@ -45,7 +45,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
-    await page.getByRole('button', { name: '+ Create Tournament' }).click();
+    await page.getByRole('region',{name:'Your tournaments'}).getByRole('button', { name: 'Create tournament',exact:true }).click();
     await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
     await page.getByLabel('Tournament name').fill('Robot Split Form Cup');
     await page.getByLabel('City').fill('Hyderabad');
@@ -80,7 +80,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
 
     // A tournament where players register (on a Google Form), with a team-average DUPR cap for doubles.
-    await page.getByRole('button', { name: '+ Create Tournament' }).click();
+    await page.getByRole('region',{name:'Your tournaments'}).getByRole('button', { name: 'Create tournament',exact:true }).click();
     await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
     await page.getByLabel('Tournament name').fill('Robot Form Cup');
     await page.getByLabel('City').fill('Hyderabad');

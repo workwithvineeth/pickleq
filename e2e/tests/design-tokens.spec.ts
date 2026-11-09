@@ -17,7 +17,7 @@ test('T1 fonts, targets, phone glass and screenshot evidence', async ({ page }) 
     await expect(page.getByRole('heading', { name: 'PQ Demo Club', exact: true })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    for (const element of await page.locator('.pq-mini-btn:visible, .pq-ws-signout:visible, .pq-ws-item:visible, .chip:visible, .seg button:visible, .link-btn:visible').all()) expect(await element.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    for (const element of await page.locator('.pq-mini-btn:visible, .pq-ws-signout:visible, .pq-ws-item:visible, .chip:is(button,a):visible, .seg button:visible, .link-btn:visible').all()) expect(await element.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
     const styles = await page.evaluate(() => {
       const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;left:-10000px;top:0';
       probe.innerHTML = '<div class="score-tap"><b class="big">11</b></div><div class="score-box"><b class="big">11</b></div><div class="kpi"><b class="v">11</b></div><b class="pq-kpi-value">11</b><b class="pq-big-number">11</b><div class="pq-tile-stat"><b>11</b></div><div class="stepper"><div class="val"><b>11</b></div></div><div class="pq-glass">Glass</div>';
