@@ -26,7 +26,7 @@ test.describe('Events board and registration (real server, no account)', () => {
     await expect(page.getByRole('button', { name: 'Sign in to enter' })).toBeVisible();
     await page.getByRole('button', { name: 'Sign in to enter' }).click();
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-    expect(await page.evaluate(() => localStorage.getItem('pq-club-return'))).toBe(`#/event-enter/${encodeURIComponent(`${EVENT}~e2e00000-0000-4000-8000-000000000311`)}`);
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pq-club-return') ?? '{}').h)).toBe(`#/event-enter/${encodeURIComponent(`${EVENT}~e2e00000-0000-4000-8000-000000000311`)}`);
   });
 
   test('a link to an event opens it in the app, with preview tags for chat apps', async ({ page, request }) => {

@@ -68,8 +68,14 @@ const RETURN_KEY = 'pq-club-return';
  * email's sign-in link opens in a new tab.
  */
 export function rememberReturn(hash: string | null) {
-  try { if (hash) localStorage.setItem(RETURN_KEY, hash); else localStorage.removeItem(RETURN_KEY); } catch { /* private mode */ }
+  try { if (hash) localStorage.setItem(RETURN_KEY, JSON.stringify({ h: hash, t: Date.now() })); else localStorage.removeItem(RETURN_KEY); } catch { /* private mode */ }
 }
 export function takeReturn(): string | null {
-  try { const v = localStorage.getItem(RETURN_KEY); localStorage.removeItem(RETURN_KEY); return v; } catch { return null; }
+  // Only a recent request counts (30 min), so an old one never hijacks a later sign-in.
+  try {
+    const v = localStorage.getItem(RETURN_KEY); localStorage.removeItem(RETURN_KEY);
+    if (!v) return null;
+    const r = JSON.parse(v) as { h?: unknown; t?: unknown };
+    return typeof r.h === 'string' && typeof r.t === 'number' && Date.now() - r.t < 30 * 60 * 1000 ? r.h : null;
+  } catch { return null; }
 }

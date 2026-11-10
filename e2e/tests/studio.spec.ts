@@ -4,8 +4,8 @@ import { canUseServer, rest, rpc, SUPABASE_KEY, SUPABASE_URL } from './helpers';
 /** Player Studio (Phase 3 Module 3): reachable from the main tabs, asks visitors to sign in, and keeps its data private. */
 test.describe('Player Studio', () => {
   test('the Studio tab asks a visitor to sign in', async ({ page }) => {
-    await page.goto('#/events');
-    await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Studio' }).click();
+    // Events has the RallyQ header now (no bottom tabs); Player Studio opens straight from its link.
+    await page.goto('#/club-player-studio');
     await expect(page.getByRole('heading', { name: 'Player Studio' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign in to Player Studio' })).toBeVisible();
     await page.getByRole('button', { name: 'Sign in to Player Studio' }).click();

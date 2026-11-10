@@ -84,7 +84,7 @@ test('fresh results link offers sign-in and retains destination', async ({ page 
   await page.goto('#/club-results-dupr/34288ff7-04a9-4745-896e-ac3a156c3100');
   await page.getByRole('button', { name: 'Sign in to view results' }).click();
   await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('pq-club-return'))).toBe('#/club-results-dupr/34288ff7-04a9-4745-896e-ac3a156c3100');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pq-club-return') ?? '{}').h)).toBe('#/club-results-dupr/34288ff7-04a9-4745-896e-ac3a156c3100');
 });
 
 test('new-account onboarding UI through confirmation and immediate club dashboard (isolated transport)', async ({ page }) => {

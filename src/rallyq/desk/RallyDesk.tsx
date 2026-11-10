@@ -20,7 +20,7 @@ export function RallyDesk({id,go,onBack}:{id:string;go:Go;onBack:()=>void}){
  const{b,state}=useTournament(id,8000);const[classic,setClassic]=useState(false);const[msg,setMsg]=useState('');
  const d=state.data;const pmap=useMemo(()=>new Map((d?.players??[]).map(p=>[p.id,p])),[d]);
  if(classic)return <><div style={{padding:'12px 16px'}}><button type="button" className="btn btn-outline" onClick={()=>setClassic(false)}>← Back to courts</button></div><Desk id={id} go={go} onBack={onBack}/></>;
- if(!d||!b)return <div className="rq" style={{minHeight:'50vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>{state.error??'Loading the desk…'}</div>;
+ if(!d||!b)return <div className="rq" style={{minHeight:'50vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>{state.error?<span style={{display:'grid',gap:12,justifyItems:'center',textAlign:'center'}}>This desk link doesn’t work. Open the desk from your club.<button type="button" className="btn btn-outline" onClick={onBack}>Back to my club</button></span>:'Loading the desk…'}</div>;
  const t=d.tournament;const active=d.matches.filter(m=>m.status!=='void');
  const board=courtBoard(active,t.courts);const queue=upNext(active,8).filter(m=>!m.court||m.status==='scheduled');
  const real=active.filter(m=>m.entryB||m.sideB.length||m.stage==='pool'||m.stage==='friendly');const played=real.filter(m=>m.status==='done').length;

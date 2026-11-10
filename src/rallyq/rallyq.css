@@ -25,3 +25,14 @@
 .rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:rqDrift 12s ease-in-out infinite alternate}
 @media (prefers-reduced-motion:reduce){.rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:none}}
 @media (min-width:761px){.rallyq-screen-main .rq .slides .s1{background-image:url(/rallyq/meera-hero.jpg)!important;background-size:cover!important;background-position:100% 0%!important}}
+.rallyq-prototype.rq-header-only .rq{min-height:0!important;background:transparent}
+.rallyq-prototype.rq-header-only{position:sticky;top:0;z-index:30;min-height:0!important;height:auto!important}
+.rq-public-page{min-height:calc(100vh - 120px);padding-bottom:40px}
+/* Older public screens under the RallyQ header: page title in the new display style, no lime band */
+.rq-public-page>main>header.header{background:transparent!important;color:var(--text,#F1F4EA)!important;box-shadow:none!important;border-radius:0!important;padding-top:28px!important}
+.rq-public-page>main>header.header .screen-title{font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:800;letter-spacing:-.03em;font-size:clamp(40px,6vw,64px);line-height:.95;color:inherit!important}
+.rq-public-page>main{max-width:1180px;margin-inline:auto}
+.rq-public-page .pq-flow .pq-flow-brand,.rq-public-page .pq-flow>.pq-flow-logo{display:none}
+.rq-public-page>main>header.header button,.rq-public-page>main>header.header a{color:#F1F4EA!important;border-color:rgba(241,244,234,.28)!important;background:rgba(241,244,234,.06)!important}
+.rq-public-page>main>header.header button svg{stroke:currentColor}
+.rq.day~.app .rq-public-page,.app.rq-public-page>main>header.header{}

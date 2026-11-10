@@ -264,7 +264,7 @@ describe('Signing in to enter (real server)', () => {
     setClubMode(null);
     const { rememberReturn, takeReturn } = await import('./club');
     rememberReturn('#/event-enter/abc~def');
-    expect(localStorage.getItem('pq-club-return')).toBe('#/event-enter/abc~def');
+    expect(JSON.parse(localStorage.getItem('pq-club-return') ?? '{}').h).toBe('#/event-enter/abc~def');
     expect(takeReturn()).toBe('#/event-enter/abc~def');
     expect(takeReturn()).toBeNull();
   });

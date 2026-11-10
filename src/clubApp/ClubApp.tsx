@@ -11,6 +11,7 @@ import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 import {RallyHome} from '../rallyq/home/RallyHome';
 import {MyStudio} from '../rallyq/studio/MyStudio';
+import {RallyHeader} from '../rallyq/RallyHeader';
 import {RallyLive} from '../rallyq/live/RallyLive';
 import {RallyEvent} from '../rallyq/event/RallyEvent';
 import {RallyTV} from '../rallyq/tv/RallyTV';
@@ -27,6 +28,7 @@ const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
 ];
 
 /** Screens without an account (referee court, desk PIN, public results and event pages): no account strip there. */
+const PUBLIC_WITH_HEADER: RouteName[] = ['events', 'my-entries', 'results', 'club-signin'];
 const NO_ACCOUNT: RouteName[] = ['court', 'desk', 'helper', 'results', 'event', 'club-signin', 'admin-login', 'demo'];
 
 /** "Signed in as … · Sign out" on every signed-in screen, so sign-out is never more than one tap away. */
@@ -98,6 +100,8 @@ export default function ClubApp() {
   if (route.name === 'event' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyEvent slug={route.id} go={go} /></>;
   // My Player Studio has its own header and feature tabs (prototype), so no old Studio side menu.
   if (route.name === 'club-player-studio' && route.id !== 'profile' && !(route.id ?? '').startsWith('profile')) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
+  // Older public screens (no prototype file yet) get the RallyQ header instead of the old top bar and bottom tabs.
+  if (PUBLIC_WITH_HEADER.includes(name)) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyHeader go={go} active={name === 'events' || name === 'my-entries' ? 'events' : null} /><div className="app pq-brand rq-public-page"><ClubRoutes route={{ ...route, name }} go={clubGo} back={back} /></div></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
   const ws = showNav && !NO_ACCOUNT.includes(name) ? workspaceOf({ ...route, name }) : null;
   return (
