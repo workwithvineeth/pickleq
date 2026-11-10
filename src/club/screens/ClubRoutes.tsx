@@ -1,4 +1,5 @@
 import type { Go, Route } from '../../navigation';
+import {MyStudio} from '../../rallyq/studio/MyStudio';
 import { AdminClubView, AdminDashboard, adminSectionOf } from './Admin';
 import { ResultsDupr } from './ResultsDupr';
 import { PlayerStudio } from './studio/Studio';
@@ -24,7 +25,7 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'club-join': return <ClubJoin key={id} code={id} go={go} onBack={() => go('club')} />;
     case 'club-view': return <ClubView key={id} clubId={id} go={go} onBack={() => go('club')} />;
     case 'club-player': return <PlayerView key={id} playerId={id} go={go} onBack={back} />;
-    case 'club-player-studio': return <PlayerStudio section={id} go={go} />;
+    case 'club-player-studio': return id ? <PlayerStudio section={id} go={go} /> : <MyStudio go={go} />;
     case 'club-claim': return <Claim key={id} id={id} go={go} />;
     case 'club-sharing': return <Sharing key={id} playerId={id} go={go} onBack={back} />;
     case 'club-tournament': return <TournamentView key={id} id={id} go={go} onBack={back} />;
