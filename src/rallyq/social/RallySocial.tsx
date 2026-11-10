@@ -7,7 +7,8 @@ import {friendlyDate} from '../../club/dates';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Social.dc.html?raw';
 import {holes} from '../holes';
-const source=holes(raw,[['font-size:15px">R33</div>','font-size:15px">{{clubMark}}</div>'],['font-size:17px;font-weight:800">Rally33</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Rally33 · Crosscourts','padding:6px 12px">{{clubName}}']]);
+import {posterPng,savePoster,sharePoster,type PosterContent} from './posterExport';
+const source=holes(raw.replace('onClick="{{save}}">Send to WhatsApp','onClick="{{share}}">Send to WhatsApp'),[['font-size:15px">R33</div>','font-size:15px">{{clubMark}}</div>'],['font-size:17px;font-weight:800">Rally33</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Rally33 · Crosscourts','padding:6px 12px">{{clubName}}']]);
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 type T='Entries open'|'Live now'|'Result'|'Champion';
 const ST={Night:{bg:'#06140D',ink:'#F1F4EA',acc:'#D9F24A',photo:true},Day:{bg:'#2B6E4B',ink:'#FFFFFF',acc:'#E4F75A',photo:false},Ball:{bg:'#D9F24A',ink:'#0B2418',acc:'#0B2418',photo:false},Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}} as const;
@@ -31,7 +32,9 @@ export function templates(d:PublicTournament|null){
 export function RallySocial({slug,go}:{slug:string;go:Go}){
  const scores=usePublicScores(slug);const d=scores.data;
  const[s,setS]=useState<{t:T;s:S;z:string;saved:boolean}>({t:'Champion',s:'Night',z:'Post 4:5',saved:false});
+ const[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const TP=templates(d),st=ST[s.s],tp=TP[s.t];
+ const exportPoster=async(share:boolean)=>{if(busy)return;setBusy(true);setMessage('');try{const photos:Record<string,string>={'ph-ball':'ball-court.jpg','ph-night':'court-night.jpg','ph-group':'group-play.jpg','ph-woman':'woman-hit.jpg'};const blob=await posterPng({club:d?.club??'Your club',mark:d?mark(d.club):'',...tp,bg:st.bg,ink:st.ink,accent:st.acc,photo:st.photo?photos[tp.ph]:undefined,size:s.z as PosterContent['size']});const name='rallyq-'+s.t.toLowerCase().replaceAll(' ','-')+'-'+s.z.replaceAll(' ','-').replace(':','x')+'.png';if(share)setMessage(await sharePoster(blob,name,tp.head+' · '+tp.foot));else{savePoster(blob,name);setMessage('PNG saved')}setS(current=>({...current,saved:true}));}catch(e){if(!(e instanceof Error&&e.name==='AbortError'))setMessage(e instanceof Error?e.message:'Export failed. Try again.')}finally{setBusy(false)}};
  const dims=({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'} as Record<string,string>)[s.z];
  const values={clubName:d?.club??'Your club',clubMark:d?mark(d.club):'',
   tpls:(Object.keys(TP) as T[]).map(n=>({name:n,cls:n===s.t?'tab on':'tab',pick:()=>setS({...s,t:n,saved:false})})),
@@ -39,6 +42,6 @@ export function RallySocial({slug,go}:{slug:string;go:Go}){
   sizes:['Post 4:5','Story 9:16','Square'].map(n=>({name:n,cls:n===s.z?'tab on':'tab',pick:()=>setS({...s,z:n})})),
   photoCls:st.photo?'photo '+tp.ph:'',poster:`${dims};border-radius:18px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;background-color:${st.bg};color:${st.ink};box-shadow:0 20px 60px rgba(0,0,0,.4)`,
   headSize:s.z==='Story 9:16'?'38px':'44px',...tp,accent:st.acc,ink:st.ink,
-  save:()=>setS({...s,saved:true}),saveLabel:s.saved?'Saved ✓':'Save image'};
- return <PrototypeScreen name="Social" go={go} source={source} values={values}/>;
+  save:()=>{void exportPoster(false)},share:()=>{void exportPoster(true)},saveLabel:busy?'Preparing PNG…':s.saved?'Saved ✓':'Save image'};
+ return <PrototypeScreen name="Social" go={go} source={source} values={values}>{message&&<p role="status" style={{padding:16}}>{message}</p>}</PrototypeScreen>;
 }
