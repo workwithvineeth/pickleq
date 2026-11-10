@@ -14,6 +14,7 @@ import {RallyLive} from '../rallyq/live/RallyLive';
 import {RallyEvent} from '../rallyq/event/RallyEvent';
 import {RallyTV} from '../rallyq/tv/RallyTV';
 import {PublicProfile} from '../rallyq/studio/PublicProfile';
+import {RallySocial} from '../rallyq/social/RallySocial';
 import { WorkspaceNav, workspaceOf } from './Workspace';
 
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results' | 'club-player-studio';
@@ -91,6 +92,7 @@ export default function ClubApp() {
   if (route.name === 'home') return <><StagingStrip /><RallyHome go={go} /></>;
   if (route.name === 'live') return <><StagingStrip /><RallyLive go={go} /></>;
   if (route.name === 'public-player') return <><StagingStrip /><PublicProfile playerId={route.id} go={go} /></>;
+  if (route.name === 'club-social' && route.id) return <><StagingStrip /><RallySocial slug={route.id} go={go} /></>;
   if (route.name === 'club-tv' && route.id) return <RallyTV slug={route.id} go={go} />;
   if (route.name === 'event' && route.id) return <><StagingStrip /><RallyEvent slug={route.id} go={go} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).

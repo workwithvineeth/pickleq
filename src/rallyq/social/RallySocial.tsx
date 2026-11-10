@@ -1,0 +1,44 @@
+import {useState} from 'react';
+import type {Go} from '../../navigation';
+import {usePublicScores} from '../../club/screens/usePublicScores';
+import {courtMatches,matchView} from '../../club/liveView';
+import type {PublicTournament} from '../../club/backend';
+import {friendlyDate} from '../../club/dates';
+import {PrototypeScreen} from '../PrototypeScreen';
+import raw from '../prototypes/Social.dc.html?raw';
+import {holes} from '../holes';
+const source=holes(raw,[['font-size:15px">R33</div>','font-size:15px">{{clubMark}}</div>'],['font-size:17px;font-weight:800">Rally33</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Rally33 · Crosscourts','padding:6px 12px">{{clubName}}']]);
+const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
+type T='Entries open'|'Live now'|'Result'|'Champion';
+const ST={Night:{bg:'#06140D',ink:'#F1F4EA',acc:'#D9F24A',photo:true},Day:{bg:'#2B6E4B',ink:'#FFFFFF',acc:'#E4F75A',photo:false},Ball:{bg:'#D9F24A',ink:'#0B2418',acc:'#0B2418',photo:false},Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}} as const;
+type S=keyof typeof ST;
+/** What each template says, from the event's real results. */
+export function templates(d:PublicTournament|null){
+ const name=d?.name??'Your event',date=d?friendlyDate(d.startDate):'';
+ const score=(m:PublicTournament['matches'][number])=>m.games.map(g=>g.a+'–'+g.b).join(' · ');
+ const done=d?d.matches.filter(m=>m.status==='done'&&m.winner):[];
+ const fin=done.find(m=>m.stage==='final'),last=done.at(-1);
+ const live=d?courtMatches(d).find(c=>c.match.status==='live'):undefined;
+ const v=(m:PublicTournament['matches'][number])=>d?matchView(d,m):null;
+ const wn=(m:PublicTournament['matches'][number])=>{const x=v(m);return x?(m.winner==='A'?x.a:x.b):'';};
+ return {
+  'Entries open':{kicker:date,head:name+'. Entries open.',big:d?d.entries.length+' teams':'',foot:'Enter on RallyQ · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-ball'},
+  'Live now':{kicker:live?'Court '+live.court:'Live',head:live?v(live.match)!.a+' vs '+v(live.match)!.b:'Courts go live soon',big:live?v(live.match)!.pointsA+' – '+v(live.match)!.pointsB:'',foot:'See live scores on RallyQ',chip:'Live',chipCls:'chip live',ph:'ph-night'},
+  'Result':{kicker:last?(v(last)?.division?.name??'Result'):'Result',head:last?wn(last)+' win.':'Results appear after each match.',big:last?score(last):'',foot:date,chip:'Result',chipCls:'chip',ph:'ph-group'},
+  'Champion':{kicker:name+(fin?' · '+(v(fin)?.division?.name??''):''),head:fin?'Champions. '+wn(fin)+'.':'Champions crowned at the final.',big:fin?score(fin):'',foot:date,chip:'Champions',chipCls:'chip gold',ph:'ph-woman'}
+ } as Record<T,{kicker:string;head:string;big:string;foot:string;chip:string;chipCls:string;ph:string}>;
+}
+export function RallySocial({slug,go}:{slug:string;go:Go}){
+ const scores=usePublicScores(slug);const d=scores.data;
+ const[s,setS]=useState<{t:T;s:S;z:string;saved:boolean}>({t:'Champion',s:'Night',z:'Post 4:5',saved:false});
+ const TP=templates(d),st=ST[s.s],tp=TP[s.t];
+ const dims=({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'} as Record<string,string>)[s.z];
+ const values={clubName:d?.club??'Your club',clubMark:d?mark(d.club):'',
+  tpls:(Object.keys(TP) as T[]).map(n=>({name:n,cls:n===s.t?'tab on':'tab',pick:()=>setS({...s,t:n,saved:false})})),
+  styles:(Object.keys(ST) as S[]).map(n=>({name:n,pick:()=>setS({...s,s:n,saved:false}),sw:`height:72px;border-radius:14px;border:0;cursor:pointer;font:inherit;display:flex;align-items:flex-end;padding:8px;background:${ST[n].bg};box-shadow:${n===s.s?'inset 0 0 0 3px #D9F24A,0 0 0 2px #06140D':'inset 0 0 0 1px rgba(241,244,234,.2)'}`,lbl:`font-size:12px;font-weight:700;color:${ST[n].ink}`})),
+  sizes:['Post 4:5','Story 9:16','Square'].map(n=>({name:n,cls:n===s.z?'tab on':'tab',pick:()=>setS({...s,z:n})})),
+  photoCls:st.photo?'photo '+tp.ph:'',poster:`${dims};border-radius:18px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;background-color:${st.bg};color:${st.ink};box-shadow:0 20px 60px rgba(0,0,0,.4)`,
+  headSize:s.z==='Story 9:16'?'38px':'44px',...tp,accent:st.acc,ink:st.ink,
+  save:()=>setS({...s,saved:true}),saveLabel:s.saved?'Saved ✓':'Save image'};
+ return <PrototypeScreen name="Social" go={go} source={source} values={values}/>;
+}
