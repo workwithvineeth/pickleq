@@ -144,7 +144,7 @@ export function ScorePad(p: ScorePadProps) {
       {!manual && p.canScore && (
         <>
 
-          <div className="score-grid">
+          <div className="score-grid rq-ref-grid">
             <button type="button" className="score-tap score-tap-a" aria-label={`Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || busy}>
               <span className="small pq-referee-name">{nameA}</span>
               <span className="big">{cur.a}</span>
@@ -160,6 +160,8 @@ export function ScorePad(p: ScorePadProps) {
           <p className={`small pq-referee-lead${gp ? ' pq-gamepoint' : ''}`} style={{ margin: 0, minHeight: 20 }} aria-live="polite">
             {!gp && !golden && Math.abs(lead) >= thr ? `${lead > 0 ? nameA : nameB} lead by ${Math.abs(lead)}` : ''}
           </p>
+          {curOver && !matchOver && <div role="status" className="rq-ref-banner rq-ref-game"><b>Game {games.length} won · match goes on</b><span>{cur.a > cur.b ? nameA : nameB} take game {games.length} · games {result.gamesA}–{result.gamesB}</span></div>}
+          {matchOver && <div role="status" className="rq-ref-banner rq-ref-match"><b>Match finished</b><span>{result.winner === 'A' ? nameA : nameB} win {result.gamesA}–{result.gamesB} in games. Check the score, then save to lock the result.</span></div>}
           <div className="sticky-actions" style={{ position: 'static' }}>
             <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || (!cur.points.length && (cur.a !== 0 || cur.b !== 0 || !games[games.length - 2]?.points.length))}>Undo</button>
             {curOver && !matchOver && <button type="button" className="btn btn-primary" onClick={() => update([...games, { points: '', a: 0, b: 0 }])}>Start game {games.length + 1}</button>}

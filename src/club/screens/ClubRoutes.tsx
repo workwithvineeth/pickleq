@@ -1,6 +1,7 @@
 import type { Go, Route } from '../../navigation';
 import {MyStudio} from '../../rallyq/studio/MyStudio';
 import {RallyDesk} from '../../rallyq/desk/RallyDesk';
+import {RallyAdmin} from '../../rallyq/admin/RallyAdmin';
 import { AdminClubView, AdminDashboard, adminSectionOf } from './Admin';
 import { ResultsDupr } from './ResultsDupr';
 import { PlayerStudio } from './studio/Studio';
@@ -48,7 +49,7 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'events-post': return <PostEvent go={go} onBack={back} />;
     // Old link to the listings queue: now a section of the admin dashboard.
     case 'admin-listings': return <AdminDashboard section="approvals" go={go} onBack={() => go('events')} />;
-    case 'admin': return <AdminDashboard section={adminSectionOf(id) ?? 'overview'} go={go} onBack={() => go('events')} />;
+    case 'admin': return !id ? <RallyAdmin go={go} /> : <AdminDashboard section={adminSectionOf(id) ?? 'overview'} go={go} onBack={() => go('events')} />;
     case 'admin-club': return <AdminClubView key={id} id={id} go={go} onBack={back} />;
     case 'club-inbox': return <EntriesInbox key={id} id={id} go={go} onBack={back} />;
     default: return null;

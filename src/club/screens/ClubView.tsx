@@ -12,7 +12,8 @@ import { isAdmin, isApproved, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, 
 import { ClubHero, LogoPicker } from './Poster';
 import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyDate } from '../dates';
-import { ClubHome, DayOfGuide } from './ClubHome';
+import { DayOfGuide } from './ClubHome';
+import { RallyOverview } from '../../rallyq/organiser/RallyOverview';
 
 type Tab = 'overview' | 'events' | 'players' | 'squad' | 'members' | 'profile' | 'guide';
 const TAB_IDS: Tab[] = ['overview', 'events', 'players', 'squad', 'members', 'profile', 'guide'];
@@ -44,7 +45,7 @@ export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: 
             badge={d.club.trusted ? <span className="pq-badge">Trusted</span> : undefined} />}
           <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
           {(tab === 'members' || tab === 'players' || tab === 'squad') && <Segmented label="People" value={tab} options={people} onChange={setTab} />}
-          {tab === 'overview' && <ClubHome d={d} go={go} />}
+          {tab === 'overview' && <RallyOverview d={d} go={go} />}
           {tab === 'guide' && <DayOfGuide d={d} go={go} />}
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
           {(tab === 'overview' || tab === 'events') && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <details className="pq-rating-card"><summary>Rate RallyQ</summary><TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} /></details>}
