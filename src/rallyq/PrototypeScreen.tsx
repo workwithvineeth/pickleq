@@ -19,7 +19,7 @@ export function scopedCSS(css:string){
  while(pos<styles.length){const open=styles.indexOf('{',pos);if(open<0){out+=styles.slice(pos);break;}const selector=styles.slice(pos,open).trim();let depth=1,i=open+1;for(;i<styles.length&&depth;i++){if(styles[i]==='{')depth++;else if(styles[i]==='}')depth--;}const body=styles.slice(open+1,i-1);
  if(/^@(media|supports|container|layer)\b/.test(selector))out+=selector+'{'+scopedCSS(body)+'}';
  else if(selector.startsWith('@'))out+=selector+'{'+body+'}';
- else out+=selector.split(',').map(s=>'.rallyq-prototype.rallyq-prototype '+s.trim().replace(/^body\b/,'.rq')).join(',')+'{'+body+'}';pos=i;
+ else out+=selector.split(',').map(s=>'.rallyq-prototype.rallyq-prototype '+(s.trim().startsWith('.rq')?s.trim():'.rq '+s.trim()).replace(/^body\b/,'.rq')).join(',')+'{'+body+'}';pos=i;
  }return prototypeAssets(out);
 }
 const attrMap:Record<string,string>={'class':'className','for':'htmlFor','tabindex':'tabIndex','viewbox':'viewBox','stroke-width':'strokeWidth','stroke-linecap':'strokeLinecap','stroke-linejoin':'strokeLinejoin','stroke-dasharray':'strokeDasharray','stroke-dashoffset':'strokeDashoffset','fill-rule':'fillRule','clip-rule':'clipRule','fill-opacity':'fillOpacity','stop-color':'stopColor','stop-opacity':'stopOpacity','gradientunits':'gradientUnits','patternunits':'patternUnits','preserveaspectratio':'preserveAspectRatio','maxlength':'maxLength','readonly':'readOnly','autocomplete':'autoComplete','inputmode':'inputMode','colspan':'colSpan','rowspan':'rowSpan','srcset':'srcSet','crossorigin':'crossOrigin','datetime':'dateTime'};
