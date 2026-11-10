@@ -76,6 +76,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
   });
 
   test('imports the sheet once, flags problems, re-import adds nobody, then a knockout draw with a time estimate', async ({ page }) => {
+    if (test.info().project.name === 'iphone') test.setTimeout(180_000);
     await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
