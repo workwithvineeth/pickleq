@@ -20,6 +20,8 @@ import {expect,test} from '@playwright/test';
    const filter=await page.locator('.pq-panel').first().evaluate(el=>getComputedStyle(el).backdropFilter);
    if(theme==='dark')expect(filter).toContain('blur(22px)');else expect(filter).toBe('none');
    await assertContrast(page.locator('.pill:visible,.pq-tag:visible,.btn-primary:visible,.pq-mini-btn:visible,.pq-kpi-value:visible,.pq-overview-greeting:visible,.pq-ws-item:not(:disabled):visible,.pq-theme-switch button:visible').filter({hasNot:page.locator('.ph')}));
+   const create=page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:'Create tournament',exact:true});
+   await expect(create).toBeVisible();await assertContrast(create);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
   await page.reload();await expect(page.locator('html')).toHaveAttribute('data-skin','court');await expect(page.locator('html')).toHaveAttribute('data-theme','light');
