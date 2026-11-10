@@ -12,7 +12,7 @@ it('denies direct growth routes to non-admins', async () => {
   backend.isPlatformAdmin.mockResolvedValue(false);
   const props = { go: vi.fn(), onBack: vi.fn() };
   const view = render(<AdminDashboard section="branding" {...props} />);
-  await screen.findByText('Only PaddleQ admins can see this.');
+  await screen.findByText('Only RallyQ admins can see this.');
   expect(screen.queryByText('Promotion studio')).toBeNull();
   view.rerender(<AdminDashboard section="marketing" {...props} />);
   expect(screen.queryByText('Sample Data Preview')).toBeNull();
@@ -43,7 +43,7 @@ it('requires Platform Admin access and explicit opt-in for fictional Circuit ran
   const props = { go: vi.fn(), onBack: vi.fn() };
   backend.isPlatformAdmin.mockResolvedValue(false);
   const denied = render(<AdminDashboard section="circuit" {...props} />);
-  await screen.findByText('Only PaddleQ admins can see this.');
+  await screen.findByText('Only RallyQ admins can see this.');
   expect(screen.queryByRole('checkbox', { name: 'Sample Data Preview' })).toBeNull();
   denied.unmount();
 
@@ -63,7 +63,7 @@ it('keeps overview demo data opt-in and uses live loaders only in Real Data mode
   const props = { go: vi.fn(), onBack: vi.fn() };
   backend.isPlatformAdmin.mockResolvedValue(false);
   const denied = render(<AdminDashboard section="overview" {...props} />);
-  await screen.findByText('Only PaddleQ admins can see this.');
+  await screen.findByText('Only RallyQ admins can see this.');
   expect(screen.queryByRole('button', { name: 'Demo Preview' })).toBeNull();
   denied.unmount();
 

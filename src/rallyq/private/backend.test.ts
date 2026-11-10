@@ -1,0 +1,12 @@
+import {describe,it,expect,vi} from 'vitest';
+import type {SupabaseClient} from '@supabase/supabase-js';
+import {goalProblem,loadPublicPlayer,practiceProblem,PRIVATE_SHARING,samplePublicPlayer,type PracticeInput} from './backend';
+const practice:PracticeInput={kind:'practice_match',scoreText:'11-7',focusTags:['Serve'],feel:3,playedAt:'2026-01-01'};
+describe('private Studio contract',()=>{
+ it('keeps every sharing switch off by default',()=>{expect(Object.values(PRIVATE_SHARING)).toEqual([false,false,false,false,false])});
+ it('validates real session input instead of silently logging a default score',()=>{expect(practiceProblem(practice)).toBe('');expect(practiceProblem({...practice,scoreText:''})).toBe('Enter the score.');expect(practiceProblem({...practice,kind:'drill',minutes:0})).toMatch('Minutes');expect(practiceProblem({...practice,feel:6})).toMatch('1 to 5');expect(practiceProblem({...practice,playedAt:'2099-01-01'})).toMatch('future')});
+ it('validates goals before writes',()=>{expect(goalProblem({title:'Four practices',target:4,progress:2})).toBe('');expect(goalProblem({title:'',target:4,progress:2})).toMatch('title');expect(goalProblem({title:'Practice',target:0,progress:0})).toMatch('above zero')});
+ it('does not call a public endpoint with a malformed player id',async()=>{const rpc=vi.fn();expect(await loadPublicPlayer('claim-secret',{rpc}as unknown as SupabaseClient)).toBeNull();expect(rpc).not.toHaveBeenCalled()});
+ it('returns only the server-projected official history and enabled public fields',async()=>{const rpc=vi.fn(async()=>({error:null,data:{player_id:'90000000-0000-4000-8000-000000000001',name:'Sample',club:'Sample Club',dupr_doubles:4.2,user_id:'private-account',email:'secret@example.test',official:[],shared:{training_hours:2,coach_notes:['Owner opted-in note'],player_id:'private-account'}}}));const p=await loadPublicPlayer('90000000-0000-4000-8000-000000000001',{rpc}as unknown as SupabaseClient);expect(p?.shared).toEqual({trainingHours:2,coachNotes:['Owner opted-in note']});expect(JSON.stringify(p)).not.toMatch(/private-account|secret@example/);expect(p?.ranking).toBeUndefined();expect(rpc).toHaveBeenCalledWith('rallyq_public_player',{p_player:'90000000-0000-4000-8000-000000000001'})});
+ it('never folds a sample self-logged practice into official profile results',()=>{const p=samplePublicPlayer();expect(p.official).toHaveLength(1);expect(p.shared).toEqual({});expect(p.name).toContain('Sample')});
+});

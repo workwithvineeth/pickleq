@@ -49,25 +49,25 @@ export function TestimonialsCard({ b, clubId, club }: { b: ClubBackend; clubId: 
     if (quote.trim().length < 10) return setMsg({ ok: false, text: 'Write a few words (at least 10 characters)' });
     if (name.trim().length < 2 || role.trim().length < 2) return setMsg({ ok: false, text: 'Add your name and role' });
     if (hasContactDetails(`${quote} ${name} ${role}`)) return setMsg({ ok: false, text: 'Please leave out phone numbers and email addresses' });
-    if (!consent) return setMsg({ ok: false, text: 'Tick the box to let PaddleQ use it' });
+    if (!consent) return setMsg({ ok: false, text: 'Tick the box to let RallyQ use it' });
     setBusy(true); setMsg(null);
     try {
       await b.submitTestimonial({ clubId, rating, quote, personName: name, personRole: role, consent, photo: photo ?? undefined });
-      setMsg({ ok: true, text: 'Thank you! PaddleQ will check it soon.' });
+      setMsg({ ok: true, text: 'Thank you! RallyQ will check it soon.' });
       setRating(0); setQuote(''); setConsent(false); setPhoto(null); if (file.current) file.current.value = '';
       state.reload();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }
   async function withdraw(id: string) {
     setBusy(true); setMsg(null);
-    try { await b.withdrawTestimonial(id); setConfirm(null); setMsg({ ok: true, text: 'Withdrawn. PaddleQ won’t use it.' }); state.reload(); }
+    try { await b.withdrawTestimonial(id); setConfirm(null); setMsg({ ok: true, text: 'Withdrawn. RallyQ won’t use it.' }); state.reload(); }
     catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }
   const left = TESTIMONIAL_MAX - quote.length;
   return (
     <section className="card section" aria-label="Share your experience">
       <h2 style={{ fontSize: 16 }}>Share your experience</h2>
-      <p className="small muted" style={{ margin: 0 }}>Tell other clubs what running events on PaddleQ is like. We check every one before using it. No phone numbers or emails are shown.</p>
+      <p className="small muted" style={{ margin: 0 }}>Tell other clubs what running events on RallyQ is like. We check every one before using it. No phone numbers or emails are shown.</p>
       <div role="group" aria-label="Rating" style={{ display: 'flex', gap: 4 }}>
         {STARS.map((n) => (
           <button key={n} type="button" aria-label={`${n} star${n === 1 ? '' : 's'}`} aria-pressed={rating === n} onClick={() => setRating(n)}
@@ -87,7 +87,7 @@ export function TestimonialsCard({ b, clubId, club }: { b: ClubBackend; clubId: 
       <input id="tm-photo" ref={file} type="file" accept="image/*" aria-label="Photo (optional)" onChange={(e) => void pick(e.target.files?.[0])} style={{ minHeight: 44, maxWidth: '100%' }} />
       {photo && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setPhoto(null); if (file.current) file.current.value = ''; }}>Remove photo</button>}
       <label className="check-row small"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> {TESTIMONIAL_CONSENT}</label>
-      <button type="button" className="btn btn-primary" disabled={busy} onClick={send}>Send to PaddleQ</button>
+      <button type="button" className="btn btn-primary" disabled={busy} onClick={send}>Send to RallyQ</button>
       {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
       <Status error={state.error} loading={state.loading && !state.data} />
       {(state.data ?? []).length > 0 && <h3 style={{ fontSize: 15, margin: '8px 0 0' }}>Your testimonials</h3>}

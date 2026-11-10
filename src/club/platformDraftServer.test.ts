@@ -29,10 +29,10 @@ describe('ServerBackend platform drafts', () => {
   });
 
   it('propagates a rejected draft without attempting table writes', async () => {
-    rpc.mockReset().mockResolvedValue({ data: null, error: { message: 'Only PaddleQ admins can create a club draft' } });
+    rpc.mockReset().mockResolvedValue({ data: null, error: { message: 'Only RallyQ admins can create a club draft' } });
     from.mockClear();
     await expect(new ServerBackend('https://fixture.supabase.co', 'fixture').createTournament(draft))
-      .rejects.toThrow('Only PaddleQ admins can create a club draft');
+      .rejects.toThrow('Only RallyQ admins can create a club draft');
     expect(rpc).toHaveBeenCalledTimes(1);
     expect(from).not.toHaveBeenCalled();
   });

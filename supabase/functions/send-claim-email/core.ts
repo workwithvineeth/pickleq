@@ -31,19 +31,19 @@ export function claimEmail(x: { name: string; tournament: string; club: string; 
   const text = [
     `Hi ${first},`,
     '',
-    `Your official results from ${x.tournament} (${x.club}) are ready on PaddleQ.`,
+    `Your official results from ${x.tournament} (${x.club}) are ready on RallyQ.`,
     'Open this private link to add them to your Player Studio, where you can also keep a practice diary:',
     x.link,
     '',
     'The link is just for you. It works once and expires in 60 days.',
     `Not ${x.name}? Ignore this email and nothing happens.`,
     '',
-    'PaddleQ · paddleq.in',
+    'RallyQ · paddleq.in',
   ].join('\n');
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#F3EBDD;font-family:Arial,Helvetica,sans-serif;color:#2B1D17">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3EBDD;padding:24px 0"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#FBF7F0;border-radius:16px;overflow:hidden">
-<tr><td style="background:#7A1F2B;color:#FBF7F0;padding:20px 24px;font-size:22px;font-weight:bold">PaddleQ</td></tr>
+<tr><td style="background:#7A1F2B;color:#FBF7F0;padding:20px 24px;font-size:22px;font-weight:bold">RallyQ</td></tr>
 <tr><td style="padding:24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px">Hi ${esc(first)},</p>
 <p style="margin:0 0 12px">Your official results from <b>${esc(x.tournament)}</b> (${esc(x.club)}) are ready.</p>
@@ -52,7 +52,7 @@ export function claimEmail(x: { name: string; tournament: string; club: string; 
 <p style="margin:0 0 8px;font-size:13px;color:#6E5E52">This link is just for you. It works once and expires in 60 days.</p>
 <p style="margin:0;font-size:13px;color:#6E5E52">Not ${esc(x.name)}? Ignore this email and nothing happens.</p>
 </td></tr>
-<tr><td style="padding:16px 24px;font-size:12px;color:#6E5E52;border-top:1px solid #E7DCCB">PaddleQ · paddleq.in</td></tr>
+<tr><td style="padding:16px 24px;font-size:12px;color:#6E5E52;border-top:1px solid #E7DCCB">RallyQ · paddleq.in</td></tr>
 </table></td></tr></table></body></html>`;
   return { subject, html, text };
 }
@@ -66,8 +66,8 @@ export async function sendClaimEmails(tournamentId: string, playerIds: string[] 
   let sent = 0, failed = 0;
   for (const t of b.targets) {
     const mail = claimEmail({ name: t.name, tournament: b.tournament, club: b.club, link: claimLink(d.appUrl, t.token) });
-    // Test mode: the real player's link, but delivered to the PaddleQ test inbox, with the player named in the subject.
-    const to = d.mode === 'test' ? { email: d.testTo!, name: 'PaddleQ test' } : { email: t.email, name: t.name };
+    // Test mode: the real player's link, but delivered to the RallyQ test inbox, with the player named in the subject.
+    const to = d.mode === 'test' ? { email: d.testTo!, name: 'RallyQ test' } : { email: t.email, name: t.name };
     const subject = d.mode === 'test' ? `[Test for ${t.name}] ${mail.subject}` : mail.subject;
     let r: { ok: boolean; id?: string; error?: string };
     try { r = await d.send({ to, subject, html: mail.html, text: mail.text, tags: ['claim-link'] }); }

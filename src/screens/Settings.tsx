@@ -38,7 +38,7 @@ export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
       <section className="card section" aria-label="Theme"><h2>Theme</h2><ThemeSwitch /><p className="small muted">Auto follows your device.</p></section>
       <AppLock />
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('help')}>
-        <span>How to use PICKLEQ</span><span>›</span>
+        <span>How to use RallyQ</span><span>›</span>
       </button>
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('privacy')}>
         <span>Privacy and your data</span><span>›</span>
@@ -97,7 +97,7 @@ function AppLock() {
   return (
     <section className="card section" aria-label="App lock">
       <div className="header"><h2 style={{ fontSize: 18 }}>App lock</h2><span className={`pill ${on ? 'pill-ok' : ''}`}>{on ? 'On' : 'Off'}</span></div>
-      <p className="small muted" style={{ margin: 0 }}>A 4–6 digit PIN to open PICKLEQ. It keeps people who pick up your phone out of the app. It doesn’t encrypt your data, and if you forget it the only way back in is to erase the app’s data and restore a backup.</p>
+      <p className="small muted" style={{ margin: 0 }}>A 4–6 digit PIN to open RallyQ. It keeps people who pick up your phone out of the app. It doesn’t encrypt your data, and if you forget it the only way back in is to erase the app’s data and restore a backup.</p>
       {mode === 'idle' && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-outline" onClick={() => { setMode('set'); setMsg(null); }}>{on ? 'Change PIN' : 'Turn on app lock'}</button>

@@ -118,9 +118,9 @@ describe('Sign in with a password', () => {
     const go = vi.fn(); const done = vi.fn();
     const user = userEvent.setup();
     render(<ClubSignIn go={go} onBack={() => {}} landing onSignedIn={done} />);
-    expect(screen.getByRole('heading', { name: 'PaddleQ', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'RallyQ', level: 1 })).toBeInTheDocument();
     expect(screen.getByText('Out of the kitchen, into the stats.')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'PaddleQ logo' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'RallyQ logo' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Sign in', level: 2 })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Join a club' })).not.toBeInTheDocument();
@@ -140,12 +140,12 @@ describe('Sign in with a password', () => {
     const user = userEvent.setup();
     fake.isPlatformAdmin.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     render(<ClubSignIn admin go={go} onBack={() => {}} />);
-    expect(screen.getByRole('heading', { name: 'PaddleQ admin' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'RallyQ admin' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Create an account/ })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Email'), 'organiser@example.com');
     await user.type(screen.getByLabelText('Password'), 'rightpass1');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('isn’t a PaddleQ admin');
+    expect(await screen.findByRole('alert')).toHaveTextContent('isn’t a RallyQ admin');
     expect(fake.signOut).toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     await vi.waitFor(() => expect(go).toHaveBeenCalledWith('admin', 'overview', { replace: true }));

@@ -199,7 +199,7 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
     return (
       <section className="card section" aria-label="Draw">
         <h2 style={{ fontSize: 16 }}>Make the draw</h2>
-        <p className="small muted" style={{ margin: 0 }}>You can make the draw once PaddleQ approves this tournament. Keep adding and accepting entries meanwhile; submit it from the tournament page.</p>
+        <p className="small muted" style={{ margin: 0 }}>You can make the draw once RallyQ approves this tournament. Keep adding and accepting entries meanwhile; submit it from the tournament page.</p>
         <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Tournament page</button>
       </section>
     );
@@ -244,9 +244,9 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
 // ---------- The events board card on a tournament page ----------
 
 const LISTING_TEXT: Record<string, string> = {
-  none: 'Not on the PaddleQ events board.',
-  pending: 'Waiting for PaddleQ to check it. That’s only needed for your club’s first listing.',
-  approved: 'On the PaddleQ events board.',
+  none: 'Not on the RallyQ events board.',
+  pending: 'Waiting for RallyQ to check it. That’s only needed for your club’s first listing.',
+  approved: 'On the RallyQ events board.',
   rejected: 'Not approved for the board.',
 };
 
@@ -265,7 +265,7 @@ export function ListingCard({ b, t, role, onChanged }: { b: ClubBackend; t: Club
     setBusy(true); setMsg(null);
     try {
       const st = await b.submitListing(t.id, l);
-      setMsg({ ok: true, text: l === 'none' ? 'Taken off the events board' : st === 'approved' ? 'It’s on the events board.' : 'It goes on the board once PaddleQ approves the tournament.' });
+      setMsg({ ok: true, text: l === 'none' ? 'Taken off the events board' : st === 'approved' ? 'It’s on the events board.' : 'It goes on the board once RallyQ approves the tournament.' });
       onChanged();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }

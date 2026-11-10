@@ -10,8 +10,8 @@ describe('guide and privacy pages', () => {
     window.location.hash = '#/settings';
     const user = userEvent.setup();
     render(<App />);
-    await user.click(await screen.findByRole('button', { name: /How to use PICKLEQ/ }));
-    await screen.findByRole('heading', { name: 'How to use PICKLEQ' });
+    await user.click(await screen.findByRole('button', { name: /How to use RallyQ/ }));
+    await screen.findByRole('heading', { name: 'How to use RallyQ' });
     for (const t of ['Start here: install and back up', 'Log a match in under a minute', 'Tournaments', 'Coach: insights and Claude', 'App lock']) {
       expect(screen.getByText(t, { selector: 'summary' })).toBeInTheDocument();
     }

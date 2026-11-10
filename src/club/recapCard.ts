@@ -1,7 +1,7 @@
 import { artworkPalette, currentSkin } from '../skin';
-// Draws a recap (recap.ts) as a 1080 × 1350 PNG (Instagram portrait, fine on WhatsApp) in PaddleQ's brand:
+// Draws a recap (recap.ts) as a 1080 × 1350 PNG (Instagram portrait, fine on WhatsApp) in RallyQ's brand:
 // maroon and cream, the Paddle Q, Fraunces for names and numbers, DM Sans for text. Browser only (canvas).
-import { Q_PATH } from '../components/Logo';
+import {COURT_Q} from '../rallyq/Brand';
 import type { Recap } from './recap';
 
 export const RECAP_W = 1080;
@@ -31,18 +31,7 @@ export function wrapText(measure: (s: string) => number, text: string, width: nu
   return kept;
 }
 
-function mark(c: CanvasRenderingContext2D, x: number, y: number, size: number) {
- const art=artworkPalette(), CREAM=art.brand, MAROON=art.hero;
-  c.save(); c.translate(x, y); c.scale(size / 260, size / 260);
-  c.save(); c.translate(130, 130); c.rotate((-28 * Math.PI) / 180); c.translate(-130, -130);
-  c.fillStyle = CREAM; roundRect(c, 72, 16, 116, 150, 54); c.fill();
-  c.fillRect(119, 160, 22, 14);
-  c.globalAlpha = 0.6; roundRect(c, 113, 170, 34, 80, 12); c.fill(); c.globalAlpha = 1;
-  c.save(); c.translate(89.75, 124); c.scale(0.052, -0.052); c.fillStyle = MAROON; c.fill(new Path2D(Q_PATH)); c.restore();
-  c.restore();
-  c.fillStyle = CREAM; c.beginPath(); c.arc(212, 54, 24, 0, Math.PI * 2); c.fill();
-  c.restore();
-}
+function mark(c:CanvasRenderingContext2D,x:number,y:number,size:number){c.save();c.translate(x,y);c.scale(size/100,size/100);c.strokeStyle='#D9F24A';c.lineWidth=10;c.lineCap='butt';c.stroke(new Path2D(COURT_Q));c.lineWidth=3;c.beginPath();c.moveTo(28,50);c.lineTo(72,50);c.stroke();c.fillStyle='#D9F24A';c.beginPath();c.arc(83,83,11,0,Math.PI*2);c.fill();c.restore();}
 
 const pct = (a: number, b: number) => (a + b ? Math.round((100 * a) / (a + b)) : 0);
 const fmtDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -52,8 +41,8 @@ export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: strin
  const art=artworkPalette(),skin=currentSkin(),axis=skin!=="maroon";
  const {hero:MAROON,deep:DEEP,chalk:CREAM,surface:SURFACE,ink:INK,muted:MUTED,opponent:SOFT,line:LINE}=art;
  const headingWeight=axis?800:600;
- const DISPLAY=skin==='court'?'Archivo, Arial, sans-serif':axis?'"PaddleQ Axis Display", Arial, sans-serif':"Fraunces, Georgia, serif";
-  try { await Promise.all([document.fonts.load(`${headingWeight} 96px ${DISPLAY}`), document.fonts.load('800 92px "PaddleQ Axis Score"'), document.fonts.load(`600 34px ${BODY}`), document.fonts.load(`400 28px ${BODY}`)]); } catch { /* fall back to system fonts */ }
+ const DISPLAY=skin==='court'?'Archivo, Arial, sans-serif':axis?'"RallyQ Axis Display", Arial, sans-serif':"Fraunces, Georgia, serif";
+  try { await Promise.all([document.fonts.load(`${headingWeight} 96px ${DISPLAY}`), document.fonts.load('800 92px "RallyQ Axis Score"'), document.fonts.load(`600 34px ${BODY}`), document.fonts.load(`400 28px ${BODY}`)]); } catch { /* fall back to system fonts */ }
   canvas.width = RECAP_W; canvas.height = RECAP_H;
   const c = canvas.getContext('2d');
   if (!c) throw new Error('This browser can’t make images');
@@ -65,7 +54,7 @@ export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: strin
 
   // Brand row.
   mark(c, 80, 78, 96);
-  c.fillStyle = CREAM; c.font = '600 54px Fraunces, Georgia, serif'; c.textBaseline = 'middle'; c.fillText('PaddleQ', 188, 128);
+  c.fillStyle = CREAM; c.font = '600 54px Fraunces, Georgia, serif'; c.textBaseline = 'middle'; c.fillText('RallyQ', 188, 128);
   c.font = `600 24px ${BODY}`;
   const chip = 'TOURNAMENT RECAP'; const cw = c.measureText(chip).width + 44;
   c.strokeStyle = skin==='court'?'rgba(241,244,234,.55)':axis?'rgba(243,242,236,.55)':'rgba(243,235,221,.55)'; c.lineWidth = 2; roundRect(c, RECAP_W - 80 - cw, 104, cw, 48, 24); c.stroke();
@@ -100,7 +89,7 @@ export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: strin
   cols.forEach(([v, label], i) => {
     const cx = 80 + colW * i + colW / 2;
     c.textAlign = 'center';
-    c.fillStyle = skin==='court'?CREAM:MAROON; c.font = `${headingWeight} 92px ${axis?'"PaddleQ Axis Score", Arial, sans-serif':DISPLAY}`; c.fillText(v, cx, top + 128);
+    c.fillStyle = skin==='court'?CREAM:MAROON; c.font = `${headingWeight} 92px ${axis?'"RallyQ Axis Score", Arial, sans-serif':DISPLAY}`; c.fillText(v, cx, top + 128);
     c.fillStyle = MUTED; c.font = `600 26px ${BODY}`; c.fillText(label.toUpperCase(), cx, top + 180);
     if (i) { c.fillStyle = LINE; c.fillRect(80 + colW * i, top + 40, 2, 150); }
   });

@@ -1,23 +1,11 @@
-// PaddleQ brand pieces for the club app's sign-in and My club screens (brand guide: maroon + cream, Fraunces).
-import { Q_PATH } from '../../components/Logo';
+// RallyQ brand pieces for the club app's sign-in and My club screens (brand guide: maroon + cream, Fraunces).
+import {RallyQMark} from '../../rallyq/Brand';
 import type { ReactNode } from 'react';
 
 export const CAPTION = 'Out of the kitchen, into the stats.';
 
 /** The Paddle Q in brand colours (cream paddle, maroon Q), for maroon backgrounds. */
-export function BrandMark({ size = 120, label }: { size?: number; label?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 260 260" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} className="pq-mark">
-      <g transform="rotate(-28 130 130)">
-        <rect x="72" y="16" width="116" height="150" rx="54" fill="var(--pq-logo-ink, var(--pq-on-brand))" />
-        <rect x="119" y="160" width="22" height="14" fill="var(--pq-logo-ink, var(--pq-on-brand))" />
-        <rect x="113" y="170" width="34" height="80" rx="12" fill="var(--pq-logo-ink, var(--pq-on-brand))" fillOpacity="0.6" />
-        <path transform="translate(89.75 124) scale(0.052 -0.052)" d={Q_PATH} fill="var(--pq-logo-cutout, var(--pq-maroon))" />
-      </g>
-      <circle cx="212" cy="54" r="24" fill="var(--pq-logo-ink, var(--pq-on-brand))" />
-    </svg>
-  );
-}
+export function BrandMark({size=120,label}:{size?:number;label?:string}){return <RallyQMark size={size} label={label} ink="var(--pq-logo-ink,var(--pq-ink,#F1F4EA))" accent="var(--pq-ball,#D9F24A)"/>;}
 
 /** The big maroon welcome: court lines, the Paddle Q, the wordmark and the caption. */
 export function LandingHero() {
@@ -26,22 +14,22 @@ export function LandingHero() {
       <span aria-hidden="true" className="pq-court" />
       <span aria-hidden="true" className="pq-court-mid" />
       <span aria-hidden="true" className="pq-court-line" />
-      <BrandMark size={112} label="PaddleQ logo" />
-      <h1 id="signin-title" className="pq-wordmark">PaddleQ</h1>
+      <BrandMark size={112} label="RallyQ logo" />
+      <h1 id="signin-title" className="pq-wordmark">RallyQ</h1>
       <p className="pq-caption">{CAPTION}</p>
     </header>
   );
 }
 
-/** PaddleQ's brand strip on results and live-score pages: compact, so the scores start on the first screen. Links to paddleq.in. */
+/** RallyQ's brand strip on results and live-score pages: compact, so the scores start on the first screen. Links to paddleq.in. */
 export function ResultsHero({ label = 'LIVE SCORES' }: { label?: string }) {
   return (
-    <a href="https://paddleq.in/" className="pq-hero pq-hero-results" aria-label={`PaddleQ: ${label === 'RESULTS' ? 'tournament results' : 'live scores'}. Run your club’s tournament at paddleq.in`} style={{ textDecoration: 'none' }}>
+    <a href="https://paddleq.in/" className="pq-hero pq-hero-results" aria-label={`RallyQ: ${label === 'RESULTS' ? 'tournament results' : 'live scores'}. Run your club’s tournament at paddleq.in`} style={{ textDecoration: 'none' }}>
       <span aria-hidden="true" className="pq-court" />
       <span aria-hidden="true" className="pq-court-mid" />
       <BrandMark size={52} />
       <span className="pq-hero-words">
-        <span className="pq-wordmark">PaddleQ</span>
+        <span className="pq-wordmark">RallyQ</span>
         <span className="pq-caption">{CAPTION}</span>
       </span>
       <span className="pq-live-chip"><i className="pq-live-dot" aria-hidden="true" />{label}</span>
@@ -58,7 +46,7 @@ export function FlowHeader({ title, sub, onBack, step }: { title: string; sub?: 
         {onBack ? <button type="button" className="pq-back" aria-label="Back" onClick={onBack}>
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
         </button> : <span className="pq-back-space" />}
-        <span className="pq-flow-brand">PaddleQ</span>
+        <span className="pq-flow-brand">RallyQ</span>
         <span className="pq-back-space" />
       </div>
       <h1 id="signin-title" className="pq-flow-title">{title}</h1>

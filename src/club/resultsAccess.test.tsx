@@ -36,7 +36,7 @@ describe('results access and editing', () => {
     await user.clear(rating); await user.type(rating, '3.45');
     expect(screen.getByRole('button', { name: 'Download results (CSV)' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Save DUPR details' }));
-    expect(await screen.findByText('Saved. PaddleQ can see the new DUPR details now.')).toBeInTheDocument();
+    expect(await screen.findByText('Saved. RallyQ can see the new DUPR details now.')).toBeInTheDocument();
     expect(fake.updatePlayer).toHaveBeenCalled();
   });
   it('ordinary player projection has exports and no editing controls', async () => {
@@ -51,7 +51,7 @@ describe('results access and editing', () => {
     const rating = (await screen.findAllByLabelText(/DUPR (singles|doubles) rating/))[0];
     await user.clear(rating); await user.type(rating, '3.45');
     await user.click(screen.getByRole('button', { name: 'Save DUPR details' }));
-    expect(await screen.findByText('Saved. PaddleQ can see the new DUPR details now.')).toBeInTheDocument();
+    expect(await screen.findByText('Saved. RallyQ can see the new DUPR details now.')).toBeInTheDocument();
     expect(fake.adminUpdateTournamentDupr).toHaveBeenCalledWith(bundle.tournament.id, expect.any(String), expect.objectContaining({ duprSingles: 3.45 }));
     expect(fake.updatePlayer).not.toHaveBeenCalled();
   });

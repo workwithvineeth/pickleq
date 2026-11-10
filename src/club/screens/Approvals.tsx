@@ -9,7 +9,7 @@ import { SupportOpenButton } from './Lifecycle';
 const KIND = { singles: 'Singles', doubles: 'Doubles' } as const;
 
 /**
- * The tournament page's approval card (organisers). Until PaddleQ approves the tournament (or the club is trusted),
+ * The tournament page's approval card (organisers). Until RallyQ approves the tournament (or the club is trusted),
  * the draw, referee and desk links, scoring, the results link, the registration link and the board stay off.
  */
 export function ApprovalCard({ b, t, onChanged }: { b: ClubBackend; t: ClubTournament; onChanged: () => void }) {
@@ -24,19 +24,19 @@ export function ApprovalCard({ b, t, onChanged }: { b: ClubBackend; t: ClubTourn
     setBusy(true); setMsg(null);
     try {
       const st = await b.submitTournament(t.id, n);
-      setMsg({ ok: true, text: st === 'approved' ? 'Approved: your club is trusted, so it’s ready to go live.' : 'Sent to PaddleQ. We’ll check it and let you know here.' });
+      setMsg({ ok: true, text: st === 'approved' ? 'Approved: your club is trusted, so it’s ready to go live.' : 'Sent to RallyQ. We’ll check it and let you know here.' });
       onChanged();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }
   return (
-    <section className="card section" aria-label="PaddleQ approval">
+    <section className="card section" aria-label="RallyQ approval">
       <div className="row" style={{ padding: 0 }}>
-        <h2 style={{ fontSize: 16 }}>PaddleQ approval</h2>
-        <span className={`pill${a === 'rejected' ? ' pill-bad' : a === 'submitted' ? '' : ' pill-warn'}`}>{a === 'submitted' ? 'Waiting for PaddleQ' : a === 'rejected' ? 'Not approved' : 'Not submitted'}</span>
+        <h2 style={{ fontSize: 16 }}>RallyQ approval</h2>
+        <span className={`pill${a === 'rejected' ? ' pill-bad' : a === 'submitted' ? '' : ' pill-warn'}`}>{a === 'submitted' ? 'Waiting for RallyQ' : a === 'rejected' ? 'Not approved' : 'Not submitted'}</span>
       </div>
-      {a === 'rejected' && t.approvalReason && <div role="status" className="msg msg-bad">PaddleQ’s note: {t.approvalReason}</div>}
+      {a === 'rejected' && t.approvalReason && <div role="status" className="msg msg-bad">RallyQ’s note: {t.approvalReason}</div>}
       <p className="small" style={{ margin: 0 }}>
-        You can set up events and add or import entries now. The draw, referee and desk links, the results link, the entry link and the events board open once PaddleQ approves this tournament.
+        You can set up events and add or import entries now. The draw, referee and desk links, the results link, the entry link and the events board open once RallyQ approves this tournament.
       </p>
       {a !== 'submitted' ? (
         <>
@@ -53,7 +53,7 @@ export function ApprovalCard({ b, t, onChanged }: { b: ClubBackend; t: ClubTourn
   );
 }
 
-/** Admin → Approvals: tournaments waiting for PaddleQ, with everything needed to decide. */
+/** Admin → Approvals: tournaments waiting for RallyQ, with everything needed to decide. */
 export function ApprovalQueue({ b, go }: { b: EventsBackend; go: Go }) {
   const state = useLoad(() => b.approvalQueue(), [b]);
   const [busy, setBusy] = useState(false);
@@ -76,7 +76,7 @@ export function ApprovalQueue({ b, go }: { b: EventsBackend; go: Go }) {
       <div className="pq-admin-list">{waiting.map((q) => (
         <section key={q.id} className="card section" aria-label={`${q.name} approval`}>
           <RequestDetails q={q} />
-          {q.mine && <div className="small muted">You organise this club, so another PaddleQ admin must decide (or make the club trusted).</div>}
+          {q.mine && <div className="small muted">You organise this club, so another RallyQ admin must decide (or make the club trusted).</div>}
           {rejecting !== q.id ? (
             <div className="meta">
               <button type="button" className="btn btn-primary" disabled={busy || q.mine} onClick={() => run(() => b.decideTournament(q.id, true), `${q.name} is approved. ${q.club} can now make the draw and share links.`)}>Approve</button>

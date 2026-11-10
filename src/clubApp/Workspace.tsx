@@ -168,7 +168,7 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
   return (
     <>
       <nav className="pq-ws-side pq-glass" aria-label={`${g.title} menu`}>
-        <div className="pq-ws-brand"><span className="pq-ws-tile"><BrandMark size={34} /></span><span><b>PaddleQ</b><small>{CAPTION.toUpperCase()}</small></span></div>
+        <div className="pq-ws-brand"><span className="pq-ws-tile"><BrandMark size={34} /></span><span><b>RallyQ</b><small>{CAPTION.toUpperCase()}</small></span></div>
         <div className="pq-ws-area">{g.area.toUpperCase()}</div>
         {kind === 'club' && c.club && <div className="pq-ws-clubname" title={c.club}>{c.club}</div>}
         {g.groups.map((grp) => (
@@ -218,7 +218,7 @@ function WorkspaceTop({ title, area, workspace, identityHeading, live, go, showS
   return (
     <header className="pq-ws-top pq-glass" aria-label="Where you are">
       <span className="pq-ws-top-tile" aria-hidden="true"><BrandMark size={22} /></span>
-      <div className="pq-ws-identity"><span className="pq-ws-product">PaddleQ · {workspace}</span><strong role={identityHeading?"heading":undefined} aria-level={identityHeading?2:undefined}>{title}</strong><span className="pq-ws-crumb">{area}</span></div>
+      <div className="pq-ws-identity"><span className="pq-ws-product">RallyQ · {workspace}</span><strong role={identityHeading?"heading":undefined} aria-level={identityHeading?2:undefined}>{title}</strong><span className="pq-ws-crumb">{area}</span></div>
       <details className="pq-account-menu" open={!compact||accountOpen} onToggle={e=>{if(compact)setAccountOpen(e.currentTarget.open);}} onKeyDown={e=>{if(e.key==="Escape")setAccountOpen(false);}}><summary aria-label="Account menu">{initials}</summary><div className="pq-ws-actions">
         {live.count > 0 && <button type="button" className="pq-shell-live" onClick={() => live.slug ? go('results', live.slug) : go('club-results')}><i className="pq-live-dot" aria-hidden="true" /><span><b className="pq-score">{live.count}</b> {live.count === 1 ? 'court live' : 'courts live'}</span></button>}
         <ThemeControls showSkin={showSkin} />

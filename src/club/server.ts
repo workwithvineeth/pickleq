@@ -547,7 +547,7 @@ export class ServerBackend implements ClubBackend {
     const profiles = check(await this.sb.from('profiles').select('id, display_name').in('id', ms.map((m) => String(m.user_id)))) as Row[];
     const nameOf = (id: unknown) => String(profiles.find((p) => p.id === id)?.display_name || ps.find((p) => p.userId === id)?.name || 'Member');
     const c = toClub(check(club) as Row);
-    // The owner's phone and note are only for the club's owner and admins (and PaddleQ admins): club_mode_19.
+    // The owner's phone and note are only for the club's owner and admins (and RallyQ admins): club_mode_19.
     if (me.role === 'owner' || me.role === 'admin') {
       const k = check(await this.sb.from('club_contacts').select('phone, note').eq('club_id', clubId)) as Row[];
       if (k[0]) { c.hostingPhone = s(k[0].phone); c.hostingNote = s(k[0].note); }
@@ -924,7 +924,7 @@ export class ServerBackend implements ClubBackend {
 
   async listingQueue(): Promise<ListingReview[]> {
     const rows = check(await this.sb.rpc('listing_queue')) as Row[] | null;
-    if (!rows) throw new ClubError('Only PaddleQ admins can review listings');
+    if (!rows) throw new ClubError('Only RallyQ admins can review listings');
     return rows.map((r) => ({
       id: String(r.id), name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '').slice(0, 5), city: s(r.city), venue: s(r.venue),
       about: s(r.about), contact: s(r.contact), link: s(r.link), listing: r.listing as Listing, listingStatus: r.listing_status as ListingStatus,

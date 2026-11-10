@@ -1,4 +1,4 @@
-import { initializeTheme } from '../theme';
+import {initializeTheme,chooseSkin,chooseTheme,currentTheme} from '../theme';
 import { applyDisplayEffects } from '../displayEffects';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -6,9 +6,11 @@ import '../styles.css';
 import '../shell.css';
 import ClubApp from './ClubApp';
 
-// The PaddleQ app: club screens only (no personal Home, Matches, Train, Stats or Coach).
+// The RallyQ app: club screens only (no personal Home, Matches, Train, Stats or Coach).
 applyDisplayEffects();
 initializeTheme();
+chooseSkin('court');
+if(currentTheme()==='auto')chooseTheme('dark');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

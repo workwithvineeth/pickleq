@@ -9,7 +9,7 @@ import type { SupportSession } from '../club/backend';
 import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
-import { Landing } from './Landing';
+import {RallyHome} from '../rallyq/home/RallyHome';
 import { WorkspaceNav, workspaceOf } from './Workspace';
 
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results' | 'club-player-studio';
@@ -41,7 +41,7 @@ function AccountStrip({ route, go }: { route: RouteName; go: Go }) {
   );
 }
 
-/** While a PaddleQ admin is in a support session, every screen says so, with one tap to end it. */
+/** While a RallyQ admin is in a support session, every screen says so, with one tap to end it. */
 function SupportBanner({ route }: { route: RouteName }) {
   const [list, setList] = useState<SupportSession[]>([]);
   const [tick, setTick] = useState(0);
@@ -51,8 +51,8 @@ function SupportBanner({ route }: { route: RouteName }) {
   return (
     <>
       {list.map((x) => (
-        <div key={x.clubId} className="pq-support" role="status" aria-label="PaddleQ support session">
-          <span style={{ flex: 1, minWidth: 0 }}><b>PaddleQ support</b> in {x.club} until {new Date(x.until).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}. Every change is logged.</span>
+        <div key={x.clubId} className="pq-support" role="status" aria-label="RallyQ support session">
+          <span style={{ flex: 1, minWidth: 0 }}><b>RallyQ support</b> in {x.club} until {new Date(x.until).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}. Every change is logged.</span>
           <button type="button" className="link-btn" onClick={async () => { await eventsBackend().endSupport(x.clubId).catch(() => undefined); setTick((n) => n + 1); }}>End support</button>
         </div>
       ))}
@@ -60,7 +60,7 @@ function SupportBanner({ route }: { route: RouteName }) {
   );
 }
 
-/** Routes that belong to the personal PaddleQ app: not part of PaddleQ, so they open My club instead. */
+/** Routes that belong to the personal RallyQ app: not part of RallyQ, so they open My club instead. */
 const PERSONAL: RouteName[] = ['matches', 'train', 'stats', 'coach', 'log', 'backfill', 'edit', 'details', 'match', 'trash', 'settings', 'backup', 'ratings', 'coach-task', 'conversation', 'coach-settings', 'report', 'help', 'privacy', 'tournaments', 'tournament-new', 'tournament-edit', 'tournament', 'clips', 'goals', 'session-new', 'session', 'club-sharing'];
 
 // Opened from a sign-in email (…/?code=…): show the sign-in screen, which finishes it.
@@ -70,7 +70,7 @@ if (/[?&](code|error_description)=/.test(window.location.search) && !window.loca
 
 export default function ClubApp() {
   const [route, go, back] = useRoute();
-  // PaddleQ admins see every club on this tab, so it's called Clubs for them; organisers see their own, My clubs.
+  // RallyQ admins see every club on this tab, so it's called Clubs for them; organisers see their own, My clubs.
   const [admin, setAdmin] = useState(false);
   useEffect(() => { let on = true; eventsBackend().isPlatformAdmin().then((a) => { if (on) setAdmin(a); }, () => undefined); return () => { on = false; }; }, [route.name]);
   const personal = route.name === 'home' || PERSONAL.includes(route.name);
@@ -78,13 +78,13 @@ export default function ClubApp() {
   const name: RouteName = personal ? 'club' : route.name;
   // A club's own page counts as My club, so the tabs stay there too.
   const tab = name === 'club-view' ? 'club' : (TABS.map((t) => t.id) as RouteName[]).includes(name) ? (name as ClubTab) : null;
-  // Top-level "back" in PaddleQ goes to the events board, never to the personal app.
+  // Top-level "back" in RallyQ goes to the events board, never to the personal app.
   const clubGo: Go = (n, id, opts) => go(n === 'home' ? 'club' : n, id, opts);
   // Desktop keeps the side menu on every signed-in screen (not on referee, desk or public pages); phones show tabs on tab screens only.
   const showNav = !!tab || !NO_ACCOUNT.includes(name);
   const current = tab ?? (name === 'club-claim' ? 'club-player-studio' : name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
   // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
-  if (route.name === 'home') return <><StagingStrip /><Landing go={clubGo} /></>;
+  if (route.name === 'home') return <><StagingStrip /><RallyHome go={go} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
   const ws = showNav && !NO_ACCOUNT.includes(name) ? workspaceOf({ ...route, name }) : null;
   return (
@@ -99,10 +99,10 @@ export default function ClubApp() {
       {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
       {name === 'club-results' && <ClubResultsTab go={clubGo} />}
       {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}
-      {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>PaddleQ {appVersion} · build {buildId}</p>}
+      {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>RallyQ {appVersion} · build {buildId}</p>}
       {showNav && (
         <nav className={`nav pq-glass${tab ? '' : ' nav-sub'}${ws ? ' nav-ws' : ''}`} aria-label="Main">
-          <div className="nav-brand" aria-hidden="true"><span className="nav-brand-tile"><BrandMark size={30} /></span><span><b>PaddleQ</b><small>{admin ? 'Platform admin' : 'For clubs'}</small></span></div>
+          <div className="nav-brand" aria-hidden="true"><span className="nav-brand-tile"><BrandMark size={30} /></span><span><b>RallyQ</b><small>{admin ? 'Platform admin' : 'For clubs'}</small></span></div>
           {TABS.map((t) => (
             <button key={t.id} type="button" className="nav-btn" aria-label={t.id === 'club' && admin ? 'Clubs' : t.label} title={t.id === 'club' && admin ? 'Clubs' : t.label} aria-current={current === t.id ? 'page' : undefined} onClick={() => go(t.id)}>
               <Icon name={t.icon} />

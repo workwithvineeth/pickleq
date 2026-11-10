@@ -83,7 +83,7 @@ function DeskSignIn({ token, problem, onOpened }: { token: string; problem: stri
           <ClubLogo src={label.data?.logoUrl} club={club ?? 'Club'} size={48} />
           <div>
             {label.data?.tournament && <div style={{ fontWeight: 700 }}>{label.data.tournament}</div>}
-            <div className="small muted">{club ? `Run by ${club} on PaddleQ` : 'On PaddleQ'}</div>
+            <div className="small muted">{club ? `Run by ${club} on RallyQ` : 'On RallyQ'}</div>
           </div>
         </div>
         {!label.loading && !label.data && <div role="alert" className="msg msg-bad">This desk link isn’t valid. Ask the organiser for the desk link again.</div>}

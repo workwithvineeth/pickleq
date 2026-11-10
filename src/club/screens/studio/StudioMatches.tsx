@@ -17,7 +17,7 @@ export function StudioMatches(p: SectionProps & { route: string }) {
       <Seg label="Which matches" value={tab} options={[{ value: 'official', label: `Official (${p.data.official.length})` }, { value: 'mine', label: `My logs (${p.data.logs.length})` }]} onChange={setTab} />
     </div>
     {tab === 'official' ? <section className="section" aria-label="Official matches">
-      <p className="small muted" style={{ margin: 0 }}>Results from PaddleQ tournaments you claimed. Read-only: the organiser corrects scores.</p>
+      <p className="small muted" style={{ margin: 0 }}>Results from RallyQ tournaments you claimed. Read-only: the organiser corrects scores.</p>
       {p.data.official.length === 0 && <p className="small muted">No official matches yet. Open the claim link your organiser sent you.</p>}
       {p.data.official.map((o) => <button key={o.id} type="button" className="match-row" aria-label={`${o.tournament} ${stageText(o)} against ${opponentsOf(o)}`} onClick={() => p.go('club-player-studio', `official.${o.id}`)}>
         <Result won={o.winner === o.mySide} />

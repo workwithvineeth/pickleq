@@ -2,7 +2,7 @@ import type { WinLoss } from '../../domain/record';
 import type { ClubMatch, ClubPlayer, Thresholds } from '../types';
 import { entryRating } from './engine';
 
-/** Same values as the personal app's src/domain/stats.ts (a close game, an even rating gap), kept here so PaddleQ doesn't load the
+/** Same values as the personal app's src/domain/stats.ts (a close game, an even rating gap), kept here so RallyQ doesn't load the
  * personal app's on-phone database (domain/stats imports it). A unit test checks they stay equal. */
 export const CLOSE_MARGIN = 3;
 export const EVEN_GAP = 0.15;

@@ -70,7 +70,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
         else await b.updatePlayer(pid, patch);
         saved++;
       }
-      setEdits({}); state.reload(); setMsg({ ok: true, text: 'Saved. PaddleQ can see the new DUPR details now.' });
+      setEdits({}); state.reload(); setMsg({ ok: true, text: 'Saved. RallyQ can see the new DUPR details now.' });
     } catch (e) { setMsg({ ok: false, text: `${saved ? `${saved} player(s) saved before the error. Remaining edits are kept. ` : ''}${errorText(e)}` }); }
     finally { setBusy(false); }
   }
@@ -103,7 +103,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   }
   function savePage() {
     const source = document.querySelector('.pq-results-page'); if (!source) return;
-    const doc = document.implementation.createHTMLDocument('Tournament results · PaddleQ');
+    const doc = document.implementation.createHTMLDocument('Tournament results · RallyQ');
     const charset = doc.createElement('meta'); charset.setAttribute('charset', 'utf-8'); doc.head.prepend(charset);
     const viewport = doc.createElement('meta'); viewport.name = 'viewport'; viewport.content = 'width=device-width, initial-scale=1'; doc.head.append(viewport);
     const policy = doc.createElement('meta'); policy.httpEquiv = 'Content-Security-Policy'; policy.content = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src 'none'"; doc.head.append(policy);
@@ -128,7 +128,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       {staff && <button className="btn btn-outline" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
       <button className="link-btn" onClick={onBack}>Back</button>
     </div>
-    <p className="small muted no-print">{staff ? `${admin ? 'Admin' : 'Organiser'}: add or edit the ratings and IDs in the boxes below each group, then choose Save DUPR details. Saved details are available to authorised club organisers and PaddleQ admins.` : 'Results and saved DUPR details. Editing is available only to authorised club organisers and PaddleQ admins.'} These stored ratings have not been synchronised or verified with DUPR.</p>
+    <p className="small muted no-print">{staff ? `${admin ? 'Admin' : 'Organiser'}: add or edit the ratings and IDs in the boxes below each group, then choose Save DUPR details. Saved details are available to authorised club organisers and RallyQ admins.` : 'Results and saved DUPR details. Editing is available only to authorised club organisers and RallyQ admins.'} These stored ratings have not been synchronised or verified with DUPR.</p>
     {staff && <p className="small muted no-print">Changes update this club’s player ratings wherever they appear. Ratings are stored to two decimal places.</p>}
     {dirty && <p role="status" className="small no-print">Save your edits before exporting. Exports use saved details.</p>}
     {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
@@ -186,6 +186,6 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     </section>)}
     {staff && b?.kind === 'server' && data.matches.some((m) => m.status === 'done') && <ClaimLinks tournamentId={data.tournament.id} clubId={data.club.id} tournament={data.tournament.name}
       players={[...new Set(data.entries.flatMap((e) => e.playerIds))].map((pid) => pmap.get(pid)).filter((x): x is NonNullable<typeof x> => !!x && !x.sample)} />}
-    <p className="pq-results-footer">Results from PaddleQ · paddleq.in · {TIE_BREAK_TEXT}</p>
+    <p className="pq-results-footer">Results from RallyQ · paddleq.in · {TIE_BREAK_TEXT}</p>
   </main>;
 }

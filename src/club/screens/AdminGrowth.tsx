@@ -23,7 +23,7 @@ export function BrandClubKits({ go }: { go: Go }) {
   const state = useLoad(() => b.adminTournaments(), [b]);
   const events: PromoEvent[] = (state.data ?? []).filter((t) => !t.isTest).map((t) => ({ id: t.id, name: t.name, club: t.club, startDate: t.startDate, startTime: t.startTime, slug: t.slug }));
   return <>
-    <section className="pq-flow" aria-label="PaddleQ brand">
+    <section className="pq-flow" aria-label="RallyQ brand">
       <BrandMark size={64} />
       <h3 className="pq-flow-title">Brand kit</h3>
       <p className="pq-flow-sub">Out of the kitchen, into the stats.</p>
@@ -85,7 +85,7 @@ export function MarketingPerformance({ previewOnly = false }: { previewOnly?: bo
     {!sample && !previewOnly ? <section className="card section">
       <h3 style={{ margin: 0 }}>Real Data · Not connected</h3>
       <p className="small muted">Instagram, Facebook and campaign attribution are not connected. Website, event, results and QR traffic are unavailable here.</p>
-      <p>Review available accounts in <a href="https://business.facebook.com/" target="_blank" rel="noreferrer">Meta Business Suite</a>. An approved account connection and measurement setup are required before PaddleQ can report live campaign results.</p>
+      <p>Review available accounts in <a href="https://business.facebook.com/" target="_blank" rel="noreferrer">Meta Business Suite</a>. An approved account connection and measurement setup are required before RallyQ can report live campaign results.</p>
     </section> : <>
       <p className="msg" role="status">Sample Data Preview · fictional metrics. No production reporting or writes.</p>
       <section className="card section" aria-label="Campaign filters"><label>From (IST)<input type="date" className="input" value={from} onChange={(e) => setFrom(e.currentTarget.value)} /></label><label>Through (IST)<input type="date" className="input" value={through} onChange={(e) => setThrough(e.currentTarget.value)} /></label>

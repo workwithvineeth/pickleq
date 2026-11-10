@@ -28,7 +28,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 interface DivDraft { name: string; kind: DivisionKind; fmt: FormatDraft; picked: string[]; teams: string[][]; gender: DivisionGender; maxDupr: string; duprCap: 'each' | 'average'; minAge: string; cap: string; fee: string }
 const newDraft = (kind: DivisionKind): DivDraft => ({ name: kind === 'singles' ? 'Open Singles' : 'Open Doubles', kind, fmt: defaultFormatDraft(), picked: [], teams: [], gender: 'open', maxDupr: '', duprCap: 'each', minAge: '', cap: '', fee: '' });
-/** What the organiser is posting: run on PaddleQ with players picked now, run on PaddleQ with players registering, or a board listing only. */
+/** What the organiser is posting: run on RallyQ with players picked now, run on RallyQ with players registering, or a board listing only. */
 type PostKind = 'roster' | 'registration' | 'listed';
 const optNum = (v: string) => (v.trim() === '' ? undefined : Number(v));
 
@@ -113,8 +113,8 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       <Field label="How do players enter?">
         <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I pick them' }] : []), { value: 'registration', label: 'They register' }, ...(club.data?.platformDraft ? [] : [{ value: 'listed' as const, label: 'List only' }])]} onChange={setPost} />
       </Field>
-      {club.data && !pickOk && <p className="small muted" style={{ margin: 0 }}>Set it up and add your entries now; PaddleQ approves the tournament before the draw, links and entry link open. Submit at least 24 hours before your event.</p>}
-      <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on PaddleQ.'}</p>
+      {club.data && !pickOk && <p className="small muted" style={{ margin: 0 }}>Set it up and add your entries now; RallyQ approves the tournament before the draw, links and entry link open. Submit at least 24 hours before your event.</p>}
+      <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on RallyQ.'}</p>
       <Field label="Tournament name"><input className="input" aria-label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
         <Field label="Date"><input className="input" type="date" aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
@@ -136,8 +136,8 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
             <Field label="Entries close"><input className="input" type="date" aria-label="Entries close" value={closes} onChange={(e) => setCloses(e.target.value)} /></Field>
             <Field label="Your UPI ID (fees)"><input className="input" aria-label="Your UPI ID" placeholder="name@bank" value={upi} maxLength={130} onChange={(e) => setUpi(e.target.value)} /></Field>
           </div>
-          <p className="small muted" style={{ margin: 0 }}>Players pay you directly by UPI or at the venue. PaddleQ never holds the money; you mark entries paid.</p>
-          <label className="check-row"><input type="checkbox" checked={onBoard} onChange={(e) => setOnBoard(e.target.checked)} /><span>Show it on the PaddleQ events board</span></label>
+          <p className="small muted" style={{ margin: 0 }}>Players pay you directly by UPI or at the venue. RallyQ never holds the money; you mark entries paid.</p>
+          <label className="check-row"><input type="checkbox" checked={onBoard} onChange={(e) => setOnBoard(e.target.checked)} /><span>Show it on the RallyQ events board</span></label>
         </>
       )}
       {post === 'listed' && (
@@ -163,7 +163,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       {post === 'roster' && b && club.data && <WalkIn b={b} clubId={clubId} onAdded={(p) => { setMsg(null); club.reload(); setDivs((ds) => ds.map((d, j) => (j === ds.length - 1 ? { ...d, picked: [...d.picked, p.id] } : d))); }} />}
       {post === 'roster' && <DayEstimateBox events={divs.map((d) => ({ name: d.name, entries: entryCount(d), ...d.fmt }))} courts={courts} slotMinutes={slot} startTime={time} finishBy={finishBy} onFinishBy={setFinishBy} onUse={(i, c) => update(i, { fmt: { ...divs[i].fmt, ...c } })} />}
       {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players are seeded by DUPR and spread across pools so the strongest don’t meet early. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
-      {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by PaddleQ before it shows on the board. Adults only (18+).</p>}
+      {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by RallyQ before it shows on the board. Adults only (18+).</p>}
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
       <button type="button" className="btn btn-primary" disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Post the listing' : post === 'registration' ? 'Save draft' : 'Create tournament'}</button>
     </main>
@@ -323,7 +323,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       {staff && approved && t.status === 'done' && isAdmin(d.role) && (
         <section className="card section" aria-label="Share your experience">
           <h2 style={{ fontSize: 16 }}>That’s a wrap! How did it go?</h2>
-          <p className="small muted" style={{ margin: 0 }}>Two lines from you help other clubs try PaddleQ. It takes 30 seconds.</p>
+          <p className="small muted" style={{ margin: 0 }}>Two lines from you help other clubs try RallyQ. It takes 30 seconds.</p>
           <button type="button" className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-view', d.club.id)}>Share your experience</button>
         </section>
       )}
@@ -626,7 +626,7 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
             }}
             divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')}
           />}
-          <p className="small muted" style={{ margin: 0 }}>Live scores by <a aria-label={d.status==='live'?'PaddleQ: live scores. Run your club’s tournament at paddleq.in':undefined} href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>PaddleQ</a> · run your club’s tournament at paddleq.in</p>
+          <p className="small muted" style={{ margin: 0 }}>Live scores by <a aria-label={d.status==='live'?'RallyQ: live scores. Run your club’s tournament at paddleq.in':undefined} href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>RallyQ</a> · run your club’s tournament at paddleq.in</p>
         </>
       )}
     </main>

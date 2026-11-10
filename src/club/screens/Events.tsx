@@ -80,10 +80,10 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
     <main className="screen pq-matchday pq-proto" aria-labelledby="events-title">
       <Header id="events-title" title="Events" right={<button type="button" className="btn btn-outline" style={{ padding: '8px 12px' }} onClick={() => go('my-entries')}>My entries</button>} />
       {b.kind === 'demo' && clubMode() === 'demo' && <DemoNote b={b} />}
-      <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on PaddleQ, or contact them for listed events.</p>
+      <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on RallyQ, or contact them for listed events.</p>
       {state.data?.admin && (
         <button type="button" className="banner-btn" onClick={() => go('admin', state.data?.pending ? 'approvals' : 'overview')}>
-          <span>{state.data.pending ? `${state.data.pending} tournament${state.data.pending === 1 ? '' : 's'} to approve` : 'PaddleQ admin'}</span><span>›</span>
+          <span>{state.data.pending ? `${state.data.pending} tournament${state.data.pending === 1 ? '' : 's'} to approve` : 'RallyQ admin'}</span><span>›</span>
         </button>
       )}
       <Segmented label="Show" value={kind} options={[{ value: 'all', label: 'All events' }, { value: 'open', label: 'Entries open' }]} onChange={setKind} />
@@ -125,7 +125,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       )}
       <section className="card section" aria-label="Organisers">
         <h2 style={{ fontSize: 16 }}>Running a tournament?</h2>
-        <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on PaddleQ: entries, draw, a referee on every court and live results.</p>
+        <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on RallyQ: entries, draw, a referee on every court and live results.</p>
         <button type="button" className="btn btn-outline" onClick={() => go('events-post')}>Post a tournament</button>
       </section>
     </main>
@@ -172,7 +172,7 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
       {e.listing === 'listed' && (
         <section className="card section" aria-label="How to enter">
           <h2 style={{ fontSize: 16 }}>How to enter</h2>
-          <p className="small muted" style={{ margin: 0 }}>This tournament is listed on PaddleQ. Enter with the organiser directly.</p>
+          <p className="small muted" style={{ margin: 0 }}>This tournament is listed on RallyQ. Enter with the organiser directly.</p>
           <div className="meta">
             {e.contact && <a className="btn btn-primary" href={waLink(e.contact)} target="_blank" rel="noreferrer">WhatsApp {e.contact}</a>}
             {e.contact && <a className="btn btn-outline" href={telLink(e.contact)}>Call</a>}
@@ -194,7 +194,7 @@ export function EventPage({ slug, go, onBack }: { slug: string; go: Go; onBack: 
         })}
       </section>
       {e.listing === 'run' && !e.registrationOpen && !e.drawn && e.entryMode === 'registration' && <p className="small muted" style={{ margin: 0 }}>Entries are closed.</p>}
-      <p className="small muted" style={{ margin: 0 }}>Everyone playing must be 18 or over. Entry fees are paid to the organiser, not to PaddleQ.</p>
+      <p className="small muted" style={{ margin: 0 }}>Everyone playing must be 18 or over. Entry fees are paid to the organiser, not to RallyQ.</p>
     </main>
   );
 }
@@ -285,7 +285,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
         <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
         <section className="card section">
           <p style={{ margin: 0 }}>Sign in with your email to enter. It takes a minute, and you come straight back here.</p>
-          <p className="small muted" style={{ margin: 0 }}>Signing in lets you see your entry’s status and withdraw if you need to. Your personal PaddleQ stays on your phone.</p>
+          <p className="small muted" style={{ margin: 0 }}>Signing in lets you see your entry’s status and withdraw if you need to. Your personal RallyQ stays on your phone.</p>
         </section>
         {found.src.kind === 'server'
           ? <button type="button" className="btn btn-primary" onClick={() => { rememberReturn(`#/event-enter/${encodeURIComponent(id)}`); go('club-signin'); }}>Sign in to enter</button>
@@ -397,9 +397,9 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
       <Header id="post-title" title="Post a tournament" onBack={onBack} />
       <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
         <li><b>List it</b> (free): it shows on the board, and players contact you to enter.</li>
-        <li><b>Run it on PaddleQ</b>: players enter in the app, you accept entries and make the draw, then score every court live. Your first event is free.</li>
+        <li><b>Run it on RallyQ</b>: players enter in the app, you accept entries and make the draw, then score every court live. Your first event is free.</li>
       </ul>
-      <p className="small muted" style={{ margin: 0 }}>Your first listing is checked by PaddleQ before it appears. After that, your club’s listings go up straight away.</p>
+      <p className="small muted" style={{ margin: 0 }}>Your first listing is checked by RallyQ before it appears. After that, your club’s listings go up straight away.</p>
       <Status error={state.error} loading={state.loading && clubs === null} />
       {!state.loading && clubs === null && (
         b.kind === 'server'
@@ -418,7 +418,7 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
           {clubs.map(({ club }) => (
             <button key={club.id} type="button" className="match-row" onClick={() => go(canHost(club) ? 'club-tournament-new' : 'club-view', club.id)}>
               <span style={{ flex: 1 }}><b>{club.name}</b>{club.city ? <span className="small muted"> · {club.city}</span> : null}
-                {!canHost(club) && <span className="small muted" style={{ display: 'block' }}>{club.hosting === 'rejected' ? 'Not approved by PaddleQ yet: open the club to see why' : 'Waiting for PaddleQ to approve this club'}</span>}</span>
+                {!canHost(club) && <span className="small muted" style={{ display: 'block' }}>{club.hosting === 'rejected' ? 'Not approved by RallyQ yet: open the club to see why' : 'Waiting for RallyQ to approve this club'}</span>}</span>
               <span aria-hidden="true">›</span>
             </button>
           ))}
@@ -428,7 +428,7 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
   );
 }
 
-// ---------- PaddleQ admins: the approval queue ----------
+// ---------- RallyQ admins: the approval queue ----------
 
 /** The listings section of the admin dashboard (Admin.tsx checks the person is an admin). */
 export function ListingReviews({ go }: { go: Go }) {
@@ -449,7 +449,7 @@ export function ListingReviews({ go }: { go: Go }) {
       <div className="row"><b>{q.name}</b><span className={`pill${q.listingStatus === 'approved' ? ' pill-ok' : q.listingStatus === 'rejected' ? ' pill-warn' : ''}`}>{q.listingStatus === 'pending' ? 'To review' : q.listingStatus === 'approved' ? 'Approved' : 'Rejected'}</span></div>
       {q.posterUrl ? <PosterImage src={q.posterUrl} name={q.name} /> : <div className="small muted">No poster</div>}
       <div className="small">{dayLabel(q.startDate)} · {timeLabel(q.startTime)} · {[q.venue, q.city].filter(Boolean).join(', ')}</div>
-      <div className="small muted">{q.club}{q.verified ? ' (verified)' : ' (new organiser)'}{q.postedBy ? ` · posted by ${q.postedBy}` : ''} · {q.listing === 'run' ? 'Run on PaddleQ' : 'Listed only'}</div>
+      <div className="small muted">{q.club}{q.verified ? ' (verified)' : ' (new organiser)'}{q.postedBy ? ` · posted by ${q.postedBy}` : ''} · {q.listing === 'run' ? 'Run on RallyQ' : 'Listed only'}</div>
       {q.divisions.map((d) => <div key={d.name} className="small">• {d.name}: {rulesLine(d.kind, d.rules)}</div>)}
       {q.about && <p className="small" style={{ margin: 0, whiteSpace: 'pre-line' }}>{q.about}</p>}
       {(q.contact || q.link) && <div className="small">Contact: {[q.contact, q.link].filter(Boolean).join(' · ')}</div>}

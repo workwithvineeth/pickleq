@@ -45,7 +45,7 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
     return (
       <main className="screen lock" aria-labelledby="forgot-title">
         <h1 id="forgot-title" className="screen-title">Forgot your PIN?</h1>
-        <p>The PIN can’t be recovered or reset. The only way back in is to <b>erase everything PICKLEQ keeps on this phone</b>, then restore your latest backup file from Settings → Backup.</p>
+        <p>The PIN can’t be recovered or reset. The only way back in is to <b>erase everything RallyQ keeps on this phone</b>, then restore your latest backup file from Settings → Backup.</p>
         <p className="small muted">Anything since your last backup will be lost. Your Claude key is erased too.</p>
         <label className="label" htmlFor="erase-confirm">Type ERASE to confirm</label>
         <input id="erase-confirm" className="input" autoComplete="off" value={typed} onChange={(e) => setTyped(e.target.value)} />

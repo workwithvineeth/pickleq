@@ -127,7 +127,7 @@ describe('Club testimonials (demo backend, same rules as the server)', () => {
   it('needs the permission tick, a 1–5 rating, at most 400 characters and no phones or emails', async () => {
     const { b, clubId } = await newClub();
     finishedTournamentFor(b, clubId);
-    const base = { clubId, rating: 5, quote: 'PaddleQ ran our whole event without a hitch.', personName: 'Robot', personRole: 'Owner, Robot Yard', consent: true };
+    const base = { clubId, rating: 5, quote: 'RallyQ ran our whole event without a hitch.', personName: 'Robot', personRole: 'Owner, Robot Yard', consent: true };
     await expect(b.submitTestimonial({ ...base, consent: false })).rejects.toThrow('Tick the box');
     await expect(b.submitTestimonial({ ...base, rating: 0 })).rejects.toThrow('rating from 1 to 5');
     await expect(b.submitTestimonial({ ...base, quote: 'x'.repeat(401) })).rejects.toThrow('400 characters');
@@ -139,7 +139,7 @@ describe('Club testimonials (demo backend, same rules as the server)', () => {
     expect(mine[0]).toMatchObject({ status: 'pending', featured: false, rating: 5 });
   });
 
-  it('PaddleQ approves, features and hides; the club sees the status, only its own, and can withdraw', async () => {
+  it('RallyQ approves, features and hides; the club sees the status, only its own, and can withdraw', async () => {
     const { b, clubId, demoClub } = await newClub();
     finishedTournamentFor(b, clubId, demoClub);
     await b.submitTestimonial({ clubId, rating: 4, quote: 'Easy for our referees on the day.', personName: 'Robot', personRole: 'Owner', consent: true });

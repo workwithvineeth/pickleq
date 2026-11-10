@@ -31,7 +31,7 @@ export interface TournamentBundle {
   desk?: boolean;
 }
 
-/** The two PINs of a tournament and its desk link. Organisers and PaddleQ admins only. */
+/** The two PINs of a tournament and its desk link. Organisers and RallyQ admins only. */
 export interface TournamentAccess { refereePin: string; deskPin: string; deskToken: string }
 /** What the desk sign-in page shows before the PIN: names only. */
 export interface DeskLabel { club: string; logoUrl?: string; tournament: string }
@@ -86,9 +86,9 @@ export interface ClubBackend extends EventsBackend {
   /** The tournament's referee PIN: every court's referee link uses it. It never opens the desk. Staff only. */
   eventPin(tournamentId: string): Promise<string | null>;
   /** Sets the referee PIN (random when none is given) for every court link of the tournament. Returns it.
-   * 4 to 6 digits, not easy to guess, never the desk PIN. Organisers and PaddleQ admins. */
+   * 4 to 6 digits, not easy to guess, never the desk PIN. Organisers and RallyQ admins. */
   setEventPin(tournamentId: string, pin?: string): Promise<string>;
-  /** Both PINs and the desk link. Organisers and PaddleQ admins. */
+  /** Both PINs and the desk link. Organisers and RallyQ admins. */
   tournamentAccess(tournamentId: string): Promise<TournamentAccess>;
   /** Sets the desk PIN (random 6 digits when none is given): never the referee PIN. Returns it. */
   setDeskPin(tournamentId: string, pin?: string): Promise<string>;
@@ -207,7 +207,7 @@ export interface MyEntry {
   results: boolean;
 }
 
-/** A listing waiting for (or recently given) a PaddleQ admin's decision. */
+/** A listing waiting for (or recently given) a RallyQ admin's decision. */
 export interface ListingReview {
   id: string;
   name: string;
@@ -265,7 +265,7 @@ export interface EventsBackend {
   applyDraw(tournamentId: string, plan: DrawPlan): Promise<void>;
   /** A round-robin-only event whose games are all played gets knockouts: the top `advance` from the table go through (2 = final, 4 = semi-finals). */
   addKnockoutStage(division: Division, advance: number): Promise<void>;
-  /** PaddleQ admins: join a club as a 4-hour, logged support admin (normal club permissions; never owner). Returns when it ends (null if already a member). */
+  /** RallyQ admins: join a club as a 4-hour, logged support admin (normal club permissions; never owner). Returns when it ends (null if already a member). */
   startSupport(clubId: string, reason: string): Promise<string | null>;
   endSupport(clubId: string): Promise<void>;
   supportSessions(): Promise<SupportSession[]>;
@@ -279,7 +279,7 @@ export interface EventsBackend {
   reviewListing(id: string, approve: boolean, reason?: string): Promise<void>;
   addPlatformAdmin(email: string): Promise<void>;
   platformAdmins(): Promise<{ email: string; addedAt: string }[]>;
-  /** The admin dashboard (PaddleQ admins only). The robot's test club is left out of the counts. */
+  /** The admin dashboard (RallyQ admins only). The robot's test club is left out of the counts. */
   adminOverview(): Promise<AdminOverview>;
   adminClubs(): Promise<AdminClub[]>;
   adminClub(id: string): Promise<AdminClubDetail>;
@@ -289,17 +289,17 @@ export interface EventsBackend {
   adminTournaments(): Promise<AdminTournament[]>;
   /** Reopens a finished tournament ('live') or marks it finished ('done'), for support. */
   adminSetTournamentStatus(id: string, status: 'live' | 'done'): Promise<void>;
-  /** Removes a PaddleQ admin; never the last one. */
+  /** Removes a RallyQ admin; never the last one. */
   removePlatformAdmin(email: string): Promise<void>;
 
   // ---------- Tournament approval ("create freely, go live with approval") ----------
-  /** The club's organisers send the tournament to PaddleQ. A trusted club's is approved straight away. Returns the new status. */
+  /** The club's organisers send the tournament to RallyQ. A trusted club's is approved straight away. Returns the new status. */
   submitTournament(id: string, expectedPlayers?: number): Promise<Approval>;
-  /** PaddleQ admins: tournaments waiting (and decided in the last 30 days). */
+  /** RallyQ admins: tournaments waiting (and decided in the last 30 days). */
   approvalQueue(): Promise<ApprovalRequest[]>;
   /** Approve, or reject with a reason the club sees. Never a tournament of a club you organise. */
   decideTournament(id: string, approve: boolean, reason?: string): Promise<void>;
-  /** The trusted switch (PaddleQ admins only). */
+  /** The trusted switch (RallyQ admins only). */
   setClubTrusted(id: string, trusted: boolean): Promise<void>;
 
   // ---------- Testimonials ----------
@@ -308,7 +308,7 @@ export interface EventsBackend {
   submitTestimonial(input: NewTestimonial): Promise<void>;
   /** The club takes it back: the words and photo are removed. */
   withdrawTestimonial(id: string): Promise<void>;
-  /** PaddleQ admins: every club's (not withdrawn). */
+  /** RallyQ admins: every club's (not withdrawn). */
   adminTestimonials(): Promise<Testimonial[]>;
   setTestimonial(id: string, status: Exclude<TestimonialStatus, 'pending' | 'withdrawn'>, featured: boolean): Promise<void>;
 
@@ -316,7 +316,7 @@ export interface EventsBackend {
 
 export interface NewTestimonial { clubId: string; rating: number; quote: string; personName: string; personRole: string; consent: boolean; photo?: Blob }
 
-/** A tournament waiting for (or recently given) PaddleQ's approval. */
+/** A tournament waiting for (or recently given) RallyQ's approval. */
 export interface ApprovalRequest {
   id: string; name: string; startDate: string; startTime: string; city?: string; venue?: string; club: string; clubId: string; trusted: boolean;
   upiId?: string; entryMode: EntryMode; listing: Listing; approval: Approval; reason?: string; expected?: number; requestedAt?: string; decidedAt?: string;

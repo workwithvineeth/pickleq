@@ -48,7 +48,7 @@ describe('recap card data', () => {
     const r = buildRecaps([m({ stage: 'final', games: [{ a: 11, b: 9, points: comeback }] })])[0];
     const text = JSON.stringify(r) + recapCaption(r, 'Fixture Me');
     expect(text).not.toContain('Fixture Rival');
-    expect(recapCaption(r, 'Fixture Me')).toBe('Fixture Me at Fixture Open (Open Singles): Champion. Came back from 4–9 to win 11–9. Results on PaddleQ: paddleq.in');
+    expect(recapCaption(r, 'Fixture Me')).toBe('Fixture Me at Fixture Open (Open Singles): Champion. Came back from 4–9 to win 11–9. Results on RallyQ: paddleq.in');
   });
 
   it('long tournament names wrap and are cut with …', () => {

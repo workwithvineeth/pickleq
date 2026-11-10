@@ -76,13 +76,13 @@ describe('Admin dashboard in the demo (same rules as the server)', () => {
     expect((await b.adminTournaments()).find((t) => t.id === done.id)?.status).toBe('done');
   });
 
-  it('a new club can create tournaments straight away; its contact number is kept for PaddleQ', async () => {
+  it('a new club can create tournaments straight away; its contact number is kept for RallyQ', async () => {
     const b = new DemoBackend(memoryStorage());
     await b.start('Robot');
     const id = await b.createClub('Smash Yard', 'Pune', 'Robot');
     let c = (await b.adminClubs()).find((x) => x.id === id)!;
     expect(c).toMatchObject({ hosting: 'approved', trusted: false });
-    await expect(b.requestHosting(id, '12345', '')).rejects.toThrow('Add a phone number PaddleQ can call');
+    await expect(b.requestHosting(id, '12345', '')).rejects.toThrow('Add a phone number RallyQ can call');
     await b.requestHosting(id, '+91 98765 43210', 'Two courts in Baner');
     c = (await b.adminClubs()).find((x) => x.id === id)!;
     expect(c).toMatchObject({ hostingPhone: '+91 98765 43210', hostingNote: 'Two courts in Baner' });

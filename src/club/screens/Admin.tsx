@@ -22,7 +22,7 @@ const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'tournaments', label: 'Events', title: 'Tournaments' },
   { id: 'results', label: 'Results & DUPR', title: 'Tournament results & DUPR' },
   { id: 'testimonials', label: 'Testimonials', title: 'Testimonials' },
-  { id: 'admins', label: 'Admins', title: 'PaddleQ admins' },
+  { id: 'admins', label: 'Admins', title: 'RallyQ admins' },
   { id: 'branding', label: 'Branding & Club Kits', title: 'Branding & Club Kits' },
   { id: 'marketing', label: 'Marketing Performance', title: 'Marketing Performance' },
   { id: 'circuit', label: 'Club Circuit', title: 'Club Circuit' },
@@ -49,7 +49,7 @@ function useAction(reload: () => void) {
   return { busy, run, note };
 }
 
-/** The PaddleQ admin dashboard: numbers, every club and tournament, listings, admins and desk access. */
+/** The RallyQ admin dashboard: numbers, every club and tournament, listings, admins and desk access. */
 export function AdminDashboard({ section, go, onBack }: { section: AdminSection; go: Go; onBack: () => void }) {
   const b = eventsBackend();
   const allowed = useLoad(() => b.isPlatformAdmin(), [b]);
@@ -62,7 +62,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
       <Status error={allowed.error} loading={allowed.loading && allowed.data === null} />
       {allowed.data === false && (
         <>
-          <p className="muted">Only PaddleQ admins can see this.</p>
+          <p className="muted">Only RallyQ admins can see this.</p>
           {b.kind === 'server' && <button type="button" className="btn btn-primary" onClick={() => go('admin-login')}>Admin sign-in</button>}
         </>
       )}
@@ -77,7 +77,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           {section === 'overview' && b.kind === 'server' && (
             <section className="card section" aria-label="Demo club">
               <h2 style={{ fontSize: 16 }}>Demo club</h2>
-              <p className="small muted" style={{ margin: 0 }}>Made-up players and tournaments on this phone, for showing PaddleQ to a club or practising. Nothing is sent to the server.</p>
+              <p className="small muted" style={{ margin: 0 }}>Made-up players and tournaments on this phone, for showing RallyQ to a club or practising. Nothing is sent to the server.</p>
               <button type="button" className="btn btn-outline" onClick={() => go('demo')}>Open the demo club</button>
             </section>
           )}
@@ -294,13 +294,13 @@ function Admins() {
       )}
       <section className="card section" aria-label="Add an admin">
         <input className="input" type="email" aria-label="New admin’s email" placeholder="Their email (they must have signed in once)" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <button type="button" className="btn btn-outline" disabled={busy || !email.trim()} onClick={async () => { const e = email.trim(); if (await run(() => b.addPlatformAdmin(e), `${e} is now a PaddleQ admin`)) setEmail(''); }}>Add admin</button>
+        <button type="button" className="btn btn-outline" disabled={busy || !email.trim()} onClick={async () => { const e = email.trim(); if (await run(() => b.addPlatformAdmin(e), `${e} is now a RallyQ admin`)) setEmail(''); }}>Add admin</button>
       </section>
     </>
   );
 }
 
-/** Both PINs of a tournament, each with New PIN (PaddleQ admins can change them for support). */
+/** Both PINs of a tournament, each with New PIN (RallyQ admins can change them for support). */
 function AdminPins({ b, t }: { b: ClubBackend; t: AdminTournament }) {
   const [pins, setPins] = useState({ refereePin: t.eventPin ?? '', deskPin: t.deskPin ?? '' });
   if (!pins.refereePin || !pins.deskPin) return <div className="small muted">PINs are made when the tournament is opened.</div>;
@@ -336,7 +336,7 @@ const AUDIT_LABEL: Record<string, string> = {
   support_start: 'Started a support session', support_end: 'Ended a support session', support_open_member: 'Opened a club they belong to',
   tournament_delete: 'Deleted a tournament', tournament_cancel: 'Cancelled a tournament', tournament_archive: 'Archived a tournament', tournament_unarchive: 'Brought a tournament back',
 };
-/** Every support session and lifecycle action, newest first (PaddleQ admins only; server: platform_audit). */
+/** Every support session and lifecycle action, newest first (RallyQ admins only; server: platform_audit). */
 function AuditLog() {
   const b = eventsBackend();
   const state = useLoad(() => b.platformAudit(), [b]);

@@ -57,7 +57,7 @@ export function Home({ go }: { go: Go }) {
         <div className="brand-row">
           <Logo size={44} />
           <div>
-            <h1 id="home-title" className="brand">PICKLEQ</h1>
+            <h1 id="home-title" className="brand">RallyQ</h1>
             <div className="small muted">{today()}</div>
           </div>
         </div>

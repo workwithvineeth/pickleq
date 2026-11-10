@@ -255,7 +255,7 @@ export class DemoBackend implements ClubBackend {
     const players = new Map(this.s.players.filter((p) => p.clubId === input.clubId).map((p) => [p.id, p]));
     const rows = buildTournamentRows(input, players, newId);
     const trusted = this.trusted(input.clubId);
-    // Same rule as the server: picking the players makes the draw at once, which needs PaddleQ's approval.
+    // Same rule as the server: picking the players makes the draw at once, which needs RallyQ's approval.
     if (!trusted && rows.matches.length) throw new ClubError(PICK_NEEDS_TRUST);
     rows.tournament.approval = trusted ? 'approved' : 'draft';
     const now = new Date().toISOString();
@@ -495,7 +495,7 @@ export class DemoBackend implements ClubBackend {
     return p;
   }
 
-  /** Organisers (staff of the club) and PaddleQ admins. In the demo, whoever is signed in is a PaddleQ admin. */
+  /** Organisers (staff of the club) and RallyQ admins. In the demo, whoever is signed in is a RallyQ admin. */
   private canRun(t: ClubTournament, msg: string) {
     if (!isStaff(this.role(t.clubId)) && !this.s.user) throw new ClubError(msg);
   }
@@ -553,7 +553,7 @@ export class DemoBackend implements ClubBackend {
     if (!hit) throw new ClubError('This desk link isn’t valid. Ask the organiser for the desk link again.');
     const t = this.tournament(hit.tid);
     if (t.status === 'done') throw new ClubError('This tournament is finished, so the desk link no longer works.');
-    if (!isApproved(t)) throw new ClubError('PaddleQ hasn’t approved this tournament yet, so the desk link doesn’t work yet.');
+    if (!isApproved(t)) throw new ClubError('RallyQ hasn’t approved this tournament yet, so the desk link doesn’t work yet.');
     const d = hit.d;
     if (d.lockedUntil && d.lockedUntil > Date.now()) throw new ClubError('Too many wrong PINs. Wait a few minutes, then try again.');
     if (pin !== d.pin) {
@@ -713,7 +713,7 @@ export class DemoBackend implements ClubBackend {
     if (!l || l.revoked) throw new ClubError('This referee link isn’t valid. Ask the organiser for a new one.');
     const t = this.s.tournaments.find((x) => x.id === l.tournamentId);
     if (!t || t.status === 'done') throw new ClubError('This event has finished, so the referee link no longer works.');
-    if (!isApproved(t)) throw new ClubError('PaddleQ hasn’t approved this tournament yet, so referee links don’t work yet.');
+    if (!isApproved(t)) throw new ClubError('RallyQ hasn’t approved this tournament yet, so referee links don’t work yet.');
     if (l.lockedUntil && l.lockedUntil > Date.now()) throw new ClubError('Too many wrong PINs. Try again in 15 minutes, or ask the organiser.');
     if (pin !== l.pin) {
       l.failed += 1;
@@ -804,7 +804,7 @@ export class DemoBackend implements ClubBackend {
   }
 
   // ---------- Module 2: events board, registration, entries inbox, approval ----------
-  // The demo user is also a PaddleQ admin, so the approval queue can be tried.
+  // The demo user is also a RallyQ admin, so the approval queue can be tried.
 
   private regs(): Registration[] { return (this.s.registrations ??= []); }
   private tournament(id: string): ClubTournament { const t = this.s.tournaments.find((x) => x.id === id); if (!t) throw new ClubError('Tournament not found'); return t; }
@@ -825,7 +825,7 @@ export class DemoBackend implements ClubBackend {
     this.need(t.clubId, isAdmin, 'Only club admins can post to the events board');
     if (listing !== 'none' && (!t.city || !t.venue)) throw new ClubError('Add the city and venue first');
     if (listing === 'listed' && !t.contact && !t.link) throw new ClubError('Add a contact number or a link so players can enter');
-    // The listing goes on the board when PaddleQ approves the tournament.
+    // The listing goes on the board when RallyQ approves the tournament.
     t.listing = listing;
     t.listingStatus = listing === 'none' ? 'none' : isApproved(t) ? 'approved' : 'pending';
     t.rejectReason = undefined;
@@ -1001,7 +1001,7 @@ export class DemoBackend implements ClubBackend {
   async supportSessions(): Promise<SupportSession[]> { return []; }
   async deleteTournament(id: string, confirmName: string) {
     const t = this.tournament(id);
-    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or PaddleQ admins) can delete a tournament');
+    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or RallyQ admins) can delete a tournament');
     const divs = new Set(this.s.divisions.filter((d) => d.tournamentId === id).map((d) => d.id));
     if (this.s.entries.some((e) => divs.has(e.divisionId)) || this.s.matches.some((m) => m.tournamentId === id && m.status !== 'void') || (this.s.registrations ?? []).some((r) => divs.has(r.divisionId))) throw new ClubError('People have entered this tournament. Cancel it instead, so nothing is lost.');
     if (confirmName.trim() !== t.name.trim()) throw new ClubError('Type the tournament name exactly to confirm');
@@ -1012,7 +1012,7 @@ export class DemoBackend implements ClubBackend {
   }
   async cancelTournament(id: string, reason: string) {
     const t = this.tournament(id);
-    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or PaddleQ admins) can cancel a tournament');
+    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or RallyQ admins) can cancel a tournament');
     if (t.status === 'done') throw new ClubError('It has finished. Archive it instead.');
     if (t.cancelledAt) throw new ClubError('It is already cancelled');
     if (reason.trim().length < 4) throw new ClubError('Give players a reason (4+ characters)');
@@ -1022,7 +1022,7 @@ export class DemoBackend implements ClubBackend {
   }
   async archiveTournament(id: string, archive: boolean) {
     const t = this.tournament(id);
-    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or PaddleQ admins) can archive a tournament');
+    this.need(t.clubId, isAdmin, 'Only the club’s owner and admins (or RallyQ admins) can archive a tournament');
     if (archive && t.status !== 'done' && !t.cancelledAt) throw new ClubError('Only finished or cancelled tournaments can be archived');
     t.archivedAt = archive ? new Date().toISOString() : undefined;
     this.audit.unshift({ at: new Date().toISOString(), action: archive ? 'tournament_archive' : 'tournament_unarchive', detail: t.name, clubId: t.clubId, tournamentId: id });
@@ -1087,7 +1087,7 @@ export class DemoBackend implements ClubBackend {
     this.save();
   }
 
-  async addPlatformAdmin(): Promise<void> { throw new ClubError('In the demo you’re the only PaddleQ admin. Add admins on the real server.'); }
+  async addPlatformAdmin(): Promise<void> { throw new ClubError('In the demo you’re the only RallyQ admin. Add admins on the real server.'); }
   async platformAdmins() { return this.s.user ? [{ email: this.s.user.email, addedAt: new Date().toISOString() }] : []; }
 
   // ---------- Admin dashboard: the same answers as the server, from the demo on this phone ----------
@@ -1146,7 +1146,7 @@ export class DemoBackend implements ClubBackend {
   async requestHosting(clubId: string, phone: string, note: string) {
     this.need(clubId, isAdmin, 'Only the club’s owner and admins can add the club’s contact number');
     const c = this.club(clubId);
-    if (phone.replace(/\D/g, '').length < 10) throw new ClubError('Add a phone number PaddleQ can call (10 digits)');
+    if (phone.replace(/\D/g, '').length < 10) throw new ClubError('Add a phone number RallyQ can call (10 digits)');
     c.hostingPhone = phone.trim().slice(0, 20); c.hostingNote = note.trim().slice(0, 500) || undefined; c.hostingReason = undefined;
     this.save();
   }
@@ -1224,13 +1224,13 @@ export class DemoBackend implements ClubBackend {
     this.need(input.clubId, isAdmin, 'Only the club’s owner and admins can share a testimonial');
     if (!this.s.tournaments.some((t) => t.clubId === input.clubId && t.status === 'done')) throw new ClubError('Share your experience after your first finished tournament');
     const quote = input.quote.trim(); const name = input.personName.trim(); const role = input.personRole.trim();
-    if (!input.consent) throw new ClubError('Tick the box to let PaddleQ use it');
+    if (!input.consent) throw new ClubError('Tick the box to let RallyQ use it');
     if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) throw new ClubError('Pick a rating from 1 to 5');
     if (quote.length < 10) throw new ClubError('Write a few words (at least 10 characters)');
     if (quote.length > TESTIMONIAL_MAX) throw new ClubError('Keep it to 400 characters');
     if (name.length < 2 || role.length < 2) throw new ClubError('Add your name and role');
     if (hasContactDetails(quote) || hasContactDetails(name) || hasContactDetails(role)) throw new ClubError('Please leave out phone numbers and email addresses');
-    if (this.testimonials().filter((t) => t.clubId === input.clubId && t.status === 'pending').length >= 5) throw new ClubError('You already have 5 waiting for PaddleQ. Withdraw one first.');
+    if (this.testimonials().filter((t) => t.clubId === input.clubId && t.status === 'pending').length >= 5) throw new ClubError('You already have 5 waiting for RallyQ. Withdraw one first.');
     if (input.photo && input.photo.size > 1_000_000) throw new ClubError('That photo is too big');
     const photo = input.photo ? await blobToDataUrl(input.photo) : undefined;
     this.testimonials().push({ id: newId(), clubId: input.clubId, rating: input.rating, quote, personName: name.slice(0, 80), personRole: role.slice(0, 80), photoPath: photo, status: 'pending', featured: false, createdAt: new Date().toISOString() });

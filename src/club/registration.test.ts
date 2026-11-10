@@ -152,7 +152,7 @@ describe('Registration flow (demo backend, same rules as the server)', () => {
     await b.updateTournamentDetails(mine, { city: 'Hyderabad', venue: 'Robot Courts' });
     expect(await b.submitListing(mine, 'run')).toBe('approved');
     expect(await b.publicEvent((await b.tournamentBundle(mine)).tournament.publicSlug)).not.toBeNull();
-    // A new club: pending until PaddleQ approves the tournament (rejecting needs a reason the club sees).
+    // A new club: pending until RallyQ approves the tournament (rejecting needs a reason the club sees).
     const other = await b.createClub('Robot Yard', 'Pune', 'Robot');
     const id = await b.createTournament({ clubId: other, name: 'Yard Cup', startDate: '2099-01-01', startTime: '08:00', courts: 2, slotMinutes: 20, entryMode: 'registration', divisions: [div], details: { city: 'Pune', venue: 'Yard' } });
     expect(await b.submitListing(id, 'run')).toBe('pending');

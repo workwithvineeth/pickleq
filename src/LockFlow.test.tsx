@@ -75,7 +75,7 @@ describe('app lock', () => {
     expect(erase).toBeDisabled();
     await user.type(screen.getByLabelText('Type ERASE to confirm'), 'ERASE');
     await user.click(erase);
-    await screen.findByRole('heading', { name: 'PICKLEQ' });
+    await screen.findByRole('heading', { name: 'RallyQ' });
     await waitFor(async () => expect(await db.matches.count()).toBe(0));
     expect(pinEnabled()).toBe(false);
     expect(loadKey()).toBe('');

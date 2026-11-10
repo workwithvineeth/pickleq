@@ -65,7 +65,7 @@ export function LifecycleCard({ b, d, go, onChanged }: { b: ClubBackend; d: Tour
 }
 
 /**
- * PaddleQ admins open any club's tournament through a logged, 4-hour support session: they get the club's own
+ * RallyQ admins open any club's tournament through a logged, 4-hour support session: they get the club's own
  * admin screens (create, entries, draw, desk, results, cancel) with normal club permissions, never ownership.
  */
 export function SupportOpenButton({ b, clubId, tournamentId, reason, go, label = 'Open tournament', primary = false }: { b: Pick<ClubBackend, 'startSupport'>; clubId: string; tournamentId?: string; reason: string; go: Go; label?: string; primary?: boolean }) {

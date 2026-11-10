@@ -1,7 +1,7 @@
 import { artworkPalette, currentSkin } from '../skin';
 import archivoFont from '../fonts/archivo.woff2?url';
 /**
- * PaddleQ promotional artwork (Phase 3): launch post, story, results card, A4 poster with a real QR code and a
+ * RallyQ promotional artwork (Phase 3): launch post, story, results card, A4 poster with a real QR code and a
  * WhatsApp banner, filled in from the event. Brand follows the selected skin, with embedded display/body fonts and the
  * official Paddle Q mark. Downloads embed the fonts, so the file looks the same anywhere.
  */
@@ -9,7 +9,7 @@ import qrcode from 'qrcode-generator';
 import fraunces600 from '@fontsource/fraunces/files/fraunces-latin-600-normal.woff2?url';
 import dmSans500 from '@fontsource/dm-sans/files/dm-sans-latin-500-normal.woff2?url';
 import dmSans600 from '@fontsource/dm-sans/files/dm-sans-latin-600-normal.woff2?url';
-import { Q_PATH } from '../components/Logo';
+import {COURT_Q} from '../rallyq/Brand';
 
 export type PromoTemplate = 'launch' | 'story' | 'results' | 'poster' | 'whatsapp';
 export const PROMO_TEMPLATES: { id: PromoTemplate; label: string; w: number; h: number; use: string }[] = [
@@ -42,11 +42,7 @@ const WORDMARK = "font-family=\"Fraunces, Georgia, serif\"";
 const FB = "font-family=\"DM Sans, Arial, sans-serif\"";
 
 /** The Paddle Q mark on a cream tile, sized s, at (x, y). */
-function markTile(x: number, y: number, s: number) {
-  const art=artworkPalette();
-  const k = s / 512;
-  return `<g transform="translate(${x} ${y}) scale(${k})"><rect width="512" height="512" rx="112" fill="${art.brand}"/><svg x="66.6" y="66.6" width="378.9" height="378.9" viewBox="0 0 260 260"><g transform="rotate(-28 130 130)"><rect x="72" y="16" width="116" height="150" rx="54" fill="${art.onBrand}"/><rect x="119" y="160" width="22" height="14" fill="${art.onBrand}"/><rect x="113" y="170" width="34" height="80" rx="12" fill="${art.onBrand}" fill-opacity="0.6"/><path transform="translate(89.75 124) scale(0.052 -0.052)" d="${Q_PATH}" fill="${art.brand}"/></g><circle cx="212" cy="54" r="24" fill="${art.onBrand}"/></svg></g>`;
-}
+function markTile(x:number,y:number,s:number){return '<svg x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#D9F24A"/><g transform="translate(12 12) scale(.76)"><path d="'+COURT_Q+'" fill="none" stroke="#0B2418" stroke-width="10"/><path d="M28 50H72" stroke="#0B2418" stroke-width="3"/><circle cx="83" cy="83" r="11" fill="#0B2418"/></g></svg>';}
 
 /** A real, scannable QR code as SVG rects (error correction M, quiet zone included). */
 export function qrSvg(text: string, x: number, y: number, size: number) {
@@ -78,7 +74,7 @@ export function promoSvg(p: PromoInput): string {
   const y0 = wide ? H * 0.36 : p.template === 'story' ? H * 0.28 : H * 0.3;
   const court = `<g fill="none" stroke="${art.chalk}" stroke-opacity=".13" stroke-width="5"><rect x="${W * 0.08}" y="${H * 0.52}" width="${W * 0.84}" height="${H * 0.42}"/><line x1="${W / 2}" y1="${H * 0.52}" x2="${W / 2}" y2="${H * 0.94}"/><line x1="${W * 0.08}" y1="${H * 0.73}" x2="${W * 0.92}" y2="${H * 0.73}"/><line x1="${W * 0.08}" y1="${H * 0.6}" x2="${W * 0.92}" y2="${H * 0.6}"/></g>`;
   let b = `<rect width="${W}" height="${H}" fill="${art.hero}"/>${court}<circle cx="${W * 0.88}" cy="${H * 0.14}" r="${W * 0.24}" fill="${art.chalk}" opacity=".05"/>`;
-  b += markTile(pad, H * 0.05, W * 0.11) + `<text x="${pad + W * 0.14}" y="${H * 0.05 + W * 0.072}" ${WORDMARK} font-size="${W * 0.05}" font-weight="600" fill="${art.chalk}">PaddleQ</text>`;
+  b += markTile(pad, H * 0.05, W * 0.11) + `<text x="${pad + W * 0.14}" y="${H * 0.05 + W * 0.072}" ${WORDMARK} font-size="${W * 0.05}" font-weight="600" fill="${art.chalk}">RallyQ</text>`;
   b += `<text x="${pad}" y="${y0 - hs * 0.95}" ${FB} font-size="${W * 0.026}" font-weight="600" letter-spacing="${W * 0.004}" fill="${art.heroMuted}">${esc((p.club || 'Your club').toUpperCase())} ${p.template === 'results' ? 'RESULTS' : 'PRESENTS'}</text>`;
   b += head.map((l, i) => `<text x="${pad}" y="${y0 + i * hs * 1.03}" ${FD} font-size="${hs}" font-weight="600" fill="${art.surface}">${esc(l)}</text>`).join('');
   const yS = y0 + head.length * hs * 1.03 + 18;
@@ -100,7 +96,7 @@ export function promoSvg(p: PromoInput): string {
     b += `<text x="${tx}" y="${cy + q + 20}" ${FB} font-size="26" font-weight="600" fill="${art.brandText}">${esc(p.url.replace(/^https?:\/\//, '').slice(0, 34))}</text>`;
   } else {
     const bw = Math.min(W * 0.7, (p.cta || 'Register').length * W * 0.021 + 90), bh = W * (wide ? 0.06 : 0.085);
-    b += `<g transform="translate(${pad} ${wide ? H * 0.74 : H * 0.84})"><rect width="${bw}" height="${bh}" rx="${bh / 2}" fill="${art.brand}"/><text x="40" y="${bh * 0.64}" ${FB} font-size="${bh * 0.36}" font-weight="600" fill="${art.onBrand}">${esc(p.cta || 'Register on PaddleQ')} →</text></g>`;
+    b += `<g transform="translate(${pad} ${wide ? H * 0.74 : H * 0.84})"><rect width="${bw}" height="${bh}" rx="${bh / 2}" fill="${art.brand}"/><text x="40" y="${bh * 0.64}" ${FB} font-size="${bh * 0.36}" font-weight="600" fill="${art.onBrand}">${esc(p.cta || 'Register on RallyQ')} →</text></g>`;
   }
   b += `<text x="${W - pad}" y="${H * 0.972}" text-anchor="end" ${FB} font-size="${W * 0.02}" fill="${art.heroMuted}">Out of the kitchen, into the stats.</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${b}</svg>`;

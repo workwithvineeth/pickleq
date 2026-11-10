@@ -138,7 +138,7 @@ export function cleanSession(s: StudioSessionInput): StudioSessionInput {
   return { ...s, drills: s.drills.map((d) => ({ ...d, category: d.category.trim() })), note: s.note.trim() };
 }
 
-// ---------- Official results (read-only, from PaddleQ tournaments) ----------
+// ---------- Official results (read-only, from RallyQ tournaments) ----------
 
 export interface OfficialPlayer { id: string; name: string }
 export interface OfficialMatch {

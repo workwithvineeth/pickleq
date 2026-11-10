@@ -21,7 +21,7 @@ export const STUDIO_SECTIONS = [
   { id: 'stats', label: 'Stats' }, { id: 'coach', label: 'Coach' }, { id: 'profile', label: 'Profile' },
 ] as const;
 
-/** Player Studio: your official PaddleQ results (read-only) and your private diary. Sections in a strip on phones, a side rail on laptops. */
+/** Player Studio: your official RallyQ results (read-only) and your private diary. Sections in a strip on phones, a side rail on laptops. */
 export function PlayerStudio({ section, go }: { section: string; go: Go }) {
   const b = serverBackend();
   const state = useLoad(async () => {
@@ -37,7 +37,7 @@ export function PlayerStudio({ section, go }: { section: string; go: Go }) {
     <main className="screen wide-ok pq-studio pq-proto" aria-labelledby="studio-title">
       <Header id="studio-title" title="Player Studio" />
       <Status loading={state.loading && !d} error={state.error} />
-      {!b && <p className="small muted">Player Studio needs the PaddleQ server. It isn’t available in the demo club.</p>}
+      {!b && <p className="small muted">Player Studio needs the RallyQ server. It isn’t available in the demo club.</p>}
       {b && !state.loading && !state.error && !d && <section className="card section" aria-label="Sign in">
         <h2>Your game, in one place</h2>
         <p className="small" style={{ margin: 0 }}>See your official tournament results, and keep a private diary of practice and casual games.</p>
@@ -209,7 +209,7 @@ function StudioProfile({ data, reload, b }: SectionProps) {
       <Seg label="Rating type" value={kind} options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} onChange={setKind} />
       <RatingPanel key={kind} kind={kind} data={data} busy={busy} run={run} />
       <button type="button" className="btn btn-outline" disabled aria-describedby="dupr-soon">Sign in with DUPR</button>
-      <p id="dupr-soon" className="small muted" style={{ margin: 0 }}>Coming later, once DUPR approves PaddleQ. Until then, type your rating from the DUPR app. PaddleQ never calculates ratings.</p>
+      <p id="dupr-soon" className="small muted" style={{ margin: 0 }}>Coming later, once DUPR approves RallyQ. Until then, type your rating from the DUPR app. RallyQ never calculates ratings.</p>
     </Card>
     <Card title="Your claimed results">
       {data.players.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nothing claimed yet. Open the claim link from your organiser to add your official matches.</p>}

@@ -19,7 +19,7 @@ export function PromoStudio({ events, initialId }: { events: PromoEvent[]; initi
   const input = useMemo(() => ev && ({
     template: tpl, club: ev.club, headline: e.headline ?? ev.name,
     subline: e.subline ?? `${friendlyDate(ev.startDate)} · ${friendlyTime(ev.startTime)}${ev.courts ? ` · ${ev.courts} courts` : ''}`,
-    cta: e.cta ?? (tpl === 'results' ? 'See every match' : 'Register on PaddleQ'),
+    cta: e.cta ?? (tpl === 'results' ? 'See every match' : 'Register on RallyQ'),
     url: appLink(tpl === 'results' ? `#/results/${ev.slug}` : `#/event/${ev.slug}`),
     date: friendlyDate(ev.startDate), time: friendlyTime(ev.startTime), courts: ev.courts, fee: ev.fee,
     podium: { champions: e.champions, runnersUp: e.runnersUp, bronze: e.bronze, score: e.score },

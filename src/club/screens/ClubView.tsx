@@ -47,7 +47,7 @@ export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: 
           {tab === 'overview' && <ClubHome d={d} go={go} />}
           {tab === 'guide' && <DayOfGuide d={d} go={go} />}
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
-          {(tab === 'overview' || tab === 'events') && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <details className="pq-rating-card"><summary>Rate PaddleQ</summary><TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} /></details>}
+          {(tab === 'overview' || tab === 'events') && isAdmin(d.role) && b && d.tournaments.some((x) => x.status === 'done') && <details className="pq-rating-card"><summary>Rate RallyQ</summary><TestimonialsCard b={b} clubId={d.club.id} club={d.club.name} /></details>}
           {tab === 'players' && <Players d={d} go={go} reload={state.reload} />}
           {tab === 'squad' && staff && <Squad d={d} go={go} />}
           {tab === 'profile' && staff && b && <LogoPicker b={b} clubId={d.club.id} club={d.club.name} current={d.club.logoUrl} onChanged={state.reload} />}
@@ -90,7 +90,7 @@ function Events({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void }
         {d.tournaments.map((t) => (
           <button key={t.id} type="button" className="match-row" onClick={() => go('club-tournament', t.id)}>
             <span style={{ flex: 1 }}><span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span><span className="small muted">{friendlyDate(t.startDate)} · {t.courts} courts</span></span>
-            {staff && !isApproved(t) ? <span className="pill">{t.approval === 'submitted' ? 'Waiting for PaddleQ' : t.approval === 'rejected' ? 'Not approved' : 'Needs approval'}</span>
+            {staff && !isApproved(t) ? <span className="pill">{t.approval === 'submitted' ? 'Waiting for RallyQ' : t.approval === 'rejected' ? 'Not approved' : 'Needs approval'}</span>
               : <span className={`pill${t.status === 'live' ? ' pill-warn' : t.status === 'done' ? ' pill-ok' : ''}`}>{t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Draft'}</span>}
           </button>
         ))}
@@ -169,7 +169,7 @@ function Players({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void 
           ))}
         </tbody>
       </table>
-      <p className="small muted" style={{ margin: 0 }}>Ratings are DUPR, entered by the club or the player. PaddleQ never calculates ratings.</p>
+      <p className="small muted" style={{ margin: 0 }}>Ratings are DUPR, entered by the club or the player. RallyQ never calculates ratings.</p>
     </section>
   );
 }
@@ -262,7 +262,7 @@ function Members({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void 
         <section className="card section">
           <h2 style={{ fontSize: 18 }}>Invite people</h2>
           <p className="small muted" style={{ margin: 0 }}>Anyone with this link can join as a player. You can make them a coach or admin after.</p>
-          <button type="button" className="btn btn-outline" onClick={async () => setMsg(await shareLink(`Join ${d.club.name} on PaddleQ`, invite))}>Share invite link</button>
+          <button type="button" className="btn btn-outline" onClick={async () => setMsg(await shareLink(`Join ${d.club.name} on RallyQ`, invite))}>Share invite link</button>
         </section>
       )}
       {msg && <div role="status" className="msg msg-ok">{msg}</div>}
@@ -386,8 +386,8 @@ function SwingList({ title, swings }: { title: string; swings: Swing[] }) {
 
 function SharedSummaryCard({ data, updatedAt }: { data: SummaryData; updatedAt: string }) {
   return (
-    <section className="card section" aria-label="Shared from personal PaddleQ">
-      <h2 style={{ fontSize: 18 }}>Shared from their personal PaddleQ</h2>
+    <section className="card section" aria-label="Shared from personal RallyQ">
+      <h2 style={{ fontSize: 18 }}>Shared from their personal RallyQ</h2>
       <p className="small muted" style={{ margin: 0 }}>The player chose to share these numbers on {updatedAt.slice(0, 10)}.</p>
       {data.record && <div className="row"><span>All matches</span><span>{data.record.wins}–{data.record.matches - data.record.wins} · close games {data.record.closeWins}–{data.record.closeLosses}</span></div>}
       {data.tags?.slice(0, 4).map((t) => <div key={t.tag} className="row"><span>{t.tag}: needs work</span><span>in {t.inLosses} of {t.losses} losses, {t.inWins} of {t.wins} wins</span></div>)}
@@ -421,7 +421,7 @@ export function Sharing({ playerId, go, onBack }: { playerId: string; go: Go; on
   const [msg, setMsg] = useState<string | null>(null);
   const share = choice ?? state.data?.p.share ?? {};
   const any = !!(share.record || share.tags || share.training);
-  // The personal app's data is loaded only when sharing from it (never needed in PaddleQ itself).
+  // The personal app's data is loaded only when sharing from it (never needed in RallyQ itself).
   const mySummary = async (x: Share) => (await import('../personal')).mySummary(x);
   async function showPreview(next: Share) { setChoice(next); setPreview(await mySummary(next)); }
   async function send() {
@@ -442,7 +442,7 @@ export function Sharing({ playerId, go, onBack }: { playerId: string; go: Go; on
         <>
           <section className="card section">
             <p style={{ margin: 0 }}><b>Always shared with {clubName}:</b> your name, ratings the club entered, and club matches you play.</p>
-            <p className="small muted" style={{ margin: 0 }}>Your personal PaddleQ (your own matches, notes and coach chats) stays on this phone. Below, you can choose to share a few numbers from it with your coaches.</p>
+            <p className="small muted" style={{ margin: 0 }}>Your personal RallyQ (your own matches, notes and coach chats) stays on this phone. Below, you can choose to share a few numbers from it with your coaches.</p>
           </section>
           <section className="section" aria-label="Choose what to share">
             {SHARE_ITEMS.map((it) => (

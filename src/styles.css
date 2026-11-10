@@ -340,7 +340,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 /* Club logo: square, whole picture shown, on a white tile so dark logos stay visible in dark mode. */
 .club-logo { display: block; width: 64px; height: 64px; object-fit: contain; border-radius: 14px; border: 1px solid var(--border); background: #fff; flex-shrink: 0; }
 
-/* ---------- PaddleQ brand: club app sign-in and My club (brand guide, 31 Oct 2026) ---------- */
+/* ---------- RallyQ brand: club app sign-in and My club (brand guide, 31 Oct 2026) ---------- */
 .pq-screen { gap: 16px; }
 .pq-hero, .pq-flow {
   position: relative; overflow: hidden; background: var(--pq-maroon); color:var(--pq-on-brand);
@@ -455,7 +455,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-organiser { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 16px; }
 .pq-organiser-name { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
 
-/* ---------- PaddleQ brand across the whole club app (paddleq.in only; the personal app keeps its look) ---------- */
+/* ---------- RallyQ brand across the whole club app (paddleq.in only; the personal app keeps its look) ---------- */
 /* Page headers: a maroon band with cream title, like the sign-in and flow screens. */
 .pq-brand .screen > .header:first-child {
   background: var(--pq-maroon); color:var(--pq-on-brand); margin: calc(-18px - var(--safe-top)) -16px 4px;
@@ -496,7 +496,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-check-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; overflow-wrap: anywhere; }
 .pq-check-text .link-btn { min-height: 44px; padding: 0; }
 
-/* ---------- PaddleQ design audit (31 Oct 2026): brand colours and tap targets, club app only ---------- */
+/* ---------- RallyQ design audit (31 Oct 2026): brand colours and tap targets, club app only ---------- */
 /* Brand: no leftover green. "Good" states (saved, Won, Paid, Through) are maroon tints; W is a solid maroon chip, L stays grey. */
 .pq-brand { --win-bg: var(--pq-tint); --win-fg: var(--pq-maroon); }
 :root[data-theme="dark"] .pq-brand { --win-bg: #4A2A2F; --win-fg: #E7AAB2; }

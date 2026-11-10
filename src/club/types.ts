@@ -25,7 +25,7 @@ export interface Club {
   /** Legacy hosting flag retained for compatibility. Migration 0018 approves all clubs;
    * permission to go live is decided per tournament. */
   hosting?: HostingStatus;
-  /** Trusted by PaddleQ: its tournaments are approved without asking. Only PaddleQ admins switch it. */
+  /** Trusted by RallyQ: its tournaments are approved without asking. Only RallyQ admins switch it. */
   trusted?: boolean;
   hostingReason?: string;
   hostingPhone?: string;
@@ -38,7 +38,7 @@ export const canHost = (c: Pick<Club, 'hosting'>) => !c.hosting || c.hosting ===
 
 export interface Member { userId: string; role: Role; name: string }
 
-/** What a player chose to share from their personal PaddleQ. Nothing is shared unless switched on. */
+/** What a player chose to share from their personal RallyQ. Nothing is shared unless switched on. */
 export interface Share { record?: boolean; tags?: boolean; training?: boolean }
 
 export interface ClubPlayer {
@@ -75,7 +75,7 @@ export interface ClubTournament {
   status: TournamentStatus;
   isPublic: boolean;
   publicSlug: string;
-  /** Module 2: where it is, how players enter, and whether it's on the PaddleQ events board. */
+  /** Module 2: where it is, how players enter, and whether it's on the RallyQ events board. */
   city?: string;
   venue?: string;
   about?: string;
@@ -96,9 +96,9 @@ export interface ClubTournament {
   drawnAt?: string;
   /** The tournament's poster (an image address, or a data: image in the demo). */
   posterUrl?: string;
-  /** PaddleQ's approval of this tournament. Missing means approved (older demo samples). */
+  /** RallyQ's approval of this tournament. Missing means approved (older demo samples). */
   approval?: Approval;
-  /** Why PaddleQ said no (the club sees it). */
+  /** Why RallyQ said no (the club sees it). */
   approvalReason?: string;
   approvalRequestedAt?: string;
   approvalExpected?: number;
@@ -107,15 +107,15 @@ export interface ClubTournament {
 /**
  * "Create freely, go live with approval": a club creates the tournament, its events and entries without asking.
  * The draw, referee and desk links, scoring, the public results link, the public registration form and the events board
- * need PaddleQ's approval of the tournament. A trusted club's tournaments are approved automatically.
+ * need RallyQ's approval of the tournament. A trusted club's tournaments are approved automatically.
  */
 export type Approval = 'draft' | 'submitted' | 'approved' | 'rejected';
 export const isApproved = (t: Pick<ClubTournament, 'approval'>) => !t.approval || t.approval === 'approved';
 export const APPROVAL_NOTE = 'Submit at least 24 hours before your event.';
-export const PICK_NEEDS_TRUST = 'Picking the players makes the draw straight away, which needs PaddleQ’s approval. Choose “They register”, add your players as entries, submit the tournament, then make the draw once it’s approved.';
-export const NOT_APPROVED = 'PaddleQ hasn’t approved this tournament yet. Submit it for approval first.';
+export const PICK_NEEDS_TRUST = 'Picking the players makes the draw straight away, which needs RallyQ’s approval. Choose “They register”, add your players as entries, submit the tournament, then make the draw once it’s approved.';
+export const NOT_APPROVED = 'RallyQ hasn’t approved this tournament yet. Submit it for approval first.';
 
-/** A club's testimonial about PaddleQ. No phone numbers or emails. */
+/** A club's testimonial about RallyQ. No phone numbers or emails. */
 export type TestimonialStatus = 'pending' | 'approved' | 'hidden' | 'withdrawn';
 export interface Testimonial {
   id: string;
@@ -133,7 +133,7 @@ export interface Testimonial {
   createdAt: string;
 }
 export const TESTIMONIAL_MAX = 400;
-export const TESTIMONIAL_CONSENT = 'PaddleQ may use this on its website and social media';
+export const TESTIMONIAL_CONSENT = 'RallyQ may use this on its website and social media';
 export const TESTIMONIAL_STATUS_LABEL: Record<TestimonialStatus, string> = { pending: 'Pending', approved: 'Approved', hidden: 'Hidden', withdrawn: 'Withdrawn' };
 /** True when the text looks like it has an email address or a phone number (7+ digits), like the server's check. */
 export const hasContactDetails = (text: string) => /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text) || /\d{7,}/.test(text.replace(/[\s().+-]/g, ''));
@@ -141,7 +141,7 @@ export const hasContactDetails = (text: string) => /[a-z0-9._%+-]+@[a-z0-9.-]+\.
 
 /** roster: the organiser picks players (Module 1). registration: players sign up, then the organiser draws. */
 export type EntryMode = 'roster' | 'registration';
-/** none: not on the board. listed: on the board only, players contact the organiser. run: run on PaddleQ. */
+/** none: not on the board. listed: on the board only, players contact the organiser. run: run on RallyQ. */
 export type Listing = 'none' | 'listed' | 'run';
 export type ListingStatus = 'none' | 'pending' | 'approved' | 'rejected';
 export type DivisionGender = 'open' | 'men' | 'women' | 'mixed';

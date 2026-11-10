@@ -1,0 +1,60 @@
+-- Local/CI only. All rows roll back. Tests actual role switching, writes and public projection.
+begin;
+insert into auth.users(id,email) values ('90000000-0000-4000-8000-000000000001','rallyq-owner@example.test'),('90000000-0000-4000-8000-000000000002','rallyq-stranger@example.test');
+insert into public.clubs(id,name,city) values('90000000-0000-4000-8000-000000000003','RallyQ SQL Club','Hyderabad');
+insert into public.club_players(id,club_id,name,user_id,claimed_at,dupr_doubles) values('90000000-0000-4000-8000-000000000004','90000000-0000-4000-8000-000000000003','Owner Sample','90000000-0000-4000-8000-000000000001',now(),4.6),('90000000-0000-4000-8000-000000000005','90000000-0000-4000-8000-000000000003','Opponent Sample',null,null,4.2);
+insert into public.tournaments(id,club_id,name,start_date,is_public,approval,status) values('90000000-0000-4000-8000-000000000006','90000000-0000-4000-8000-000000000003','Approved Sample',current_date,true,'approved','done');
+insert into public.club_matches(id,club_id,tournament_id,stage,side_a,side_b,format,games,status,winner,played_on) values('90000000-0000-4000-8000-000000000007','90000000-0000-4000-8000-000000000003','90000000-0000-4000-8000-000000000006','pool',array['90000000-0000-4000-8000-000000000004'::uuid],array['90000000-0000-4000-8000-000000000005'::uuid],'{"pointsTo":11}', '[{"a":11,"b":7,"points":"AAABAAABAAABAAABAA"}]','done','A',current_date),('90000000-0000-4000-8000-000000000008','90000000-0000-4000-8000-000000000003','90000000-0000-4000-8000-000000000006','pool',array['90000000-0000-4000-8000-000000000004'::uuid],array['90000000-0000-4000-8000-000000000005'::uuid],'{"pointsTo":11}', '[{"a":11,"b":1}]','done','A',current_date);
+select set_config('request.jwt.claims','{"sub":"90000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+set local role authenticated;
+insert into public.practice_sessions(id,kind,score_text,focus_tags,feel,partner,opponents) values('90000000-0000-4000-8000-000000000009','practice_match','11-7',array['Serve'],4,'Private Partner','Private Opponent');
+insert into public.practice_sessions(kind,minutes) values('training',60);
+insert into public.player_goals(title,target,progress) values('Four practices',4,2);
+insert into public.profile_sharing default values;
+do $$begin
+ if (select count(*) from public.practice_sessions)<>2 then raise exception 'FAIL: owner cannot read practices'; end if;
+ if exists(select 1 from public.profile_sharing where practice_results or practice_vs_tournament or training_hours or coach_notes or goals_badges) then raise exception 'FAIL: sharing defaults are not private';end if;
+ begin insert into public.practice_sessions(player,kind,score_text)values('90000000-0000-4000-8000-000000000002','practice_match','11-9');raise exception 'FAIL: impersonated insert allowed';exception when insufficient_privilege then null;end;
+ begin update public.practice_sessions set player='90000000-0000-4000-8000-000000000002';raise exception 'FAIL: reassigned practice owner';exception when insufficient_privilege then null;end;
+ begin update public.profile_sharing set player='90000000-0000-4000-8000-000000000002';raise exception 'FAIL: reassigned sharing owner';exception when insufficient_privilege then null;end;
+ begin insert into public.practice_sessions(kind,minutes,feel)values('training',20,6);raise exception 'FAIL: invalid feel allowed';exception when check_violation then null;end;
+end $$;
+reset role;
+select set_config('request.jwt.claims','{"sub":"90000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+set local role authenticated;
+do $$begin
+ if exists(select 1 from public.practice_sessions) or exists(select 1 from public.player_goals) or exists(select 1 from public.profile_sharing) then raise exception 'FAIL: stranger read private rows';end if;
+ update public.practice_sessions set score_text='99-0' where id='90000000-0000-4000-8000-000000000009';
+ if found then raise exception 'FAIL: stranger updated practice';end if;
+ delete from public.player_goals;if found then raise exception 'FAIL: stranger deleted goals';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claims','{}',true);set local role anon;
+do $$declare p jsonb;begin
+ begin perform 1 from public.practice_sessions;raise exception 'FAIL: anon raw practice read';exception when insufficient_privilege then null;end;
+ p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');
+ if jsonb_array_length(p->'official')<>1 then raise exception 'FAIL: profile includes untracked final-score matches';end if;
+ if p->'shared'<>'{}'::jsonb then raise exception 'FAIL: private by default projection';end if;
+ if p::text like '%rallyq-owner@example%' or p::text like '%Private Partner%' then raise exception 'FAIL: profile leaked contact or private identity';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claims','{"sub":"90000000-0000-4000-8000-000000000001","role":"authenticated"}',true);set local role authenticated;
+update public.profile_sharing set practice_results=true,training_hours=true,goals_badges=true;
+reset role;set local role anon;
+do $$declare p jsonb;begin
+ p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');
+ if jsonb_array_length(p->'shared'->'practice_results')<>2 or (p->'shared'->>'training_hours')::numeric<>1 then raise exception 'FAIL: opted-in practice/training missing';end if;
+ if p->'shared' ? 'coach_notes' or p->'shared' ? 'practice_vs_tournament' then raise exception 'FAIL: unrelated sharing flags exposed';end if;
+ if p::text like '%Private Partner%' or p::text like '%Private Opponent%' then raise exception 'FAIL: public practice leaked other people';end if;
+end $$;
+reset role;
+update public.club_players set user_id='90000000-0000-4000-8000-000000000002' where id='90000000-0000-4000-8000-000000000004';
+set local role anon;
+do $$declare p jsonb;begin p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');if p->'shared'<>'{}'::jsonb then raise exception 'FAIL: new claimant inherited private data/consent';end if;end $$;
+reset role;
+update public.tournaments set is_public=false where id='90000000-0000-4000-8000-000000000006';
+set local role anon;
+do $$begin if public.rallyq_public_player('90000000-0000-4000-8000-000000000004') is not null then raise exception 'FAIL: private tournament exposed profile';end if;end $$;
+reset role;
+select 'RallyQ private Studio RLS and sharing PASS';
+rollback;

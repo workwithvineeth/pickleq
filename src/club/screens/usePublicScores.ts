@@ -6,6 +6,7 @@ import { publicSourcesFor } from '../index';
 export function usePublicScores(slug: string) {
   const [state, setState] = useState<{ slug: string; data: PublicTournament | null; error: string | null; loading: boolean }>({ slug, data: null, error: null, loading: true });
   useEffect(() => {
+    if(!slug){setState({slug,data:null,error:null,loading:false});return;}
     let alive = true, busy = false;
     let status: PublicTournament['status'] | undefined;
     async function load() {

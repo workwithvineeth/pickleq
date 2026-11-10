@@ -84,8 +84,8 @@ export default defineConfig(({ mode }) => {
         includeAssets: [`icons/${icon}-apple-180.png`],
         manifest: {
           id: base,
-          name: isLive ? 'PICKLEQ' : isClubApp ? 'PaddleQ' : isClub ? 'PICKLEQ Club' : 'PICKLEQ Preview',
-          short_name: isLive ? 'PICKLEQ' : isClubApp ? 'PaddleQ' : isClub ? 'PQ Club' : 'PQ Preview',
+          name: isClubApp ? 'RallyQ' : isLive ? 'PICKLEQ' : isClubApp ? 'RallyQ' : isClub ? 'PICKLEQ Club' : 'PICKLEQ Preview',
+          short_name: isClubApp ? 'RallyQ' : isLive ? 'PICKLEQ' : isClubApp ? 'RallyQ' : isClub ? 'PQ Club' : 'PQ Preview',
           description: isClubApp ? 'Run pickleball tournaments: entries, draw, a scorer on every court and live results' : 'Personal pickleball tracker and AI coach',
           start_url: base,
           scope: base,
@@ -100,7 +100,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          // PaddleQ (club app): a new version takes over on its own, so players and referees get it on their next open
+          // RallyQ (club app): a new version takes over on its own, so players and referees get it on their next open
           // without tapping Update. The personal app keeps asking first.
           ...(isClubApp ? { skipWaiting: true, clientsClaim: true } : {}),
           globPatterns: ['**/*.{js,css,html,woff2,png,svg}'],
@@ -112,6 +112,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     test: {
+      maxWorkers: 4,
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
       // The robot (e2e/) runs with Playwright against the deployed site, not here.

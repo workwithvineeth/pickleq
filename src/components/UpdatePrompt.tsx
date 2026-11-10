@@ -4,7 +4,7 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 /**
  * Shows "Update ready" when a new version has downloaded; nothing changes until the user taps.
  * `offlineNotice` (default on) also says once that the app works offline. `inline` puts the prompt in the page flow at the top
- * instead of floating, so it never covers a form or a button (the PaddleQ club app uses both: no offline notice, inline).
+ * instead of floating, so it never covers a form or a button (the RallyQ club app uses both: no offline notice, inline).
  */
 export function UpdatePrompt({ offlineNotice = true, inline = false }: { offlineNotice?: boolean; inline?: boolean } = {}) {
   const {
@@ -38,7 +38,7 @@ export function UpdatePrompt({ offlineNotice = true, inline = false }: { offline
   if (needRefresh) {
     return (
       <div className={inline ? 'toast toast-inline' : 'toast'} role="status">
-        <span>A new version of {import.meta.env.VITE_CLUB_APP === "on" ? "PaddleQ" : "PICKLEQ"} is ready.</span>
+        <span>A new version of {import.meta.env.VITE_CLUB_APP === "on" ? "RallyQ" : "RallyQ"} is ready.</span>
         <span style={{ display: 'flex', gap: 6 }}>
           <button type="button" className="toast-dismiss" onClick={() => setNeedRefresh(false)}>Later</button>
           <button type="button" onClick={() => {
@@ -53,7 +53,7 @@ export function UpdatePrompt({ offlineNotice = true, inline = false }: { offline
   if (offlineReady && offlineNotice) {
     return (
       <div className="toast" role="status">
-        <span>{import.meta.env.VITE_CLUB_APP === "on" ? "PaddleQ" : "PICKLEQ"} now works offline.</span>
+        <span>{import.meta.env.VITE_CLUB_APP === "on" ? "RallyQ" : "RallyQ"} now works offline.</span>
         <button type="button" onClick={() => setOfflineReady(false)}>OK</button>
       </div>
     );

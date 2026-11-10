@@ -52,7 +52,7 @@ export function Claim({ id, go }: { id: string; go: Go }) {
           <h2>{p.name}</h2>
           <p style={{ margin: 0 }}>{p.club} · {plural(p.matches, 'official match', 'official matches')}, {plural(p.wins, 'win')}</p>
           <ul className="pq-plain-list">{p.tournaments.map((t) => <li key={t.name + t.date}>{t.name} <span className="small muted">· {friendlyDate(t.date)}</span></li>)}</ul>
-          <p className="small muted" style={{ margin: 0 }}>Only claim if this is you. Claiming someone else’s results breaks PaddleQ’s rules.</p>
+          <p className="small muted" style={{ margin: 0 }}>Only claim if this is you. Claiming someone else’s results breaks RallyQ’s rules.</p>
           <div className="meta">
             <button type="button" className="btn btn-primary" onClick={() => setStep('privacy')}>This is me</button>
             <button type="button" className="btn btn-outline" onClick={() => go('club-player-studio')}>Not me</button>
@@ -80,7 +80,7 @@ export function Claim({ id, go }: { id: string; go: Go }) {
 }
 
 export const claimMessage = (tournament: string, name: string, token: string) =>
-  `${name}, your official results from ${tournament} are ready on PaddleQ. Claim them in Player Studio (private link, just for you): ${appLink(`#/club-claim/${token}`)}`;
+  `${name}, your official results from ${tournament} are ready on RallyQ. Claim them in Player Studio (private link, just for you): ${appLink(`#/club-claim/${token}`)}`;
 
 /**
  * Organisers: send each player of a tournament their private claim link, on WhatsApp (one at a time) or by email
@@ -115,7 +115,7 @@ export function ClaimLinks({ tournamentId, clubId, tournament, players }: { tour
     await run(async () => {
       const r = await b!.emailClaimLinks(tournamentId, canEmail.map((p) => p.id));
       status.reload();
-      const parts = [r.test ? `Test mode: ${plural(r.sent, 'email')} went to the PaddleQ test inbox, not to players` : `Emailed ${plural(r.sent, 'player')}`];
+      const parts = [r.test ? `Test mode: ${plural(r.sent, 'email')} went to the RallyQ test inbox, not to players` : `Emailed ${plural(r.sent, 'player')}`];
       if (r.failed) parts.push(`${r.failed} didn’t go through`);
       if (r.limited) parts.push('the daily email limit was reached, so send the rest tomorrow or on WhatsApp');
       return parts.join('; ') + '.';

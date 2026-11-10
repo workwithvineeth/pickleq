@@ -26,10 +26,10 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     if (!b) return null;
     const user = await b.currentUser();
     if (!user) return null;
-    // PaddleQ (the club-only app) has no personal history to add club matches to.
+    // RallyQ (the club-only app) has no personal history to add club matches to.
     const [clubs, pending] = await Promise.all([b.myClubs(), isClubApp() ? [] as NewMatch[] : import('../personal').then((m) => m.pendingClubMatches(b)).catch(() => [] as NewMatch[])]);
     const next = isClubApp() ? await nextTournament(b, clubs).catch(() => null) : null;
-    // PaddleQ admins: this page is "Clubs", with every club on PaddleQ (logos, approval state) under their own.
+    // RallyQ admins: this page is "Clubs", with every club on RallyQ (logos, approval state) under their own.
     const admin = isClubApp() ? await b.isPlatformAdmin().catch(() => false) : false;
     const all = admin ? (await b.adminClubs().catch(() => [] as AdminClub[])).filter((c) => !c.isTest) : [];
     const toApprove = admin ? (await b.approvalQueue().catch(() => [])).filter((q) => q.approval === 'submitted').length : 0;
@@ -49,7 +49,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
   }
   async function addPending(list: NewMatch[]) {
-    // The personal app's database is loaded only in the personal app's Club mode, never in PaddleQ.
+    // The personal app's database is loaded only in the personal app's Club mode, never in RallyQ.
     const n = await (await import('../personal')).importClubMatches(list);
     setMsg(`Added ${n} club ${n === 1 ? 'match' : 'matches'} to your history.`);
     state.reload();
@@ -61,7 +61,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   }
 
   const signedIn = state.data;
-  // PaddleQ (the club app): signed out, My club is the sign-in page, so paddleq.in opens on it.
+  // RallyQ (the club app): signed out, My club is the sign-in page, so paddleq.in opens on it.
   if (isClubApp() && server && !state.loading && !state.error && !signedIn) return <ClubSignIn go={go} onBack={onBack} landing onSignedIn={state.reload} />;
   return (
     <main className="screen" aria-labelledby="club-title">
@@ -70,7 +70,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
       {!state.loading && !signedIn && (
         <>
           {isClubApp() ? (
-            <section className="card section" aria-label="About PaddleQ">
+            <section className="card section" aria-label="About RallyQ">
               <h2 style={{ fontSize: 18 }}>Run your club’s tournaments</h2>
               <p className="small" style={{ margin: 0 }}>Entries (or import them from a Google Form), the draw, a scorer on every court with a PIN link, and live results anyone can open.</p>
               <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
@@ -83,7 +83,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               <h2 style={{ fontSize: 18 }}>Play with your club</h2>
               <p className="small" style={{ margin: 0 }}>Run club tournaments with live scoring, and give coaches a view of where each player wins and loses points.</p>
               <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>
-                <li>Your personal PaddleQ stays on this phone. Nothing is shared unless you choose.</li>
+                <li>Your personal RallyQ stays on this phone. Nothing is shared unless you choose.</li>
                 <li>Club matches you play can be added to your own history.</li>
                 <li>Signing in is only needed for Club mode.</li>
               </ul>
@@ -123,7 +123,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           <h2 className="pq-kicker">YOUR CLUBS</h2>
           <section className="section" aria-label="Your clubs" style={{ gap: 10 }}>
             {signedIn.clubs.length === 0 && (
-              <div className="pq-info"><span>You’re not in a club yet. Create your club and set up a tournament (PaddleQ approves it before it goes live), or open the invite link your club sent you.</span></div>
+              <div className="pq-info"><span>You’re not in a club yet. Create your club and set up a tournament (RallyQ approves it before it goes live), or open the invite link your club sent you.</span></div>
             )}
             {signedIn.clubs.map(({ club, role }) => (
               <button key={club.id} type="button" className="pq-club" onClick={() => go('club-view', club.id)}>
@@ -195,10 +195,10 @@ async function nextTournament(b: ClubBackend, clubs: MyClub[]): Promise<NextT | 
   return { ...all[0], access: await b.tournamentAccess(all[0].t.id).catch(() => null) };
 }
 
-/** Admin home: every club on PaddleQ with its logo and approval state. Own clubs open their page; others the admin view. */
+/** Admin home: every club on RallyQ with its logo and approval state. Own clubs open their page; others the admin view. */
 function AllClubs({ all, mine, go }: { all: AdminClub[]; mine: Set<string>; go: Go }) {
   return (
-    <section className="section" aria-label="All clubs on PaddleQ" style={{ gap: 10 }}>
+    <section className="section" aria-label="All clubs on RallyQ" style={{ gap: 10 }}>
       <h2 className="pq-kicker">ALL CLUBS ON PADDLEQ ({all.length})</h2>
       {all.map((c) => (
         <button key={c.id} type="button" className="pq-club" onClick={() => go(mine.has(c.id) ? 'club-view' : 'admin-club', c.id)}>
@@ -259,7 +259,7 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
         <div className="pq-next-meta">{when}{t.startTime ? ` · ${friendlyTime(t.startTime)}` : ''} · {t.courts} court{t.courts === 1 ? '' : 's'}</div>
       </div>
       <div className="pq-next-actions">
-        {!isApproved(t) && <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-tournament', t.id)}>{t.approval === 'submitted' ? 'Waiting for PaddleQ' : 'Submit for approval'}</button>}
+        {!isApproved(t) && <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-tournament', t.id)}>{t.approval === 'submitted' ? 'Waiting for RallyQ' : 'Submit for approval'}</button>}
         {isApproved(t) && <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-desk', t.id)}>{icon('M3 4h18v12H3zM8 20h8M12 16v4')}Desk</button>}
         <button type="button" className="pq-next-btn" onClick={() => go('club-inbox', t.id)}>{icon('M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M17 11h5M19.5 8.5v5')}Entries</button>
         {isApproved(t) && <button type="button" className="pq-next-btn" onClick={() => go('club-scorers', t.id)}>{icon('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7')}Referee links</button>}
@@ -273,7 +273,7 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
 
 /** The demo club on this phone (opened from the admin dashboard): made-up players, nothing sent anywhere. */
 /**
- * The demo is for PaddleQ admins (Vineeth's decision, 31 Oct 2026): Admin → Overview → Open the demo club. Anyone else opening
+ * The demo is for RallyQ admins (Vineeth's decision, 31 Oct 2026): Admin → Overview → Open the demo club. Anyone else opening
  * #/demo is told so. It's a product choice, not a security line: the demo only ever lives on the phone that opens it. The test robot
  * (and local test builds with no club server) may open it; the robot sets a switch in the phone's storage.
  */
@@ -295,8 +295,8 @@ export function DemoStart({ go, onBack }: { go: Go; onBack: () => void }) {
       <main className="screen" aria-labelledby="demo-title">
         <Header id="demo-title" title="Demo club" onBack={onBack} />
         <section className="card section" aria-label="Demo club">
-          <p style={{ margin: 0 }}>The demo club is for PaddleQ admins.</p>
-          <p className="small muted" style={{ margin: 0 }}>Running a tournament? Sign in and create your club; PaddleQ will help you set up your first event.</p>
+          <p style={{ margin: 0 }}>The demo club is for RallyQ admins.</p>
+          <p className="small muted" style={{ margin: 0 }}>Running a tournament? Sign in and create your club; RallyQ will help you set up your first event.</p>
           <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in</button>
           <button type="button" className="btn btn-outline" onClick={() => go('events')}>See events</button>
         </section>
@@ -313,7 +313,7 @@ export function DemoStart({ go, onBack }: { go: Go; onBack: () => void }) {
     <main className="screen" aria-labelledby="demo-title">
       <Header id="demo-title" title="Demo club" onBack={onBack} />
       <section className="card section" aria-label="Demo club">
-        <p className="small muted" style={{ margin: 0 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone, for showing PaddleQ to clubs and for practice. Close it from My club when you’re done.</p>
+        <p className="small muted" style={{ margin: 0 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone, for showing RallyQ to clubs and for practice. Close it from My club when you’re done.</p>
         <label className="label" htmlFor="demo-name">Your name in the demo</label>
         <input id="demo-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="You" maxLength={40} />
         {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
@@ -339,7 +339,7 @@ function JoinByLink({ go }: { go: Go }) {
 type SignInStep = 'signin' | 'signup' | 'confirm' | 'forgot' | 'reset';
 
 /** Organisers and admins: email + password (at least 8 characters). New accounts confirm their email with a 6-digit
- * code; "Forgot password" sends a code too. `admin` is the PaddleQ admin sign-in page: no new accounts, and it only
+ * code; "Forgot password" sends a code too. `admin` is the RallyQ admin sign-in page: no new accounts, and it only
  * lets platform admins through to the admin dashboard. */
 export function ClubSignIn({ go, onBack, admin = false, landing = false, onSignedIn }: { go: Go; onBack: () => void; admin?: boolean; landing?: boolean; onSignedIn?: () => void }) {
   const [step, setStep] = useState<SignInStep>('signin');
@@ -356,7 +356,7 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
     setClubMode('server');
     if (admin) {
       const ok = await b?.isPlatformAdmin().catch(() => false);
-      if (!ok) { await b?.signOut(); setMsg({ ok: false, text: 'This account isn’t a PaddleQ admin. Organisers sign in on the normal sign-in page.' }); return; }
+      if (!ok) { await b?.signOut(); setMsg({ ok: false, text: 'This account isn’t a RallyQ admin. Organisers sign in on the normal sign-in page.' }); return; }
       go('admin', 'overview', { replace: true });
       return;
     }
@@ -442,7 +442,7 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
       <label className="pq-label" htmlFor="pq-code">6-digit code</label>
       <input id="pq-code" className="input pq-input pq-code" inputMode="numeric" autoComplete="one-time-code" maxLength={7} placeholder="••••••" value={code}
         onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, ''))} onKeyDown={enter(onEnter)} />
-      <span className="small muted">From PaddleQ &lt;hello@paddleq.in&gt;. Works for one hour.</span>
+      <span className="small muted">From RallyQ &lt;hello@paddleq.in&gt;. Works for one hour.</span>
     </div>
   );
   const message = msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>;
@@ -461,9 +461,9 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
   return (
     <main className="screen pq-screen" aria-labelledby="signin-title">
       {step === 'signin' && (admin
-        ? <FlowHeader title="PaddleQ admin" sub="For PaddleQ admins only." onBack={onBack} />
+        ? <FlowHeader title="RallyQ admin" sub="For RallyQ admins only." onBack={onBack} />
         : landing ? <LandingHero /> : <FlowHeader title="Sign in" sub="For clubs and organisers." onBack={onBack} />)}
-      {step === 'signup' && <FlowHeader title="Create your account" sub="Run your club’s tournaments on PaddleQ." onBack={back} step={1} />}
+      {step === 'signup' && <FlowHeader title="Create your account" sub="Run your club’s tournaments on RallyQ." onBack={back} step={1} />}
       {step === 'confirm' && <FlowHeader title="Check your email" sub={<>We sent a 6-digit code to <b>{email.trim()}</b></>} onBack={back} step={2} />}
       {(step === 'forgot' || step === 'reset') && <FlowHeader title="Reset your password" sub={step === 'forgot' ? 'We’ll email you a 6-digit code.' : <>We sent a code to <b>{email.trim()}</b></>} onBack={back} />}
       {!b && <div role="alert" className="msg msg-bad">The club server isn’t set up in this version.</div>}
@@ -492,7 +492,7 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
           {primary('Sign in', 'Signing in…', signIn)}
           {!admin && (
             <>
-              <div className="pq-or">New to PaddleQ?</div>
+              <div className="pq-or">New to RallyQ?</div>
               <button type="button" className="btn btn-outline pq-big" onClick={() => to('signup')}>Create an account</button>
             </>
           )}
@@ -508,7 +508,7 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
           {primary('Create account', 'Creating…', signUp)}
           <div className="pq-info">
             <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
-            <span>We email you a 6-digit code to confirm it’s really you. Then create your club and prepare a tournament. PaddleQ approves each tournament before it goes live; trusted clubs skip that step.</span>
+            <span>We email you a 6-digit code to confirm it’s really you. Then create your club and prepare a tournament. RallyQ approves each tournament before it goes live; trusted clubs skip that step.</span>
           </div>
           <p className="pq-note">Already have an account? {textLink('Sign in', back)}</p>
         </>
@@ -648,7 +648,7 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
       <Field label="Your name"><input className="input" aria-label="Your name" value={me} onChange={(e) => setMe(e.target.value)} maxLength={60} /></Field>
       <PhoneField country={country} digits={digits} onChange={(c, d) => { setCountry(c); setDigits(d); }} />
       <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} placeholder="Where you play, how many courts, tournaments you plan" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
-      <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. Set up tournaments straight away; PaddleQ approves each one before it goes live, and may call or WhatsApp you on this number.</p>
+      <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. Set up tournaments straight away; RallyQ approves each one before it goes live, and may call or WhatsApp you on this number.</p>
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
       <button type="button" className="btn btn-primary" disabled={busy} onClick={create}>Create club</button>
     </main>
@@ -679,8 +679,8 @@ export function ClubJoin({ code, go, onBack }: { code: string; go: Go; onBack: (
     <main className="screen" aria-labelledby="join-title">
       <Header id="join-title" title="Join a club" onBack={onBack} />
       <section className="card section">
-        <p style={{ margin: 0 }}>You’ve been invited to join a club in PaddleQ.</p>
-        <p className="small muted" style={{ margin: 0 }}>Joining shares your name and the club matches you play with that club. Your personal PaddleQ stays private unless you choose to share parts of it.</p>
+        <p style={{ margin: 0 }}>You’ve been invited to join a club in RallyQ.</p>
+        <p className="small muted" style={{ margin: 0 }}>Joining shares your name and the club matches you play with that club. Your personal RallyQ stays private unless you choose to share parts of it.</p>
       </section>
       {user.data === null && !user.loading && (server
         ? <button type="button" className="btn btn-primary" onClick={signInFirst}>Sign in to join</button>

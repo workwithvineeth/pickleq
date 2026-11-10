@@ -1,4 +1,4 @@
-/** Password rules and plain-English sign-in messages for PaddleQ accounts (organisers and admins). */
+/** Password rules and plain-English sign-in messages for RallyQ accounts (organisers and admins). */
 
 export const MIN_PASSWORD = 8;
 
@@ -45,7 +45,7 @@ export function authMessage(raw: string): string {
   if (/password should be at least|weak password|password.*(short|length)/.test(m)) return `Use at least ${MIN_PASSWORD} characters`;
   if (/should be different from the old/.test(m)) return 'Choose a password different from your old one.';
   if (/rate limit|too many|only request this after/.test(m)) return 'Too many tries just now. Wait a minute, then try again.';
-  if (/signups not allowed|signup is disabled/.test(m)) return 'New accounts are switched off just now. Ask PaddleQ for help.';
+  if (/signups not allowed|signup is disabled/.test(m)) return 'New accounts are switched off just now. Ask RallyQ for help.';
   if (/fetch|network/.test(m)) return 'No connection to the club server. Check your internet and try again.';
   return raw;
 }

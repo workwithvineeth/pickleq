@@ -40,7 +40,7 @@ describe('Club mode', () => {
     vi.stubEnv('VITE_CLUB', '');
     window.location.hash = '#/club';
     render(<App />);
-    expect(await screen.findByRole('heading', { name: 'PICKLEQ' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'RallyQ' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Club/ })).not.toBeInTheDocument();
   });
 
@@ -48,7 +48,7 @@ describe('Club mode', () => {
     const user = userEvent.setup();
     window.location.hash = '#/home';
     render(<App />);
-    const header = (await screen.findByRole('heading', { name: 'PICKLEQ' })).closest('header') as HTMLElement;
+    const header = (await screen.findByRole('heading', { name: 'RallyQ' })).closest('header') as HTMLElement;
     await user.click(await within(header).findByRole('button', { name: 'Club' }));
     expect(await screen.findByRole('button', { name: 'Open PQ Demo Club' })).toBeInTheDocument();
   });
@@ -199,7 +199,7 @@ describe('Club mode', () => {
     await openDemo(user);
     window.location.hash = '#/results/pq-demo-open';
     await screen.findByRole('heading', { name: 'PQ Demo Open' });
-    expect(screen.getByRole('link', { name: /PaddleQ: live scores/ })).toHaveAttribute('href', 'https://paddleq.in/');
+    expect(screen.getByRole('link', { name: /RallyQ: live scores/ })).toHaveAttribute('href', 'https://paddleq.in/');
     expect(screen.getByText(/run your club’s tournament at paddleq.in/)).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Pool A' })).toBeInTheDocument();
     expect(screen.queryByText(/DUPR/)).not.toBeInTheDocument();

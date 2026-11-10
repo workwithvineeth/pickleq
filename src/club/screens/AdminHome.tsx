@@ -23,7 +23,7 @@ export function AdminCommandCentre({ go }: { go: Go }) {
   return (
     <div className="pq-dash">
       <Intro kicker="Platform admin"
-        sub="Approvals, clubs, tournaments, match day and results across PaddleQ, in one place."
+        sub="Approvals, clubs, tournaments, match day and results across RallyQ, in one place."
         action={<button type="button" className="btn btn-primary" onClick={() => go('admin', 'approvals')}>Review approvals{waiting.length ? ` (${waiting.length})` : ''}</button>} />
       <Status error={state.error} loading={state.loading && !d} />
       {d && <>

@@ -9,7 +9,7 @@ export const deskLink = (token: string) => appLink(`#/desk/${token}`);
 type Which = 'referee' | 'desk';
 
 /**
- * The tournament's two ways in, for organisers and PaddleQ admins: the referee PIN (court links only) and the desk link + desk PIN
+ * The tournament's two ways in, for organisers and RallyQ admins: the referee PIN (court links only) and the desk link + desk PIN
  * (this tournament's desk only, never the referee PIN). Each PIN can be typed or made new.
  */
 export function AccessCards({ b, tournamentId, name, finished }: { b: ClubBackend; tournamentId: string; name: string; finished?: boolean }) {

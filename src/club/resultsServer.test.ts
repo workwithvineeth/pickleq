@@ -9,8 +9,8 @@ describe('server results projection and saving', () => {
     fake.rpc.mockResolvedValue({ error: null, data: { ok: true } });
     await b.adminUpdateTournamentDupr('event', 'player', { duprSingles: 3.45 });
     expect(fake.rpc).toHaveBeenCalledWith('admin_update_tournament_dupr', { p_tournament: 'event', p_player: 'player', p_patch: { duprSingles: 3.45 } });
-    fake.rpc.mockResolvedValue({ error: null, data: { error: 'Only PaddleQ admins can do this' } });
-    await expect(b.adminUpdateTournamentDupr('event', 'player', { duprId: 'ABC123' })).rejects.toThrow('Only PaddleQ admins');
+    fake.rpc.mockResolvedValue({ error: null, data: { error: 'Only RallyQ admins can do this' } });
+    await expect(b.adminUpdateTournamentDupr('event', 'player', { duprId: 'ABC123' })).rejects.toThrow('Only RallyQ admins');
   });
   it('maps a platform-admin projection as read only without private fields', async () => {
     fake.rpc.mockResolvedValue({ error: null, data: {
