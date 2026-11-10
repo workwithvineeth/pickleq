@@ -19,3 +19,8 @@
 @media (prefers-reduced-motion:reduce){.pq-score-flash,[class*='pq-score']{animation:none!important;transition:none!important}}
 .rallyq-screen-main .rq section.sec{overflow-x:clip}
 .rallyq-prototype .rq .chip{white-space:nowrap}
+
+/* Meera photo: slow drift inside its card (never steps out) */
+@keyframes rqDrift{from{background-position:50% 18%}to{background-position:50% 42%}}
+.rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:rqDrift 12s ease-in-out infinite alternate}
+@media (prefers-reduced-motion:reduce){.rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:none}}
