@@ -69,5 +69,5 @@ export function RallyEvent({slug,go}:{slug:string;go:Go}){
  const scores=usePublicScores(state.data?.event.drawn||state.data?.event.results?slug:'');
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>{state.loading?'Loading event…':state.error??'This event could not be found.'}</div>;
  const e=state.data.event;
- return <PrototypeScreen name="Event" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,()=>e.registrationOpen?go('event-enter',slug):go('live'))}/>;
+ return <PrototypeScreen name="Event" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,()=>e.registrationOpen?go('event-enter',e.divisions.length===1?slug+'~'+e.divisions[0].id:slug):go('live'))}/>;
 }

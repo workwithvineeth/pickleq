@@ -249,6 +249,10 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   const found = state.data?.found;
   const e = found?.event;
   const d = e?.divisions.find((x) => x.id === divId);
+  if (e && !divId && e.registrationOpen) return <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
+    <Header id="enter-title" title="Choose your category" onBack={onBack}/>
+    <p>{e.name}</p><section className="card section" aria-label="Event categories">{e.divisions.map(category=><button type="button" key={category.id} className="btn btn-outline" onClick={()=>go('event-enter',slug+'~'+category.id)}>Enter {category.name}</button>)}</section>
+  </main>;
   if (!found || !e || !d) {
     return (
       <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
