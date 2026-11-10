@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Club logo system</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0}
+.d{font-family:'Archivo','Arial Narrow',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.92;margin:0}
+.n{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;line-height:1}
+.cap{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.word{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.02em}
+.night{background:url(/_blob/45301c98dc20f6fd79377a172af16957) center/cover}
+.slot{background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;position:relative;box-shadow:0 0 0 1px rgba(11,36,24,.2)}
+.slot i{position:absolute;inset:5px;border:1.5px dashed rgba(11,36,24,.35);border-radius:inherit}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div style="width:1440px;height:1180px;box-sizing:border-box;background:#06140D;color:#F1F4EA;font-family:'DM Sans',sans-serif;padding:36px 48px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:40px">
+<div><div class="cap" style="color:#D9F24A">Club logo system</div><div class="d" style="font-size:44px;margin-top:8px">The club is the host. RallyQ signs off.</div></div>
+<div style="font-size:13px;color:#9FB4A6;max-width:480px;text-align:right">Dashed squares = where each club's real logo goes. We have no logo files yet, so the prototype shows initials. Same rule everywhere: club logo first and bigger, “Hosted by”, RallyQ small at the end.</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+<div style="background:#0D2218;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
+<div class="cap" style="color:#9FB4A6">1 · The logo tile</div>
+<div style="display:flex;gap:14px;align-items:flex-end">
+<div class="slot" style="width:96px;height:96px;border-radius:24px;font-size:26px"><i></i>LP</div>
+<div class="slot" style="width:64px;height:64px;border-radius:16px;font-size:18px"><i></i>LP</div>
+<div class="slot" style="width:40px;height:40px;border-radius:10px;font-size:12px"><i></i>LP</div>
+<div class="slot" style="width:24px;height:24px;border-radius:6px;font-size:8px">LP</div>
+</div>
+<div style="font-size:13px;color:#C9D6CC">Logo always sits on a chalk tile, so any colour logo works on our dark green. Square, rounded. No logo yet? Club initials in the same tile.</div>
+</div>
+<div style="background:#0D2218;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
+<div class="cap" style="color:#9FB4A6">2 · The lock-up</div>
+<div style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:#133022">
+<div class="slot" style="width:56px;height:56px;border-radius:14px;font-size:16px"><i></i>LP</div>
+<div style="flex:1"><div style="font-size:11px;color:#9FB4A6;letter-spacing:.12em;text-transform:uppercase;font-weight:800">Hosted by</div><div style="font-weight:800;font-size:18px">Loki’s Pickleball Club</div></div>
+<div style="display:flex;align-items:center;gap:6px;color:#9FB4A6"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:18px;height:18px"><use href="#fq"></use></svg><span class="word" style="font-size:14px">RallyQ</span></div>
+</div>
+<div style="font-size:13px;color:#C9D6CC">Club logo is always at least 2.5× the RallyQ mark. RallyQ never goes above or before the club.</div>
+</div>
+<div style="background:#0D2218;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
+<div class="cap" style="color:#9FB4A6">3 · Sizes per screen</div>
+<div style="display:grid;grid-template-columns:1fr auto;gap:8px 16px;font-size:14px">
+<span>Venue TV board</span><b class="n" style="font-size:20px">96 px</b>
+<span>Event page, posters</span><b class="n" style="font-size:20px">64 px</b>
+<span>Organiser menu, desk</span><b class="n" style="font-size:20px">40 px</b>
+<span>Live score cards, lists</span><b class="n" style="font-size:20px">24 px</b>
+</div>
+<div style="font-size:13px;color:#C9D6CC">Clubs upload one square logo in their settings. We make every size from it.</div>
+</div>
+</div>
+
+<div class="cap" style="color:#9FB4A6">Where the club shows up</div>
+<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;flex:1;min-height:0">
+
+<div style="border-radius:22px;overflow:hidden;background:#06140D;box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;gap:14px;align-items:center"><div class="slot" style="width:96px;height:96px;border-radius:24px;font-size:26px"><i></i>R33</div><div><div class="cap" style="color:#9FB4A6">Hosted by Rally33 at Crosscourts</div><div class="d" style="font-size:40px;margin-top:4px">Rally33 Open</div></div></div><span style="font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;background:#FF655C;color:#1A0603">● LIVE</span></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;flex:1">
+<div style="background:#0D2218;border-radius:14px;padding:12px"><div class="cap" style="color:#9FB4A6">Court 1</div><div class="n" style="font-size:40px;color:#D9F24A;margin-top:8px">10–10</div></div>
+<div style="background:#0D2218;border-radius:14px;padding:12px"><div class="cap" style="color:#9FB4A6">Court 2</div><div class="n" style="font-size:40px;margin-top:8px">7–5</div></div>
+</div>
+<div class="cap" style="color:#D9F24A">TV board · logo 96 px, top left</div>
+</div>
+
+<div class="night" style="border-radius:22px;overflow:hidden;position:relative;padding:18px;display:flex;flex-direction:column;justify-content:space-between">
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,20,13,.3),rgba(6,20,13,.92))"></div>
+<div style="position:relative;display:flex;gap:10px;align-items:center"><div class="slot" style="width:64px;height:64px;border-radius:16px;font-size:18px"><i></i>EP</div><div><div style="font-size:10px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;color:#C9D6CC">Hosted by</div><div style="font-weight:800;font-size:17px">ElitePicklers</div></div></div>
+<div style="position:relative"><div class="cap" style="color:#C9D6CC">Champions</div><div class="d" style="font-size:36px;margin-top:4px">Kavya and Arjun</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><span class="n" style="font-size:28px;color:#E8C35A">11–7 · 11–9</span><span style="display:flex;align-items:center;gap:5px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A;width:16px;height:16px"><use href="#fq"></use></svg><span class="word" style="font-size:13px">RallyQ</span></span></div></div>
+<div class="cap" style="position:relative;color:#D9F24A;margin-top:8px">Poster · logo 64 px</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="background:#0D2218;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:#FF655C;color:#1A0603">● LIVE</span><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#9FB4A6"><span class="slot" style="width:24px;height:24px;border-radius:6px;font-size:8px">TPC</span>TPC Narapally</span></div>
+<div style="display:flex;justify-content:space-between"><b>Mohan / Ravi</b><span class="n" style="font-size:24px;color:#D9F24A">6</span></div>
+<div style="display:flex;justify-content:space-between;color:#9FB4A6"><span>Suresh / Prem</span><span class="n" style="font-size:24px;color:#F1F4EA">6</span></div>
+<div class="cap" style="color:#D9F24A">Live card · 24 px</div>
+</div>
+<div style="background:#091A11;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;flex:1">
+<div style="display:flex;align-items:center;gap:10px"><div class="slot" style="width:40px;height:40px;border-radius:10px;font-size:12px"><i></i>PY</div><div><b>Pickleyard</b><div style="font-size:12px;color:#9FB4A6">Malkajgiri</div></div></div>
+<div style="font-size:13px;color:#9FB4A6">Home · Tournament desk · Events · Social studio</div>
+<div class="cap" style="color:#D9F24A">Organiser menu · 40 px</div>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My Player Studio</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#020A06}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="rq" style="background:#020A06">
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a class="on" href="MyStudio.dc.html">My Player Studio</a><a href="Overview.dc.html">Organiser</a><a href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a href="Social.dc.html">Social</a><a href="Admin.dc.html">Admin</a></div></nav>
+
+<div style="max-width:1440px;margin:0 auto;width:100%;box-sizing:border-box;padding:18px max(16px,1.6vw) 32px;display:flex;flex-direction:column;gap:14px">
+<div class="between">
+<a class="brand" href="Main.dc.html"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A;width:26px;height:26px"><use href="#fq"></use></svg><span class="word" style="font-size:22px">RallyQ</span><span class="cap" style="margin-left:8px">My Player Studio · private</span></a>
+<div class="row" style="flex-wrap:wrap;gap:6px"><span class="cap" style="margin-right:4px">Show</span><sc-for list="{{scopes}}" as="s" hint-placeholder-count="3"><button class="{{s.cls}}" onClick="{{s.pick}}">{{s.name}}</button></sc-for></div>
+<a class="tlink" href="Studio.dc.html">View my public profile ↗</a>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px">
+
+<section style="background:#0D2218;border-radius:28px;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:820px;box-sizing:border-box">
+<div style="display:flex;gap:6px;flex-wrap:wrap" role="tablist" aria-label="Studio features"><sc-for list="{{feats}}" as="f" hint-placeholder-count="6"><button role="tab" class="{{f.cls}}" onClick="{{f.pick}}">{{f.name}}</button></sc-for></div>
+<div><div class="cap">{{matchLabel}}</div><div class="disp" style="font-size:36px;margin-top:6px">Match overview</div></div>
+<div style="display:flex;gap:6px;justify-content:center"><sc-for list="{{games}}" as="g" hint-placeholder-count="3"><button class="{{g.cls}}" style="{{g.w}}" onClick="{{g.pick}}">{{g.label}}</button></sc-for></div>
+<div style="display:flex;gap:12px;align-items:stretch;flex:1;min-height:380px">
+<div style="display:flex;flex-direction:column;justify-content:space-around;font-size:12px;color:#9FB4A6;text-align:right;width:66px"><div><b class="n" style="font-size:22px;color:#F1F4EA">{{g.srv}}</b><br>won on serve</div><div><b class="n" style="font-size:22px;color:#F1F4EA">{{g.ret}}</b><br>won returning</div></div>
+<div style="flex:1;border-radius:16px;background:#2B6E4B;position:relative;box-shadow:inset 0 0 0 3px #F1F4EA">
+<div style="position:absolute;left:0;right:0;top:50%;height:3px;background:#F1F4EA"></div>
+<div style="position:absolute;left:0;right:0;top:36%;height:2px;background:rgba(241,244,234,.8)"></div>
+<div style="position:absolute;left:0;right:0;top:64%;height:2px;background:rgba(241,244,234,.8)"></div>
+<div style="position:absolute;left:50%;top:0;height:36%;width:2px;background:rgba(241,244,234,.8)"></div>
+<div style="position:absolute;left:50%;bottom:0;height:36%;width:2px;background:rgba(241,244,234,.8)"></div>
+<div style="position:absolute;left:8px;top:39%;font-size:10px;font-weight:800;letter-spacing:.12em;color:#DDEBDF">KITCHEN</div>
+<sc-for list="{{g.runs}}" as="r" hint-placeholder-count="4"><div style="{{r.style}}"></div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;justify-content:space-around;font-size:12px;color:#9FB4A6;width:66px"><div><b class="n" style="font-size:22px;color:#F1F4EA">{{g.run}}</b><br>longest run</div><div><b class="n" style="font-size:22px;color:#F1F4EA">{{g.so}}</b><br>side-outs</div></div>
+</div>
+<div style="background:#133022;border-radius:18px;padding:14px 16px" class="between"><div><div style="font-size:12px;color:#9FB4A6">Games</div><div class="n" style="font-size:32px;margin-top:4px">{{scoreLine}}</div></div><span class="{{srcChip}}">{{srcLabel}}</span></div>
+<div style="font-size:11px;color:#9FB4A6">Dots = scoring runs by phase of the game. Court position needs the live stream, coming later.</div>
+</section>
+
+<section class="photo ph-woman" style="border-radius:28px;display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:820px;color:#F1F4EA;box-sizing:border-box">
+<div class="between"><span class="chip ball">DUPR 4.62 ▲ 0.18</span><span class="chip" style="background:rgba(6,20,13,.7)">Hyderabad #14</span></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="disp" style="font-size:clamp(44px,4.2vw,58px)">Kiran Reddy</div>
+<div style="color:#DDE7DC;font-size:14px">Right side · Two-handed backhand · Loki’s Pickleball Club</div>
+<div style="background:rgba(6,20,13,.75);border-radius:16px;padding:12px 14px">
+<div class="between"><span class="cap">Rating over time</span><span style="font-size:12px;color:#9FB4A6">tournaments only</span></div>
+<svg viewBox="0 0 300 64" aria-hidden="true" style="width:100%;height:64px;margin-top:6px"><path d="M0 54 L30 50 L60 52 L90 44 L120 40 L150 42 L180 32 L210 27 L240 29 L270 18 L300 12 L300 64 L0 64Z" fill="rgba(217,242,74,.12)"></path><path d="M0 54 L30 50 L60 52 L90 44 L120 40 L150 42 L180 32 L210 27 L240 29 L270 18 L300 12" fill="none" stroke="#D9F24A" stroke-width="3"></path></svg>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<div style="background:rgba(6,20,13,.75);border-radius:14px;padding:10px"><div class="n" style="font-size:26px">38</div><div style="font-size:11px;color:#9FB4A6">tournament</div></div>
+<div style="background:rgba(6,20,13,.75);border-radius:14px;padding:10px"><div class="n" style="font-size:26px">{{practiceCount}}</div><div style="font-size:11px;color:#9FB4A6">practice</div></div>
+<div style="background:rgba(6,20,13,.75);border-radius:14px;padding:10px"><div class="n" style="font-size:26px">{{hours}} h</div><div style="font-size:11px;color:#9FB4A6">training · Nov</div></div>
+</div>
+<div class="between"><button class="btn sm" style="background:#F1F4EA" onClick="{{prev}}">← Previous</button><span style="font-size:12px;color:#C9D6CC">Match {{gameNo}} of {{total}}</span><button class="btn sm" onClick="{{next}}">Next →</button></div>
+</div>
+</section>
+
+<section style="background:#F1F4EA;color:#0B2418;border-radius:28px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:820px;box-sizing:border-box">
+
+<sc-if value="{{is.Overview}}" hint-placeholder-val="{{ true }}">
+<div class="disp" style="font-size:32px">Your numbers</div>
+<div style="background:#FFFFFF;border-radius:20px;padding:14px 16px">
+<div class="between"><div><span class="n" style="font-size:40px">{{serve}}</span> <span style="font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:#0B2418;color:#D9F24A">+6%</span></div><span style="font-size:12px;color:#4A5D50">points won on serve · {{scopeLabel}}</span></div>
+<div style="display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:10px"><sc-for list="{{bars}}" as="b" hint-placeholder-count="12"><i style="{{b}}"></i></sc-for></div>
+<div class="between" style="font-size:11px;color:#4A5D50;margin-top:6px"><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span></div>
+</div>
+<div style="font-size:14px"><div class="between" style="padding:9px 0;border-bottom:1px solid rgba(11,36,24,.12)"><span>Comebacks from 5+ down</span><b>4</b></div><div class="between" style="padding:9px 0;border-bottom:1px solid rgba(11,36,24,.12)"><span>Longest win streak</span><b>9</b></div><div class="between" style="padding:9px 0"><span>Rival · Varun / Neel</span><b>You lead 3–2</b></div></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px"><div style="background:#2B6E4B;color:#FFFFFF;border-radius:18px;padding:14px"><div style="font-size:12px">Deciding games</div><div class="n" style="font-size:34px;margin-top:8px">5–1</div><div style="font-size:11px;color:#DDEBDF">won in game 3</div></div><div style="background:#FFFFFF;border-radius:18px;padding:14px"><div style="font-size:12px">Closing it out</div><div class="n" style="font-size:34px;margin-top:8px">82%</div><div style="font-size:11px;color:#4A5D50">wins from 10 points</div></div></div>
+<div class="between"><b>Things to work on</b><span style="font-size:12px;color:#4A5D50">practice and tournaments</span></div>
+<div class="photo ph-ball" style="flex:1;border-radius:18px;min-height:110px;padding:14px;color:#F1F4EA;font-size:13px;font-weight:600;display:flex;align-items:flex-end">Receiving side loses 3 in a row most often in game 2. Slow the start.</div>
+</sc-if>
+
+<sc-if value="{{is.Log}}" hint-placeholder-val="{{ false }}">
+<div class="disp" style="font-size:32px">Log a session</div>
+<div class="cap" style="color:#4A5D50">What did you do?</div>
+<div class="row" style="flex-wrap:wrap;gap:6px"><sc-for list="{{types}}" as="t" hint-placeholder-count="3"><button class="btn sm" style="{{t.style}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div>
+<div class="cap" style="color:#4A5D50;margin-top:6px">{{logQ}}</div>
+<div style="min-height:48px;border-radius:14px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);display:flex;align-items:center;padding:0 14px;font-weight:700;font-size:18px">{{logValue}}</div>
+<div class="cap" style="color:#4A5D50;margin-top:6px">Worked on</div>
+<div class="row" style="flex-wrap:wrap;gap:6px"><sc-for list="{{focus}}" as="f" hint-placeholder-count="4"><button class="btn sm" style="{{f.style}}" onClick="{{f.pick}}">{{f.name}}</button></sc-for></div>
+<div class="cap" style="color:#4A5D50;margin-top:6px">How did it feel?</div>
+<div class="row" style="gap:6px"><sc-for list="{{feel}}" as="f" hint-placeholder-count="5"><button class="btn sm" style="{{f.style}}" onClick="{{f.pick}}">{{f.n}}</button></sc-for></div>
+<button class="btn" style="background:#0B2418;color:#D9F24A!important;margin-top:auto" onClick="{{saveLog}}">{{saveLabel}}</button>
+<div style="font-size:12px;color:#4A5D50">Saved sessions are tagged “self-logged”. They never change your rating.</div>
+</sc-if>
+
+<sc-if value="{{is.Compare}}" hint-placeholder-val="{{ false }}">
+<div class="disp" style="font-size:32px">Practice vs tournament</div>
+<sc-for list="{{compare}}" as="c" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:6px;background:#FFFFFF;border-radius:16px;padding:12px 14px">
+<div class="between" style="font-size:13px"><b>{{c.label}}</b><span style="color:#4A5D50">{{c.note}}</span></div>
+<div style="display:grid;grid-template-columns:84px 1fr 44px;gap:8px;align-items:center;font-size:12px;color:#4A5D50"><span>Tournament</span><div style="height:10px;border-radius:99px;background:#DCE5DD;overflow:hidden"><i style="{{c.tBar}}"></i></div><b class="n" style="font-size:18px;color:#0B2418">{{c.t}}</b></div>
+<div style="display:grid;grid-template-columns:84px 1fr 44px;gap:8px;align-items:center;font-size:12px;color:#4A5D50"><span>Practice</span><div style="height:10px;border-radius:99px;background:#DCE5DD;overflow:hidden"><i style="{{c.pBar}}"></i></div><b class="n" style="font-size:18px;color:#0B2418">{{c.p}}</b></div>
+</div>
+</sc-for>
+<div style="background:#2B6E4B;color:#FFFFFF;border-radius:18px;padding:14px;font-size:14px;line-height:1.5;margin-top:auto"><b style="color:#E4F75A">Pressure gap.</b> You win 74% on serve in practice but 68% in tournaments. The drop starts at 9 points.</div>
+</sc-if>
+
+<sc-if value="{{is.Diary}}" hint-placeholder-val="{{ false }}">
+<div class="between"><div class="disp" style="font-size:32px">Diary</div><span style="font-size:12px;color:#4A5D50">{{scopeLabel}}</span></div>
+<sc-for list="{{diary}}" as="e" hint-placeholder-count="6">
+<div style="background:#FFFFFF;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+<div class="between"><span style="{{e.tag}}">{{e.kind}}</span><span style="font-size:12px;color:#4A5D50">{{e.d}}</span></div>
+<div class="between"><b style="font-size:14px">{{e.what}}</b><span class="n" style="font-size:20px">{{e.score}}</span></div>
+<div style="{{e.src}}">{{e.srcLabel}}</div>
+</div>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{is.Goals}}" hint-placeholder-val="{{ false }}">
+<div class="disp" style="font-size:32px">Goals and coach</div>
+<div style="background:#FFFFFF;border-radius:18px;padding:14px"><div class="between"><b>November goal</b><span class="n" style="font-size:22px">{{goalDone}} / 4</span></div><div style="font-size:13px;color:#4A5D50;margin-top:4px">Four practice sessions on third-shot drops</div><div style="height:8px;border-radius:99px;background:#DCE5DD;margin-top:8px;overflow:hidden"><i style="{{goalBar}}"></i></div></div>
+<div style="background:#FFFFFF;border-radius:18px;padding:14px"><div class="between"><b>Get to DUPR 4.75</b><span class="n" style="font-size:22px">4.62</span></div><div style="font-size:13px;color:#4A5D50;margin-top:4px">Tournament matches only · by 31 Dec</div><div style="height:8px;border-radius:99px;background:#DCE5DD;margin-top:8px;overflow:hidden"><i style="display:block;height:100%;width:60%;background:#2B6E4B;border-radius:99px"></i></div></div>
+<div style="background:#2B6E4B;color:#FFFFFF;border-radius:18px;padding:14px"><div class="between"><span class="cap" style="color:#E4F75A">Coach note</span><span style="font-size:11px;color:#DDEBDF">Coach Suresh · 8 Nov</span></div><div style="font-size:14px;line-height:1.5;margin-top:6px">Stay back one more ball after the serve. Your drops land when you are set, not running.</div></div>
+<div class="cap" style="color:#4A5D50">Badges</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><div style="background:#FFFFFF;border-radius:14px;padding:12px;text-align:center"><div class="n" style="font-size:26px;color:#2B6E4B">9</div><div style="font-size:11px;color:#4A5D50">wins in a row</div></div><div style="background:#FFFFFF;border-radius:14px;padding:12px;text-align:center"><div class="n" style="font-size:26px;color:#2B6E4B">5</div><div style="font-size:11px;color:#4A5D50">venues played</div></div><div style="background:#E8C35A;border-radius:14px;padding:12px;text-align:center"><div class="n" style="font-size:26px;color:#2A1D00">QF</div><div style="font-size:11px;color:#2A1D00">best finish</div></div></div>
+</sc-if>
+
+<sc-if value="{{is.Sharing}}" hint-placeholder-val="{{ false }}">
+<div class="disp" style="font-size:32px">Who sees what</div>
+<div style="font-size:13px;color:#4A5D50">Tournament results are always public. Everything else stays private until you switch it on.</div>
+<div class="between" style="padding:10px 0;border-bottom:1px solid rgba(11,36,24,.12);font-size:14px"><span>Tournament matches, rating, ranking</span><span style="font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:#DCE5DD">ALWAYS PUBLIC</span></div>
+<sc-for list="{{perms}}" as="p" hint-placeholder-count="5"><div class="between" style="padding:8px 0;border-bottom:1px solid rgba(11,36,24,.12);font-size:14px"><span>{{p.label}}</span><button onClick="{{p.flip}}" aria-label="{{p.aria}}" style="{{p.sw}}"><span style="{{p.knob}}"></span></button></div></sc-for>
+<div style="background:#FFFFFF;border-radius:16px;padding:12px 14px;font-size:13px;margin-top:auto"><b>{{sharedCount}} private items shared.</b> Shared practice numbers show a “self-logged” tag on your public profile.</div>
+<a class="btn" href="Studio.dc.html" style="background:#0B2418;color:#D9F24A!important">See my public profile</a>
+</sc-if>
+</section>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { f:'Overview', scope:'All', g:2, m:3, type:'Practice match', focus:{0:true}, feel:3, added:0, saved:false, perm:{} }; }
+renderVals(){
+  const s = this.state;
+  const F = [['Overview','Overview'],['Log','Log session'],['Compare','Practice vs tournament'],['Diary','Diary'],['Goals','Goals and coach'],['Sharing','Sharing']];
+  const is = {}; F.forEach(([k]) => is[k] = s.f===k);
+  const pill = on => on ? 'tab on' : 'tab';
+  const G = {1:{srv:7,ret:4,run:4,so:9,dots:[[20,18],[70,30],[35,74],[60,82]]},2:{srv:5,ret:3,run:3,so:12,dots:[[25,22],[75,15],[30,80]]},3:{srv:8,ret:3,run:6,so:7,dots:[[22,12],[66,25],[40,70],[72,78],[30,88]]}};
+  const g = G[s.g];
+  const runs = g.dots.map(([x,y],i) => ({style:`position:absolute;left:${x}%;top:${y}%;width:${12+i*2}px;height:${12+i*2}px;border-radius:50%;background:${i%3===2?'#FF655C':'#D9F24A'};box-shadow:0 0 0 3px rgba(11,36,24,.35);transform:translate(-50%,-50%)`}));
+  const practice = s.scope==='Practice';
+  const bar = (v,c) => `display:block;height:100%;width:${v}%;background:${c};border-radius:99px`;
+  const C = [['Points won on serve',68,74,'practice +6'],['Games closed from 10',82,90,'practice +8'],['Kitchen rallies won',61,58,'tournament +3'],['Comebacks from 5+ down',40,55,'practice +15']];
+  const D0 = [['15 Nov','Tournament','Loki’s DUPR Night · QF','11–8 · 11–7',true],['13 Nov','Drill','Drop-shot drill with Sai','45 min',false],['12 Nov','Practice','Match vs Rohan / Ajay','11–6 · 9–11',false],['8 Nov','Tournament','TPC DUPR Night','7–11 · 11–9 · 9–11',true],['6 Nov','Training','Fitness and footwork','60 min',false]];
+  let D = D0.slice();
+  for (let i=0;i<s.added;i++) D.unshift(['Today', s.type==='Practice match' ? 'Practice' : s.type, s.type==='Practice match' ? 'Practice match at Loki’s' : (s.type==='Drill' ? 'Third-shot drop drill' : 'Footwork session'), s.type==='Practice match' ? '11–7' : '40 min', false]);
+  if (s.scope==='Tournament') D = D.filter(x => x[4]); if (practice) D = D.filter(x => !x[4]);
+  const P = ['Practice match results','Practice vs tournament chart','Training hours','Coach notes','Goals and badges'];
+  const bv = [38,44,41,52,48,55,50,58,61,57,64,68].map(v => practice ? Math.min(100, v+6) : v);
+  const focusNames = ['Third-shot drop','Serve','Dinks','Returns'];
+  return {
+    is,
+    feats: F.map(([k,n]) => ({name:n, cls: pill(s.f===k), pick: () => this.setState({f:k, saved:false})})),
+    scopes: ['All','Tournament','Practice'].map(n => ({name:n, cls: pill(s.scope===n), pick: () => this.setState({scope:n})})),
+    scopeLabel: s.scope==='All' ? 'all matches' : s.scope.toLowerCase(),
+    matchLabel: practice ? 'Practice · vs Rohan / Ajay · self-logged' : 'Men’s SF · Loki’s DUPR Night',
+    games: [1,2,3].map(n => ({label: n===s.g ? 'Game '+n : String(n), cls: pill(n===s.g), w: n===s.g ? 'min-width:96px' : 'min-width:40px', pick: () => this.setState({g:n})})),
+    g: {...g, runs},
+    scoreLine: practice ? '11–6 · 9–11' : '11–9 · 8–11 · 11–6',
+    srcChip: practice ? 'chip' : 'chip ball', srcLabel: practice ? 'Self-logged' : 'Referee scored',
+    practiceCount: 22 + s.added, hours: 14 + (s.added ? 1 : 0),
+    gameNo: s.m, total: 38 + 22 + s.added,
+    prev: () => this.setState({m: Math.max(1, s.m-1)}), next: () => this.setState({m: s.m+1}),
+    serve: practice ? '74%' : '68%',
+    bars: bv.map((h,i) => `display:block;flex:1;border-radius:6px;height:${h}%;background:${i===bv.length-1?'#2B6E4B':(i>7?'#7FA88E':'#D7E3D9')}`),
+    types: ['Practice match','Drill','Training'].map(n => ({name:n, style: s.type===n ? 'background:#0B2418;color:#D9F24A' : 'background:#FFFFFF;color:#0B2418;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2)', pick: () => this.setState({type:n, saved:false})})),
+    logQ: s.type==='Practice match' ? 'Score' : 'Minutes', logValue: s.type==='Practice match' ? '11–7' : '40 min',
+    focus: focusNames.map((n,i) => ({name:n, style: s.focus[i] ? 'background:#2B6E4B;color:#FFFFFF' : 'background:#FFFFFF;color:#0B2418;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2)', pick: () => this.setState({focus:{...s.focus,[i]:!s.focus[i]}})})),
+    feel: [1,2,3,4,5].map(n => ({n, style: s.feel===n ? 'background:#0B2418;color:#D9F24A;min-width:44px' : 'background:#FFFFFF;color:#0B2418;min-width:44px;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2)', pick: () => this.setState({feel:n})})),
+    saveLog: () => this.setState({added: s.added+1, saved:true}), saveLabel: s.saved ? 'Saved to diary ✓' : 'Save to diary',
+    compare: C.map(([label,t,p,note]) => ({label, note, t:t+'%', p:p+'%', tBar: bar(t,'#2B6E4B'), pBar: bar(p,'#9FB4A6')})),
+    diary: D.slice(0,6).map(([d,kind,what,score,ref]) => ({d,kind,what,score,
+      tag:`font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;${ref ? 'background:#0B2418;color:#D9F24A' : (kind==='Training' ? 'background:#E8C35A;color:#2A1D00' : 'background:#DCE5DD;color:#0B2418')}`,
+      src: ref ? 'font-size:12px;color:#2B6E4B;font-weight:700' : 'font-size:12px;color:#4A5D50', srcLabel: ref ? 'Referee scored · counts to rating' : 'Self-logged · private'})),
+    goalDone: Math.min(4, 3 + (s.added ? 1 : 0)), goalBar: bar(Math.min(100, 75 + (s.added ? 25 : 0)), '#2B6E4B'),
+    perms: P.map((label,i) => { const v = !!s.perm[i]; return {label, aria:(v?'Hide ':'Show ')+label+' on public profile', flip: () => this.setState({perm:{...s.perm,[i]:!v}}),
+      sw:`width:52px;height:30px;border-radius:999px;border:0;padding:3px;cursor:pointer;display:flex;justify-content:${v?'flex-end':'flex-start'};background:${v?'#2B6E4B':'#DCE5DD'}`,
+      knob:`width:24px;height:24px;border-radius:50%;background:${v?'#E4F75A':'#FFFFFF'};box-shadow:0 1px 2px rgba(0,0,0,.2)`}; }),
+    sharedCount: Object.values(s.perm).filter(Boolean).length
+  };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Venue TV Board</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="rq" style="width:1280px;height:720px;overflow:hidden;padding:28px 32px;display:flex;flex-direction:column;gap:18px;background:radial-gradient(80% 60% at 80% 0%,rgba(217,242,74,.08),transparent 60%),#06140D">
+<div class="between">
+<div class="row" style="gap:16px"><div style="width:64px;height:64px;border-radius:16px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:18px">R33</div><div><div class="cap">Hosted by Rally33 at Crosscourts</div><div class="disp" style="font-size:44px">Rally33 Open</div></div></div>
+<div class="row" style="gap:12px"><span class="chip live" style="font-size:13px;min-height:32px">Live</span><span class="n" style="font-size:40px">6:42</span><a href="Desk.dc.html" class="btn ghost sm">← Desk</a></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;flex:1">
+<sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
+<button onClick="{{c.tap}}" class="card mini" style="border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;padding:18px 22px;display:flex;flex-direction:column;justify-content:space-between"><svg viewBox="0 0 300 200" preserveAspectRatio="none" aria-hidden="true"><g><rect x="1" y="1" width="298" height="198"></rect><line x1="150" y1="1" x2="150" y2="199" stroke-width="4"></line><line x1="105" y1="1" x2="105" y2="199"></line><line x1="195" y1="1" x2="195" y2="199"></line><line x1="1" y1="100" x2="105" y2="100"></line><line x1="195" y1="100" x2="299" y2="100"></line></g></svg>
+<div class="between" style="width:100%"><span class="disp" style="font-size:26px">{{c.name}}</span><span class="cap">{{c.stage}}</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 16px;align-items:center;width:100%">
+<span style="font-size:24px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{c.a}}</span><span class="n acc" style="font-size:72px">{{c.sa}}</span>
+<span style="font-size:24px;font-weight:600;color:#DDEBDF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{c.b}}</span><span class="n" style="font-size:72px">{{c.sb}}</span>
+</div>
+</button>
+</sc-for>
+</div>
+<div class="card" style="padding:14px 20px;display:flex;align-items:center;gap:18px;border-radius:14px">
+<span class="chip ball">Up next</span><span style="font-weight:600;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">Fatima / Zara vs Gita / Rekha · Sid / Rahul vs Leela / Tara · Open final 8:15 pm</span>
+<span class="row" style="margin-left:auto;gap:8px;flex:none"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:26px;height:26px"><use href="#fq"></use></svg><span class="word" style="font-size:20px;color:#9FB4A6">RallyQ</span></span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { s: [[10,10],[7,5],[3,8],[0,0]] }; }
+renderVals() {
+  const base = [
+    {name:'Court 1',stage:'Open SF · G3',a:'Varun / Neel',b:'Imran / Joseph'},
+    {name:'Court 2',stage:'Mixed SF · G2',a:'Ishaan / Arav',b:'Asha / Lata'},
+    {name:'Court 3',stage:'Pool A',a:'Kabir / Omar',b:'Dev / Yash'},
+    {name:'Court 4',stage:'Women’s QF',a:'Fatima / Zara',b:'Gita / Rekha'}
+  ];
+  return { courts: base.map((c,i) => ({...c, sa:this.state.s[i][0], sb:this.state.s[i][1],
+    tap: () => { const s = this.state.s.map(x => x.slice()); s[i][(s[i][0]+s[i][1]) % 2] += 1; this.setState({s}); }})) };
+}
+}
+</script>
+</body>
+</html>

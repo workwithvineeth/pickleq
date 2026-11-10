@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Organiser</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="rq">
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a href="MyStudio.dc.html">My Player Studio</a><a class="on" href="Overview.dc.html">Organiser</a><a href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a href="Social.dc.html">Social</a><a href="Admin.dc.html">Admin</a></div></nav>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu">
+<a class="brand" href="Main.dc.html" style="min-height:52px;margin-bottom:10px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="font-size:22px">RallyQ</span></a>
+<span class="cap" style="padding:6px 12px">Rally33 · Crosscourts</span>
+<a class="on" href="Overview.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"></path></svg>Home</a>
+<a href="Desk.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Tournament desk</a>
+<a href="Event.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg>Events</a>
+<a href="Referee.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M11 18h2"></path></svg>Referee scorer</a>
+<a href="Social.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="12" cy="12" r="4"></circle></svg>Social studio</a>
+<a href="TV.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8"></path></svg>TV board</a>
+<a href="Studio.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4-6 8-6s7 2 8 6"></path></svg>Players</a>
+</aside>
+<main class="main" style="display:flex;flex-direction:column;gap:20px">
+<div class="between"><div><div class="cap">Tuesday 10 Nov</div><h1 class="disp" style="font-size:clamp(36px,4vw,54px);margin-top:6px">Five days to Rally33 Open.</h1><a class="tlink mut" href="Event.dc.html">View public page ↗</a></div><a class="btn" href="Desk.dc.html">Open tournament desk</a></div>
+
+<div class="grid g4">
+<div class="card stat" style="padding:18px"><div class="cap">Teams entered</div><div class="n acc">24</div><div class="mut" style="font-size:13px">of 32 · 2 waitlist</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Courts</div><div class="n">4</div><div class="mut" style="font-size:13px">all with a referee</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Matches planned</div><div class="n">46</div><div class="mut" style="font-size:13px">5:00 to 9:30 pm</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Page views</div><div class="n">1,240</div><div class="mut" style="font-size:13px">this week</div></div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<div class="card" style="flex:999 1 480px;min-width:0;padding:22px">
+<div class="between"><div><div class="cap acc">Match-day checklist</div><div style="font-weight:700;font-size:18px;margin-top:4px">{{done}} of {{total}} ready</div></div><span class="n acc" style="font-size:36px">{{pct}}</span></div>
+<div class="bar" style="margin-top:12px"><i style="width:{{pct}}"></i></div>
+<div style="display:flex;flex-direction:column;gap:6px;margin-top:16px">
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="6">
+<button onClick="{{t.toggle}}" class="{{t.cls}}" style="display:flex;align-items:center;gap:12px;min-height:48px;padding:0 12px;border:0;border-radius:12px;background:#133022;color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%">
+<span style="{{t.box}}"></span><span style="{{t.txt}}">{{t.name}}</span><sc-if value="{{t.isNext}}" hint-placeholder-val="{{ false }}"><span class="chip ball">Next</span></sc-if><span class="mut" style="margin-left:auto;font-size:12px">{{t.when}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div class="card photo ph-ball" style="min-height:200px;padding:18px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px"><span class="chip ball" style="align-self:flex-start">Entries poster</span><div style="font-weight:700">Share “Entries open” to WhatsApp</div><a class="tlink" href="Social.dc.html" style="align-self:flex-start">Make poster →</a></div>
+<div class="card" style="padding:18px"><div class="cap">Coming up</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+<div class="between"><span style="font-weight:600">Rally33 Open</span><span class="n" style="font-size:18px">15 Nov</span></div>
+<div class="between"><span class="mut">Rally33 Monday Social</span><span class="n mut" style="font-size:18px">23 Nov</span></div>
+<div class="between"><span class="mut">Rally33 December League</span><span class="n mut" style="font-size:18px">12 Dec</span></div>
+</div></div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { done: {0:true,1:true,2:true} }; }
+renderVals() {
+  const L = [['Entries link shared','Done'],['Categories and pools set','Done'],['Referees invited (4)','Done'],['Court QR codes printed','Fri'],['TV board tested on venue screen','Sat'],['Dress rehearsal run','Sat 14 Nov']];
+  const d = this.state.done;
+  const tasks = L.map(([name,when],i) => ({name, when: d[i] ? '✓' : when,
+    box: d[i] ? 'width:22px;height:22px;border-radius:7px;background:#D9F24A;flex:none' : 'width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 2px #9FB4A6;flex:none',
+    txt: d[i] ? 'color:#9FB4A6;text-decoration:line-through' : 'font-weight:600',
+    toggle: () => this.setState({done: {...d, [i]: !d[i]}})}));
+  const nx = L.findIndex((x,i) => !d[i]);
+  tasks.forEach((t,i) => { t.isNext = i===nx; t.cls = i===nx ? 'next' : ''; });
+  const done = tasks.filter((t,i) => d[i]).length;
+  return { tasks, done, total: L.length, pct: Math.round(done/L.length*100) + '%' };
+}
+}
+</script>
+</body>
+</html>

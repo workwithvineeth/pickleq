@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Admin</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="rq">
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a href="MyStudio.dc.html">My Player Studio</a><a href="Overview.dc.html">Organiser</a><a href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a href="Social.dc.html">Social</a><a class="on" href="Admin.dc.html">Admin</a></div></nav>
+<div class="shell">
+<aside class="side" aria-label="Admin menu">
+<a class="brand" href="Main.dc.html" style="min-height:52px;margin-bottom:10px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="font-size:22px">RallyQ</span></a>
+<span class="cap" style="padding:6px 12px">Admin · Hyderabad</span>
+<sc-for list="{{menu}}" as="m" hint-placeholder-count="5"><a class="{{m.cls}}" href="#top" onClick="{{m.pick}}">{{m.name}}<span class="n mut" style="margin-left:auto;font-size:16px">{{m.count}}</span></a></sc-for>
+</aside>
+<main class="main" id="top" style="display:flex;flex-direction:column;gap:20px">
+<div class="card" style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><span class="chip gold">Platform admin</span><span class="mut" style="font-size:13px">RallyQ team only. Clubs never see this screen; they run their own events from the organiser home.</span></div>
+<div class="between"><div><div class="cap">RallyQ admin</div><h1 class="disp" style="font-size:clamp(34px,4vw,50px);margin-top:6px">{{title}}</h1></div><span class="chip gold">{{pending}} waiting for you</span></div>
+
+<div class="grid g4">
+<div class="card stat" style="padding:16px"><div class="cap">Clubs live</div><div class="n acc">6</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">Events in Nov</div><div class="n">6</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">Players</div><div class="n">420</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">Matches scored</div><div class="n">1,180</div></div>
+</div>
+
+<sc-if value="{{isClubs}}" hint-placeholder-val="{{ true }}">
+<div class="card scroll" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Club</th><th>Area</th><th>Next event</th><th>Plan</th><th>Status</th><th></th></tr></thead><tbody>
+<sc-for list="{{clubs}}" as="c" hint-placeholder-count="6"><tr><td style="font-weight:700">{{c.n}}</td><td class="mut">{{c.a}}</td><td class="n" style="font-size:18px">{{c.e}}</td><td class="mut">{{c.p}}</td><td><span class="{{c.cls}}">{{c.st}}</span></td><td><sc-if value="{{c.canApprove}}" hint-placeholder-val="{{ false }}"><button class="btn sm" onClick="{{c.approve}}">Approve</button></sc-if></td></tr></sc-for>
+</tbody></table></div>
+</sc-if>
+
+<sc-if value="{{isEvents}}" hint-placeholder-val="{{ false }}">
+<div class="grid g3"><sc-for list="{{events}}" as="e" hint-placeholder-count="6"><div class="card" style="padding:18px;display:flex;flex-direction:column;gap:8px"><div class="between"><span class="n" style="font-size:26px">{{e.d}}</span><span class="{{e.cls}}">{{e.s}}</span></div><div style="font-weight:700">{{e.n}}</div><div class="mut" style="font-size:13px">{{e.c}}</div><a href="Desk.dc.html" style="font-size:13px">View as organiser →</a></div></sc-for></div>
+</sc-if>
+
+<sc-if value="{{isBrand}}" hint-placeholder-val="{{ false }}">
+<div class="grid g2">
+<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:12px"><div class="cap">Poster style each club can pick</div>
+<div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div style="height:90px;border-radius:12px;background:#06140D;box-shadow:inset 0 0 0 1px rgba(241,244,234,.2)"></div><div style="height:90px;border-radius:12px;background:#2B6E4B"></div><div style="height:90px;border-radius:12px;background:#D9F24A"></div><div style="height:90px;border-radius:12px;background:#F1F4EA"></div></div>
+<div class="mut" style="font-size:13px">Night · Day · Ball · Chalk. Courts are never blue.</div></div>
+<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px"><div class="cap">Wordmark rules</div><div class="row"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A;width:56px;height:56px"><use href="#fq"></use></svg><span class="word" style="font-size:44px">RallyQ</span></div><div class="mut" style="font-size:13px">Club tile always says “Hosted by”. RallyQ sits smaller, bottom right.</div></div>
+</div>
+</sc-if>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { tab: 'Clubs', ok: {} }; }
+renderVals() {
+  const s = this.state;
+  const C = [
+    ['Loki’s Pickleball Club','Hyderabad','15 Nov','Club',true],
+    ['Rally33','Crosscourts','15 Nov','Club',true],
+    ['TPC','Narapally','15 Nov','Club',true],
+    ['ElitePicklers','Bowenpally','15 Nov','Club',true],
+    ['Pickleyard','Malkajgiri','21 Nov','Club',false],
+    ['Pickleball Central','Hyderabad','28 Nov','Club + stream',false]
+  ];
+  const clubs = C.map(([n,a,e,p,live],i) => { const on = live || s.ok[i]; return {n,a,e,p, st: on ? 'Live' : 'Pending', cls: on ? 'chip ball' : 'chip gold', canApprove: !on, approve: () => this.setState({ok: {...s.ok, [i]: true}})}; });
+  const pending = clubs.filter(c => c.canApprove).length;
+  const M = [['Clubs',6],['Events',6],['Brand',''],];
+  return {
+    clubs, pending,
+    title: ({Clubs:'Clubs on RallyQ', Events:'Events this month', Brand:'Brand for clubs'})[s.tab],
+    menu: M.map(([n,c]) => ({name:n, count:c, cls: n===s.tab ? 'on' : '', pick: () => this.setState({tab:n})})),
+    isClubs: s.tab==='Clubs', isEvents: s.tab==='Events', isBrand: s.tab==='Brand',
+    events: [['15 Nov','Loki’s DUPR Night','Loki’s Pickleball Club','Ready'],['15 Nov','Rally33 Open','Rally33 · Crosscourts','Ready'],['15 Nov','TPC DUPR Night','TPC Narapally','Ready'],['15 Nov','ElitePicklers Cup','ElitePicklers Bowenpally','Setting up'],['21 Nov','Pickleyard Classic','Pickleyard Malkajgiri','Draft'],['28 Nov','Central Showdown','Pickleball Central · live stream','Draft']].map(([d,n,c,st]) => ({d,n,c,s:st, cls: st==='Ready' ? 'chip ball' : (st==='Draft' ? 'chip' : 'chip gold')}))
+  };
+}
+}
+</script>
+</body>
+</html>
