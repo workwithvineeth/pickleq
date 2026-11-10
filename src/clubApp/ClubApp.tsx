@@ -12,6 +12,7 @@ import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 import {RallyHome} from '../rallyq/home/RallyHome';
 import {RallyLive} from '../rallyq/live/RallyLive';
 import {RallyEvent} from '../rallyq/event/RallyEvent';
+import {RallyTV} from '../rallyq/tv/RallyTV';
 import { WorkspaceNav, workspaceOf } from './Workspace';
 
 type ClubTab = 'events' | 'club' | 'club-tournaments' | 'club-results' | 'club-player-studio';
@@ -88,6 +89,7 @@ export default function ClubApp() {
   // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
   if (route.name === 'home') return <><StagingStrip /><RallyHome go={go} /></>;
   if (route.name === 'live') return <><StagingStrip /><RallyLive go={go} /></>;
+  if (route.name === 'club-tv' && route.id) return <RallyTV slug={route.id} go={go} />;
   if (route.name === 'event' && route.id) return <><StagingStrip /><RallyEvent slug={route.id} go={go} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
   const ws = showNav && !NO_ACCOUNT.includes(name) ? workspaceOf({ ...route, name }) : null;
