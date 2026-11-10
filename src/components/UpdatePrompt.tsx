@@ -30,7 +30,11 @@ export function UpdatePrompt({ offlineNotice = true, inline = false }: { offline
     // Let the organiser choose when to reload so scoring and unsaved edits are preserved.
     // On a first visit the worker takes control of a page it didn't control yet: that's not an update, so say nothing.
     let hadController = !!worker.controller;
-    const ready = () => { if (hadController) setNeedRefresh(true); hadController = true; };
+    const ready = () => {
+      // A newer version took over right after opening: reload now so nobody keeps looking at an old cached build.
+      if (hadController && import.meta.env.MODE !== 'test' && performance.now() < 15000) { window.location.reload(); return; }
+      if (hadController) setNeedRefresh(true); hadController = true;
+    };
     worker.addEventListener('controllerchange', ready);
     return () => worker.removeEventListener('controllerchange', ready);
   }, [setNeedRefresh]);

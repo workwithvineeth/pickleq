@@ -46,6 +46,6 @@ export function RallyLive({go}:{go:Go}){
     return {court:'Court '+court,stage:view.division?.name??d.name,a:view.a,b:view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
- const values=liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p})));
+ const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today:new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
  return <PrototypeScreen name="Live" go={go} values={values}/>;
 }

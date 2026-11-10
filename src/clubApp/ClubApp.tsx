@@ -90,14 +90,14 @@ export default function ClubApp() {
   const showNav = !!tab || !NO_ACCOUNT.includes(name);
   const current = tab ?? (name === 'club-claim' ? 'club-player-studio' : name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
   // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
-  if (route.name === 'home') return <><StagingStrip /><RallyHome go={go} /></>;
-  if (route.name === 'live') return <><StagingStrip /><RallyLive go={go} /></>;
-  if (route.name === 'public-player') return <><StagingStrip /><PublicProfile playerId={route.id} go={go} /></>;
-  if (route.name === 'club-social' && route.id) return <><StagingStrip /><RallySocial slug={route.id} go={go} /></>;
-  if (route.name === 'club-tv' && route.id) return <RallyTV slug={route.id} go={go} />;
-  if (route.name === 'event' && route.id) return <><StagingStrip /><RallyEvent slug={route.id} go={go} /></>;
+  if (route.name === 'home') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyHome go={go} /></>;
+  if (route.name === 'live') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyLive go={go} /></>;
+  if (route.name === 'public-player') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><PublicProfile playerId={route.id} go={go} /></>;
+  if (route.name === 'club-social' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallySocial slug={route.id} go={go} /></>;
+  if (route.name === 'club-tv' && route.id) return <><UpdatePrompt offlineNotice={false} inline /><RallyTV slug={route.id} go={go} /></>;
+  if (route.name === 'event' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyEvent slug={route.id} go={go} /></>;
   // My Player Studio has its own header and feature tabs (prototype), so no old Studio side menu.
-  if (route.name === 'club-player-studio' && route.id !== 'profile' && !(route.id ?? '').startsWith('profile')) return <><StagingStrip /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
+  if (route.name === 'club-player-studio' && route.id !== 'profile' && !(route.id ?? '').startsWith('profile')) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
   const ws = showNav && !NO_ACCOUNT.includes(name) ? workspaceOf({ ...route, name }) : null;
   return (

@@ -200,7 +200,7 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
           <button type="button" className="pq-ws-item" aria-label="Events board" title="Events board" onClick={() => go('events')}><span className="pq-ws-glyph" aria-hidden="true">◈</span><span className="pq-ws-label">Events board</span></button>
         </div>
       </nav>
-      <WorkspaceTop showSkin={kind==='admin'} title={kind === 'club' ? c.club ?? 'Club' : g.title} area={kind === 'club' ? current?.name ?? g.area : g.area} workspace={g.title} identityHeading={kind==='club'&&active==='overview'&&c.staff!==false} live={live} go={go} />
+      <WorkspaceTop showSkin={false} title={kind === 'club' ? c.club ?? 'Club' : g.title} area={kind === 'club' ? current?.name ?? g.area : g.area} workspace={g.title} identityHeading={kind==='club'&&active==='overview'&&c.staff!==false} live={live} go={go} />
       <nav className="pq-ws-tabs" tabIndex={0} onFocusCapture={(e) => { if (e.target !== e.currentTarget) e.target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); }} aria-label={`${g.title} sections`}>
         {g.groups.flatMap((grp) => grp.items).map((i) => (
           <button key={i.key} type="button" aria-current={active === i.key ? 'page' : undefined} disabled={!i.to} aria-label={i.label} onClick={() => open(i)}>{i.key==='create'?'New':i.label}</button>
