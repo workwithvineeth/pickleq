@@ -21,6 +21,7 @@
 .rallyq-prototype .rq .chip{white-space:nowrap}
 
 /* Meera photo: slow drift inside its card (never steps out) */
-@keyframes rqDrift{from{background-position:50% 18%}to{background-position:50% 42%}}
+@keyframes rqDrift{from{background-position:65% 0%}to{background-position:65% 14%}}
 .rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:rqDrift 12s ease-in-out infinite alternate}
 @media (prefers-reduced-motion:reduce){.rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:none}}
+@media (min-width:761px){.rallyq-screen-main .rq .slides .s1{background-image:url(/rallyq/meera-hero.jpg)!important;background-size:cover!important;background-position:100% 0%!important}}
