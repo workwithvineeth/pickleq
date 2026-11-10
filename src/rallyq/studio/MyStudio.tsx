@@ -28,8 +28,8 @@ const source=holes(raw,[
  ['<div style="min-height:48px;border-radius:14px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);display:flex;align-items:center;padding:0 14px;font-weight:700;font-size:18px">{{logValue}}</div>','<input value="{{logValue}}" onChange="{{setLogValue}}" placeholder="{{logPlaceholder}}" aria-label="{{logQ}}" style="min-height:48px;border-radius:14px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);padding:0 14px;font:inherit;font-weight:700;font-size:18px;color:#0B2418;width:100%;box-sizing:border-box">']]);
 
 /** Private My Player Studio, exactly as the prototype, on the owner's real matches, practice, goals and sharing. */
-export function MyStudio({go}:{go:Go}){
- const[ui,setUi]=useState<StudioUI>(INITIAL_UI);const set=(p:Partial<StudioUI>)=>setUi(s=>({...s,...p}));
+export function MyStudio({go,section}:{go:Go;section?:string}){
+ const[ui,setUi]=useState<StudioUI>(()=>({...INITIAL_UI,f:section==='log'||section?.startsWith('log.')||section==='practice'||section?.startsWith('practice.')?'Log':section==='train'||section==='matches'?'Diary':section==='coach'?'Goals':section?.includes('privacy')?'Sharing':'Overview'}));const set=(p:Partial<StudioUI>)=>setUi(s=>({...s,...p}));
  const state=useLoad(async()=>{const store=new RallyStudioStore();return{store,data:await store.load()};},[]);
  const[sharing,setSharing]=useState<SharingOptions|null>(null);
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6',padding:24,textAlign:'center'}}>{state.loading?'Loading your Player Studio…':<span>{state.error??'Sign in to open My Player Studio.'} <button type="button" className="tlink" onClick={()=>go('club-signin')}>Sign in →</button></span>}</div>;
@@ -39,6 +39,6 @@ export function MyStudio({go}:{go:Go}){
   try{await store.savePractice({kind,scoreText:kind==='practice_match'?ui.value:'',minutes:kind==='practice_match'?undefined:Number(ui.value),focusTags:Object.entries(ui.focus).filter(([,v])=>v).map(([i])=>['Third-shot drop','Serve','Dinks','Returns'][Number(i)]),feel:ui.feel,playedAt:new Date().toISOString().slice(0,10)});set({saved:true,value:''});state.reload();}
   catch(e){set({error:e instanceof Error?e.message:'Could not save.'});}};
  const toggle=async(k:keyof SharingOptions)=>{const next={...share,[k]:!share[k]};setSharing(next);try{await store.saveSharing(next);}catch{setSharing(share);}};
- const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Claim your player profile to see your matches',dupr:me?.duprDoubles,official:data.official.official,logs:data.official.logs,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
+ const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Claim your player profile to see your matches',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
  return <PrototypeScreen name="MyStudio" go={go} source={source} values={values}/>;
 }

@@ -1,11 +1,11 @@
-import type {OfficialMatch,StudioLog} from '../../club/playerStudio';
+import type {OfficialMatch} from '../../club/playerStudio';
 import type {PracticeSession,PlayerGoal,SharingOptions} from '../private/backend';
 
 export type Feature='Overview'|'Log'|'Compare'|'Diary'|'Goals'|'Sharing';
 export type Scope='All'|'Tournament'|'Practice';
 export interface StudioUI {f:Feature;scope:Scope;g:number;m:number;type:'Practice match'|'Drill'|'Training';value:string;focus:Record<number,boolean>;feel:number;saved:boolean;error:string}
 export const INITIAL_UI:StudioUI={f:'Overview',scope:'All',g:1,m:0,type:'Practice match',value:'',focus:{0:true},feel:3,saved:false,error:''};
-export interface StudioInput {name:string;club:string;dupr?:number;official:OfficialMatch[];logs:StudioLog[];practice:PracticeSession[];goals:PlayerGoal[];sharing:SharingOptions}
+export interface StudioInput {name:string;club:string;dupr?:number;official:OfficialMatch[];practice:PracticeSession[];goals:PlayerGoal[];sharing:SharingOptions}
 const FOCUS=['Third-shot drop','Serve','Dinks','Returns'];
 const SHARE:[keyof SharingOptions,string][]=[['practice_results','Practice match results'],['practice_vs_tournament','Practice vs tournament chart'],['training_hours','Training hours'],['coach_notes','Coach notes'],['goals_badges','Goals and badges']];
 const STAGE_RANK:Record<string,number>={final:6,sf:5,qf:4,r16:3,r32:2,pool:1,friendly:0};
@@ -21,8 +21,7 @@ export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)
  const off=[...d.official].sort((a,b)=>a.playedOn.localeCompare(b.playedOn));
  const practiceMatches=d.practice.filter(p=>p.kind==='practice_match');
  const pr=practiceMatches.map(p=>parseScore(p.scoreText)).filter(g=>g.length);
- const logGames=d.logs.flatMap(l=>((l as unknown as {games?:{you:number;them:number}[]}).games??[]).map(g=>[g.you,g.them]));
- const prGames=[...pr.flat(),...logGames];
+ const prGames=pr.flat();
  const tPoints=off.flatMap(o=>o.games.map(g=>mine(o,g)));
  const sum=(gs:number[][],i:number)=>gs.reduce((s,g)=>s+g[i],0);
  const tPts=pct(sum(tPoints,0),sum(tPoints,0)+sum(tPoints,1)),pPts=pct(sum(prGames,0),sum(prGames,0)+sum(prGames,1));
@@ -60,7 +59,7 @@ export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)
   games:(sel?.games??[{a:0,b:0}]).map((_x,i)=>({label:i+1===gi?'Game '+(i+1):String(i+1),cls:pill(i+1===gi),w:i+1===gi?'min-width:96px':'min-width:40px',pick:()=>set({g:i+1})})),
   g:{srv:gm[0],ret:gm[1],run:rr.best,so:rr.changes,runs:dots.map(([x,y],i)=>({style:`position:absolute;left:${x}%;top:${y}%;width:${12+i*2}px;height:${12+i*2}px;border-radius:50%;background:${i%3===2?'#FF655C':'#D9F24A'};box-shadow:0 0 0 3px rgba(11,36,24,.35);transform:translate(-50%,-50%)`}))},
   scoreLine:sel?sel.games.map(g=>mine(sel,g).join('–')).join(' · '):'–',srcChip:'chip ball',srcLabel:'Referee scored',
-  practiceCount:practiceMatches.length+d.logs.length,hours:Math.round(minutes/60),gameNo:list.length?mi+1:0,total:list.length,
+  practiceCount:practiceMatches.length,hours:Math.round(minutes/60),gameNo:list.length?mi+1:0,total:list.length,
   prev:()=>set({m:Math.max(0,mi-1),g:1}),next:()=>set({m:Math.min(list.length-1,mi+1),g:1}),
   serve:(practice?pPts:tPts)+'%',bars:(bv.length?bv:[0]).map((h,i,a)=>`display:block;flex:1;border-radius:6px;height:${Math.max(4,h)}%;background:${i===a.length-1?'#2B6E4B':(i>a.length-5?'#7FA88E':'#D7E3D9')}`),
   comebacks:off.filter(o=>won(o)&&o.games.length>1&&mine(o,o.games[0])[0]<mine(o,o.games[0])[1]).length,streak,
