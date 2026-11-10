@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { AdminDashboard } from './Admin';
 
@@ -72,15 +72,15 @@ it('keeps overview demo data opt-in and uses live loaders only in Real Data mode
   const demo = await screen.findByRole('button', { name: 'Demo Preview' });
   expect(screen.getByRole('button', { name: 'Real Data' }).getAttribute('aria-pressed')).toBe('true');
   expect(screen.queryByText('Cedar Court Rally Day')).toBeNull();
-  expect(backend.adminOverview).toHaveBeenCalledTimes(1);
-  expect(backend.approvalQueue).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(backend.adminOverview).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(backend.approvalQueue).toHaveBeenCalledTimes(1));
   fireEvent.click(demo);
   expect(screen.getByText('Cedar Court Rally Day')).toBeTruthy();
   expect(screen.getByText('Attributed registration sessions')).toBeTruthy();
-  expect(backend.adminOverview).toHaveBeenCalledTimes(1);
-  expect(backend.approvalQueue).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(backend.adminOverview).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(backend.approvalQueue).toHaveBeenCalledTimes(1));
   fireEvent.click(screen.getByRole('button', { name: 'Real Data' }));
   expect(screen.queryByText('Cedar Court Rally Day')).toBeNull();
   expect(screen.queryByText('Attributed registration sessions')).toBeNull();
-  expect(backend.adminOverview).toHaveBeenCalledTimes(2);
+  await waitFor(() => expect(backend.adminOverview).toHaveBeenCalledTimes(2));
 });
