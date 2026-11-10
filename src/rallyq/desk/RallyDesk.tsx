@@ -8,7 +8,7 @@ import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Desk.dc.html?raw';
 import {holes} from '../holes';
 const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace('</main>','<sc-if value="{{msg}}"><p role="status" style="padding:12px 16px">{{msg}}</p></sc-if></main>'),[
- ['Rally33 Open · Desk','{{title}}'],['Sun 15 Nov · 6:42 pm','{{when}}'],['+6 min','{{running}}'],['Running</div>','Done</div>'],['behind plan','of all matches'],
+ ['Rally33 Open · Desk','{{title}}'],['Sun 15 Nov · 6:42 pm','{{when}}'],['+6 min','{{running}}'],['Running</div>','Done</div>'],['behind plan','of all matches'],['of 46 matches','of {{total}} matches'],
  ['Finish a match (demo)','Results, walkovers and moves →'],
  ['class="tlink mut" href="TV.dc.html">TV board ↗</a><a class="tlink mut" href="Live.dc.html">Public live scores ↗</a>','class="tlink mut" href="{{tvHref}}">TV board ↗</a><a class="tlink mut" href="{{socialHref}}">Social studio ↗</a><a class="tlink mut" href="{{liveHref}}">Public live scores ↗</a>'],
  ['<sc-if value="{{msg}}"','<sc-if value="{{msg}}"']]);
@@ -30,7 +30,7 @@ export function RallyDesk({id,go,onBack}:{id:string;go:Go;onBack:()=>void}){
  const courts=board.map(s=>s.now?{name:'Court '+s.court,busy:true,free:false,status:'Live',chip:'chip live',stage:[div(s.now),STAGE[s.now.stage]].filter(Boolean).join(' · '),ref:'court link',a:names(s.now.sideA,pmap),b:names(s.now.sideB,pmap),sa:last(s.now).a,sb:last(s.now).b}
   :{name:'Court '+s.court,busy:false,free:true,status:'Free',chip:'chip ball',blocked:!head,callLabel:head?'Call to Court '+s.court:'Queue empty',call:()=>{void call(s.court);}});
  const values={title:t.name+' · Desk',when:new Date().toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}),running:real.length?Math.round(played/real.length*100)+'%':'0%',
-  played,onCourt:board.filter(s=>s.now).length,waiting:queue.length,nextUp:head?names(head.sideA,pmap)+' vs '+names(head.sideB,pmap):'Queue empty',courts,
+  played,total:real.length,onCourt:board.filter(s=>s.now).length,waiting:queue.length,nextUp:head?names(head.sideA,pmap)+' vs '+names(head.sideB,pmap):'Queue empty',courts,
   queue:queue.map((m,i)=>({no:i+1,m:names(m.sideA,pmap)+' vs '+names(m.sideB,pmap),s:[div(m),STAGE[m.stage]].filter(Boolean).join(' · '),ci:m.court?'On court '+m.court:'Waiting',cls:m.court?'chip ball':'chip gold',t:m.slot!=null?'#'+(m.slot+1):'—',checkin:()=>undefined})),
   finish:()=>setClassic(true),msg,tvHref:'#/club-tv/'+encodeURIComponent(slug),socialHref:'#/club-social/'+encodeURIComponent(slug),liveHref:'#/event/'+encodeURIComponent(slug)};
  return <PrototypeScreen name="Desk" go={go} source={source} values={values}/>;

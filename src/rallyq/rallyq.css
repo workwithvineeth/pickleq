@@ -11,3 +11,7 @@
 .rq-ref-banner b{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .rq-ref-game{box-shadow:inset 0 0 0 2px #D9F24A}.rq-ref-game b{color:#D9F24A}
 .rq-ref-match{box-shadow:inset 0 0 0 2px #E8C35A}.rq-ref-match b{color:#E8C35A}
+
+/* Keep the Event content within narrow phones; tables retain their own scroll. */
+.rallyq-screen-event .rq>.wrap{width:100%;min-width:0;box-sizing:border-box}
+.rallyq-screen-event .rq .tabs{min-width:0;max-width:100%}
