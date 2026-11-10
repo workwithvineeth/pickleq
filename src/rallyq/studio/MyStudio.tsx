@@ -7,6 +7,7 @@ import {holes} from '../holes';
 import {RallyStudioStore,PRIVATE_SHARING,type SharingOptions} from '../private/backend';
 import {INITIAL_UI,studioValues,type StudioUI} from './studioValues';
 const source=holes(raw,[
+ ['<div class="disp" style="font-size:32px">Goals and coach</div>','<div class="disp" style="font-size:32px">Goals and coach</div><div style="display:grid;grid-template-columns:minmax(0,1fr) 90px auto;gap:8px;align-items:center"><input value="{{goalNew}}" onChange="{{setGoalNew}}" placeholder="New goal, e.g. 4 drop-shot sessions" aria-label="Goal" style="min-height:44px;border-radius:12px;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);padding:0 12px;font:inherit;color:#0B2418;background:#FFFFFF;min-width:0"><input value="{{goalNewTarget}}" onChange="{{setGoalNewTarget}}" inputmode="numeric" placeholder="Target" aria-label="Target" style="min-height:44px;border-radius:12px;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);padding:0 10px;font:inherit;color:#0B2418;background:#FFFFFF;min-width:0"><button class="btn sm" style="background:#0B2418;color:#D9F24A!important" onClick="{{addGoal}}">Add</button></div><sc-if value="{{goalMsg}}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#4A5D50">{{goalMsg}}</div></sc-if><sc-if value="{{hasGoal}}" hint-placeholder-val="{{ false }}"><button class="btn sm" style="background:#2B6E4B;color:#FFFFFF!important;align-self:flex-start" onClick="{{goalStep}}">+1 on “{{goalTitle}}”</button></sc-if>'],
  ['DUPR 4.62 ▲ 0.18','{{duprLabel}}'],['Hyderabad #14','{{rankLabel}}'],['>Kiran Reddy</div>','>{{playerName}}</div>'],
  ['Right side · Two-handed backhand · Loki’s Pickleball Club','{{playerLine}}'],
  ['<br>won on serve</div>','<br>points won</div>'],['<br>won returning</div>','<br>points lost</div>'],['<br>side-outs</div>','<br>lead changes</div>'],
@@ -32,6 +33,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  const[ui,setUi]=useState<StudioUI>(()=>({...INITIAL_UI,f:section==='log'||section?.startsWith('log.')||section==='practice'||section?.startsWith('practice.')?'Log':section==='train'||section==='matches'?'Diary':section==='coach'?'Goals':section?.includes('privacy')?'Sharing':'Overview'}));const set=(p:Partial<StudioUI>)=>setUi(s=>({...s,...p}));
  const state=useLoad(async()=>{const store=new RallyStudioStore();return{store,data:await store.load()};},[]);
  const[sharing,setSharing]=useState<SharingOptions|null>(null);
+ const[goal,setGoal]=useState({title:'',target:'',msg:''});
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6',padding:24,textAlign:'center'}}>{state.loading?'Loading your Player Studio…':<span>{state.error??'Sign in to open My Player Studio.'} <button type="button" className="tlink" onClick={()=>go('club-signin')}>Sign in →</button></span>}</div>;
  const{store,data}=state.data;const me=data.official.players[0];
  const share=sharing??data.sharing??PRIVATE_SHARING;
@@ -40,5 +42,9 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
   catch(e){set({error:e instanceof Error?e.message:'Could not save.'});}};
  const toggle=async(k:keyof SharingOptions)=>{const next={...share,[k]:!share[k]};setSharing(next);try{await store.saveSharing(next);}catch{setSharing(share);}};
  const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Claim your player profile to see your matches',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
+ const g0=data.goals[0];
+ const addGoal=async()=>{try{await store.saveGoal({title:goal.title,target:Number(goal.target),progress:0});setGoal({title:'',target:'',msg:'Goal added.'});state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not save the goal.'});}};
+ const goalStep=async()=>{if(!g0)return;try{await store.saveGoal({title:g0.title,target:g0.target,progress:Math.min(g0.target,g0.progress+1),due:g0.due},g0.id);state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not update the goal.'});}};
+ Object.assign(values,{goalNew:goal.title,goalNewTarget:goal.target,goalMsg:goal.msg,hasGoal:!!g0,setGoalNew:(e:{target:{value:string}})=>setGoal({...goal,title:e.target.value,msg:''}),setGoalNewTarget:(e:{target:{value:string}})=>setGoal({...goal,target:e.target.value.replace(/[^0-9.]/g,''),msg:''}),addGoal:()=>{void addGoal();},goalStep:()=>{void goalStep();}});
  return <PrototypeScreen name="MyStudio" go={go} source={source} values={values} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
 }

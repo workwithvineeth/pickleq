@@ -18,7 +18,7 @@ import { EntriesInbox } from './Inbox';
 import { AddPanel } from './AddPanel';
 
 /** Loads a tournament for an organiser screen, drawing any knockout round that's ready. */
-function useTournament(id: string, poll?: number) {
+export function useTournament(id: string, poll?: number) {
   const b = useClubBackend();
   const [tick, setTick] = useState(0);
   const state = useLoad(async () => {

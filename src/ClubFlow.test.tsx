@@ -425,6 +425,9 @@ describe('Club mode', () => {
     await openEvent(user);
     await user.click(screen.getByRole('button', { name: 'Desk view' }));
     await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' });
+    // RallyQ desk shows the courts; results, walkovers and moves live one tap away in the classic desk.
+    await user.click(await screen.findByRole('button', { name: /Results, walkovers and moves/ }));
+    await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' });
     for (let c = 1; c <= 6; c++) expect(screen.getByLabelText(`Court ${c}`)).toBeInTheDocument();
     const card = screen.getAllByText('More',{exact:true})[0].closest('[aria-label^="Court"]') as HTMLElement;
     await user.click(within(card).getByText('More',{exact:true}));

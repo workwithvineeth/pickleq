@@ -1,5 +1,6 @@
 import type { Go, Route } from '../../navigation';
 import {MyStudio} from '../../rallyq/studio/MyStudio';
+import {RallyDesk} from '../../rallyq/desk/RallyDesk';
 import { AdminClubView, AdminDashboard, adminSectionOf } from './Admin';
 import { ResultsDupr } from './ResultsDupr';
 import { PlayerStudio } from './studio/Studio';
@@ -9,7 +10,7 @@ import { EnterEvent, EventPage, EventsBoard, MyEntries, PostEvent } from './Even
 import { DeskApp, OldDeskLink } from './DeskApp';
 import { ClubHub, ClubJoin, ClubNew, ClubSignIn, DemoStart } from './Hub';
 import { EntriesInbox } from './Inbox';
-import { CourtScorer, Desk, DuprExport, Entries, ScorerLinks } from './Organiser';
+import { CourtScorer, DuprExport, Entries, ScorerLinks } from './Organiser';
 import { ScoreMatch } from './Score';
 import { Results, TournamentNew, TournamentView } from './Tournament';
 
@@ -31,7 +32,7 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'club-tournament': return <TournamentView key={id} id={id} go={go} onBack={back} />;
     case 'club-tournament-new': return <TournamentNew key={id} clubId={id} go={go} onBack={back} />;
     case 'club-score': return <ScoreMatch key={id} matchId={id} go={go} onBack={back} />;
-    case 'club-desk': return <Desk key={id} id={id} go={go} onBack={back} />;
+    case 'club-desk': return <RallyDesk key={id} id={id} go={go} onBack={back} />;
     case 'club-scorers': return <ScorerLinks key={id} id={id} go={go} onBack={back} />;
     case 'club-entries': return <Entries key={id} id={id} go={go} onBack={back} />;
     case 'club-results-dupr': return <ResultsDupr key={id} id={id} go={go} onBack={back} />;

@@ -7,8 +7,9 @@ import {friendlyDate} from '../../club/dates';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Social.dc.html?raw';
 import {holes} from '../holes';
+import {useClubLogo,logoTile} from '../useClubLogo';
 import {posterPng,savePoster,sharePoster,type PosterContent} from './posterExport';
-const source=holes(raw.replace('onClick="{{save}}">Send to WhatsApp','onClick="{{share}}">Send to WhatsApp'),[['>R33</div>','>{{clubMark}}</div>'],['font-size:17px;font-weight:800">Rally33</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Rally33 · Crosscourts','padding:6px 12px">{{clubName}}']]);
+const source=holes(raw.replace('onClick="{{save}}">Send to WhatsApp','onClick="{{share}}">Send to WhatsApp'),[['>R33</div>','><span style="display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border-radius:inherit">'+logoTile('{{clubMark}}')+'</span></div>'],['font-size:17px;font-weight:800">Rally33</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Rally33 · Crosscourts','padding:6px 12px">{{clubName}}']]);
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 type T='Entries open'|'Live now'|'Result'|'Champion';
 const ST={Night:{bg:'#06140D',ink:'#F1F4EA',acc:'#D9F24A',photo:true},Day:{bg:'#2B6E4B',ink:'#FFFFFF',acc:'#E4F75A',photo:false},Ball:{bg:'#D9F24A',ink:'#0B2418',acc:'#0B2418',photo:false},Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}} as const;
@@ -30,13 +31,13 @@ export function templates(d:PublicTournament|null){
  } as Record<T,{kicker:string;head:string;big:string;foot:string;chip:string;chipCls:string;ph:string}>;
 }
 export function RallySocial({slug,go}:{slug:string;go:Go}){
- const scores=usePublicScores(slug);const d=scores.data;
+ const scores=usePublicScores(slug);const d=scores.data;const logoUrl=useClubLogo(slug);
  const[s,setS]=useState<{t:T;s:S;z:string;saved:boolean}>({t:'Champion',s:'Night',z:'Post 4:5',saved:false});
  const[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const TP=templates(d),st=ST[s.s],tp=TP[s.t];
  const exportPoster=async(share:boolean)=>{if(busy)return;setBusy(true);setMessage('');try{const photos:Record<string,string>={'ph-ball':'ball-court.jpg','ph-night':'court-night.jpg','ph-group':'group-play.jpg','ph-woman':'woman-hit.jpg'};const blob=await posterPng({club:d?.club??'Your club',mark:d?mark(d.club):'',...tp,bg:st.bg,ink:st.ink,accent:st.acc,photo:st.photo?photos[tp.ph]:undefined,size:s.z as PosterContent['size']});const name='rallyq-'+s.t.toLowerCase().replaceAll(' ','-')+'-'+s.z.replaceAll(' ','-').replace(':','x')+'.png';if(share)setMessage(await sharePoster(blob,name,tp.head+' · '+tp.foot));else{savePoster(blob,name);setMessage('PNG saved')}setS(current=>({...current,saved:true}));}catch(e){if(!(e instanceof Error&&e.name==='AbortError'))setMessage(e instanceof Error?e.message:'Export failed. Try again.')}finally{setBusy(false)}};
  const dims=({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'} as Record<string,string>)[s.z];
- const values={clubName:d?.club??'Your club',clubMark:d?mark(d.club):'',
+ const values={logoUrl:logoUrl??'',noLogo:!logoUrl,clubName:d?.club??'Your club',clubMark:d?mark(d.club):'',
   tpls:(Object.keys(TP) as T[]).map(n=>({name:n,cls:n===s.t?'tab on':'tab',pick:()=>setS({...s,t:n,saved:false})})),
   styles:(Object.keys(ST) as S[]).map(n=>({name:n,pick:()=>setS({...s,s:n,saved:false}),sw:`height:72px;border-radius:14px;border:0;cursor:pointer;font:inherit;display:flex;align-items:flex-end;padding:8px;background:${ST[n].bg};box-shadow:${n===s.s?'inset 0 0 0 3px #D9F24A,0 0 0 2px #06140D':'inset 0 0 0 1px rgba(241,244,234,.2)'}`,lbl:`font-size:12px;font-weight:700;color:${ST[n].ink}`})),
   sizes:['Post 4:5','Story 9:16','Square'].map(n=>({name:n,cls:n===s.z?'tab on':'tab',pick:()=>setS({...s,z:n})})),

@@ -239,7 +239,7 @@ function Squad({ d, go }: { d: ClubBundle; go: Go }) {
           <tbody>
             {sorted.map((r) => (
               <tr key={r.playerId}>
-                <td><button type="button" className="link-btn" style={{ padding: 0, textAlign: 'left' }} onClick={() => go('public-player', r.playerId)}>{r.name}</button></td>
+                <td><button type="button" className="link-btn" style={{ padding: 0, textAlign: 'left' }} onClick={() => go('club-player', r.playerId)}>{r.name}</button></td>
                 <td>{r.matches}</td><td>{pct(r.winPct)}</td><td>{pct(r.closePct)}</td><td>{r.comebacks}</td><td>{r.lostLeads}</td><td>{pct(r.closing)}</td>
               </tr>
             ))}
