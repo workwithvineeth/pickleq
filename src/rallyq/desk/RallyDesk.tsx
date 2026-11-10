@@ -7,7 +7,7 @@ import type {ClubMatch} from '../../club/types';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Desk.dc.html?raw';
 import {holes} from '../holes';
-const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,''),[
+const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace('</main>','<sc-if value="{{msg}}"><p role="status" style="padding:12px 16px">{{msg}}</p></sc-if></main>'),[
  ['Rally33 Open · Desk','{{title}}'],['Sun 15 Nov · 6:42 pm','{{when}}'],['+6 min','{{running}}'],['Running</div>','Done</div>'],['behind plan','of all matches'],
  ['Finish a match (demo)','Results, walkovers and moves →'],
  ['class="tlink mut" href="TV.dc.html">TV board ↗</a><a class="tlink mut" href="Live.dc.html">Public live scores ↗</a>','class="tlink mut" href="{{tvHref}}">TV board ↗</a><a class="tlink mut" href="{{socialHref}}">Social studio ↗</a><a class="tlink mut" href="{{liveHref}}">Public live scores ↗</a>'],

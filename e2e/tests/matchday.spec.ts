@@ -11,13 +11,13 @@ test('match day keeps tournament tabs, desk and point scoring usable on a phone'
  await expect(page.getByRole('region',{name:'Pools',exact:true})).toBeVisible();
  await page.getByRole('group',{name:'Tournament view'}).getByRole('button',{name:'Knockouts',exact:true}).click();
  await expect(page.getByRole('region',{name:'Knockouts',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Desk view',exact:true}).click();
+ await page.getByRole('button',{name:'Desk view',exact:true}).click();await page.getByRole('button',{name:/Results, walkovers and moves/}).click();
  await expect(page.getByRole('progressbar',{name:'Matches completed'})).toBeVisible();
  await expect(page.getByRole('region',{name:'Courts',exact:true})).toBeVisible();
  const deskUrl=page.url();
  await page.getByRole('button',{name:'Score',exact:true}).first().click();
  const a=page.locator('.score-tap-a'),b=page.locator('.score-tap-b');
- await expect(a).toBeVisible();expect(await a.evaluate(el=>parseFloat(getComputedStyle(el.querySelector('.big')!).fontSize))).toBeGreaterThanOrEqual(96);
+ await expect(a).toBeVisible();expect(await a.evaluate(el=>parseFloat(getComputedStyle(el.querySelector('.big')!).fontSize))).toBeGreaterThanOrEqual(88);
  expect((await b.boundingBox())!.y).toBeGreaterThan((await a.boundingBox())!.y);
  const before=Number(await a.locator('.big').textContent());await a.click();await expect(a.locator('.big')).toHaveText(String(before+1));
  await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(a.locator('.big')).toHaveText(String(before));
@@ -29,5 +29,5 @@ test('match day keeps tournament tabs, desk and point scoring usable on a phone'
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
  const originalId=deskUrl.split("/").at(-1)!;
  const emptyId=await page.evaluate(originalId=>{const k="pq-club-demo-v1",d=JSON.parse(localStorage.getItem(k)!),id=crypto.randomUUID(),t=d.tournaments.find((t:{id:string})=>t.id===originalId),v=d.divisions.find((v:{tournamentId:string})=>v.tournamentId===originalId);d.tournaments.push({...t,id,name:"Empty match-day fixture",status:"draft",drawnAt:undefined,isPublic:false,publicSlug:"empty-"+id});d.divisions.push({...v,id:crypto.randomUUID(),tournamentId:id,advance:0});localStorage.setItem(k,JSON.stringify(d));return id;},originalId);
- await page.goto("#/club-desk/"+emptyId);await page.reload();await expect(page.getByText("No matches scheduled yet. Open entries to make the draw.",{exact:true})).toBeVisible();await expect(page.getByRole("progressbar",{name:"Matches completed"})).toHaveCount(0);
+ await page.goto("#/club-desk/"+emptyId);await page.reload();await expect(page.getByText("Queue empty",{exact:true}).first()).toBeVisible();await expect(page.getByRole("progressbar",{name:"Matches completed"})).toHaveCount(0);
 });

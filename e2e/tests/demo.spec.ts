@@ -82,6 +82,7 @@ test.describe('Organiser screens (demo club)', () => {
     await openDemoEvent(page);
     await page.getByRole('button', { name: 'Desk view' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Open · Desk' })).toBeVisible();
+    await page.getByRole('button', { name: /Results, walkovers and moves/ }).click();
     for (const c of [1, 2, 3]) await expect(page.getByLabel(`Court ${c}`, { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Queue' })).toBeVisible();
     await page.getByText('More', { exact: true }).first().click();
