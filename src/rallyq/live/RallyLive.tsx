@@ -27,7 +27,7 @@ function longestRun(pts:string){let best=0,cur=0,prev='';for(const p of pts){cur
 export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?:number})=>void){
  const venue=venues[v]??venues[0];const courts=venue?.courts??[];const ci=Math.min(c,Math.max(0,courts.length-1));
  const mk=(x:Court)=>({...x,chip:x.status==='Live'?'chip live':'chip gold'});
- const s=courts[ci]?mk(courts[ci]):mk({court:'Court 1',stage:'',a:'To be decided',b:'To be decided',sa:0,sb:0,game:1,games:[],status:'Final',run:0,next:'',pts:''});
+ const s=courts[ci]?mk(courts[ci]):mk({court:'Court 1',stage:'',a:'No match on court yet',b:'Check back soon',sa:0,sb:0,game:1,games:[],status:'Waiting',run:0,next:'',pts:''});
  const first=(n:string)=>n.split(' / ')[0];
  return {venue:venue?.name??'',clubName:venue?.club??'',clubMark:venue?.mark??'',
   venues:venues.map((x,i)=>({name:x.name,cls:i===v?'tab on':'tab',pick:()=>set({v:i,c:0})})),
