@@ -26,7 +26,7 @@ export function RallyDesk({id,go,onBack}:{id:string;go:Go;onBack:()=>void}){
  const last=(m:ClubMatch)=>m.games.at(-1)??{a:0,b:0};
  const head=queue.find(m=>m.status==='scheduled');
  const call=async(court:number)=>{if(!head)return;try{await b.patchMatches([{id:head.id,patch:{court}}]);setMsg('Sent to court '+court);state.reload();}catch(e){setMsg(errorText(e));}};
- const slug=(t as {slug?:string}).slug??id;
+ const slug=t.publicSlug||id;
  const courts=board.map(s=>s.now?{name:'Court '+s.court,busy:true,free:false,status:'Live',chip:'chip live',stage:[div(s.now),STAGE[s.now.stage]].filter(Boolean).join(' · '),ref:'court link',a:names(s.now.sideA,pmap),b:names(s.now.sideB,pmap),sa:last(s.now).a,sb:last(s.now).b}
   :{name:'Court '+s.court,busy:false,free:true,status:'Free',chip:'chip ball',blocked:!head,callLabel:head?'Call to Court '+s.court:'Queue empty',call:()=>{void call(s.court);}});
  const values={title:t.name+' · Desk',when:new Date().toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}),running:real.length?Math.round(played/real.length*100)+'%':'0%',
