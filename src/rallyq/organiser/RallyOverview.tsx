@@ -50,5 +50,6 @@ export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
   done,total:tasks.length,pct:Math.round(done/tasks.length*100)+'%',
   coming:upcoming.slice(0,3).map((t,i)=>({name:t.name,date:day(t.startDate),style:i?'color:#9FB4A6':'font-weight:600'})),noComing:!upcoming.length
  };
+ if(live.length)return <><section aria-label="Club tools" style={{padding:'16px max(16px,2.4vw) 0'}}><ClubHome d={d} go={go}/></section><PrototypeScreen name="Overview" go={go} source={source} values={values}/></>;
  return <PrototypeScreen name="Overview" go={go} source={source} values={values}><section aria-label="Club tools" style={{padding:'0 max(16px,2.4vw) 32px'}}><ClubHome d={d} go={go}/></section></PrototypeScreen>;
 }

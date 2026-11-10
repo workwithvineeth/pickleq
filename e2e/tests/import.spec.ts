@@ -12,10 +12,12 @@ test.describe('PaddleQ app', () => {
   test('has its own tabs, and no personal-app tabs', async ({ page }) => {
     // Signed out, paddleq.in opens on the public home page; Sign in leads to the sign-in page.
     await page.goto('./');
-    await expect(page.getByRole('heading', { level: 1, name: 'Every point. Live.' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Watch a match →' })).toBeVisible();
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page).toHaveURL(/#\/club-signin/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Your court. The main event.' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /See live scores/ }).first()).toBeVisible();
+    const menu = page.getByRole('button', { name: 'Menu' });
+    if (await menu.isVisible()) await menu.click();
+    await page.getByRole('link', { name: 'Club sign in' }).locator('visible=true').first().click();
+    await expect(page).toHaveURL(/#\/club(-signin)?$/);
     await page.goto('#/club');
     const nav = page.getByRole('navigation', { name: 'Main' });
     for (const t of ['Events', 'My club', 'Results']) await expect(nav.getByRole('button', { name: t })).toBeVisible();
@@ -24,16 +26,16 @@ test.describe('PaddleQ app', () => {
     for (const t of ['Home', 'Train', 'Stats', 'Coach']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Log a match' })).toHaveCount(0);
     // Signed out, My clubs is the sign-in page; the demo lives in the admin dashboard, not here.
-    await expect(page.getByRole('heading', { name: 'PaddleQ', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'RallyQ', level: 1 })).toBeVisible();
     await expect(page.getByText('Out of the kitchen, into the stats.')).toBeVisible();
-    await expect(page.getByRole('img', { name: 'PaddleQ logo' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'RallyQ logo' })).toBeVisible();
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: /Got an invite from a club/ }).click();
     await expect(page.getByRole('region', { name: 'Join a club' })).toBeVisible();
     await expect(page.getByText('Try the demo club')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
     await page.goto('#/stats');
-    await expect(page.getByRole('heading', { name: 'PaddleQ', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'RallyQ', level: 1 })).toBeVisible();
     await nav.getByRole('button', { name: 'Results' }).click();
     await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
   });
@@ -57,7 +59,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByRole('group', { name: 'Event 2 type' }).getByRole('button', { name: 'Doubles' }).click();
     await page.getByLabel('Event 2 DUPR cap').fill('3.5');
     await page.getByRole('group', { name: 'Event 2 DUPR cap is for' }).getByRole('button', { name: 'Team average' }).click();
-    await page.getByLabel('Show it on the PaddleQ events board').uncheck();
+    await page.getByLabel('Show it on the RallyQ events board').uncheck();
     await page.getByRole('button', { name: 'Save draft' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Split Form Cup' })).toBeVisible();
     await page.getByRole('button', { name: /^Entries( and draw)?$/ }).click();
@@ -92,7 +94,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByRole('group', { name: 'Event 2 type' }).getByRole('button', { name: 'Doubles' }).click();
     await page.getByLabel('Event 2 DUPR cap').fill('3.5');
     await page.getByRole('group', { name: 'Event 2 DUPR cap is for' }).getByRole('button', { name: 'Team average' }).click();
-    await page.getByLabel('Show it on the PaddleQ events board').uncheck();
+    await page.getByLabel('Show it on the RallyQ events board').uncheck();
     await page.getByRole('button', { name: 'Save draft' }).click();
     await expect(page.getByRole('heading', { name: 'Robot Form Cup' })).toBeVisible();
     await page.getByRole('button', { name: /^Entries( and draw)?$/ }).click();

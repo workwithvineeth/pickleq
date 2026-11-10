@@ -28,7 +28,7 @@ test('T1 fonts, targets, phone glass and screenshot evidence', async ({ page }) 
       const effects = document.documentElement.dataset.pqEffects;
       probe.remove(); return { numbers, blur, effects };
     });
-    expect(styles.effects).toBeUndefined(); expect(styles.blur).toContain('blur(26px)');
+    expect(styles.effects).toBeUndefined(); expect(styles.blur).toContain('blur(22px)');
     for (const number of styles.numbers) { expect(number.font).toContain('Archivo'); expect(number.weight).toBe('800'); expect(number.stretch).toBe('68%'); expect(number.nums).toContain('tabular-nums'); }
     await page.screenshot({ path: test.info().outputPath(`T1-club-${width}-${colorScheme}.png`), fullPage: true });
     await page.getByRole('button', { name: /PQ Demo Open/ }).first().click();

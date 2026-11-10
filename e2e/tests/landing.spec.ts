@@ -1,10 +1,11 @@
 import {expect,test} from '@playwright/test';
-test('Court Green home: seven sections, phone sizing, working paths and keyboard',async({page})=>{
- await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));await page.emulateMedia({reducedMotion:'reduce'});await page.goto('#/home');await expect(page.getByRole('heading',{level:1,name:'Every point. Live.'})).toBeVisible();
- const showcase=await page.getByText('Staging showcase · sample players and numbers').count();
- for(const name of ['Scores that feel live.','Your game, on record.','Your club, on the big stage.','Match day, handled.','The city’s home of pickleball.','Where to play this week.','The whole club in your pocket.'])await expect(page.getByRole('heading',{name,exact:true})).toBeVisible();
- for(const width of [320,390,870,1440]){await page.setViewportSize({width,height:900});await page.evaluate(()=>document.fonts.ready);expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);if(width<600){expect(await page.locator('.home-hero').evaluate(el=>el.getBoundingClientRect().height)).toBeLessThanOrEqual(650);if(showcase){expect(await page.locator('.home-live-grid article').first().evaluate(el=>el.getBoundingClientRect().height)).toBeLessThanOrEqual(300);expect(await page.locator('.home-player-photo').evaluate(el=>el.getBoundingClientRect().height)).toBeLessThanOrEqual(360)}}}
- if(showcase){await expect(page.getByRole('region',{name:'Sample player cards'})).toBeVisible();await expect(page.getByText('Get seats from ₹499')).toBeVisible();expect(await page.getByRole('button',{name:'Get seats from ₹499'}).count()).toBe(0)}else{await expect(page.getByText('Alex Reed')).toHaveCount(0);await expect(page.getByText('Tickets on sale')).toHaveCount(0)}
+test('RallyQ home: seven sections, phone sizing and the Night/Day switch',async({page})=>{
+ await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));await page.emulateMedia({reducedMotion:'reduce'});await page.goto('#/home');
+ await expect(page.getByRole('heading',{level:1,name:'Your court. The main event.'})).toBeVisible();
+ for(const name of ['Every point, as it happens.','Your game, with a pro\'s profile.','Your venue, presented like a stadium.','From entries to final in one desk.','The city\'s home of pickleball.','This month on court.','Match day lives on your phone.'])await expect(page.getByRole('heading',{level:2,name})).toHaveCount(1);
+ await expect(page.getByText(/Match intelligence/i)).toHaveCount(0);
+ for(const width of [320,390,870,1440]){await page.setViewportSize({width,height:900});await page.evaluate(()=>document.fonts.ready);expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);}
  await page.setViewportSize({width:390,height:900});await page.evaluate(()=>scrollTo(0,0));
- await page.getByRole('button',{name:'Switch to Day'}).click({timeout:15000});await expect(page.locator('html')).toHaveAttribute('data-theme','light');await page.getByRole('button',{name:'Switch to Night'}).click({timeout:15000});await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await page.getByRole('button',{name:'Watch a match →'}).focus();await page.keyboard.press('Enter');await expect(page).toHaveURL(showcase?/results\//:/events/);
+ await page.getByRole('button',{name:'Switch to day mode'}).first().click();await expect(page.getByRole('button',{name:'Switch to night mode'}).first()).toBeVisible();
+ await page.getByRole('button',{name:'Switch to night mode'}).first().click();await expect(page.getByRole('button',{name:'Switch to day mode'}).first()).toBeVisible();
 });

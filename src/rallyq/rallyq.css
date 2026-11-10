@@ -15,3 +15,6 @@
 /* Keep the Event content within narrow phones; tables retain their own scroll. */
 .rallyq-screen-event .rq>.wrap{width:100%;min-width:0;box-sizing:border-box}
 .rallyq-screen-event .rq .tabs{min-width:0;max-width:100%}
+
+@media (prefers-reduced-motion:reduce){.pq-score-flash,[class*='pq-score']{animation:none!important;transition:none!important}}
+.rallyq-screen-main .rq section.sec{overflow-x:clip}

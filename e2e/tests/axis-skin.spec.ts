@@ -1,6 +1,7 @@
 import {expect,test} from '@playwright/test';
 import {assertContrast} from './contrast';
-for(const skin of ['axis','maroon'])for(const theme of ['light','dark'])test('skin '+skin+' / '+theme+': contrast, display type and saved preference',async({page})=>{
+// Retired 10 Nov: RallyQ v1 ships the court skin only (T18). court-skin.spec covers it.
+for(const skin of ['axis','maroon'])for(const theme of ['light','dark'])test.skip('skin '+skin+' / '+theme+': contrast, display type and saved preference',async({page})=>{
  await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));
  await page.addInitScript(()=>{Object.defineProperty(navigator,'deviceMemory',{get:()=>8});Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>8});});
  await page.goto('#/demo');await page.getByLabel('Your name in the demo').fill('Alex');await page.getByRole('button',{name:'Open PQ Demo Club'}).click();
