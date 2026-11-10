@@ -10,6 +10,7 @@ import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 import {RallyHome} from '../rallyq/home/RallyHome';
+import {MyStudio} from '../rallyq/studio/MyStudio';
 import {RallyLive} from '../rallyq/live/RallyLive';
 import {RallyEvent} from '../rallyq/event/RallyEvent';
 import {RallyTV} from '../rallyq/tv/RallyTV';
@@ -95,6 +96,8 @@ export default function ClubApp() {
   if (route.name === 'club-social' && route.id) return <><StagingStrip /><RallySocial slug={route.id} go={go} /></>;
   if (route.name === 'club-tv' && route.id) return <RallyTV slug={route.id} go={go} />;
   if (route.name === 'event' && route.id) return <><StagingStrip /><RallyEvent slug={route.id} go={go} /></>;
+  // My Player Studio has its own header and feature tabs (prototype), so no old Studio side menu.
+  if (route.name === 'club-player-studio' && route.id !== 'profile' && !(route.id ?? '').startsWith('profile')) return <><StagingStrip /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
   const ws = showNav && !NO_ACCOUNT.includes(name) ? workspaceOf({ ...route, name }) : null;
   return (

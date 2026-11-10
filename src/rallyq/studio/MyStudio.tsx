@@ -35,7 +35,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  const state=useLoad(async()=>{const store=new RallyStudioStore();return{store,data:await store.load()};},[]);
  const[sharing,setSharing]=useState<SharingOptions|null>(null);
  const[goal,setGoal]=useState({title:'',target:'',msg:''});
- if(!state.data&&!state.loading)return <PlayerStudio section={section??''} go={go}/>;
+ if(!state.data&&!state.loading)return <div className="app pq-brand"><PlayerStudio section={section??''} go={go}/></div>;
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6',padding:24,textAlign:'center'}}>{state.loading?'Loading your Player Studio…':<span>{state.error??'Sign in to open My Player Studio.'} <button type="button" className="tlink" onClick={()=>go('club-signin')}>Sign in →</button></span>}</div>;
  const{store,data}=state.data;const me=data.official.players[0];
  const share=sharing??data.sharing??PRIVATE_SHARING;
