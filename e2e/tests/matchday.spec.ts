@@ -11,7 +11,7 @@ test('match day keeps tournament tabs, desk and point scoring usable on a phone'
  await expect(page.getByRole('region',{name:'Pools',exact:true})).toBeVisible();
  await page.getByRole('group',{name:'Tournament view'}).getByRole('button',{name:'Knockouts',exact:true}).click();
  await expect(page.getByRole('region',{name:'Knockouts',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Desk view',exact:true}).click();await page.getByRole('button',{name:/Results, walkovers and moves/}).click();
+ await page.getByRole('button',{name:'Desk view',exact:true}).click();await page.getByRole('button',{name:/Results, walkovers and court changes/}).click();
  await expect(page.getByRole('progressbar',{name:'Matches completed'})).toBeVisible();
  await expect(page.getByRole('region',{name:'Courts',exact:true})).toBeVisible();
  const deskUrl=page.url();

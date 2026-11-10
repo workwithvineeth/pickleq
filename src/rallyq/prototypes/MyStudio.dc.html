@@ -55,7 +55,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="disp" style="font-size:clamp(44px,4.2vw,58px)">Kiran Reddy</div>
 <div style="color:#DDE7DC;font-size:14px">Right side · Two-handed backhand · Loki’s Pickleball Club</div>
 <div style="background:rgba(6,20,13,.75);border-radius:16px;padding:12px 14px">
-<div class="between"><span class="cap">Rating over time</span><span style="font-size:12px;color:#9FB4A6">tournaments only</span></div>
+<div class="between"><span class="cap">DUPR rating history</span><span style="font-size:12px;color:#9FB4A6">official rating</span></div>
 <svg viewBox="0 0 300 64" aria-hidden="true" style="width:100%;height:64px;margin-top:6px"><path d="M0 54 L30 50 L60 52 L90 44 L120 40 L150 42 L180 32 L210 27 L240 29 L270 18 L300 12 L300 64 L0 64Z" fill="rgba(217,242,74,.12)"></path><path d="M0 54 L30 50 L60 52 L90 44 L120 40 L150 42 L180 32 L210 27 L240 29 L270 18 L300 12" fill="none" stroke="#D9F24A" stroke-width="3"></path></svg>
 </div>
 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
@@ -93,7 +93,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="cap" style="color:#4A5D50;margin-top:6px">How did it feel?</div>
 <div class="row" style="gap:6px"><sc-for list="{{feel}}" as="f" hint-placeholder-count="5"><button class="btn sm" style="{{f.style}}" onClick="{{f.pick}}">{{f.n}}</button></sc-for></div>
 <button class="btn" style="background:#0B2418;color:#D9F24A!important;margin-top:auto" onClick="{{saveLog}}">{{saveLabel}}</button>
-<div style="font-size:12px;color:#4A5D50">Saved sessions are tagged “self-logged”. They never change your rating.</div>
+<div style="font-size:12px;color:#4A5D50">Sessions you log yourself are marked “Self-logged”. They never change your DUPR rating.</div>
 </sc-if>
 
 <sc-if value="{{is.Compare}}" hint-placeholder-val="{{ false }}">
@@ -130,7 +130,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 <sc-if value="{{is.Sharing}}" hint-placeholder-val="{{ false }}">
 <div class="disp" style="font-size:32px">Who sees what</div>
-<div style="font-size:13px;color:#4A5D50">Tournament results are always public. Everything else stays private until you switch it on.</div>
+<div style="font-size:13px;color:#4A5D50">Tournament results are always on your public profile. Practice, training, coach notes and goals stay private unless you switch them on here.</div>
 <div class="between" style="padding:10px 0;border-bottom:1px solid rgba(11,36,24,.12);font-size:14px"><span>Tournament matches, rating, ranking</span><span style="font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:#DCE5DD">ALWAYS PUBLIC</span></div>
 <sc-for list="{{perms}}" as="p" hint-placeholder-count="5"><div class="between" style="padding:8px 0;border-bottom:1px solid rgba(11,36,24,.12);font-size:14px"><span>{{p.label}}</span><button onClick="{{p.flip}}" aria-label="{{p.aria}}" style="{{p.sw}}"><span style="{{p.knob}}"></span></button></div></sc-for>
 <div style="background:#FFFFFF;border-radius:16px;padding:12px 14px;font-size:13px;margin-top:auto"><b>{{sharedCount}} private items shared.</b> Shared practice numbers show a “self-logged” tag on your public profile.</div>

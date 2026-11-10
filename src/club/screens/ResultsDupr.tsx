@@ -70,7 +70,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
         else await b.updatePlayer(pid, patch);
         saved++;
       }
-      setEdits({}); state.reload(); setMsg({ ok: true, text: 'Saved. RallyQ can see the new DUPR details now.' });
+      setEdits({}); state.reload(); setMsg({ ok: true, text: 'DUPR details saved.' });
     } catch (e) { setMsg({ ok: false, text: `${saved ? `${saved} player(s) saved before the error. Remaining edits are kept. ` : ''}${errorText(e)}` }); }
     finally { setBusy(false); }
   }

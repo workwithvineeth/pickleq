@@ -148,13 +148,13 @@ export function ScorePad(p: ScorePadProps) {
             <button type="button" className="score-tap score-tap-a" aria-label={`Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || busy}>
               <span className="small pq-referee-name">{nameA}</span>
               <span className="big">{cur.a}</span>
-              <span className="small muted">Tap if they won the point</span>
+              <span className="small muted">Tap when this team wins the point</span>
             </button>
             {(golden || gp) && <div role="status" className="pq-gamepoint-strip">{golden ? "GOLDEN POINT" : "GAME POINT"}<small>{golden ? "Golden point · next point wins" : "Game point: " + (gp === "A" ? nameA : nameB)}</small></div>}
             <button type="button" className="score-tap score-tap-b" aria-label={`Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || busy}>
               <span className="small pq-referee-name">{nameB}</span>
               <span className="big">{cur.b}</span>
-              <span className="small muted">Tap if they won the point</span>
+              <span className="small muted">Tap when this team wins the point</span>
             </button>
           </div>
           <p className={`small pq-referee-lead${gp ? ' pq-gamepoint' : ''}`} style={{ margin: 0, minHeight: 20 }} aria-live="polite">

@@ -17,7 +17,7 @@ const R:[string,string][]=[
  ['font-size:20px">Rally33 at Crosscourts</div>','font-size:20px">{{hostLine}}</div>'],
  ['<span class="mut">of 32 teams</span>','<span class="mut">{{capLabel}}</span>'],
  ['[YOUR PRICE] per team','{{entryLine}}'],
- ['Paid to the club at the desk. Closes Fri 13 Nov, 9 pm.','{{entryNote}}'],
+ ['Pay the club directly at the venue desk. Entries close Friday, 13 November at 9 pm.','{{entryNote}}'],
  ['Final · 8:15 pm','{{finalLabel}}'],
  ['Pools of 4, top 2 to knockouts. Games to 11, win by 2. Finals best of 3.','{{infoFormat}}'],
  ['Crosscourts, Hyderabad. 4 outdoor courts under lights. Parking on site.','{{infoVenue}}'],

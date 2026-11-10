@@ -25,6 +25,6 @@ import {expect,test} from '@playwright/test';
    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
   await page.reload();await expect(page.locator('html')).toHaveAttribute('data-skin','court');await expect(page.locator('html')).toHaveAttribute('data-theme','light');
-  await page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:/PQ Demo Open/}).click();await page.getByRole('button',{name:'Desk view',exact:true}).click();await page.getByRole('button',{name:/Results, walkovers and moves/}).click();await page.getByRole('button',{name:'Score',exact:true}).first().click();
+  await page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:/PQ Demo Open/}).click();await page.getByRole('button',{name:'Desk view',exact:true}).click();await page.getByRole('button',{name:/Results, walkovers and court changes/}).click();await page.getByRole('button',{name:'Score',exact:true}).first().click();
   await assertContrast(page.locator('.score-tap-a .big'));await assertContrast(page.locator('.score-tap-b .big'));
  });

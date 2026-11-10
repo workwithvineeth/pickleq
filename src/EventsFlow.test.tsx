@@ -386,6 +386,6 @@ describe('Results and DUPR (organiser)', () => {
     const box = (await screen.findAllByLabelText(/DUPR doubles rating/))[0] as HTMLInputElement;
     await user.clear(box); await user.type(box, '3.45');
     await user.click(screen.getByRole('button', { name: 'Save DUPR details' }));
-    expect(await screen.findByText('Saved. RallyQ can see the new DUPR details now.')).toBeInTheDocument();
+    expect(await screen.findByText('DUPR details saved.')).toBeInTheDocument();
   });
 });

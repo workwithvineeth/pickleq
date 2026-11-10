@@ -9,7 +9,7 @@ import raw from '../prototypes/Desk.dc.html?raw';
 import {holes} from '../holes';
 const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace('</main>','<sc-if value="{{msg}}"><p role="status" style="padding:12px 16px">{{msg}}</p></sc-if></main>'),[
  ['Rally33 Open · Desk','{{title}}'],['Sun 15 Nov · 6:42 pm','{{when}}'],['+6 min','{{running}}'],['Running</div>','Done</div>'],['behind plan','of all matches'],['of 46 matches','of {{total}} matches'],
- ['Finish a match (demo)','Results, walkovers and moves →'],
+ ['Finish a match (demo)','Results, walkovers and court changes →'],
  ['class="tlink mut" href="TV.dc.html">TV board ↗</a><a class="tlink mut" href="Live.dc.html">Public live scores ↗</a>','class="tlink mut" href="{{tvHref}}">TV board ↗</a><a class="tlink mut" href="{{socialHref}}">Social studio ↗</a><a class="tlink mut" href="{{liveHref}}">Public live scores ↗</a>'],
  ['<div class="card mini" style="padding:18px;','<div class="card mini" role="group" aria-label="{{c.name}}" style="padding:18px;'],
  ['<div class="cap" style="position:relative">Courts · drawn as courts</div>','<div class="cap" style="position:relative">Courts</div><sc-if value="{{hasReal}}"><progress aria-label="Matches completed" max="{{realCount}}" value="{{played}}" style="position:relative;width:100%;height:6px;accent-color:#D9F24A"></progress></sc-if>'],

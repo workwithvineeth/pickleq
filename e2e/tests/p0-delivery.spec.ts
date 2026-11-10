@@ -15,7 +15,7 @@ test('normal dashboard and Results tab lead to the organiser results page', asyn
   const rating = page.getByLabel(/DUPR singles rating/).first();
   await rating.fill('3.45');
   await page.getByRole('button', { name: 'Save DUPR details', exact: true }).click();
-  await expect(page.getByText('Saved. RallyQ can see the new DUPR details now.')).toBeVisible();
+  await expect(page.getByText('DUPR details saved.')).toBeVisible();
   await page.reload(); await expect(page.getByLabel(/DUPR singles rating/).first()).toHaveValue('3.45');
   await page.goto('#/club-results');
   const results = page.getByRole('region', { name: 'Organiser results and DUPR', exact: true });
@@ -60,7 +60,7 @@ test('organiser results: saved ratings under names, knockout scores, CSV/PDF, ph
   const rating = page.getByLabel(/DUPR singles rating/).first(); await rating.fill('3.456');
   await expect(page.getByRole('button', { name: 'Save as PDF' })).toBeDisabled();
   await page.getByRole('button', { name: 'Save DUPR details' }).click();
-  await expect(page.getByText('Saved. RallyQ can see the new DUPR details now.')).toBeVisible();
+  await expect(page.getByText('DUPR details saved.')).toBeVisible();
   await page.reload(); await expect(page.getByLabel(/DUPR singles rating/).first()).toHaveValue('3.456');
   await page.evaluate(() => { window.print = () => { document.body.dataset.printRequested = 'yes'; }; });
   await page.getByRole('button', { name: 'Save as PDF', exact: true }).click();

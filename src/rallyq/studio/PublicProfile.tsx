@@ -39,7 +39,7 @@ export function profileValues(p:PublicRallyPlayer,tab:string,setTab:(t:string)=>
   matches:off.slice(0,12).map(o=>{const side=o.mySide==='A'?o.sideA:o.sideB,them=o.mySide==='A'?o.sideB:o.sideA;return{d:new Date(o.playedOn+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}),e:o.tournament,w:first(side.filter(x=>x.id!==o.me),go)||'—',v:first(them,go),s:score(o),r:won(o)?'W':'L',cls:won(o)?'chip ball':'chip'};}),
   venues:[...byClub.entries()].map(([n,v])=>({n,w:v.w,p:Math.round(v.w/v.n*100)+'%'})),
   lastEvent:last?.tournament??'No matches yet',lastScore:last?score(last):'',lastClub:last?.club??p.club,lastResult:last?(won(last)?'Win':'Result'):'',lastChip:last&&won(last)?'chip live':'chip',
-  share:onShare,shareLabel:shared?'Saved to your phone ✓':'Save for Instagram'
+  share:onShare,shareLabel:shared?'Image saved ✓':'Save for Instagram'
  };
 }
 /** Public player profile (#/public-player/<id>): tournament matches only, scored by referees. */

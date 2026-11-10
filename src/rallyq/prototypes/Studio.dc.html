@@ -36,7 +36,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </div>
 </div>
 <div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
-<div class="between"><span class="row" style="gap:8px"><span class="chip ball">Public profile</span><span class="mut" style="font-size:13px">Tournament matches only, scored by referees</span></span><a class="tlink" href="MyStudio.dc.html">Open my Player Studio →</a></div>
+<div class="between"><span class="row" style="gap:8px"><span class="chip ball">Public profile</span><span class="mut" style="font-size:13px">Referee-scored tournament matches only</span></span><a class="tlink" href="MyStudio.dc.html">Open My Player Studio →</a></div>
 <div class="grid g4">
 <div class="card stat" style="padding:18px"><div class="cap">Matches</div><div class="n">38</div></div>
 <div class="card stat" style="padding:18px"><div class="cap">Win rate</div><div class="n acc">68%</div></div>
@@ -100,7 +100,7 @@ renderVals() {
     isMatches: this.state.tab==='Matches', isVenues: this.state.tab==='Venues', isShare: this.state.tab==='Share card',
     venues: [['Loki’s Pickleball Club',12,'80%'],['TPC Narapally',6,'60%'],['Rally33 · Crosscourts',4,'67%'],['ElitePicklers Bowenpally',3,'75%'],['Pickleyard Malkajgiri',1,'33%']].map(([n,w,p]) => ({n,w,p})),
     share: () => this.setState({shared:true}),
-    shareLabel: this.state.shared ? 'Saved to your phone ✓' : 'Save for Instagram'
+    shareLabel: this.state.shared ? 'Image saved ✓' : 'Save for Instagram'
   };
 }
 }
