@@ -33,3 +33,4 @@ describe('workspace permissions and routes', () => {
     expect(screen.queryByRole('button', { name: 'Audit log' })).toBeNull(); expect(screen.queryByRole('button', { name: 'Permissions' })).toBeNull();
   });
 });
+it('opens the selected public event in TV and Social, using its slug',async()=>{const go=vi.fn();bundle.mockResolvedValue({club:{id:'c',name:'Sample'},role:'owner',tournaments:[{id:'t',name:'Open',status:'live',isPublic:true,publicSlug:'sample-open',startDate:'2026-11-10'}]});render(<WorkspaceNav kind="club" route={{name:'club-view',id:'c'}} go={go} admin={false}/>);await act(async()=>{});fireEvent.click(screen.getAllByRole('button',{name:'TV board'})[0]);expect(go).toHaveBeenCalledWith('club-tv','sample-open');fireEvent.click(screen.getAllByRole('button',{name:'Social studio'})[0]);expect(go).toHaveBeenCalledWith('club-social','sample-open')});

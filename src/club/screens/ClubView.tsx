@@ -162,7 +162,7 @@ function Players({ d, go, reload }: { d: ClubBundle; go: Go; reload: () => void 
         <tbody>
           {list.map((p) => (
             <tr key={p.id}>
-              <td><button type="button" className="link-btn" style={{ padding: 0, textAlign: 'left' }} onClick={() => go('club-player', p.id)}>{p.name}</button>{p.id === d.myPlayerId && <span className="small muted"> (you)</span>}</td>
+              <td><button type="button" className="link-btn" style={{ padding: 0, textAlign: 'left' }} onClick={() => go('public-player', p.id)}>{p.name}</button>{p.id === d.myPlayerId && <span className="small muted"> (you)</span>}</td>
               <td>{fmtRating(p.duprSingles)}</td>
               <td>{fmtRating(p.duprDoubles)}</td>
             </tr>
@@ -239,7 +239,7 @@ function Squad({ d, go }: { d: ClubBundle; go: Go }) {
           <tbody>
             {sorted.map((r) => (
               <tr key={r.playerId}>
-                <td><button type="button" className="link-btn" style={{ padding: 0, textAlign: 'left' }} onClick={() => go('club-player', r.playerId)}>{r.name}</button></td>
+                <td><button type="button" className="link-btn" style={{ padding: 0, textAlign: 'left' }} onClick={() => go('public-player', r.playerId)}>{r.name}</button></td>
                 <td>{r.matches}</td><td>{pct(r.winPct)}</td><td>{pct(r.closePct)}</td><td>{r.comebacks}</td><td>{r.lostLeads}</td><td>{pct(r.closing)}</td>
               </tr>
             ))}

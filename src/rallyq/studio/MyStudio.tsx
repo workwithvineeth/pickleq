@@ -40,5 +40,5 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
   catch(e){set({error:e instanceof Error?e.message:'Could not save.'});}};
  const toggle=async(k:keyof SharingOptions)=>{const next={...share,[k]:!share[k]};setSharing(next);try{await store.saveSharing(next);}catch{setSharing(share);}};
  const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Claim your player profile to see your matches',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
- return <PrototypeScreen name="MyStudio" go={go} source={source} values={values}/>;
+ return <PrototypeScreen name="MyStudio" go={go} source={source} values={values} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
 }

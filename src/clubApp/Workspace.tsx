@@ -69,7 +69,7 @@ function useClubContext(route: Route, on: boolean) {
 
 const t = (x?: string): [RouteName, string?] | null => (x ? ['club-tournament', x] : null);
 
-function groups(kind: WorkspaceKind, c: { clubId?: string; tournamentId?: string }): { title: string; area: string; groups: Group[] } {
+function groups(kind: WorkspaceKind, c: { clubId?: string; tournamentId?: string; tournaments?: ClubTournament[] }): { title: string; area: string; groups: Group[] } {
   if (kind === 'admin') return {
     title: 'Platform Admin', area: 'Platform governance', groups: [
       { label: 'Workspace', items: [{ key: 'overview', label: 'Overview', glyph: '◫', to: ['admin', 'overview'] }] },
@@ -109,6 +109,8 @@ function groups(kind: WorkspaceKind, c: { clubId?: string; tournamentId?: string
     ],
   };
   const club = c.clubId;
+  const event = c.tournaments?.find(t=>t.id===c.tournamentId);
+  const slug = event?.isPublic ? event.publicSlug : undefined;
   return {
     title: 'Club / Organiser', area: 'Club operations', groups: [
       { label: 'Club', items: [{ key: 'overview', label: 'Overview', glyph: '⌂', to: club ? ['club-view', club] : null }] },
@@ -120,6 +122,8 @@ function groups(kind: WorkspaceKind, c: { clubId?: string; tournamentId?: string
       { label: 'Match day', items: [
         { key: 'draws', label: 'Pools & knockouts', glyph: '▦', to: t(c.tournamentId), hint: 'Pick a tournament first' },
         { key: 'desk', label: 'Tournament Desk', glyph: '▤', to: c.tournamentId ? ['club-desk', c.tournamentId] : null, hint: 'Pick a tournament first' },
+        { key: 'tv', label: 'TV board', glyph: '▤', to: slug ? ['club-tv', slug] : null, hint: 'Pick a public event first' },
+        { key: 'social', label: 'Social studio', glyph: '✦', to: slug ? ['club-social', slug] : null, hint: 'Pick a public event first' },
         { key: 'scoring', label: 'Referee scoring', glyph: '◎', to: c.tournamentId ? ['club-scorers', c.tournamentId] : null, hint: 'Pick a tournament first' },
         { key: 'results', label: 'Results & DUPR', glyph: '◷', to: c.tournamentId ? ['club-results-dupr', c.tournamentId] : null, hint: 'Pick a tournament first' },
       ] },
