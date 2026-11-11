@@ -154,12 +154,35 @@ export function crossPoolOrder(rows: StandingRow[], seedOf: (id: string) => numb
 }
 
 /**
- * First knockout round from pool results. Pool winners are seeded first (better record first), then runners-up, and so on.
- * Pairs are then adjusted so two players from the same pool don't meet in the first round when it can be avoided.
+ * Crossover first round (RallyQ rule, Vineeth 11 Nov 2026): with 2, 4 or 8 pools sending the same number of teams (1 or 2 each),
+ * the first pool crosses with the last, the second with the second-last, and so on: A1 v D2 · B1 v C2 · C1 v B2 · D1 v A2.
+ * Two teams from the same pool land in opposite halves, so they can only meet again in the final.
+ * Returns null when the qualifiers don't fit that shape (e.g. best third-placed teams); the seeded bracket is used then.
+ */
+export function crossoverPairs(qualifiers: Qualifier[]): [Qualifier, Qualifier][] | null {
+  const pools = [...new Set(qualifiers.map((q) => q.pool))].sort((x, y) => x - y);
+  const n = pools.length, per = qualifiers.length / n;
+  if (![2, 4, 8].includes(n) || (per !== 1 && per !== 2)) return null;
+  const at = (pool: number, place: number) => qualifiers.find((q) => q.pool === pool && q.place === place);
+  const pairs: [Qualifier, Qualifier][] = [];
+  if (per === 2) {
+    for (let i = 0; i < n; i++) { const a = at(pools[i], 1), b = at(pools[n - 1 - i], 2); if (!a || !b) return null; pairs.push([a, b]); }
+  } else {
+    for (let i = 0; i < n / 2; i++) { const a = at(pools[i], 1), b = at(pools[n - 1 - i], 1); if (!a || !b) return null; pairs.push([a, b]); }
+  }
+  return pairs;
+}
+
+/**
+ * First knockout round from pool results. Pools cross over when they can (see crossoverPairs). Otherwise pool winners are
+ * seeded first (better record first), then runners-up, and so on, and pairs are adjusted so two players from the same
+ * pool don't meet in the first round when it can be avoided.
  */
 export function firstKnockoutPairs(qualifiers: Qualifier[], rankKey: (q: Qualifier) => number): [Qualifier, Qualifier][] {
   const size = qualifiers.length;
   if (!KNOCKOUT_SIZES.includes(size)) throw new Error('Knockouts need 2, 4, 8 or 16 qualifiers');
+  const crossed = crossoverPairs(qualifiers);
+  if (crossed) return crossed;
   const seeded = [...qualifiers].sort((x, y) => x.place - y.place || rankKey(x) - rankKey(y));
   const order = bracketOrder(size);
   const pairs: [Qualifier, Qualifier][] = [];

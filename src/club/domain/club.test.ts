@@ -106,6 +106,21 @@ describe('tournament engine', () => {
     expect(() => firstKnockoutPairs(q.slice(0, 6), () => 0)).toThrow();
   });
 
+  it('pools cross over in the first knockout round: A1 v D2, B1 v C2, C1 v B2, D1 v A2', () => {
+    const q = [1, 2, 3, 4].flatMap((pool) => [1, 2].map((place) => ({ entryId: `${'ABCD'[pool - 1]}${place}`, pool, place })));
+    const ids = (ps: [{ entryId: string }, { entryId: string }][]) => ps.map(([a, b]) => `${a.entryId}v${b.entryId}`);
+    expect(ids(firstKnockoutPairs(q, () => 0))).toEqual(['A1vD2', 'B1vC2', 'C1vB2', 'D1vA2']);
+    // Two pools, top two: A1 v B2 and B1 v A2. Four pools, winners only: A v D and B v C.
+    expect(ids(firstKnockoutPairs(q.filter((x) => x.pool <= 2), () => 0))).toEqual(['A1vB2', 'B1vA2']);
+    expect(ids(firstKnockoutPairs(q.filter((x) => x.place === 1), () => 0))).toEqual(['A1vD1', 'B1vC1']);
+    // Same-pool teams sit in opposite halves (positions 0-1 and 2-3), so A1 and A2 can only meet in the final.
+    const pos = new Map(firstKnockoutPairs(q, () => 0).flatMap(([a, b], i) => [[a.entryId, i], [b.entryId, i]] as [string, number][]));
+    for (const p of 'ABCD') expect(pos.get(p + '1')! < 2).not.toBe(pos.get(p + '2')! < 2);
+    // Uneven qualifiers (not the same number from every pool) fall back to the seeded bracket.
+    const uneven = [...q.filter((x) => x.pool <= 3), { entryId: 'A3', pool: 1, place: 3 }, { entryId: 'B3', pool: 2, place: 3 }];
+    expect(firstKnockoutPairs(uneven, () => 0)).toHaveLength(4);
+  });
+
   it('next knockout round from finished matches', () => {
     const qf = [0, 1, 2, 3].map((pos) => ({ ...done(`q${pos}`, `a${pos}`, `b${pos}`, [[11, 5]]), stage: 'qf' as const, bracketPos: pos }));
     expect(nextRoundPairs(qf)).toEqual([{ bracketPos: 0, entryA: 'a0', entryB: 'a1' }, { bracketPos: 1, entryA: 'a2', entryB: 'a3' }]);
