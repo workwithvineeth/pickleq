@@ -36,3 +36,13 @@
 .rq-public-page>main>header.header button,.rq-public-page>main>header.header a{color:#F1F4EA!important;border-color:rgba(241,244,234,.28)!important;background:rgba(241,244,234,.06)!important}
 .rq-public-page>main>header.header button svg{stroke:currentColor}
 .rq.day~.app .rq-public-page,.app.rq-public-page>main>header.header{}
+
+/* The old app's global classes (.row, .card, .chip, .empty, .col) must not restyle prototype markup */
+.rallyq-prototype .rq .row{padding:0;border-top:0;justify-content:flex-start}
+.rallyq-prototype .rq .card{padding:0}
+.rallyq-prototype .rq .chip{border:0}
+.rallyq-prototype .rq .empty{display:block}
+.rallyq-prototype .rq .col{display:block;font-size:inherit;align-items:stretch;justify-content:normal;height:auto;gap:0}
+.rallyq-prototype .rq :is(h1,h2,h3,h4){letter-spacing:normal}
+/* v1.2 shells: the header scrolls with the page (prototype), it never floats over the content */
+.rallyq-prototype.rq-v12 .rq .hdr{position:relative!important;z-index:1!important}
