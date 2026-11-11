@@ -4,11 +4,12 @@ import {chooseTheme,currentTheme,subscribeTheme} from '../../theme';
 import {eventsBackend} from '../../club/index';
 import {scopedCSS} from '../PrototypeScreen';
 import raw from './v12.css?raw';
+import {Q_PATH,Watermark} from './Watermark';
 
 /** RallyQ v1.2 shell: the final prototype's styles (docs/final-prototype/*.dc.html) around real screens.
  * Inside a shell, write markup with the prototype's classes: card, list, tbl, btn, st ok, tabs, fld, inp, opt, cglass… */
 const CSS=scopedCSS(raw).replaceAll('%BASE%',import.meta.env.BASE_URL);
-const Q='M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62';
+const Q=Q_PATH;
 export function QMark({ink='#F1F4EA',accent='#D9F24A',className,size}:{ink?:string;accent?:string;className?:string;size?:number}){
  return <svg className={className} width={size} height={size} viewBox="0 0 100 100" aria-hidden="true"><path d={Q} fill="none" stroke={ink} strokeWidth="10" strokeLinecap="butt"/><line x1="28" y1="50" x2="72" y2="50" stroke={accent} strokeWidth="3"/><circle cx="83" cy="83" r="11" fill={accent}/></svg>;
 }
@@ -29,7 +30,7 @@ export function HostBlock({host,onClick}:{host:Host;onClick?:()=>void}){
 }
 function Frame({children,watermark=true}:{children:ReactNode;watermark?:boolean}){
  const day=useDay();const style=useMemo(()=><style>{CSS}</style>,[]);
- return <div className="rallyq-prototype rq-v12">{style}<div className={day?'rq day':'rq'} style={{minHeight:'100vh'}}>{watermark&&<svg className="wm motif" viewBox="0 0 100 100" aria-hidden="true" style={{['--c' as string]:'rgba(241,244,234,.07)',['--a' as string]:'rgba(217,242,74,.55)'}}><path d={Q} fill="none" style={{stroke:'var(--c)'}} strokeWidth="10"/><line x1="28" y1="50" x2="72" y2="50" style={{stroke:'var(--a)'}} strokeWidth="3"/><circle cx="83" cy="83" r="11" style={{fill:'var(--a)'}}/></svg>}{children}</div></div>;
+ return <div className="rallyq-prototype rq-v12">{style}<div className={day?'rq day':'rq'} style={{minHeight:'100vh'}}>{watermark&&<Watermark/>}{children}</div></div>;
 }
 export type PublicTab='live'|'events'|'studio'|'clubs'|null;
 /** Public pages: club leads in the header, RallyQ signs off small and last. */

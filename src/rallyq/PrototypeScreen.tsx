@@ -1,8 +1,13 @@
 import {createElement,Fragment,isValidElement,useEffect,useMemo,useState,type CSSProperties,type ReactNode,type SyntheticEvent} from 'react';
 import type {Go,RouteName} from '../navigation';
 import {chooseTheme,currentTheme,subscribeTheme} from '../theme';
-import shared from '../../public/rallyq/rq.css?raw';
+import sharedRaw from '../../public/rallyq/rq.css?raw';
+/** rq.css is the final v1.2 stylesheet (a copy of shell/v12.css with ./ image paths, so it also works as a static file). */
+const shared=sharedRaw.replaceAll('url(./','url('+import.meta.env.BASE_URL+'rallyq/');
 import './rallyq.css';
+import {Watermark} from './shell/Watermark';
+/** Screens without the logo watermark: the TV board is a scoreboard, the referee phone scorer and logo tool stay plain. */
+const NO_WATERMARK=new Set(['TV','Referee','ClubLogos']);
 const files=import.meta.glob('./prototypes/*.dc.html',{query:'?raw',import:'default',eager:true}) as Record<string,string>;
 export type PrototypeName='Main'|'Live'|'Event'|'Studio'|'MyStudio'|'Overview'|'Desk'|'Referee'|'Admin'|'TV'|'Social'|'ClubLogos';
 export type PrototypeValues=Record<string,unknown>;
@@ -37,7 +42,12 @@ function nodeView(node:Node,scope:PrototypeValues,key:string,ctx:RenderContext):
  if(tag==='a'&&typeof props.href==='string'){const href=props.href;const proto=/^(?:\.\/)?(\w+)\.dc\.html(?:#.*)?$/.exec(href);if(proto){props.href=ctx.hrefs?.[proto[1]]??prototypeHref(proto[1]);}const final=String(props.href);if(final.startsWith('#/'))props.onClick=(e:SyntheticEvent)=>{if(click){click(e);return;}e.preventDefault();const path=final.slice(2).split('/');ctx.go(path[0] as RouteName,path[1]?decodeURIComponent(path[1]):undefined);};else if(final.startsWith('#')&&final.length>1)props.onClick=(e:SyntheticEvent)=>{e.preventDefault();document.getElementById(final.slice(1))?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});};else if(click)props.onClick=click;
  }else if(click)props.onClick=click;
  if(tag==='button'&&!props.type)props.type='button';if(tag==='img'){props.loading=props.loading??'lazy';props.alt=props.alt??'';}
- const children=Array.from(el.childNodes).filter(n=>!(['table','thead','tbody','tfoot','tr','colgroup'].includes(tag)&&n.nodeType===Node.TEXT_NODE&&!n.textContent?.trim())).map((n,i)=>nodeView(n,scope,key+'.'+i,ctx));return createElement(tag,props,...children);
+ const children=Array.from(el.childNodes).filter(n=>!(['table','thead','tbody','tfoot','tr','colgroup'].includes(tag)&&n.nodeType===Node.TEXT_NODE&&!n.textContent?.trim())).map((n,i)=>nodeView(n,scope,key+'.'+i,ctx));
+ const cls=typeof props.className==='string'?props.className.split(/\s+/):[];const wm=!NO_WATERMARK.has(ctx.name)&&!el.closest('.wm');
+ // Watermark: first thing inside the page root; on Home it sits inside the hero, under the court lines (final Main.dc.html).
+ if(wm&&ctx.name!=='Main'&&cls.includes('rq')&&!el.parentElement?.closest('[class*="rqCls"]'))children.unshift(createElement(Watermark,{key:'wm'}));
+ if(wm&&ctx.name==='Main'&&cls.includes('over')&&el.parentElement?.classList.contains('hero'))return createElement(Fragment,{key},createElement(tag,props,...children),createElement(Watermark,{key:'wm',style:{zIndex:-1}}));
+ return createElement(tag,props,...children);
 }
 export interface PrototypeScreenProps{name:PrototypeName;values?:PrototypeValues;go:Go;source?:string;hrefs?:Record<string,string>;children?:ReactNode;className?:string;keepTitle?:boolean}
 export function PrototypeScreen({name,values={},go,source,hrefs,children,className='',keepTitle=false}:PrototypeScreenProps){
