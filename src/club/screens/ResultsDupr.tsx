@@ -34,7 +34,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const d = state.data?.bundle;
   const b = state.data?.source;
-  if (!d) return <main className="screen"><Header id="rd-title" title="Results and DUPR" onBack={onBack} />
+  if (!d) return <main className="screen"><Header id="rd-title" title="Results & DUPR" onBack={onBack} />
     <Status error={state.error} loading={state.loading} />
     {!state.loading && !state.error && <><p>Sign in to view this tournament’s results and DUPR details.</p>
       <button className="btn btn-primary" onClick={() => { rememberReturn(`#/club-results-dupr/${id}`); go('club-signin'); }}>Sign in to view results</button></>}
@@ -164,7 +164,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
         const rows = standings(entries.map((e) => e.id), matches);
         return <section key={pool} className="card section" aria-label={`${div.name} Group ${poolLetter(pool)}`}>
           <h3>Group {poolLetter(pool)}</h3><span className="sr-only">Pool standings</span>
-          <table className="pool-table pq-results-table" aria-label={`Group ${poolLetter(pool)} table`}><thead><tr><th>{div.kind === 'doubles' ? 'Team' : 'Player'}</th><th><abbr title="Played">P</abbr></th><th>W</th><th>L</th><th><abbr title="Points for">PF</abbr></th><th><abbr title="Points against">PA</abbr></th><th>+/−</th></tr></thead>
+          <table className="pool-table pq-results-table" aria-label={`Group ${poolLetter(pool)} table`}><thead><tr><th>{div.kind === 'doubles' ? 'Team' : 'Player'}</th><th><abbr title="Played">P</abbr></th><th>W</th><th>L</th><th>Pts won</th><th>Pts lost</th><th>Diff</th></tr></thead>
             <tbody>{rows.map((r, i) => <tr key={r.entryId} className={i < div.advance ? 'pq-result-qualifier' : ''}><td><span className="pq-result-position" aria-label={`Pool position ${i + 1}`}>{i + 1}</span>{entries.find((e) => e.id === r.entryId)?.playerIds.map((pid) => player(pid, div))}</td><td>{r.played}</td><td>{r.wins}</td><td>{r.losses}</td><td>{r.pointsFor}</td><td>{r.pointsAgainst}</td><td>{r.diff > 0 ? '+' : ''}{r.diff}</td></tr>)}</tbody>
           </table>
           {staff && <div className="pq-result-edit-list no-print" aria-label={`${div.name} Group ${poolLetter(pool)} DUPR details`}>

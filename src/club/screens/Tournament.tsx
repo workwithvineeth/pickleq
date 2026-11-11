@@ -312,7 +312,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
           <button type="button" className={cls('desk')} onClick={() => go('club-desk', t.id)}>Desk view</button>
           <button type="button" className="btn ghost" onClick={() => go('club-scorers', t.id)}>Referee links</button>
           {t.status !== 'draft' && <button type="button" className="btn ghost" onClick={() => go('club-dupr', t.id)}>File for DUPR</button>}
-          {t.status !== 'draft' && <button type="button" className={cls('results')} onClick={() => go('club-results-dupr', t.id)}>Results and DUPR</button>}
+          {t.status !== 'draft' && <button type="button" className={cls('results')} onClick={() => go('club-results-dupr', t.id)}>Results &amp; DUPR</button>}
         </nav>
       )}
       {staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}

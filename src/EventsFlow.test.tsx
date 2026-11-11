@@ -392,7 +392,7 @@ describe('Results and DUPR (organiser)', () => {
     const { demoBackend } = await import('./club');
     const t = (await demoBackend().clubBundle(clubId)).tournaments.find((x) => x.name === 'PQ Demo Diwali Doubles')!;
     window.location.hash = `#/club-results-dupr/${t.id}`;
-    await screen.findByRole('heading', { name: 'Results and DUPR' });
+    await screen.findByRole('heading', { name: 'Results & DUPR' });
     expect(await screen.findByRole('button', { name: 'Download results (CSV)' })).toBeInTheDocument();
     const box = (await screen.findAllByLabelText(/DUPR doubles rating/))[0] as HTMLInputElement;
     await user.clear(box); await user.type(box, '3.45');
