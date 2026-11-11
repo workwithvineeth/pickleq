@@ -33,7 +33,7 @@ test.describe('PaddleQ app', () => {
     await expect(page.getByText('Try the demo club')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
     await page.goto('#/stats');
-    await expect(page.getByRole('heading', { name: 'RallyQ', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Your court\./, level: 1 })).toBeVisible();
     await nav.getByRole('button', { name: 'Results' }).click();
     await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
   });
@@ -117,7 +117,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await expect(imp.getByRole('button', { name: 'Import 0 entries' })).toBeDisabled();
     await imp.getByRole('button', { name: 'Close' }).click();
     await page.getByRole('group', { name: 'Show entries' }).getByRole('button', { name: 'Accepted' }).click();
-    await expect(page.getByRole('region', { name: 'Robot Aarav' })).toBeVisible();
+    await expect(page.getByRole('row', { name: 'Robot Aarav' })).toBeVisible();
 
     // The draw: knockout only for singles, round robin for doubles, 3 courts, 15 minutes a match.
     const draw = page.getByRole('region', { name: 'Draw' });
@@ -136,12 +136,12 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'See the draw' }).click();
     await page.getByRole('group', { name: 'Tournament view' }).getByRole('button', { name: 'Knockouts' }).click();
     const ko = page.getByRole('region', { name: 'Knockouts' });
-    await expect(ko.getByRole('heading', { name: 'Semifinal 1' })).toBeVisible();
+    await expect(ko.getByRole('heading', { name: 'Semi-finals' })).toBeVisible();
     await expect(ko.getByText('Through (bye)')).toBeVisible();
     await page.getByRole('group', { name: 'Event' }).getByRole('button', { name: 'Doubles 3.5' }).click();
     await page.getByRole('group', { name: 'Tournament view' }).getByRole('button', { name: 'Pools' }).click();
     const table = page.getByRole('table', { name: 'Pool A' });
-    for (const h of ['P', 'W', 'L', 'PF', 'PA', '+/−']) await expect(table.getByRole('columnheader', { name: h, exact: true })).toBeVisible();
+    for (const h of ['P', 'W', 'L', 'Pts won', 'Pts lost', 'Diff']) await expect(table.getByRole('columnheader', { name: h, exact: true })).toBeVisible();
     await expect(page.getByText(/Ties are split by: 1\. most wins; 2\. head-to-head/)).toBeVisible();
   });
 });

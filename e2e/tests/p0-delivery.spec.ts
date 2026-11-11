@@ -11,7 +11,7 @@ test('normal dashboard and Results tab lead to the organiser results page', asyn
   await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Results & DUPR', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tournament results & DUPR', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Add / edit DUPR', exact: true }).first().click();
-  await expect(page.getByRole('heading', { name: 'Results and DUPR', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results & DUPR', exact: true })).toBeVisible();
   const rating = page.getByLabel(/DUPR singles rating/).first();
   await rating.fill('3.45');
   await page.getByRole('button', { name: 'Save DUPR details', exact: true }).click();
@@ -20,7 +20,7 @@ test('normal dashboard and Results tab lead to the organiser results page', asyn
   await page.goto('#/club-results');
   const results = page.getByRole('region', { name: 'Organiser results and DUPR', exact: true });
   await results.getByRole('button', { name: /Results & DUPR/ }).first().click();
-  await expect(page.getByRole('heading', { name: 'Results and DUPR', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results & DUPR', exact: true })).toBeVisible();
 });
 
 test('organiser results: saved ratings under names, knockout scores, CSV/PDF, phone widths', async ({ page }, info) => {
@@ -40,7 +40,7 @@ test('organiser results: saved ratings under names, knockout scores, CSV/PDF, ph
     localStorage.setItem(key, JSON.stringify(s)); return t.id as string;
   });
   await page.goto(`#/club-results-dupr/${id}`); await page.reload();
-  await expect(page.getByRole('heading', { name: 'Results and DUPR' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results & DUPR' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Champions', exact: true }).locator('.pq-results-champion')).toHaveCount(1);
   await expect(page.getByRole('region', { name: /Knockout results/ }).filter({ hasText: '11–7, 11–9' })).toBeVisible();
   await expect(page.locator('.pq-results-table .pq-result-player').first().locator('span').nth(1)).toContainText('DUPR');

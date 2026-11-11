@@ -5,8 +5,7 @@ test('match day keeps tournament tabs, desk and point scoring usable on a phone'
  await page.setViewportSize({width:390,height:844});await page.goto('#/demo');
  await page.getByLabel('Your name in the demo').fill('Alex');await page.getByRole('button',{name:'Open PQ Demo Club'}).click();
  await page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:/PQ Demo Open/}).click();
- await expect(page.locator('.pq-event-photo')).toBeVisible();
- await expect(page.getByRole('complementary',{name:'Entry summary'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'PQ Demo Open',level:1})).toBeVisible();
  await page.getByRole('group',{name:'Tournament view'}).getByRole('button',{name:'Pools',exact:true}).click();
  await expect(page.getByRole('region',{name:'Pools',exact:true})).toBeVisible();
  await page.getByRole('group',{name:'Tournament view'}).getByRole('button',{name:'Knockouts',exact:true}).click();

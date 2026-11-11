@@ -46,3 +46,5 @@
 .rallyq-prototype .rq :is(h1,h2,h3,h4){letter-spacing:normal}
 /* v1.2 shells: the header scrolls with the page (prototype), it never floats over the content */
 .rallyq-prototype.rq-v12 .rq .hdr{position:relative!important;z-index:1!important}
+/* Printing a v1.2 page (Results & DUPR "Save as PDF"): only the content, no menus or buttons */
+@media print{.rallyq-prototype .no-print,.rallyq-prototype .hdr,.rallyq-prototype .side,.rallyq-prototype .wm,.rallyq-prototype .pfoot{display:none!important}}

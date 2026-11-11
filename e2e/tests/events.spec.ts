@@ -112,7 +112,8 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.goto('#/events');
     await page.getByRole('button', { name: 'PQ Demo Night' }).click();
     await page.getByRole('button', { name: 'Enter the event', exact: true }).click();
-    await page.getByRole('button', { name: 'Enter Men’s Doubles 3.5' }).click();
+    await page.getByRole('group', { name: 'Event categories' }).getByRole('button', { name: /^Men’s Doubles 3\.5/ }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
     await fillPerson(page, 'You', { name: 'Robot Player', phone: '98111 11111', dupr: '3.42', age: '30' });
     await fillPerson(page, 'Partner', { name: 'Robot Partner', phone: '98111 11112', dupr: '3.1', age: '17' });
     await page.getByRole('button', { name: 'Continue' }).click();
@@ -133,13 +134,13 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: /PQ Demo Night/ }).click();
     await page.getByRole('button', { name: /^Entries( and draw)?$/ }).click();
     // One Entries screen: one "+ Add" with every way of adding entries.
-    await expect(page.getByRole('heading', { name: 'Entries', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Entries & UPI', exact: true })).toBeVisible();
     await page.getByRole('button', { name: '+ Add', exact: true }).click();
     const modes = page.getByRole('group', { name: 'What are you adding?' });
     await expect(modes.getByRole('button', { name: 'Person or team' })).toBeVisible();
     await expect(modes.getByRole('button', { name: 'Import a sheet' })).toBeVisible();
     await page.getByRole('button', { name: 'Close', exact: true }).click();
-    const robot = page.getByRole('region', { name: 'Robot Player / Robot Partner' });
+    const robot = page.getByRole('row', { name: 'Robot Player / Robot Partner' });
     await robot.getByRole('button', { name: 'Accept' }).click();
     await expect(page.getByText('Robot Player / Robot Partner: accepted')).toBeVisible();
     const draw = page.getByRole('region', { name: 'Draw' });

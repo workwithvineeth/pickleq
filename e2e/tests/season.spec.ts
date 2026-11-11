@@ -50,7 +50,7 @@ test.describe('Full-scale day (13 tournaments, 300 players)', () => {
     await page.goto(`#/club-desk/${t1.id}`);
     await expect(page.getByRole('heading', { name: `${t1.name} · Desk` })).toBeVisible();
     await page.getByRole('button', { name: /Results, walkovers and court changes/ }).first().click();
-    await expect(page.getByText(/(\d+) of \1 matches played/)).toBeVisible();
+    await expect(page.locator('.stat').filter({ hasText: 'Played' })).toHaveText(/Played\s*(\d+)\s*of \1 matches/);
     // Public results link for a finished tournament.
     await page.goto(`#/results/${report.tournamentIds[3].slug}`);
     await expect(page.getByRole('heading', { name: report.tournamentIds[3].name })).toBeVisible();
@@ -101,9 +101,10 @@ test.describe('Pickleball Central Season 8 (demo sample)', () => {
     await page.getByRole('button', { name: 'Desk view' }).click();
     await expect(page.getByRole('heading', { name: 'Pickleball Central Season 8 · Desk' })).toBeVisible();
     await page.getByRole('button', { name: /Results, walkovers and court changes/ }).first().click();
-    await page.getByText('More', { exact: true }).first().click();
-    await page.getByRole('button', { name: 'Walkover…' }).first().click();
-    await page.getByRole('region', { name: 'Walkover or retired' }).getByRole('button', { name: /go through/ }).first().click();
+    await page.getByRole('tab', { name: 'Walkover or retired' }).click();
+    const wo = page.getByRole('region', { name: 'Walkover or retired' });
+    await wo.getByRole('button', { name: /Didn’t turn up or retired/ }).first().click();
+    await wo.getByRole('button', { name: /go through$/ }).click();
     await expect(page.getByText(/win by walkover|win: the other side retired/)).toBeVisible();
   });
 
