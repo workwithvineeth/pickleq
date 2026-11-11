@@ -9,7 +9,7 @@ test.describe('Events board and registration (real server, no account)', () => {
 
   test('the board lists the test event; its page shows the rules; entering asks you to sign in', async ({ page }) => {
     await page.goto('#/events/robot');
-    await expect(page.getByRole('heading', { name: 'Events' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Find your next main event.' })).toBeVisible();
     await page.getByRole('button', { name: 'E2E Test Open' }).click();
     await expect(page.getByRole('heading', { name: 'E2E Test Open' })).toBeVisible();
     await page.getByRole('tab', { name: 'Info', exact: true }).click();
@@ -88,7 +88,7 @@ test.describe('Board with posters (demo club on the phone)', () => {
     // Posters really render (not a broken picture).
     await expect.poll(()=>page.getByRole('img', { name: 'Poster for PQ Demo Night' }).first().evaluate((img: HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
     await expect(page.getByRole('button', { name: 'PQ Demo Ladder Cup', exact: true })).toHaveCount(0);
-    await page.getByRole('button', { name: 'PQ Demo Diwali Doubles results' }).click();
+    await page.getByRole('link', { name: 'PQ Demo Diwali Doubles results' }).click();
     await expect(page.getByRole('table', { name: 'Pool A' })).toBeVisible();
     await page.goto('#/admin-listings');
     await expect(page.getByRole('heading', { name: 'Tournament approvals' })).toBeVisible();
@@ -115,14 +115,16 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Enter Men’s Doubles 3.5' }).click();
     await fillPerson(page, 'You', { name: 'Robot Player', phone: '98111 11111', dupr: '3.42', age: '30' });
     await fillPerson(page, 'Partner', { name: 'Robot Partner', phone: '98111 11112', dupr: '3.1', age: '17' });
-    await page.getByRole('button', { name: 'Send my entry' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByRole('alert')).toContainText('18 or over');
     await page.getByRole('group', { name: 'Partner', exact: true }).getByLabel('Partner age').fill('27');
     // Emails are optional, but a typo is caught before sending.
     await page.getByRole('group', { name: 'Partner', exact: true }).getByLabel('Partner email').fill('robot.partner@');
-    await page.getByRole('button', { name: 'Send my entry' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByRole('alert')).toContainText('Robot Partner: check the email address');
     await page.getByRole('group', { name: 'Partner', exact: true }).getByLabel('Partner email').fill('robot.partner@example.test');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByRole('heading', { name: 'Pay the club.' })).toBeVisible();
     await page.getByRole('button', { name: 'Send my entry' }).click();
     await expect(page.getByText(/You’re entered in Men’s Doubles 3.5/)).toBeVisible();
 

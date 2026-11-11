@@ -1,7 +1,8 @@
 import { EventPhotoHeader } from './MatchdayHeader';
-import { useEffect, useState } from 'react';
-import { Field, Segmented } from '../../components/Controls';
-import type { Go } from '../../navigation';
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
+import { Segmented } from '../../components/Controls';
+import { routeHash, type Go, type RouteName } from '../../navigation';
+import { clubMark, PageHead, PublicShell } from '../../rallyq/shell/Shell';
 import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backend';
 import { clubMode, inLaunchCity, LAUNCH_CITY } from '../config';
 import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBackend } from '../index';
@@ -21,6 +22,61 @@ export function eventShareLink(slug: string): string {
 }
 const telLink = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
 const waLink = (phone: string) => { const d = phone.replace(/\D/g, ''); return `https://wa.me/${d.length === 10 ? `91${d}` : d}`; };
+
+// ---------- RallyQ v1.2 parts shared by the board, the entry steps and My entries ----------
+
+/** A real link (so it can be opened in a new tab) that moves inside the app. */
+function linkTo(go: Go, name: RouteName, id?: string) {
+  return { href: routeHash(id ? { name, id } : { name }), onClick: (ev: MouseEvent) => { ev.preventDefault(); go(name, id); } };
+}
+/** Loading and errors, in words (never colour alone). */
+function Wait({ error, loading }: { error: string | null; loading?: boolean }) {
+  if (error) return <div role="alert" className="note"><b>Something went wrong.</b> {error}</div>;
+  if (loading) return <p className="mut" role="status" style={{ margin: 0 }}>Loading…</p>;
+  return null;
+}
+function DemoLine({ b }: { b: ClubBackend | null }) {
+  if (b?.kind !== 'demo') return null;
+  return <div className="note">Demo club. Sample players and scores. Nothing is shared.</div>;
+}
+/** One choice out of a few, as pill buttons (the prototype's tabs), announced as pressed or not. */
+function Pills<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
+  return (
+    <div className="tabs" role="group" aria-label={label}>
+      {options.map((o) => <button key={o.value} type="button" className={o.value === value ? 'tab on' : 'tab'} style={{ minHeight: 44 }} aria-pressed={o.value === value} onClick={() => onChange(o.value)}>{o.label}</button>)}
+    </div>
+  );
+}
+const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/** Today up to seven days from now (or live right now). */
+function thisWeek(e: PublicEvent, now = new Date()): boolean {
+  const end = new Date(now); end.setDate(end.getDate() + 7);
+  return e.status === 'live' || (e.startDate >= isoDay(now) && e.startDate <= isoDay(end));
+}
+/** "24 of 32 teams" when every category has a limit; otherwise what is truly known. */
+function spotsText(e: PublicEvent): string {
+  if (e.listing === 'listed') return 'Enter with the organiser';
+  if (e.status === 'live') return 'Playing now';
+  const taken = e.divisions.reduce((n, d) => n + d.taken, 0);
+  const kinds = new Set(e.divisions.map((d) => d.kind));
+  const unit = kinds.size === 1 ? (kinds.has('doubles') ? 'teams' : 'players') : 'entries';
+  if (e.divisions.length > 0 && e.divisions.every((d) => d.rules.cap !== undefined)) return `${taken} of ${e.divisions.reduce((n, d) => n + (d.rules.cap ?? 0), 0)} ${unit}`;
+  if (e.registrationOpen) return e.entriesClose ? `Entries close ${dayLabel(e.entriesClose)}` : taken ? `${taken} ${taken === 1 ? unit.replace(/s$/, '').replace(/ie$/, 'y') : unit} so far` : 'Be the first to enter';
+  return e.drawn ? 'Draw made' : 'Entries closed';
+}
+function hostLine(clubs: number): string {
+  const rest = 'enter in a minute, and see every score as it happens.';
+  if (clubs === 0) return `Pick a tournament, ${rest}`;
+  if (clubs === 1) return `1 club is hosting this week. Pick an event, ${rest}`;
+  return `${clubs} clubs are hosting this week. Pick one, ${rest}`;
+}
+
+function EventStatus({ e }: { e: PublicEvent }) {
+  if (e.status === 'live') return <span className="chip live">Live</span>;
+  if (e.registrationOpen) return <span className="st ok">Entries open</span>;
+  if (e.listing === 'listed') return <span className="st off">Contact the organiser</span>;
+  return <span className="st off">{e.drawn ? 'Draw made' : 'Entries closed'}</span>;
+}
 
 /** Opens a public event on whichever club server knows it (the real server first, then the demo on this phone). */
 async function findEvent(slug: string): Promise<{ src: ClubBackend; event: PublicEvent } | null> {
@@ -45,6 +101,8 @@ function EventBadges({ e }: { e: PublicEvent }) {
 
 // ---------- The events board (Events tab) ----------
 
+type BoardFilter = 'all' | 'open' | 'live' | 'week';
+
 export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
   const b = eventsBackend();
   const state = useLoad(async () => {
@@ -56,79 +114,106 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
     const fromServer = async <T,>(f: () => Promise<T[]>): Promise<T[]> => {
       try { return await f(); } catch (e) { serverDown = true; if (!demoOn) throw e; return []; }
     };
-    const [real, demo, pastReal, pastDemo, admin] = await Promise.all([
+    const [real, demo, pastReal, pastDemo, admin, user] = await Promise.all([
       server ? fromServer(() => server.publicEvents(robot)) : Promise.resolve([]),
       demoOn ? demoBackend().publicEvents() : Promise.resolve([]),
       server ? fromServer(() => server.recentResults(robot)) : Promise.resolve([]),
       demoOn ? demoBackend().recentResults() : Promise.resolve([]),
       b.isPlatformAdmin().catch(() => false),
+      b.currentUser().catch(() => null),
     ]);
     const seen = new Set(real.map((e) => e.slug));
     const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].filter((e) => inLaunchCity(e.city)).sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
     const pastSeen = new Set(pastReal.map((e) => e.slug));
     const past = [...pastReal, ...pastDemo.filter((e) => !pastSeen.has(e.slug))].filter((e) => inLaunchCity(e.city)).sort((x, y) => y.startDate.localeCompare(x.startDate));
     const queue = admin ? await b.approvalQueue().catch(() => []) : [];
-    return { events, past, pending: queue.filter((q) => q.approval === 'submitted').length, admin, serverDown };
+    return { events, past, pending: queue.filter((q) => q.approval === 'submitted').length, admin, serverDown, signedIn: !!user };
   }, [b, robot]);
-  const [kind, setKind] = useState<'all' | 'open'>('all');
+  const [kind, setKind] = useState<BoardFilter>('all');
   const events = state.data?.events ?? [];
-  const shown = events.filter((e) => kind === 'all' || e.registrationOpen);
-  const byDay = new Map<string, PublicEvent[]>();
-  for (const e of shown) byDay.set(e.startDate, [...(byDay.get(e.startDate) ?? []), e]);
+  const shown = events.filter((e) => kind === 'all' || (kind === 'open' && e.registrationOpen) || (kind === 'live' && e.status === 'live') || (kind === 'week' && thisWeek(e)));
+  // One yellow button on the page: the first event you can enter right now.
+  const lead = shown.find((e) => e.registrationOpen && e.status !== 'live');
+  const clubs = new Set(events.map((e) => e.club.trim().toLowerCase())).size;
+  const signedIn = !!state.data?.signedIn;
 
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="events-title">
-      <Header id="events-title" title="Events" right={<button type="button" className="btn btn-outline" style={{ padding: '8px 12px' }} onClick={() => go('my-entries')}>My entries</button>} />
-      {b.kind === 'demo' && clubMode() === 'demo' && <DemoNote b={b} />}
-      <p className="small muted" style={{ margin: 0 }}>Pickleball tournaments coming up. Enter in the app when the organiser runs it on RallyQ, or contact them for listed events.</p>
+    <PublicShell go={go} active="events">
+      <PageHead cap={<span className="acc">{LAUNCH_CITY} · pickleball</span>} title="Find your next main event." sub={state.data ? hostLine(clubs) : undefined}
+        actions={<a className="btn ghost" {...linkTo(go, 'my-entries')}>My entries</a>} />
+      {b.kind === 'demo' && clubMode() === 'demo' && <DemoLine b={b} />}
       {state.data?.admin && (
-        <button type="button" className="banner-btn" onClick={() => go('admin', state.data?.pending ? 'approvals' : 'overview')}>
-          <span>{state.data.pending ? `${state.data.pending} tournament${state.data.pending === 1 ? '' : 's'} to approve` : 'RallyQ admin'}</span><span>›</span>
+        <button type="button" className="btn ghost" style={{ alignSelf: 'flex-start' }} onClick={() => go('admin', state.data?.pending ? 'approvals' : 'overview')}>
+          {state.data.pending ? `${state.data.pending} tournament${state.data.pending === 1 ? '' : 's'} to approve` : 'RallyQ admin'} <span aria-hidden="true">→</span>
         </button>
       )}
-      <Segmented label="Show" value={kind} options={[{ value: 'all', label: 'All events' }, { value: 'open', label: 'Entries open' }]} onChange={setKind} />
-      <Status error={state.error} loading={state.loading && !state.data} />
-      {state.data?.serverDown && <div role="status" className="msg msg-bad small">Can’t reach the club server right now, so only the demo’s events are showing.</div>}
-      {state.data && shown.length === 0 && <p className="muted">No upcoming events in {LAUNCH_CITY} yet.</p>}
-      {[...byDay.entries()].map(([day, list]) => (
-        <section key={day} className="section" aria-label={dayLabel(day)}>
-          <div className="label">{dayLabel(day)}</div>
-          {list.map((e) => (
-            <button key={e.slug} type="button" className="match-row" aria-label={e.name} onClick={() => go('event', e.slug)} style={{ alignItems: 'flex-start', gap: 12 }}>
-              <PosterImage src={e.posterUrl} name={e.name} size="thumb" />
-              <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontWeight: 600 }}>{e.name}</span>
-                <span className="small muted">{timeLabel(e.startTime)} · {[e.venue, e.city].filter(Boolean).join(', ')} · {e.club}</span>
-                <span className="small">{e.divisions.map((d) => d.name).join(' · ')}</span>
-                <EventBadges e={e} />
-              </span>
-              <span aria-hidden="true">›</span>
-            </button>
-          ))}
-        </section>
-      ))}
+      <div className="between">
+        <Pills<BoardFilter> label="Show" value={kind} options={[{ value: 'all', label: 'All' }, { value: 'open', label: 'Entries open' }, { value: 'live', label: 'Live now' }, { value: 'week', label: 'This week' }]} onChange={setKind} />
+        {state.data && <span className="mut" style={{ fontSize: 13 }}>{shown.length} {shown.length === 1 ? 'event' : 'events'} in {LAUNCH_CITY}</span>}
+      </div>
+      <Wait error={state.error} loading={state.loading && !state.data} />
+      {state.data?.serverDown && <div role="status" className="note">Can’t reach the club server right now, so only the demo’s events are showing.</div>}
+      {state.data && shown.length === 0 && <div className="card empty">{events.length === 0 ? `No upcoming events in ${LAUNCH_CITY} yet.` : 'No events match this filter right now.'}</div>}
+      {shown.length > 0 && (
+        <div className="grid g3">
+          {shown.map((e) => {
+            const where = [e.venue, e.city].filter(Boolean).join(', ');
+            const cta = e.status === 'live' ? { text: 'See live scores', to: linkTo(go, 'live') }
+              : e.registrationOpen ? { text: 'Enter', to: linkTo(go, 'event-enter', e.slug) }
+                : { text: 'Details', to: linkTo(go, 'event', e.slug) };
+            const titleId = `ev-${e.slug}`;
+            return (
+              <article key={e.slug} className="card" aria-labelledby={titleId} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+                <div className="between">
+                  <span className="row" style={{ gap: 10, minWidth: 0 }}><span className="tile" aria-hidden="true">{clubMark(e.club)}</span><span style={{ minWidth: 0 }}><span className="cap" style={{ display: 'block' }}>Hosted by</span><b style={{ fontSize: 14 }}>{e.club}</b></span></span>
+                  <EventStatus e={e} />
+                </div>
+                <div>
+                  <div className="cap">{dayLabel(e.startDate)} · {timeLabel(e.startTime)}</div>
+                  <h2 className="disp" style={{ fontSize: 30, marginTop: 6 }}>
+                    <button type="button" id={titleId} aria-label={e.name} onClick={() => go('event', e.slug)} style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, width: '100%', padding: 0, border: 0, background: 'none', color: 'inherit', font: 'inherit', letterSpacing: 'inherit', lineHeight: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+                      <PosterImage src={e.posterUrl} name={e.name} size="thumb" />
+                      <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{e.name}</span>
+                    </button>
+                  </h2>
+                  {where && <div className="mut" style={{ fontSize: 14, marginTop: 6 }}>{where}</div>}
+                </div>
+                {e.divisions.length > 0 && <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>{e.divisions.map((d) => <span key={d.id} className="chip">{d.name}</span>)}</div>}
+                <div className="between" style={{ marginTop: 'auto', paddingTop: 6 }}>
+                  <span className="mut" style={{ fontSize: 13 }}>{spotsText(e)}</span>
+                  <a className={e === lead ? 'btn sm' : 'btn ghost sm'} style={{ minHeight: 44 }} aria-describedby={titleId} {...cta.to}>{cta.text}</a>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
       {(state.data?.past.length ?? 0) > 0 && (
-        <section className="section" aria-label="Recent results">
-          <div className="label">Recent results</div>
-          {state.data!.past.map((e) => (
-            <button key={e.slug} type="button" className="match-row" aria-label={`${e.name} results`} onClick={() => go('results', e.slug)} style={{ alignItems: 'flex-start', gap: 12 }}>
-              <PosterImage src={e.posterUrl} name={e.name} size="thumb" />
-              <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontWeight: 600 }}>{e.name}</span>
-                <span className="small muted">{dayLabel(e.startDate)} · {e.club}</span>
-                <span className="pill" style={{ alignSelf: 'flex-start' }}>Finished · see results</span>
-              </span>
-              <span aria-hidden="true">›</span>
-            </button>
-          ))}
+        <section aria-labelledby="recent-results-title" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <h2 id="recent-results-title" className="disp" style={{ fontSize: 32 }}>Recent results</h2>
+          <div className="card list">
+            {state.data!.past.map((e) => (
+              <a key={e.slug} aria-label={`${e.name} results`} {...linkTo(go, 'results', e.slug)}>
+                <span className="tile" aria-hidden="true">{clubMark(e.club)}</span>
+                <span className="grow"><b style={{ display: 'block', overflowWrap: 'anywhere' }}>{e.name}</b><span className="mut" style={{ display: 'block', fontSize: 13 }}>{dayLabel(e.startDate)} · {e.club}</span></span>
+                <span className="st ok">Results</span>
+              </a>
+            ))}
+          </div>
         </section>
       )}
-      <section className="card section" aria-label="Organisers">
-        <h2 style={{ fontSize: 16 }}>Running a tournament?</h2>
-        <p className="small muted" style={{ margin: 0 }}>Put it on the board for free, or run it on RallyQ: entries, draw, a referee on every court and live results.</p>
-        <button type="button" className="btn btn-outline" onClick={() => go('events-post')}>Post a tournament</button>
+      <section className="card" aria-label="For clubs" style={{ padding: 24, display: 'flex', flexWrap: 'wrap', gap: '16px 24px', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div className="grow" style={{ flex: '1 1 320px' }}>
+          <div className="cap acc">For clubs</div>
+          <h2 className="disp" style={{ fontSize: 30, marginTop: 6 }}>Give players a reason to choose your court.</h2>
+          <div className="mut" style={{ marginTop: 6 }}>List your tournament or run it here: entries, the draw, a referee on every court and live results.</div>
+        </div>
+        <div className="row" style={{ flexWrap: 'wrap', gap: '8px 18px' }}>
+          <a className="btn ghost" {...linkTo(go, signedIn ? 'club' : 'club-signin')}>{signedIn ? 'My club' : 'Club sign in'}</a>
+          <a className="tlink" {...linkTo(go, 'events-post')}>Post a tournament <span aria-hidden="true">→</span></a>
+        </div>
       </section>
-    </main>
+    </PublicShell>
   );
 }
 
@@ -205,12 +290,36 @@ const ME_KEY = 'pq-entry-me';
 function savedMe(): EntryPerson { try { return { ...blankPerson(), ...(JSON.parse(localStorage.getItem(ME_KEY) ?? '{}') as Partial<EntryPerson>) }; } catch { return blankPerson(); } }
 function saveMe(p: EntryPerson) { try { localStorage.setItem(ME_KEY, JSON.stringify(p)); } catch { /* private mode */ } }
 
-export function PersonFields({ p, onChange, label }: { p: EntryPerson; onChange: (p: EntryPerson) => void; label: string }) {
+/** One person's details. `v12` draws it with the RallyQ v1.2 parts (inside a shell); without it, the older look (the organiser's "+ Add"). */
+export function PersonFields({ p, onChange, label, v12 }: { p: EntryPerson; onChange: (p: EntryPerson) => void; label: string; v12?: boolean }) {
   const set = (patch: Partial<EntryPerson>) => onChange({ ...p, ...patch });
   const num = (v: string) => (v.trim() === '' ? undefined : Number(v));
   // Keep what's typed for the rating, so "3." can become "3.5" (a number field alone would drop the dot).
   const [rating, setRating] = useState(p.dupr !== undefined ? String(p.dupr) : '');
   if (p.dupr !== undefined && Number(rating) !== p.dupr) setRating(String(p.dupr));
+  const onRating = (raw: string) => { const v = raw.replace(/[^\d.]/g, ''); setRating(v); set({ dupr: v === '' ? undefined : Number(v) }); };
+  if (v12) {
+    const key = label.toLowerCase().replace(/\W+/g, '-');
+    const mine = label === 'You';
+    return (
+      <fieldset aria-label={label} style={{ border: 0, margin: 0, padding: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <legend className="cap" style={{ padding: 0, marginBottom: 12 }}>{label}</legend>
+        <div className="form two">
+          <div className="fld"><label htmlFor={`${key}-name`}>Full name</label><input id={`${key}-name`} className="inp" aria-label={`${label} name`} autoComplete={mine ? 'name' : 'off'} maxLength={60} value={p.name} onChange={(e) => set({ name: e.target.value })} /></div>
+          <div className="fld"><label htmlFor={`${key}-phone`}>Phone (WhatsApp)</label><input id={`${key}-phone`} className="inp" aria-label={`${label} phone`} inputMode="tel" autoComplete={mine ? 'tel' : 'off'} maxLength={18} value={p.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
+        </div>
+        <div className="fld"><label htmlFor={`${key}-email`}>Email for results (optional)</label><input id={`${key}-email`} className="inp" type="email" aria-label={`${label} email`} inputMode="email" autoComplete={mine ? 'email' : 'off'} maxLength={254} value={p.email ?? ''} onChange={(e) => set({ email: e.target.value })} /></div>
+        <div className="form two">
+          <div className="fld"><label htmlFor={`${key}-dupr`}>DUPR rating</label><input id={`${key}-dupr`} className="inp" aria-label={`${label} DUPR rating`} placeholder="e.g. 3.42" inputMode="decimal" value={rating} onChange={(e) => onRating(e.target.value)} /></div>
+          <div className="fld"><label htmlFor={`${key}-duprid`}>DUPR ID</label><input id={`${key}-duprid`} className="inp" aria-label={`${label} DUPR ID`} autoCapitalize="characters" maxLength={20} value={p.duprId ?? ''} onChange={(e) => set({ duprId: e.target.value })} /></div>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
+          <div className="fld" style={{ flex: '0 0 96px' }}><label htmlFor={`${key}-age`}>Age</label><input id={`${key}-age`} className="inp" aria-label={`${label} age`} inputMode="numeric" maxLength={3} value={p.age ?? ''} onChange={(e) => set({ age: num(e.target.value.replace(/\D/g, '')) })} /></div>
+          <div className="fld" style={{ flex: '1 1 220px' }}><span className="lbl">Gender</span><Pills<PlayerGender | ''> label={`${label} gender`} value={p.gender} options={[{ value: 'm', label: 'Man' }, { value: 'f', label: 'Woman' }, { value: 'x', label: 'Other' }]} onChange={(g) => set({ gender: g })} /></div>
+        </div>
+      </fieldset>
+    );
+  }
   return (
     <fieldset className="card section" style={{ border: 0, margin: 0 }} aria-label={label}>
       <legend className="label" style={{ padding: 0 }}>{label}</legend>
@@ -218,7 +327,7 @@ export function PersonFields({ p, onChange, label }: { p: EntryPerson; onChange:
       <input className="input" aria-label={`${label} phone`} placeholder="Phone (WhatsApp)" inputMode="tel" autoComplete={label === 'You' ? 'tel' : 'off'} maxLength={18} value={p.phone} onChange={(e) => set({ phone: e.target.value })} />
       <input className="input" type="email" aria-label={`${label} email`} placeholder="Email for results (optional)" inputMode="email" autoComplete={label === 'You' ? 'email' : 'off'} maxLength={254} value={p.email ?? ''} onChange={(e) => set({ email: e.target.value })} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-        <input className="input" aria-label={`${label} DUPR rating`} placeholder="DUPR rating" inputMode="decimal" value={rating} onChange={(e) => { const v = e.target.value.replace(/[^\d.]/g, ''); setRating(v); set({ dupr: v === '' ? undefined : Number(v) }); }} />
+        <input className="input" aria-label={`${label} DUPR rating`} placeholder="DUPR rating" inputMode="decimal" value={rating} onChange={(e) => onRating(e.target.value)} />
         <input className="input" aria-label={`${label} DUPR ID`} placeholder="DUPR ID" autoCapitalize="characters" maxLength={20} value={p.duprId ?? ''} onChange={(e) => set({ duprId: e.target.value })} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '64px minmax(0, 1fr)', gap: 8, alignItems: 'center' }}>
@@ -228,6 +337,14 @@ export function PersonFields({ p, onChange, label }: { p: EntryPerson; onChange:
     </fieldset>
   );
 }
+
+type PayChoice = 'venue' | 'claimed' | 'unpaid';
+const PAY_CHOICES: { value: PayChoice; name: string; sub: string; short: string }[] = [
+  { value: 'claimed', name: 'UPI now', sub: 'Pay the club and paste the reference', short: 'UPI now' },
+  { value: 'venue', name: 'Pay at the desk', sub: 'Cash or UPI on match day', short: 'At the desk' },
+  { value: 'unpaid', name: 'Pay later', sub: 'Agree it with the club before you play', short: 'Later' },
+];
+const STEP_NAMES = ['Category', 'Partner', 'Pay', 'Done'];
 
 export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
   const [slug, divId] = id.split('~');
@@ -241,63 +358,55 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   // Your sign-in email is the natural one for your results; you can change it.
   const accountEmail = cleanEmail(state.data?.user?.email);
   useEffect(() => { if (accountEmail) setMe((m) => (m.email?.trim() ? m : { ...m, email: accountEmail })); }, [accountEmail]);
-  const [pay, setPay] = useState<'venue' | 'claimed' | 'unpaid'>('venue');
+  const [pay, setPay] = useState<PayChoice>('venue');
   const [ref, setRef] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<RegistrationStatus | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [payStep, setPayStep] = useState(false);
   const found = state.data?.found;
   const e = found?.event;
   const d = e?.divisions.find((x) => x.id === divId);
-  if (e && !divId && e.registrationOpen) return <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
-    <Header id="enter-title" title="Choose your category" onBack={onBack}/>
-    <p>{e.name}</p><section className="card section" aria-label="Event categories">{e.divisions.map(category=><button type="button" key={category.id} className="btn btn-outline" onClick={()=>go('event-enter',slug+'~'+category.id)}>Enter {category.name}</button>)}</section>
-  </main>;
-  if (!found || !e || !d) {
-    return (
-      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
-        <Header id="enter-title" title="Enter" onBack={onBack} />
-        <Status error={state.error} loading={state.loading} />
-        {!state.loading && !state.error && <p className="muted">This event isn’t taking entries.</p>}
-      </main>
-    );
-  }
-  const fee = d.rules.fee ?? 0;
-  const players = d.kind === 'doubles' ? [me, partner] : [me];
+  const choosing = !!e && !divId && e.registrationOpen;
+  const chosen = choosing ? e.divisions.find((x) => x.id === picked) ?? e.divisions[0] : d;
+  const doubles = chosen?.kind === 'doubles';
+  const stepNames = STEP_NAMES.map((n, i) => (i === 1 && chosen && !doubles ? 'Your details' : n));
+  const shell = (body: ReactNode) => <PublicShell go={go} active="events" host={e ? { marks: [clubMark(e.club)], name: e.club } : undefined}>{body}</PublicShell>;
+  const back = (text: string, f: () => void) => <button type="button" className="tlink mut" onClick={f}><span aria-hidden="true">←</span> {text}</button>;
 
-  if (done) {
-    return (
-      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
-        <Header id="enter-title" title="Entry sent" onBack={() => go('event', slug)} />
-        <div role="status" className="msg msg-ok">{done === 'waitlist' ? `${d.name} is full, so you’re on the waitlist. The organiser will tell you if a place opens.` : `You’re entered in ${d.name}. The organiser will confirm your entry.`}</div>
-        <p className="small muted" style={{ margin: 0 }}>Status: {REG_STATUS_LABEL[done]}. Follow it in My entries.</p>
-        <button type="button" className="btn btn-primary" onClick={() => go('my-entries')}>My entries</button>
-      </main>
+  if (!found || !e || (!choosing && !d)) {
+    return shell(
+      <>
+        <PageHead cap={<span className="acc">Enter</span>} title="Enter an event." />
+        <Wait error={state.error} loading={state.loading} />
+        {!state.loading && !state.error && <div className="card empty">This event isn’t taking entries.</div>}
+        <div>{back('Back', onBack)}</div>
+      </>,
     );
   }
-  if (!e.registrationOpen) {
-    return (
-      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
-        <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
-        <p className="muted">Entries for this tournament are closed.</p>
-      </main>
-    );
-  }
-  if (!state.data?.user) {
-    return (
-      <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
-        <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
-        <section className="card section">
-          <p style={{ margin: 0 }}>Sign in with your email to enter. It takes a minute, and you come straight back here.</p>
-          <p className="small muted" style={{ margin: 0 }}>Signing in lets you see your entry’s status and withdraw if you need to. Your personal RallyQ stays on your phone.</p>
-        </section>
-        {found.src.kind === 'server'
-          ? <button type="button" className="btn btn-primary" onClick={() => { rememberReturn(`#/event-enter/${encodeURIComponent(id)}`); go('club-signin'); }}>Sign in to enter</button>
-          : <button type="button" className="btn btn-primary" onClick={() => go('club')}>Open the demo club first</button>}
-      </main>
+  if (d && !done && !e.registrationOpen) {
+    return shell(
+      <>
+        <PageHead cap={<span className="acc">Enter · {e.name}</span>} title={`Enter ${d.name}`} />
+        <div className="card empty">Entries for this tournament are closed.</div>
+        <div>{back('Back', onBack)}</div>
+      </>,
     );
   }
 
+  const user = state.data?.user;
+  const step = choosing ? 1 : done ? 4 : payStep ? 3 : 2;
+  const fee = d?.rules.fee ?? 0;
+  const players = d?.kind === 'doubles' ? [me, partner] : [me];
+  const title = step === 1 ? 'Pick your category.' : step === 2 ? (doubles ? 'Who’s your partner?' : 'Your details.') : step === 3 ? 'Pay the club.' : 'Entry sent.';
+  const payName = PAY_CHOICES.find((c) => c.value === pay)!.short;
+
+  function toPay() {
+    const problem = entryProblem(d!.kind, d!.rules, players, true);
+    if (problem) return setMsg(problem);
+    setMsg(null); setPayStep(true);
+  }
   async function submit() {
     const problem = entryProblem(d!.kind, d!.rules, players, true);
     if (problem) return setMsg(problem);
@@ -309,35 +418,135 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
       setDone(r.status);
     } catch (err) { setMsg(errorText(err)); } finally { setBusy(false); }
   }
+  // Steps you have finished can be opened again (until the entry is sent); steps ahead open with Continue.
+  const openStep = [() => go('event-enter', slug), () => { setMsg(null); setPayStep(false); }];
 
-  return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="enter-title">
-      <Header id="enter-title" title={`Enter ${d.name}`} onBack={onBack} />
-      <p className="small muted" style={{ margin: 0 }}>{e.name} · {dayLabel(e.startDate)} · {rulesLine(d.kind, d.rules)}</p>
-      <PersonFields label="You" p={me} onChange={setMe} />
-      {d.kind === 'doubles' && <PersonFields label="Partner" p={partner} onChange={setPartner} />}
-      {d.rules.maxDupr !== undefined && <p className="small muted" style={{ margin: 0 }}>{d.kind === 'doubles' && d.rules.duprCap === 'average' ? `This event is for teams with an average DUPR of ${capText(d.rules.maxDupr)} and under, so both players need a rating.` : `This event is for DUPR ${capText(d.rules.maxDupr)} and under, so every player needs a rating.`}</p>}
-      {fee > 0 && (
-        <section className="card section" aria-label="Entry fee">
-          <div className="row"><b>Entry fee</b><b>₹{fee}</b></div>
-          <Segmented label="How you’ll pay" value={pay} options={[{ value: 'venue', label: 'At the venue' }, { value: 'claimed', label: 'Paid by UPI' }, { value: 'unpaid', label: 'Later' }]} onChange={setPay} />
-          {pay === 'claimed' && (
-            <>
-              {e.upiId && <a className="btn btn-outline" href={upiLink(e.upiId, e.club, fee, `${e.name}: ${d.name}`)}>Pay ₹{fee} by UPI to {e.upiId}</a>}
-              <Field label="UPI reference number"><input className="input" aria-label="UPI reference number" inputMode="numeric" maxLength={60} value={ref} onChange={(x) => setRef(x.target.value)} /></Field>
-              <p className="small muted" style={{ margin: 0 }}>You pay the organiser directly. They check the reference and mark your entry paid.</p>
-            </>
-          )}
-        </section>
-      )}
-      <p className="small muted" style={{ margin: 0 }}>Your names, phone numbers, emails, ages and DUPR details go to the organiser for this tournament only. Emails are used only to send you your results. Everyone must be 18 or over.</p>
-      {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
-      <button type="button" className="btn btn-primary" disabled={busy} onClick={submit}>Send my entry</button>
-    </main>
+  return shell(
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
+      <section aria-labelledby="enter-title" style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="pg-h"><span className="cap acc">Enter · {e.name}</span><h1 id="enter-title" className="disp">{title}</h1></div>
+        <div className="steps" role="group" aria-label="Steps">
+          {stepNames.map((n, i) => {
+            const canOpen = i + 1 < step && step < 4 && i < 2;
+            return <button key={n} type="button" className={i + 1 === step ? 'on' : i + 1 < step ? 'done' : undefined} aria-current={i + 1 === step ? 'step' : undefined} disabled={!canOpen} style={canOpen ? undefined : { cursor: 'default' }} onClick={canOpen ? openStep[i] : undefined}><i aria-hidden="true">{i + 1 < step ? '✓' : i + 1}</i>{n}</button>;
+          })}
+        </div>
+        {found.src.kind === 'demo' && <DemoLine b={found.src} />}
+
+        {step === 1 && (
+          <>
+            <div className="grid g2" role="group" aria-label="Event categories" style={{ gap: 12 }}>
+              {e.divisions.map((c) => {
+                const left = c.rules?.cap !== undefined ? Math.max(0, c.rules.cap - c.taken) : undefined;
+                return (
+                  <button key={c.id} type="button" className={c.id === chosen?.id ? 'opt on' : 'opt'} aria-pressed={c.id === chosen?.id} onClick={() => setPicked(c.id)}>
+                    <span className="dot" aria-hidden="true" />
+                    <span className="grow"><b style={{ display: 'block' }}>{c.name}</b><span className="mut" style={{ fontSize: 13 }}>{rulesLine(c.kind, c.rules)}</span></span>
+                    {left !== undefined && <span className={left === 0 ? 'st no' : 'st ok'}>{left === 0 ? 'Full · waitlist' : `${left} ${left === 1 ? 'spot' : 'spots'} left`}</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="between">{back('Back', onBack)}<button type="button" className="btn" disabled={!chosen} onClick={() => chosen && go('event-enter', `${slug}~${chosen.id}`)}>Continue</button></div>
+          </>
+        )}
+
+        {step === 2 && d && !user && (
+          <>
+            <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <b>Sign in with your email to enter. It takes a minute, and you come straight back here.</b>
+              <span className="mut" style={{ fontSize: 14 }}>Signing in lets you see your entry’s status and withdraw if you need to. Your personal RallyQ stays on your phone.</span>
+            </div>
+            <div className="between">
+              {back('Back', onBack)}
+              {found.src.kind === 'server'
+                ? <button type="button" className="btn" onClick={() => { rememberReturn(`#/event-enter/${encodeURIComponent(id)}`); go('club-signin'); }}>Sign in to enter</button>
+                : <button type="button" className="btn" onClick={() => go('club')}>Open the demo club first</button>}
+            </div>
+          </>
+        )}
+
+        {step === 2 && d && user && (
+          <>
+            <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <PersonFields v12 label="You" p={me} onChange={setMe} />
+              {d.kind === 'doubles' && <PersonFields v12 label="Partner" p={partner} onChange={setPartner} />}
+              {d.rules.maxDupr !== undefined && <div className="note">{d.kind === 'doubles' && d.rules.duprCap === 'average' ? `This event is for teams with an average DUPR of ${capText(d.rules.maxDupr)} and under, so both players need a rating.` : `This event is for DUPR ${capText(d.rules.maxDupr)} and under, so every player needs a rating.`}</div>}
+              <span className="mut" style={{ fontSize: 13 }}>Your names, phone numbers, emails, ages and DUPR details go to the organiser for this tournament only. Emails are used only to send you your results. Everyone must be 18 or over.</span>
+            </div>
+            {msg && <div role="alert" className="note"><b>Check this first.</b> {msg}</div>}
+            <div className="between">{back('Back', onBack)}<button type="button" className="btn" onClick={toPay}>Continue</button></div>
+          </>
+        )}
+
+        {step === 3 && d && (
+          <>
+            <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="between">
+                <span><b>{fee > 0 ? 'Entry fee' : 'No entry fee'}</b><span className="mut" style={{ display: 'block', fontSize: 13 }}>{fee > 0 ? `Paid to ${e.club} directly. RallyQ never holds money.` : 'There is nothing to pay for this category. RallyQ never holds money.'}</span></span>
+                {fee > 0 && <span className="n acc" style={{ fontSize: 34 }}>₹{fee}</span>}
+              </div>
+              {fee > 0 && (
+                <div className="grid g2" role="group" aria-label="How you’ll pay" style={{ gap: 12 }}>
+                  {PAY_CHOICES.map((c) => (
+                    <button key={c.value} type="button" className={c.value === pay ? 'opt on' : 'opt'} aria-pressed={c.value === pay} onClick={() => setPay(c.value)}>
+                      <span className="dot" aria-hidden="true" /><span><b style={{ display: 'block' }}>{c.name}</b><span className="mut" style={{ fontSize: 13 }}>{c.sub}</span></span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {fee > 0 && pay === 'claimed' && (
+                <>
+                  {e.upiId && <a className="btn ghost" style={{ alignSelf: 'flex-start', height: 'auto', paddingBlock: 10, textAlign: 'center' }} href={upiLink(e.upiId, e.club, fee, `${e.name}: ${d.name}`)}>Pay ₹{fee} by UPI to {e.upiId}</a>}
+                  <div className="fld">
+                    <label htmlFor="utr">UPI reference number</label>
+                    <input id="utr" className="inp" inputMode="numeric" maxLength={60} placeholder="e.g. 431298765012" value={ref} onChange={(x) => setRef(x.target.value)} />
+                    <span className="hint">{e.upiId ? `Pay ${e.upiId}, then paste the reference so the club can match it.` : 'Pay the club, then paste the reference so they can match it.'} They check it and mark your entry paid.</span>
+                  </div>
+                </>
+              )}
+            </div>
+            {msg && <div role="alert" className="note"><b>Check this first.</b> {msg}</div>}
+            <div className="between">{back('Back', openStep[1])}<button type="button" className="btn" disabled={busy} onClick={submit}>Send my entry</button></div>
+          </>
+        )}
+
+        {step === 4 && d && done && (
+          <>
+            <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span className={done === 'waitlist' ? 'st off' : 'st ok'} style={{ alignSelf: 'flex-start' }}>{done === 'waitlist' ? 'On the waitlist' : 'Entry sent'}</span>
+              <h2 className="disp" style={{ fontSize: 34 }}>{done === 'waitlist' ? 'You’re on the waitlist.' : 'You’re in the queue.'}</h2>
+              <div role="status" className="mut">{done === 'waitlist' ? `${d.name} is full, so you’re on the waitlist. The organiser will tell you if a place opens.` : `You’re entered in ${d.name}. The organiser will confirm your entry.`}</div>
+              <div className="mut" style={{ fontSize: 13 }}>Status: {REG_STATUS_LABEL[done]}. Follow it in My entries.</div>
+            </div>
+            <div className="between">{back('Back to the event', () => go('event', slug))}<button type="button" className="btn" onClick={() => go('my-entries')}>See my entries</button></div>
+          </>
+        )}
+      </section>
+
+      <aside className="card" aria-label="Your entry" style={{ flex: '1 1 300px', minWidth: 0, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="row"><span className="tile lg" aria-hidden="true">{clubMark(e.club)}</span><span style={{ minWidth: 0 }}><span className="cap" style={{ display: 'block' }}>Hosted by</span><b>{e.club}</b></span></div>
+        <div><div className="cap">{dayLabel(e.startDate)} · {timeLabel(e.startTime)}</div><div className="disp" style={{ fontSize: 28, marginTop: 4 }}>{e.name}</div></div>
+        <div className="list" style={{ marginInline: -20 }}>
+          <div><span className="grow mut">Category</span><b style={{ textAlign: 'right' }}>{chosen?.name ?? 'Not picked yet'}</b></div>
+          {doubles && <div><span className="grow mut">Partner</span><b style={{ textAlign: 'right', overflowWrap: 'anywhere' }}>{partner.name.trim() || 'Not added yet'}</b></div>}
+          <div><span className="grow mut">Pay</span><b style={{ textAlign: 'right' }}>{(chosen?.rules?.fee ?? 0) > 0 ? `₹${chosen!.rules.fee} · ${payName}` : 'No entry fee'}</b></div>
+        </div>
+        {e.entriesClose && <div className="mut" style={{ fontSize: 12 }}>Entries close {dayLabel(e.entriesClose)}.</div>}
+      </aside>
+    </div>,
   );
 }
 
 // ---------- My entries ----------
+
+/** Waiting is neutral, confirmed is good, the rest is quiet (never coral or gold). */
+function entryStatus(x: MyEntry): { cls: string; text: string } {
+  if (x.status === 'accepted') return { cls: 'st ok', text: 'Confirmed' };
+  if (x.status === 'pending') return { cls: 'st wait', text: x.fee && x.payment === 'unpaid' ? 'Waiting for payment' : REG_STATUS_LABEL.pending };
+  if (x.status === 'waitlist') return { cls: 'st off', text: 'Waitlist' };
+  return { cls: x.status === 'rejected' ? 'st no' : 'st off', text: REG_STATUS_LABEL[x.status] };
+}
 
 export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
   const b = eventsBackend();
@@ -350,40 +559,65 @@ export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
   async function withdraw(x: MyEntry) {
     try { await b.withdrawMyEntry(x.id); setMsg(`Withdrawn from ${x.division}`); setConfirm(null); state.reload(); } catch (e) { setMsg(errorText(e)); }
   }
+  const signedOut = !state.loading && !state.data && !state.error;
+  const entries = state.data?.entries ?? [];
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="mine-title">
-      <Header id="mine-title" title="My entries" onBack={onBack} />
-      <DemoNote b={b.kind === 'demo' ? b : null} />
-      <Status error={state.error} loading={state.loading && !state.data} />
-      {!state.loading && !state.data && !state.error && (
-        <>
-          <p className="muted">Sign in to see the tournaments you’ve entered.</p>
-          {b.kind === 'server' && <button type="button" className="btn btn-primary" onClick={() => { rememberReturn('#/my-entries'); go('club-signin'); }}>Sign in</button>}
-        </>
+    <PublicShell go={go} active="events">
+      <PageHead cap={state.data ? <span className="acc">{state.data.user.email}</span> : undefined} title="My entries" />
+      <DemoLine b={b.kind === 'demo' ? b : null} />
+      <Wait error={state.error} loading={state.loading && !state.data} />
+      {signedOut && (
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-start' }}>
+          <span className="mut">Sign in to see the tournaments you’ve entered.</span>
+          {b.kind === 'server' && <button type="button" className="btn" onClick={() => { rememberReturn('#/my-entries'); go('club-signin'); }}>Sign in</button>}
+        </div>
       )}
-      {msg && <div role="status" className="msg msg-ok">{msg}</div>}
-      {state.data && state.data.entries.length === 0 && <p className="muted">No entries yet. Find a tournament in Events.</p>}
-      {state.data?.entries.map((x) => {
-        const active = x.status === 'pending' || x.status === 'accepted' || x.status === 'waitlist';
-        return (
-          <section key={x.id} className="card section" aria-label={`${x.tournament}: ${x.division}`} style={active ? undefined : { opacity: 0.7 }}>
-            <button type="button" className="link-btn" style={{ alignSelf: 'flex-start', fontWeight: 600 }} onClick={() => go('event', x.slug)}>{x.tournament}</button>
-            <div className="small muted">{x.division} · {dayLabel(x.startDate)} · {[x.venue, x.city].filter(Boolean).join(', ')}</div>
-            <div className="small">{x.players.map((p) => p.name).join(' / ')}</div>
-            <div className="meta" style={{ gap: 6 }}>
-              <span className={`pill${x.status === 'accepted' ? ' pill-ok' : x.status === 'rejected' ? ' pill-warn' : ''}`}>{REG_STATUS_LABEL[x.status]}</span>
-              {x.fee ? <span className={`pill${x.payment === 'paid' ? ' pill-ok' : ''}`}>{PAYMENT_LABEL[x.payment]}</span> : null}
-            </div>
-            {x.note && <p className="small" style={{ margin: 0 }}>Organiser: {x.note}</p>}
-            {active && x.fee && x.payment !== 'paid' && x.upiId ? <a className="btn btn-outline" href={upiLink(x.upiId, x.club, x.fee, `${x.tournament}: ${x.division}`)}>Pay ₹{x.fee} by UPI</a> : null}
-            {x.results && <button type="button" className="btn btn-outline" onClick={() => go('results', x.slug)}>Results</button>}
-            {active && !x.drawn && (confirm === x.id
-              ? <div className="meta"><button type="button" className="btn btn-primary" onClick={() => withdraw(x)}>Yes, withdraw</button><button type="button" className="btn btn-outline" onClick={() => setConfirm(null)}>Keep my entry</button></div>
-              : <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setConfirm(x.id)}>Withdraw…</button>)}
-          </section>
-        );
-      })}
-    </main>
+      {msg && <div role="status" className="note">{msg}</div>}
+      {state.data && entries.length === 0 && (
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-start' }}>
+          <span className="mut">No entries yet. Find a tournament in Events.</span>
+          <a className="btn" {...linkTo(go, 'events')}>See events</a>
+        </div>
+      )}
+      {entries.length > 0 && (
+        <div className="card list">
+          {entries.map((x) => {
+            const active = x.status === 'pending' || x.status === 'accepted' || x.status === 'waitlist';
+            const st = entryStatus(x);
+            const where = [x.venue, x.city].filter(Boolean).join(', ');
+            const payUpi = active && x.fee && x.payment !== 'paid' && x.upiId;
+            return (
+              <div key={x.id} role="region" aria-label={`${x.tournament}: ${x.division}`} style={{ flexWrap: 'wrap', opacity: active ? undefined : 0.75 }}>
+                <a className="row grow" style={{ gap: 14, minHeight: 44, color: 'inherit', textDecoration: 'none' }} {...linkTo(go, 'event', x.slug)}>
+                  <span className="tile" aria-hidden="true">{clubMark(x.club)}</span>
+                  <span className="grow">
+                    <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{x.tournament} · {x.division}</b>
+                    <span className="mut" style={{ display: 'block', fontSize: 13 }}>{[dayLabel(x.startDate), where].filter(Boolean).join(' · ')}</span>
+                  </span>
+                </a>
+                <span className={`${st.cls} wrapok`}>{st.text}</span>
+                <div style={{ flex: '1 1 100%', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
+                  <span>{x.players.map((p) => `${p.name} (${p.dupr !== undefined ? `DUPR ${p.dupr}` : 'Unrated'})`).join(' / ')}</span>
+                  {x.fee ? <span className="mut">Entry fee ₹{x.fee}: <span>{PAYMENT_LABEL[x.payment]}</span></span> : null}
+                  {x.note && <span>Organiser: {x.note}</span>}
+                  {(payUpi || x.results || (active && !x.drawn)) && (
+                    <div className="row" style={{ flexWrap: 'wrap', gap: '8px 16px' }}>
+                      {payUpi ? <a className="btn ghost sm" style={{ minHeight: 44 }} href={upiLink(x.upiId!, x.club, x.fee!, `${x.tournament}: ${x.division}`)}>Pay ₹{x.fee} by UPI</a> : null}
+                      {x.results && <button type="button" className="btn ghost sm" style={{ minHeight: 44 }} onClick={() => go('results', x.slug)}>Results</button>}
+                      {active && !x.drawn && (confirm === x.id
+                        ? <><button type="button" className="btn alt sm" style={{ minHeight: 44 }} onClick={() => withdraw(x)}>Yes, withdraw</button><button type="button" className="btn ghost sm" style={{ minHeight: 44 }} onClick={() => setConfirm(null)}>Keep my entry</button></>
+                        : <button type="button" className="tlink mut" onClick={() => setConfirm(x.id)}>Withdraw…</button>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {entries.some((x) => x.status === 'pending' && x.fee && x.payment !== 'paid') && <div className="note">Waiting for payment? Show your UPI reference at the desk and they’ll confirm you on the spot.</div>}
+      <div><button type="button" className="tlink mut" onClick={onBack}><span aria-hidden="true">←</span> Back</button></div>
+    </PublicShell>
   );
 }
 
