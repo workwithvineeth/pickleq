@@ -23,7 +23,9 @@ export const ALL_CLUBS:Host={marks:['R33','LP','TPC','EP'],cap:'Hosted by',name:
 /** Short club name: "Rally33 at Crosscourts" → "Rally33". */
 export function clubShort(name:string){return name.trim().split(/\s+(?:at|@)\s+/i)[0]||name.trim();}
 /** Club tile letters: "Rally33 at Crosscourts" → "R33", "The Pickleball Company" → "TPC", "Loki" → "LOK". */
-export function clubMark(name:string){const w=clubShort(name).split(/\s+/).filter(Boolean);if(w.length===1){const m=w[0].match(/^(\p{L})\p{L}*(\d+)$/u);return(m?m[1]+m[2]:w[0]).slice(0,3).toUpperCase();}return w.map(x=>x[0]).join('').slice(0,3).toUpperCase();}
+/** Letters a club tile must never spell (file types, rude words): then the first letter plus the last two words' letters. */
+const BAD_MARKS=new Set(['PDF','ZIP','SOS','ASS','SEX','WTF','FCK','KKK','FAT','PIG','CUM','GAY','XXX']);
+export function clubMark(name:string){const w=clubShort(name).split(/\s+/).filter(Boolean);if(w.length===1){const m=w[0].match(/^(\p{L})\p{L}*(\d+)$/u);return(m?m[1]+m[2]:w[0]).slice(0,3).toUpperCase();}const i=w.map(x=>x[0].toUpperCase());const mark=i.join('').slice(0,3);return BAD_MARKS.has(mark)&&i.length>3?i[0]+i.slice(-2).join(''):mark;}
 export function HostBlock({host,onClick}:{host:Host;onClick?:()=>void}){
  const tiles=host.marks.map((m,i)=><span key={i} className="tile">{m}</span>);
  return <a className="host" href="#/" onClick={e=>{e.preventDefault();onClick?.()}}>{host.marks.length>1?<span className="tiles">{tiles}</span>:tiles}<span><span className="cap">{host.cap??'Hosted by'}</span><b>{host.name}</b></span></a>;

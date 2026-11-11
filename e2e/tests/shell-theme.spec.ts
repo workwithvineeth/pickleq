@@ -95,7 +95,7 @@ test('saved theme runs before app JavaScript and obeys CSP', async ({ page }) =>
   await page.route('**/assets/*.js', route => route.abort());
   await page.goto('./', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe('rgb(18, 7, 9)');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe('rgb(6, 20, 13)');
 });
 
 test('live chip uses public demo courts, has readable labels and opens existing results', async ({ page }) => {

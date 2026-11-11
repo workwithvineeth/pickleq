@@ -48,3 +48,32 @@
 .rallyq-prototype.rq-v12 .rq .hdr{position:relative!important;z-index:1!important}
 /* Printing a v1.2 page (Results & DUPR "Save as PDF"): only the content, no menus or buttons */
 @media print{.rallyq-prototype .no-print,.rallyq-prototype .hdr,.rallyq-prototype .side,.rallyq-prototype .wm,.rallyq-prototype .pfoot{display:none!important}}
+/* Several club tiles in a header: overlap a little less so three-letter marks are never cut off */
+.rallyq-prototype .rq .tiles .tile+.tile{margin-left:-4px!important}
+.rallyq-prototype .rq .tiles .tile{font-size:12px!important;letter-spacing:-.02em}
+/* Results & DUPR (organiser): the per-group tables, players and matches in the v1.2 look */
+.rallyq-prototype .rq .pq-results-page>section,.rallyq-prototype .rq .pq-results-page>section>section{display:flex;flex-direction:column;gap:14px}
+.rallyq-prototype .rq .pq-results-page .card.section{background:var(--c1)!important;border-radius:22px!important;padding:20px!important;box-shadow:inset 0 0 0 1px var(--line)!important}
+.rallyq-prototype .rq .pq-results-page h2{font-family:var(--disp,inherit);font-size:28px;font-weight:800;margin:0;color:var(--ink)}
+.rallyq-prototype .rq .pq-results-page h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0;color:var(--mut)}
+.rallyq-prototype .rq .pq-results-page h4{font-size:13px;margin:6px 0 0;color:var(--mut)}
+.rallyq-prototype .rq .pq-results-table{display:block;overflow-x:auto;width:100%}
+.rallyq-prototype .rq .pq-results-table th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)!important}
+.rallyq-prototype .rq .pq-results-table td{vertical-align:top}
+.rallyq-prototype .rq .pq-result-qualifier td:first-child{box-shadow:inset 3px 0 0 var(--ball)}
+.rallyq-prototype .rq .pq-result-position{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--c2);font-weight:800;margin-right:8px}
+.rallyq-prototype .rq .pq-result-player{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rallyq-prototype .rq .pq-result-player>span:first-child{font-weight:700}
+.rallyq-prototype .rq .pq-result-edit-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
+.rallyq-prototype .rq .pq-result-edit-player{background:var(--c2);border-radius:16px;padding:12px}
+.rallyq-prototype .rq .pq-result-edit-player label{display:flex;flex-direction:column;gap:4px;flex:1 1 110px}
+.rallyq-prototype .rq .pq-result-missing{color:var(--ink)!important;font-weight:700}
+.rallyq-prototype .rq .pq-result-input-missing{box-shadow:inset 0 0 0 1px var(--ball)!important}
+.rallyq-prototype .rq .pq-result-match{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.rallyq-prototype .rq .pq-result-score{font-weight:800;font-size:16px;text-align:center;color:var(--ink)}
+.rallyq-prototype .rq .pq-result-winner .pq-result-player>span:first-child{color:var(--ball)}
+.rallyq-prototype .rq .pq-results-champions{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:10px}
+.rallyq-prototype .rq .pq-results-champion{display:flex;flex-direction:column;gap:4px;padding:16px;border-radius:18px;box-shadow:inset 0 0 0 2px var(--gold)}
+.rallyq-prototype .rq .pq-results-champion b{font-size:22px}
+.rallyq-prototype .rq .pq-results-footer{color:var(--mut);font-size:12px}
+@media (max-width:560px){.rallyq-prototype .rq .pq-result-match{grid-template-columns:1fr;text-align:left}.rallyq-prototype .rq .pq-result-score{text-align:left}}

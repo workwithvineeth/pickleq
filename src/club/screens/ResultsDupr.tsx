@@ -80,7 +80,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     const p = pmap.get(pid); if (!p) return <span key={pid}>Unknown player</span>;
     const rating = div.kind === 'singles' ? p.duprSingles : p.duprDoubles;
     return <div key={pid} className={`pq-result-player${editable ? ' pq-result-edit-player' : ''}`}><span>{displayPlayerName(p.name)}</span>
-      <span className={`small${rating === undefined ? ' pq-result-missing' : ' muted'}`}>DUPR {div.kind}: {rating ?? 'Missing rating'}</span>
+      <span className={`small${rating === undefined ? ' pq-result-missing' : ' muted'}`}>DUPR {div.kind}: {rating ?? 'Unrated'}</span>
       {editable && staff && <div className="meta no-print">
         <label className="small">{div.kind === 'singles' ? 'Singles' : 'Doubles'} rating
           <input className={`input${rating === undefined ? ' pq-result-input-missing' : ''}`} inputMode="decimal" aria-label={`${p.name} DUPR ${div.kind} rating`} disabled={busy}

@@ -44,7 +44,7 @@ describe('v1.2 shells',()=>{
   expect(screen.getAllByRole('button',{name:'Switch to day mode'})).toHaveLength(1);
  });
  it('club marks and short names',()=>{
-  expect(clubMark('Rally33 at Crosscourts')).toBe('R33');expect(clubMark('The Pickleball Company')).toBe('TPC');expect(clubMark('Loki Pickleball')).toBe('LP');
+  expect(clubMark('Rally33 at Crosscourts')).toBe('R33');expect(clubMark('The Pickleball Company')).toBe('TPC');expect(clubMark('Loki Pickleball')).toBe('LP');expect(clubMark('PQ Demo Friends Club')).toBe('PFC');
   expect(clubShort('Rally33 at Crosscourts')).toBe('Rally33');expect(clubShort('Ekam Pickleball')).toBe('Ekam Pickleball');
  });
 });
