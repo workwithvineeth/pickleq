@@ -88,7 +88,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
               {signedIn.clubs.length === 0 && <div className="empty">You’re not in a club yet. Create your club and set up a tournament (RallyQ approves it before it goes live), or open the invite link your club sent you.</div>}
               {signedIn.clubs.map(({ club, role }) => (
                 <button key={club.id} type="button" onClick={() => go('club-view', club.id)}>
-                  {club.logoUrl ? <img src={club.logoUrl} alt="" className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span aria-hidden="true" className="tile lg">{clubMark(club.name)}</span>}
+                  {club.logoUrl ? <img src={club.logoUrl} alt={`${club.name} logo`} className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span role="img" aria-label={`${club.name} logo`} className="tile lg">{clubMark(club.name)}</span>}
                   <span className="grow" style={{ minWidth: 0, textAlign: 'left' }}><b style={{ display: 'block', overflowWrap: 'anywhere' }}>{club.name}</b><span className="mut" style={{ fontSize: 13 }}>{[club.city, ROLE_LABEL[role]].filter(Boolean).join(' · ')}</span></span>
                   {club.trusted ? <span className="st ok">Trusted</span> : null}
                   <span aria-hidden="true" className="mut">›</span>
@@ -199,7 +199,7 @@ function AllClubs({ all, mine, go }: { all: AdminClub[]; mine: Set<string>; go: 
       <div className="list">
         {all.map((c) => (
           <button key={c.id} type="button" onClick={() => go(mine.has(c.id) ? 'club-view' : 'admin-club', c.id)}>
-            {c.logoUrl ? <img src={c.logoUrl} alt="" className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span aria-hidden="true" className="tile lg">{clubMark(c.name)}</span>}
+            {c.logoUrl ? <img src={c.logoUrl} alt={`${c.name} logo`} className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span role="img" aria-label={`${c.name} logo`} className="tile lg">{clubMark(c.name)}</span>}
             <span className="grow" style={{ minWidth: 0, textAlign: 'left' }}><b style={{ display: 'block', overflowWrap: 'anywhere' }}>{c.name}</b>
               <span className="mut" style={{ fontSize: 13, display: 'block' }}>{[c.city, `${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}`].filter(Boolean).join(' · ')}</span>
               <span className="mut" style={{ fontSize: 12, overflowWrap: 'anywhere' }}>{c.owners.join(', ') || 'No owner email'}</span></span>

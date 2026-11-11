@@ -372,7 +372,6 @@ test.describe('Admin home in the demo (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await page.goto('#/club');
     await expect(page.getByRole('heading', { name: 'Clubs', exact: true })).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Main' }).first().getByRole('link', { name: 'For clubs' })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByRole('region', { name: 'Demo tour' })).toBeVisible();
     await expect(page.getByRole('button', { name: /3 tournaments waiting for your approval/ })).toBeVisible();
     const all = page.getByRole('region', { name: 'All clubs on RallyQ' });

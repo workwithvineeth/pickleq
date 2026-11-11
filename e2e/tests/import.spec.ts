@@ -20,8 +20,12 @@ test.describe('PaddleQ app', () => {
     await expect(page).toHaveURL(/#\/club(-signin)?$/);
     await page.goto('#/club');
     // v1.2: the public shell's menu (no personal-app tabs anywhere).
-    const nav = page.getByRole('navigation', { name: 'Main' }).first();
+    // On a phone the menu sits behind the Menu button.
+    const menuBtn = page.getByRole('button', { name: 'Menu' });
+    if (await menuBtn.isVisible()) await menuBtn.click();
+    const nav = page.getByRole('navigation', { name: /^(Main|Menu)$/ }).locator('visible=true').first();
     for (const t of ['Live scores', 'Events', 'Player Studio', 'For clubs']) await expect(nav.getByRole('link', { name: t })).toHaveCount(1);
+    if (await menuBtn.isVisible()) await menuBtn.click();
     for (const t of ['Home', 'Train', 'Stats', 'Coach', 'Tournaments']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Log a match' })).toHaveCount(0);
     // Signed out, My clubs is the sign-in page; the demo lives in the admin dashboard, not here.

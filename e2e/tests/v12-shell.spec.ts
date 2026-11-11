@@ -10,7 +10,7 @@ test('v1.2 club pages: Night default, Day switch saved, readable, fit 320 and 14
   await page.getByLabel('Your name in the demo').fill('Alex');
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
   await expect(page.getByRole('heading', { name: 'PQ Demo Club', exact: true })).toBeVisible();
-  await expect(page.getByRole('navigation', { name: 'Organiser menu' })).toHaveCount(1);
+  await expect(page.getByRole('complementary', { name: 'Organiser menu' })).toHaveCount(1);
   await expect(page.locator('.rallyq-prototype .rq').first()).not.toHaveClass(/\bday\b/);
   for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 900 });

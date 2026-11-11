@@ -17,7 +17,7 @@ test('overview has real live courts, compact phone frame, account settings and e
   expect(await card.locator('.pq-score').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(40);
   expect(await live.locator('.pq-overview-courts').evaluate(el=>el.scrollWidth>el.clientWidth)).toBeTruthy();
   // v1.2: the organiser shell (club side menu, page head, section tabs) replaces the old account strip and menus.
-  await expect(page.getByRole('navigation',{name:'Organiser menu'})).toHaveCount(1);
+  await expect(page.getByRole('complementary',{name:'Organiser menu'})).toHaveCount(1);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   await expect(page.getByRole('region',{name:'Needs you'})).toBeVisible();
   await expect(page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:'Create tournament',exact:true})).toBeVisible();
