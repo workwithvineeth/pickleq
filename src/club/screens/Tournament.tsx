@@ -8,6 +8,7 @@ import { Chips, Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
 import { routeHash, type Go } from '../../navigation';
 import { clubMark, ModeButton, OrgShell, PageHead, PublicShell } from '../../rallyq/shell/Shell';
+import { Legacy } from './InboxLegacy';
 import { ChampionHero, ResultsPosters, type ChampionInfo } from './ResultsPosters';
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, formatFor, matchResult, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
@@ -21,7 +22,7 @@ import { ApprovalCard } from './Approvals';
 import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
-import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
+import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, names, shareLink, Status, useLoad } from './common';
 import { friendlyDate, friendlyTime } from '../dates';
 import { preflight, type PreflightItem } from '../preflight';
 
@@ -108,8 +109,10 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   }
 
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="tnew-title">
-      <Header id="tnew-title" title="New tournament" onBack={onBack} />
+    <OrgShell go={go} active="tournaments" clubName={club.data?.club.name} clubId={clubId}>
+      <PageHead cap={club.data?.club.name ?? 'Your club'} title={<span id="tnew-title">Create tournament</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
+      <section className="card" style={{ flex: '999 1 560px', minWidth: 0, padding: 22 }}><Legacy style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Status error={club.error} loading={club.loading && !club.data} />
       <Field label="How do players enter?">
         <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I pick them' }] : []), { value: 'registration', label: 'They register' }, ...(club.data?.platformDraft ? [] : [{ value: 'listed' as const, label: 'List only' }])]} onChange={setPost} />
@@ -165,9 +168,19 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       {post === 'roster' && <DayEstimateBox events={divs.map((d) => ({ name: d.name, entries: entryCount(d), ...d.fmt }))} courts={courts} slotMinutes={slot} startTime={time} finishBy={finishBy} onFinishBy={setFinishBy} onUse={(i, c) => update(i, { fmt: { ...divs[i].fmt, ...c } })} />}
       {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players are seeded by DUPR and spread across pools so the strongest don’t meet early. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
       {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by RallyQ before it shows on the board. Adults only (18+).</p>}
-      {msg && <div role="status" className="msg msg-bad">{msg}</div>}
-      <button type="button" className="btn btn-primary" disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Post the listing' : post === 'registration' ? 'Save draft' : 'Create tournament'}</button>
-    </main>
+      {msg && <div role="status" className="warn">{msg}</div>}
+      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Post the listing' : post === 'registration' ? 'Save draft' : 'Create tournament'}</button>
+      </Legacy></section>
+      {post !== 'roster' && <aside className="card" aria-label="Preview on Events" style={{ flex: '1 1 300px', minWidth: 0, padding: 20, display: 'flex', flexDirection: 'column', gap: 10, position: 'sticky', top: 20 }}>
+        <div className="cap">Preview on Events</div>
+        <div className="row" style={{ gap: 10 }}><span className="tile">{clubMark(club.data?.club.name ?? 'Club')}</span><span><span className="cap" style={{ display: 'block' }}>Hosted by</span><b style={{ fontSize: 14 }}>{club.data?.club.name ?? 'Your club'}</b></span></div>
+        <div className="disp" style={{ fontSize: 28, overflowWrap: 'anywhere' }}>{name.trim() || 'Tournament name'}</div>
+        <div className="mut" style={{ fontSize: 13 }}>{[friendlyDate(date), time && friendlyTime(time), venue.trim() || city.trim(), post !== 'listed' ? `${courts} court${courts === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')}</div>
+        <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>{divs.filter((d) => d.name.trim()).map((d, i) => <span key={i} className="chip">{d.name}</span>)}</div>
+        <span className="st wait" style={{ alignSelf: 'flex-start' }}>{post === 'registration' && onBoard ? 'Shows on Events once RallyQ approves it' : post === 'listed' ? 'Listing: checked by RallyQ first' : 'Not on the Events board'}</span>
+      </aside>}
+      </div>
+    </OrgShell>
   );
 }
 

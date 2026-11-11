@@ -38,7 +38,7 @@ describe('Poster upload', () => {
     await user.click(screen.getByRole('button', { name: 'Open PQ Demo Club' }));
     await screen.findByRole('heading', { name: 'PQ Demo Club' });
     window.location.hash = `#/club-tournament-new/${window.location.hash.split('/')[2]}`;
-    await screen.findByRole('heading', { name: 'New tournament' });
+    await screen.findByRole('heading', { name: 'Create tournament' });
     await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'List only' }));
     await user.upload(screen.getByLabelText('Poster picture'), new File(['photo'], 'poster.png', { type: 'image/png' }));
     expect(await screen.findByText(/Poster ready/)).toBeInTheDocument();

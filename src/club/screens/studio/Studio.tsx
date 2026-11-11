@@ -1,3 +1,4 @@
+import { PublicShell } from '../../../rallyq/shell/Shell';
 import { useState, type FormEvent } from 'react';
 import type { Go } from '../../../navigation';
 import { eventsBackend, rememberReturn, serverBackend } from '../../index';
@@ -33,6 +34,24 @@ export function PlayerStudio({ section, go }: { section: string; go: Go }) {
   const current = STUDIO_SECTIONS.some((s) => s.id === top) || top === 'log' || top === 'practice' || top === 'official' ? top : 'home';
   const navId = current === 'log' || current === 'official' ? 'matches' : current === 'practice' ? 'train' : current;
   const d = state.data;
+  // Signed out: the v1.2 Player Studio welcome, in the public shell.
+  if (b && !state.loading && !state.error && !d) return (
+    <PublicShell go={go} active="studio">
+      <section className="card" aria-label="Sign in" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexWrap: 'wrap', alignItems: 'stretch' }}>
+        <div style={{ flex: '999 1 380px', minWidth: 0, padding: 'clamp(22px,4vw,44px)', display: 'flex', flexDirection: 'column', gap: 16, justifyContent: 'center' }}>
+          <span className="cap">Player Studio</span>
+          <h1 id="studio-title" className="disp" style={{ fontSize: 'clamp(40px,7vw,72px)', lineHeight: .95, margin: 0 }}>Your game, in one place.</h1>
+          <p className="mut" style={{ margin: 0, fontSize: 16, maxWidth: 520 }}>See your referee-scored tournament results, and keep a private diary of practice and casual games. Your club’s DUPR ratings for you show beside every match.</p>
+          <div className="row" style={{ flexWrap: 'wrap', gap: 10 }}>
+            <button type="button" className="btn" onClick={() => { rememberReturn('#/club-player-studio'); go('club-signin'); }}>Sign in to Player Studio</button>
+            <button type="button" className="btn ghost" onClick={() => go('events')}>See events</button>
+          </div>
+          <span className="mut" style={{ fontSize: 13 }}>Private by default. You choose what your club or the public can see.</span>
+        </div>
+        <div aria-hidden="true" style={{ flex: '1 1 280px', minHeight: 280, background: `url(${import.meta.env.BASE_URL}rallyq/cutout-player-card.webp) center bottom / contain no-repeat, radial-gradient(circle at 50% 60%, rgba(217,242,74,.18), transparent 65%)` }} />
+      </section>
+    </PublicShell>
+  );
   return (
     <main className="screen wide-ok pq-studio pq-proto" aria-labelledby="studio-title">
       <Header id="studio-title" title="Player Studio" />

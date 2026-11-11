@@ -34,7 +34,7 @@ describe('RallyQ v1.2 app frame', () => {
   });
   it('keeps the old frame on screens that are not rebuilt yet', async () => {
     sessions.mockResolvedValue([]);
-    const { container } = await open('#/club-new');
+    const { container } = await open('#/club-join/abc');
     expect(container.querySelector('.app.pq-brand')).not.toBeNull();
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Account' })).toHaveTextContent('alex@example.test');

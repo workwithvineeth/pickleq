@@ -5,10 +5,9 @@ import type { Go } from '../../navigation';
 import { clubMode, clubServerConfig, isClubApp, setClubMode } from '../config';
 import { backend, demoBackend, serverBackend, takeReturn } from '../index';
 import { emailOk, MIN_PASSWORD, passwordProblem } from '../authText';
-import { BigLogo } from './Poster';
 import { joinPhone, PhoneField, phoneProblem } from './Phone';
-import { BrandMark } from './Brand';
-import { PublicShell } from '../../rallyq/shell/Shell';
+import { clubMark, PageHead, PublicShell } from '../../rallyq/shell/Shell';
+import { Legacy } from './InboxLegacy';
 import type { AdminClub, ClubBackend, MyClub, TournamentAccess } from '../backend';
 import { PinPair } from './Access';
 import { isApproved, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
@@ -64,6 +63,52 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   const signedIn = state.data;
   // RallyQ (the club app): signed out, My club is the sign-in page, so paddleq.in opens on it.
   if (isClubApp() && server && !state.loading && !state.error && !signedIn) return <ClubSignIn go={go} onBack={onBack} landing onSignedIn={state.reload} />;
+  if (signedIn && isClubApp()) return (
+    <PublicShell go={go} active="clubs" host={signedIn.clubs.length === 1 ? { marks: [clubMark(signedIn.clubs[0].club.name)], name: signedIn.clubs[0].club.name, cap: 'Hosted by' } : undefined}>
+      <PageHead cap={b?.kind === 'demo' ? 'Demo mode' : `Signed in as ${signedIn.user.email}`} title={<span id="club-title">{signedIn.admin ? 'Clubs' : 'My clubs'}</span>}
+        actions={<>
+          {signedIn.admin && <button type="button" className="btn ghost sm" onClick={() => go('admin', 'overview')}>Admin dashboard</button>}
+          <button type="button" className="btn ghost sm" onClick={() => signedIn.admin ? go('admin', 'results') : go('club-results')}>Results &amp; DUPR</button>
+          {b?.kind === 'server' && <button type="button" className="btn ghost sm" onClick={() => go('club-player-studio')}>Player Studio</button>}
+        </>} />
+      <Legacy><DemoNote b={b} /></Legacy>
+      {msg && <div role="status" className="note">{msg}</div>}
+      {signedIn.admin && signedIn.toApprove > 0 && (
+        <button type="button" className="card between" style={{ padding: '16px 20px', minHeight: 56, cursor: 'pointer', font: 'inherit', color: 'inherit', textAlign: 'left' }} onClick={() => go('admin', 'approvals')}>
+          <b>{signedIn.toApprove} tournament{signedIn.toApprove === 1 ? '' : 's'} waiting for your approval</b><span className="st wait">Review</span>
+        </button>
+      )}
+      {signedIn.next && b && <NextTournament n={signedIn.next} go={go} b={b} />}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
+        <div style={{ flex: '999 1 460px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <TodayAndUpcoming go={go} />
+          <section className="card" aria-label="Your clubs">
+            <div className="between" style={{ padding: '16px 18px 4px' }}><h2 className="cap" style={{ margin: 0 }}>Your clubs</h2>{b?.kind === 'server' && <button type="button" className="tlink" style={{ fontSize: 13 }} onClick={() => go('club-new')}>Create a club →</button>}</div>
+            <div className="list">
+              {signedIn.clubs.length === 0 && <div className="empty">You’re not in a club yet. Create your club and set up a tournament (RallyQ approves it before it goes live), or open the invite link your club sent you.</div>}
+              {signedIn.clubs.map(({ club, role }) => (
+                <button key={club.id} type="button" onClick={() => go('club-view', club.id)}>
+                  {club.logoUrl ? <img src={club.logoUrl} alt="" className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span aria-hidden="true" className="tile lg">{clubMark(club.name)}</span>}
+                  <span className="grow" style={{ minWidth: 0, textAlign: 'left' }}><b style={{ display: 'block', overflowWrap: 'anywhere' }}>{club.name}</b><span className="mut" style={{ fontSize: 13 }}>{[club.city, ROLE_LABEL[role]].filter(Boolean).join(' · ')}</span></span>
+                  {club.trusted ? <span className="st ok">Trusted</span> : null}
+                  <span aria-hidden="true" className="mut">›</span>
+                </button>
+              ))}
+            </div>
+          </section>
+          {signedIn.admin && <AllClubs all={signedIn.all} mine={new Set(signedIn.clubs.map((c) => c.club.id))} go={go} />}
+        </div>
+        <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {b?.kind === 'demo' && <DemoTour go={go} clubId={signedIn.clubs[0]?.club.id} />}
+          {b?.kind === 'server' && <button type="button" className="btn ghost" onClick={() => go('club-new')}>Create a club</button>}
+          {b?.kind === 'server' && <section className="card" style={{ padding: 18 }}><Legacy><MyPasswordCard /></Legacy></section>}
+          <button type="button" className="tlink mut" style={{ alignSelf: 'flex-start' }} onClick={signOut}>
+            {b?.kind === 'demo' ? 'Close the demo and delete it from this phone' : 'Sign out'}
+          </button>
+        </div>
+      </div>
+    </PublicShell>
+  );
   return (
     <main className="screen" aria-labelledby="club-title">
       <Header id="club-title" title={isClubApp() ? (state.data?.admin ? 'Clubs' : 'My clubs') : 'Club'} onBack={isClubApp() ? undefined : onBack} />
@@ -101,54 +146,6 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           </section>}
         </>
       )}
-      {signedIn && isClubApp() && (
-        <>
-          <DemoNote b={b} />
-          <div className="pq-me">
-            <span className="pq-me-email">{b?.kind === 'demo' ? 'Demo mode' : signedIn.user.email}</span>
-            <span className="pq-tile"><BrandMark size={30} /></span>
-          </div>
-          {msg && <div role="status" className="msg msg-ok">{msg}</div>}
-          <div className="meta" aria-label="Dashboard shortcuts">
-            {b?.kind === 'server' && <button type="button" className="btn btn-outline" onClick={() => go('club-player-studio')}>Player Studio</button>}
-            {signedIn.admin && <button type="button" className="btn btn-primary" onClick={() => go('admin', 'overview')}>Admin dashboard</button>}
-            <button type="button" className="btn btn-outline" onClick={() => signedIn.admin ? go('admin', 'results') : go('club-results')}>Results &amp; DUPR</button>
-          </div>
-          {b?.kind === 'demo' && <DemoTour go={go} clubId={signedIn.clubs[0]?.club.id} />}
-          {signedIn.admin && signedIn.toApprove > 0 && (
-            <button type="button" className="banner-btn" onClick={() => go('admin', 'approvals')}>
-              <span>{signedIn.toApprove} tournament{signedIn.toApprove === 1 ? '' : 's'} waiting for your approval</span><span>›</span>
-            </button>
-          )}
-          <TodayAndUpcoming go={go} />
-          <h2 className="pq-kicker">YOUR CLUBS</h2>
-          <section className="section" aria-label="Your clubs" style={{ gap: 10 }}>
-            {signedIn.clubs.length === 0 && (
-              <div className="pq-info"><span>You’re not in a club yet. Create your club and set up a tournament (RallyQ approves it before it goes live), or open the invite link your club sent you.</span></div>
-            )}
-            {signedIn.clubs.map(({ club, role }) => (
-              <button key={club.id} type="button" className="pq-club" onClick={() => go('club-view', club.id)}>
-                {club.logoUrl ? <img src={club.logoUrl} alt="" className="pq-club-logo" /> : <span aria-hidden="true" className="pq-club-logo">{initials(club.name)}</span>}
-                <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  <b style={{ fontSize: 17, overflowWrap: 'anywhere' }}>{club.name}</b>
-                  <span className="pq-club-meta">
-                    {[club.city, ROLE_LABEL[role]].filter(Boolean).join(' · ')}
-                    {club.trusted && <span className="pq-badge">Trusted</span>}
-                  </span>
-                </span>
-                <span aria-hidden="true" style={{ color: 'var(--accent)', fontSize: 22 }}>›</span>
-              </button>
-            ))}
-          </section>
-          {signedIn.next && b && <NextTournament n={signedIn.next} go={go} b={b} />}
-          {signedIn.admin && <AllClubs all={signedIn.all} mine={new Set(signedIn.clubs.map((c) => c.club.id))} go={go} />}
-          {b?.kind === 'server' && <button type="button" className="btn btn-outline pq-big" onClick={() => go('club-new')}>Create a club</button>}
-          {b?.kind === 'server' && <MyPasswordCard />}
-          <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={signOut}>
-            {b?.kind === 'demo' ? 'Close the demo and delete it from this phone' : 'Sign out'}
-          </button>
-        </>
-      )}
       {signedIn && !isClubApp() && (
         <>
           <DemoNote b={b} />
@@ -182,8 +179,6 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   );
 }
 
-const initials = (name: string) => name.split(/\s+/).filter((w) => /^[A-Za-z0-9]/.test(w) && !/^the$/i.test(w)).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || 'PQ';
-
 interface NextT { t: ClubTournament; club: string; access: TournamentAccess | null }
 
 /** The next tournament (live first, then the soonest not finished) across the clubs I run. */
@@ -199,22 +194,20 @@ async function nextTournament(b: ClubBackend, clubs: MyClub[]): Promise<NextT | 
 /** Admin home: every club on RallyQ with its logo and approval state. Own clubs open their page; others the admin view. */
 function AllClubs({ all, mine, go }: { all: AdminClub[]; mine: Set<string>; go: Go }) {
   return (
-    <section className="section" aria-label="All clubs on RallyQ" style={{ gap: 10 }}>
-      <h2 className="pq-kicker">ALL CLUBS ON PADDLEQ ({all.length})</h2>
-      {all.map((c) => (
-        <button key={c.id} type="button" className="pq-club" onClick={() => go(mine.has(c.id) ? 'club-view' : 'admin-club', c.id)}>
-          <BigLogo src={c.logoUrl} club={c.name} size={48} />
-          <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <b style={{ fontSize: 16, overflowWrap: 'anywhere' }}>{c.name}</b>
-            <span className="pq-club-meta">
-              {[c.city, `${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}`].filter(Boolean).join(' · ')}
-              {c.trusted && <span className="pq-badge">Trusted</span>}
-            </span>
-            <span className="small muted" style={{ overflowWrap: 'anywhere' }}>{c.owners.join(', ') || 'No owner email'}</span>
-          </span>
-          <span aria-hidden="true" style={{ color: 'var(--accent)', fontSize: 22 }}>›</span>
-        </button>
-      ))}
+    <section className="card" aria-label="All clubs on RallyQ">
+      <h2 className="cap" style={{ margin: 0, padding: '16px 18px 4px' }}>All clubs on RallyQ ({all.length})</h2>
+      <div className="list">
+        {all.map((c) => (
+          <button key={c.id} type="button" onClick={() => go(mine.has(c.id) ? 'club-view' : 'admin-club', c.id)}>
+            {c.logoUrl ? <img src={c.logoUrl} alt="" className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span aria-hidden="true" className="tile lg">{clubMark(c.name)}</span>}
+            <span className="grow" style={{ minWidth: 0, textAlign: 'left' }}><b style={{ display: 'block', overflowWrap: 'anywhere' }}>{c.name}</b>
+              <span className="mut" style={{ fontSize: 13, display: 'block' }}>{[c.city, `${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}`].filter(Boolean).join(' · ')}</span>
+              <span className="mut" style={{ fontSize: 12, overflowWrap: 'anywhere' }}>{c.owners.join(', ') || 'No owner email'}</span></span>
+            {c.trusted && <span className="st ok">Trusted</span>}
+            <span aria-hidden="true" className="mut">›</span>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }
@@ -229,15 +222,16 @@ function DemoTour({ go, clubId }: { go: Go; clubId?: string }) {
     { title: '5 · The admin overview', text: 'Matches scored, clubs and tournaments at a glance.', to: () => go('admin', 'overview') },
   ];
   return (
-    <section className="card section" aria-label="Demo tour">
-      <h2 style={{ fontSize: 18 }}>Demo tour</h2>
-      <p className="small muted" style={{ margin: 0 }}>Made-up clubs, players and tournaments on this phone. Tap a step to see that screen.</p>
-      {steps.map((s) => (
-        <button key={s.title} type="button" className="match-row" onClick={s.to}>
-          <span style={{ flex: 1, minWidth: 0 }}><b style={{ display: 'block' }}>{s.title}</b><span className="small muted">{s.text}</span></span>
-          <span aria-hidden="true" style={{ color: 'var(--accent)' }}>›</span>
-        </button>
-      ))}
+    <section className="card" aria-label="Demo tour">
+      <div style={{ padding: '16px 18px 4px' }}><h2 className="cap" style={{ margin: 0 }}>Demo tour</h2><p className="mut" style={{ margin: '6px 0 0', fontSize: 13 }}>Made-up clubs, players and tournaments on this phone. Tap a step to see that screen.</p></div>
+      <div className="list">
+        {steps.map((s) => (
+          <button key={s.title} type="button" onClick={s.to}>
+            <span className="grow" style={{ minWidth: 0, textAlign: 'left' }}><b style={{ display: 'block' }}>{s.title}</b><span className="mut" style={{ fontSize: 13 }}>{s.text}</span></span>
+            <span aria-hidden="true" className="mut">›</span>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }
@@ -250,24 +244,18 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
   const when = relativeDate(t.startDate);
   const icon = (d: string) => <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
   return (
-    <section className="pq-next" aria-label="Next tournament">
-      <div className="pq-row-split">
-        <span className="pq-next-kicker">{t.status === 'live' ? 'LIVE NOW' : 'NEXT TOURNAMENT'}</span>
-        <span className="small" style={{ color: 'var(--pq-on-maroon-soft)' }}>{n.club}</span>
+    <section className="card" aria-label="Next tournament" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="between"><span className={t.status === 'live' ? 'chip live' : 'cap'}>{t.status === 'live' ? 'Live now' : 'Next tournament'}</span><span className="mut" style={{ fontSize: 13 }}>{n.club}</span></div>
+      <div><h2 className="disp" style={{ fontSize: 34, margin: 0 }}>{t.name}</h2><div className="mut" style={{ fontSize: 14, marginTop: 4 }}>{when}{t.startTime ? ` · ${friendlyTime(t.startTime)}` : ''} · {t.courts} court{t.courts === 1 ? '' : 's'}</div></div>
+      <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+        {!isApproved(t) && <button type="button" className="btn" onClick={() => go('club-tournament', t.id)}>{t.approval === 'submitted' ? 'Waiting for RallyQ' : 'Submit for approval'}</button>}
+        {isApproved(t) && <button type="button" className="btn" onClick={() => go('club-desk', t.id)}>{icon('M3 4h18v12H3zM8 20h8M12 16v4')}Desk</button>}
+        <button type="button" className="btn ghost" onClick={() => go('club-inbox', t.id)}>{icon('M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M17 11h5M19.5 8.5v5')}Entries</button>
+        {isApproved(t) && <button type="button" className="btn ghost" onClick={() => go('club-scorers', t.id)}>{icon('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7')}Referee links</button>}
+        {isApproved(t) && <button type="button" className="btn ghost" onClick={async () => setMsg(await shareLink(`${t.name}: live results`, appLink(`#/results/${t.publicSlug}`)))}>{icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13')}Share results</button>}
       </div>
-      <div>
-        <h2>{t.name}</h2>
-        <div className="pq-next-meta">{when}{t.startTime ? ` · ${friendlyTime(t.startTime)}` : ''} · {t.courts} court{t.courts === 1 ? '' : 's'}</div>
-      </div>
-      <div className="pq-next-actions">
-        {!isApproved(t) && <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-tournament', t.id)}>{t.approval === 'submitted' ? 'Waiting for RallyQ' : 'Submit for approval'}</button>}
-        {isApproved(t) && <button type="button" className="pq-next-btn pq-solid" onClick={() => go('club-desk', t.id)}>{icon('M3 4h18v12H3zM8 20h8M12 16v4')}Desk</button>}
-        <button type="button" className="pq-next-btn" onClick={() => go('club-inbox', t.id)}>{icon('M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M17 11h5M19.5 8.5v5')}Entries</button>
-        {isApproved(t) && <button type="button" className="pq-next-btn" onClick={() => go('club-scorers', t.id)}>{icon('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7')}Referee links</button>}
-        {isApproved(t) && <button type="button" className="pq-next-btn" onClick={async () => setMsg(await shareLink(`${t.name}: live results`, appLink(`#/results/${t.publicSlug}`)))}>{icon('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13')}Share results</button>}
-      </div>
-      {msg && <div role="status" className="small" style={{ color: 'var(--pq-on-brand)' }}>{msg}</div>}
-      {pins && isApproved(t) && <PinPair b={b} tournamentId={t.id} access={pins} onChanged={(p) => setPins({ ...pins, ...p })} light />}
+      {msg && <div role="status" className="note">{msg}</div>}
+      {pins && isApproved(t) && <Legacy><PinPair b={b} tournamentId={t.id} access={pins} onChanged={(p) => setPins({ ...pins, ...p })} /></Legacy>}
     </section>
   );
 }
@@ -640,17 +628,19 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
     } catch (e) { setMsg(errorText(e)); setBusy(false); }
   }
   return (
-    <main className="screen" aria-labelledby="newclub-title">
-      <Header id="newclub-title" title="Create a club" onBack={onBack} />
+    <PublicShell go={go} active="clubs">
+      <PageHead cap="For clubs" title={<span id="newclub-title">Create a club</span>} sub="Your club leads on every page players see. RallyQ signs off small and last." actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <section className="card" style={{ padding: 22, maxWidth: 640 }}><Legacy style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <Field label="Club name"><input className="input" aria-label="Club name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
       <Field label="City (optional)"><input className="input" aria-label="City" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} /></Field>
       <Field label="Your name"><input className="input" aria-label="Your name" value={me} onChange={(e) => setMe(e.target.value)} maxLength={60} /></Field>
       <PhoneField country={country} digits={digits} onChange={(c, d) => { setCountry(c); setDigits(d); }} />
       <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} placeholder="Where you play, how many courts, tournaments you plan" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
       <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. Set up tournaments straight away; RallyQ approves each one before it goes live, and may call or WhatsApp you on this number.</p>
-      {msg && <div role="status" className="msg msg-bad">{msg}</div>}
-      <button type="button" className="btn btn-primary" disabled={busy} onClick={create}>Create club</button>
-    </main>
+      {msg && <div role="status" className="warn">{msg}</div>}
+      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy} onClick={create}>Create club</button>
+      </Legacy></section>
+    </PublicShell>
   );
 }
 

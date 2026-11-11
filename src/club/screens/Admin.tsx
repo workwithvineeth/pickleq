@@ -1,3 +1,5 @@
+import { clubMark, PageHead, PublicShell } from '../../rallyq/shell/Shell';
+import { Legacy } from './InboxLegacy';
 import { AdminOverviewPreview, BrandClubKits, CircuitPreview, MarketingPerformance } from './AdminGrowth';
 import { TestimonialsAdmin } from './Testimonials';
 import { useState } from 'react';
@@ -5,7 +7,7 @@ import type { Go } from '../../navigation';
 import type { AdminTournament, ClubBackend } from '../backend';
 import { eventsBackend } from '../index';
 import { ROLE_LABEL } from '../types';
-import { appLink, DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
+import { appLink, DemoNote, errorText, shareLink, Status, useLoad } from './common';
 import { deskLink, PinPair } from './Access';
 import { BigLogo } from './Poster';
 import { resultsDuprLink } from './ResultsDupr';
@@ -56,8 +58,9 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
   const current = SECTIONS.find((s) => s.id === section)!;
   const growthSection = section === 'branding' || section === 'marketing' || section === 'circuit';
   return (
-    <main className="screen" aria-labelledby="admin-title">
-      <Header id="admin-title" title={section === 'overview' ? 'Founder command centre' : current.title} onBack={onBack} />
+    <PublicShell go={go} host={{ marks: [], cap: 'Platform admin', name: 'RallyQ' }}>
+      <PageHead cap="RallyQ admin" title={<span id="admin-title">{section === 'overview' ? 'Founder command centre' : current.title}</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <Legacy cards style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <DemoNote b={b.kind === 'demo' ? b : null} />
       <Status error={allowed.error} loading={allowed.loading && allowed.data === null} />
       {allowed.data === false && (
@@ -68,9 +71,9 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
       )}
       {allowed.data && (
         <>
-          <div className="seg seg-wrap" role="group" aria-label="Admin sections">
+          <div className="tabs" role="group" aria-label="Admin sections" style={{ flexWrap: 'wrap' }}>
             {SECTIONS.filter((s) => b.kind === 'server' || (s.id !== 'branding' && s.id !== 'marketing' && s.id !== 'circuit')).map((s) => (
-              <button key={s.id} type="button" aria-pressed={s.id === section} onClick={() => go('admin', s.id, { replace: true })}>{s.label}</button>
+              <button key={s.id} type="button" className={s.id === section ? 'tab on' : 'tab'} aria-pressed={s.id === section} onClick={() => go('admin', s.id, { replace: true })}>{s.label}</button>
             ))}
           </div>
           {section === 'overview' && (b.kind === 'server' ? <OverviewMode go={go} /> : <AdminCommandCentre go={go} />)}
@@ -95,7 +98,8 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
           {section === 'circuit' && b.kind === 'server' && <CircuitPreview />}
         </>
       )}
-    </main>
+      </Legacy>
+    </PublicShell>
   );
 }
 
@@ -159,8 +163,9 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
   const state = useLoad(() => b.adminClub(id), [b, id]);
   const c = state.data;
   return (
-    <main className="screen" aria-labelledby="admin-club-title">
-      <Header id="admin-club-title" title={c?.name ?? 'Club'} onBack={onBack} />
+    <PublicShell go={go} host={c ? { marks: [clubMark(c.name)], cap: 'Club', name: c.name } : { marks: [], cap: 'Platform admin', name: 'RallyQ' }}>
+      <PageHead cap="RallyQ admin · club" title={<span id="admin-club-title">{c?.name ?? 'Club'}</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <Legacy cards style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Status error={state.error} loading={state.loading && !c} />
       {c && (
         <>
@@ -195,7 +200,8 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
           </section>
         </>
       )}
-    </main>
+      </Legacy>
+    </PublicShell>
   );
 }
 

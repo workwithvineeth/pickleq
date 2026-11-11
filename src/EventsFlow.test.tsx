@@ -223,7 +223,7 @@ describe('Posting a tournament and approving it', () => {
     await openDemo(user);
     const clubId = window.location.hash.split('/')[2];
     window.location.hash = `#/club-tournament-new/${clubId}`;
-    await screen.findByRole('heading', { name: 'New tournament' });
+    await screen.findByRole('heading', { name: 'Create tournament' });
     await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'They register' }));
     await user.type(screen.getByLabelText('Tournament name'), 'Robot Mixed Cup');
     await user.type(screen.getByLabelText('City'), 'Hyderabad');
@@ -254,7 +254,7 @@ describe('Posting a tournament and approving it', () => {
     await openDemo(user);
     const clubId = window.location.hash.split('/')[2];
     window.location.hash = `#/club-tournament-new/${clubId}`;
-    await screen.findByRole('heading', { name: 'New tournament' });
+    await screen.findByRole('heading', { name: 'Create tournament' });
     await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'List only' }));
     expect(screen.queryByRole('group', { name: 'Courts' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Tournament name'), 'Robot Listed Open');
@@ -292,7 +292,7 @@ describe('Create freely, go live with approval', () => {
     await user.type(screen.getByLabelText('Phone number'), '98765 43210');
     await user.click(screen.getByRole('button', { name: 'Create club' }));
     await user.click(within(await screen.findByRole('region',{name:'Your tournaments'})).getByRole('button', { name: 'Create tournament' }));
-    await screen.findByRole('heading', { name: 'New tournament' });
+    await screen.findByRole('heading', { name: 'Create tournament' });
     // Picking players makes the draw at once, so a club that isn't trusted only gets "They register" and "List only".
     expect(within(screen.getByRole('group', { name: 'How do players enter?' })).queryByRole('button', { name: 'I pick them' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Tournament name'), 'Smash Yard Open');

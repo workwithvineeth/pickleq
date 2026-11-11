@@ -30,12 +30,14 @@ const source=holes(raw,[
  ['<div style="min-height:48px;border-radius:14px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);display:flex;align-items:center;padding:0 14px;font-weight:700;font-size:18px">{{logValue}}</div>','<input value="{{logValue}}" onChange="{{setLogValue}}" placeholder="{{logPlaceholder}}" aria-label="{{logQ}}" style="min-height:48px;border-radius:14px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);padding:0 14px;font:inherit;font-weight:700;font-size:18px;color:#0B2418;width:100%;box-sizing:border-box">']]);
 
 /** Private My Player Studio, exactly as the prototype, on the owner's real matches, practice, goals and sharing. */
+/** Signed out the Player Studio welcome brings its own v1.2 shell; signed in (no studio data yet) it keeps the app frame. */
+function PlayerStudioOrWelcome({go,section}:{go:Go;section:string}){return <div className="app pq-brand pq-studio-wrap"><PlayerStudio section={section} go={go}/></div>;}
 export function MyStudio({go,section}:{go:Go;section?:string}){
  const[ui,setUi]=useState<StudioUI>(()=>({...INITIAL_UI,f:section==='log'||section?.startsWith('log.')||section==='practice'||section?.startsWith('practice.')?'Log':section==='train'||section==='matches'?'Diary':section==='coach'?'Goals':section?.includes('privacy')?'Sharing':'Overview'}));const set=(p:Partial<StudioUI>)=>setUi(s=>({...s,...p}));
  const state=useLoad(async()=>{const store=new RallyStudioStore();return{store,data:await store.load()};},[]);
  const[sharing,setSharing]=useState<SharingOptions|null>(null);
  const[goal,setGoal]=useState({title:'',target:'',msg:''});
- if(!state.data&&!state.loading)return <div className="app pq-brand"><PlayerStudio section={section??''} go={go}/></div>;
+ if(!state.data&&!state.loading)return <PlayerStudioOrWelcome section={section??''} go={go}/>;
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6',padding:24,textAlign:'center'}}>{state.loading?'Loading your Player Studio…':<span>{state.error??'Sign in to open My Player Studio.'} <button type="button" className="tlink" onClick={()=>go('club-signin')}>Sign in →</button></span>}</div>;
  const{store,data}=state.data;const me=data.official.players[0];
  const share=sharing??data.sharing??PRIVATE_SHARING;

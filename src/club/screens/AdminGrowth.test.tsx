@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { AdminDashboard } from './Admin';
 
-const backend = vi.hoisted(() => ({ kind: 'server', isPlatformAdmin: vi.fn(), adminOverview: vi.fn(async () => null), approvalQueue: vi.fn(async () => []), adminTournaments: vi.fn(async () => [{ id: 't1', name: 'Winter Smash Open', club: 'Banjara Pickle House', clubId: 'c1', isTest: false, startDate: '2026-12-12', startTime: '08:00', status: 'draft', listing: 'none', listingStatus: 'none', slug: 'wso', results: false, registrations: 0, matches: 0, matchesDone: 0 }]) }));
+const backend = vi.hoisted(() => ({ kind: 'server', currentUser: vi.fn(async () => null), isPlatformAdmin: vi.fn(), adminOverview: vi.fn(async () => null), approvalQueue: vi.fn(async () => []), adminTournaments: vi.fn(async () => [{ id: 't1', name: 'Winter Smash Open', club: 'Banjara Pickle House', clubId: 'c1', isTest: false, startDate: '2026-12-12', startTime: '08:00', status: 'draft', listing: 'none', listingStatus: 'none', slug: 'wso', results: false, registrations: 0, matches: 0, matchesDone: 0 }]) }));
 vi.mock('../index', async (importOriginal) => ({
   ...await importOriginal<typeof import('../index')>(),
   eventsBackend: () => backend,

@@ -181,7 +181,7 @@ describe('Club mode', () => {
     const user = userEvent.setup();
     await openDemo(user);
     await user.click(within(screen.getByRole('region',{name:'Your tournaments'})).getByRole('button', { name: 'Create tournament' }));
-    await screen.findByRole('heading', { name: 'New tournament' });
+    await screen.findByRole('heading', { name: 'Create tournament' });
     await user.type(screen.getByLabelText('Tournament name'), 'Friday Ladder');
     await user.click(within(screen.getByRole('group', { name: 'Courts' })).getByRole('button', { name: '2' }));
     const boxes = screen.getAllByRole('checkbox');
@@ -517,7 +517,7 @@ describe('Club mode', () => {
     const user = userEvent.setup();
     await openDemo(user);
     await user.click(within(screen.getByRole('region',{name:'Your tournaments'})).getByRole('button', { name: 'Create tournament' }));
-    await screen.findByRole('heading', { name: 'New tournament' });
+    await screen.findByRole('heading', { name: 'Create tournament' });
     expect(within(screen.getByRole('group', { name: 'Event 1 scoring' })).getByRole('button', { name: 'Golden point' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Golden point: at 10–10 the next point wins.')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Tournament name'), 'Win by two night');

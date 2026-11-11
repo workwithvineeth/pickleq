@@ -89,3 +89,9 @@
 .rallyq-prototype .rq .pq-results-table td:first-child{white-space:normal}
 .rallyq-prototype .rq .pq-results-page section.card{max-width:none}
 .rallyq-prototype .rq .pq-result-position{color:var(--ink)!important}
+/* Rows in a .list can be real buttons too (same look as the prototype's links) */
+.rallyq-prototype .rq .list>button{display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 18px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;width:100%;cursor:pointer;text-align:left}
+.rallyq-prototype .rq .list>button:last-child{border-bottom:0}
+.rallyq-prototype .rq .list>button:hover{background:rgba(255,255,255,.06)}
+.rallyq-prototype .rq .list>button:focus-visible{outline:2px solid var(--ball);outline-offset:-2px}
+.rallyq-prototype .rq .list>.empty{padding:16px 18px}

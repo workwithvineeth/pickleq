@@ -39,9 +39,23 @@ const RULES: [string, string][] = [
   ['.check-row', 'display:flex;align-items:center;gap:10px;min-height:44px'],
 ];
 const CSS = RULES.map(([sel, body]) => `${sel.split(',').map((s) => `${P} ${s}`).join(',')}{${body}}`).join('');
+/** With `cards`: older cards stay visible as v1.2 data-glass cards (for whole older screens, e.g. the admin dashboard). */
+const CARDS: [string, string][] = [
+  ['.card', 'background:var(--c1);border-radius:22px;padding:18px;box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;gap:10px;min-width:0'],
+  ['.pill', 'display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--c2);color:var(--mut);white-space:nowrap'],
+  ['.pill-ok', 'background:rgba(217,242,74,.14);color:var(--ball)'],
+  ['.pill-warn,.pill-bad', 'background:var(--c2);color:var(--ink)'],
+  ['.banner-btn', 'display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:56px;padding:0 18px;border-radius:18px;border:0;background:var(--c1);color:var(--ink);font:inherit;font-weight:700;box-shadow:inset 0 0 0 1px var(--line);cursor:pointer'],
+  ['.match-row', 'display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:10px 14px;border-radius:16px;border:0;background:var(--c2);color:var(--ink);font:inherit;text-align:left;cursor:pointer'],
+  ['.pq-admin-list', 'display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:12px'],
+  ['.pq-kicker,h2', 'font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:6px 0 0'],
+  ['.card h2,.card h3', 'font-size:18px;letter-spacing:0;text-transform:none;color:var(--ink)'],
+  ['.msg-bad', 'box-shadow:inset 0 0 0 1px rgba(241,244,234,.5)'],
+];
+const CARD_CSS = CARDS.map(([sel, body]) => `${sel.split(',').map((s) => `${P}.lgcc ${s}`).join(',')}{${body}}`).join('');
 
-export function Legacy({ children, style, className }: { children: ReactNode; style?: CSSProperties; className?: string }) {
-  return <div className={`lgc${className ? ` ${className}` : ''}`} style={style}><style>{CSS}</style>{children}</div>;
+export function Legacy({ children, style, className, cards = false }: { children: ReactNode; style?: CSSProperties; className?: string; cards?: boolean }) {
+  return <div className={`lgc${cards ? ' lgcc' : ''}${className ? ` ${className}` : ''}`} style={style}><style>{cards ? CSS + CARD_CSS : CSS}</style>{children}</div>;
 }
 
 /** A visually hidden label (the prototype's "sr" span). */

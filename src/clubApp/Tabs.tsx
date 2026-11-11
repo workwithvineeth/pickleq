@@ -62,18 +62,18 @@ export function TodayAndUpcoming({ go }: { go: Go }) {
   const list = state.data ?? [];
   if (!list.length) return null;
   return (
-    <section className="section" aria-label="Today and upcoming">
-      <h2 className="pq-kicker">TODAY AND UPCOMING</h2>
-      {list.map(({ t, club }) => (
-        <button key={t.id} type="button" className={`match-row${t.status === 'live' ? ' pq-live-row' : ''}`} onClick={() => go('club-tournament', t.id)}>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontWeight: 600 }}>{t.name}</span>
-            <span className="small muted">{club} · {friendlyDate(t.startDate)} · {friendlyTime(t.startTime)}</span>
-          </span>
-          {t.status === 'live' ? <span className="pill pill-warn">Live</span> : <span className="pill">{STATUS_TEXT[t.status]}</span>}
-          <span aria-hidden="true">›</span>
-        </button>
-      ))}
+    <section className="card" aria-label="Today and upcoming">
+      <h2 className="cap" style={{ margin: 0, padding: '16px 18px 4px' }}>Today and upcoming</h2>
+      <div className="list">
+        {list.map(({ t, club }) => (
+          <button key={t.id} type="button" onClick={() => go('club-tournament', t.id)}>
+            <span className="tile" aria-hidden="true">{t.startDate.slice(8, 10)}</span>
+            <span className="grow" style={{ minWidth: 0, textAlign: 'left' }}><b style={{ display: 'block' }}>{t.name}</b><span className="mut" style={{ fontSize: 13 }}>{club} · {friendlyDate(t.startDate)} · {friendlyTime(t.startTime)}</span></span>
+            {t.status === 'live' ? <span className="st live">Live</span> : <span className={t.status === 'done' ? 'st off' : 'st wait'}>{STATUS_TEXT[t.status]}</span>}
+            <span aria-hidden="true" className="mut">›</span>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }
