@@ -103,6 +103,10 @@ describe('Events tab (Club builds only)', () => {
     expect(await screen.findByRole('heading', { name: 'PQ Demo Diwali Doubles' })).toBeInTheDocument();
     expect(screen.getByText(/Finished/)).toBeInTheDocument();
     expect(within(screen.getByRole('table', { name: 'Pool A' })).getAllByRole('row')).toHaveLength(7);
+    // Round robin only, so there is no final: no gold champion frame and no winners' posters.
+    expect(screen.queryByRole('region', { name: /^Champions · / })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Posters for the winners' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Share results' })).toHaveLength(1);
     window.location.hash = '#/event/pq-demo-night';
     expect(await screen.findByRole('img', { name: 'Poster for PQ Demo Night' })).toBeInTheDocument();
   });

@@ -1,15 +1,16 @@
 import { LiveCourts } from './LiveCourts';
 import { usePublicScores } from './usePublicScores';
-import { EventPhotoHeader, TournamentEntrySummary } from './MatchdayHeader';
+import { TournamentEntrySummary } from './MatchdayHeader';
 import { PublicScoreAnnouncement } from './PublicScoreAnnouncement';
 import { isBronzeMatch } from '../resultsReport';
-import { ResultsHero } from './Brand';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
-import type { Go } from '../../navigation';
+import { routeHash, type Go } from '../../navigation';
+import { clubMark, ModeButton, OrgShell, PageHead, PublicShell } from '../../rallyq/shell/Shell';
+import { ChampionHero, ResultsPosters, type ChampionInfo } from './ResultsPosters';
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
-import { entryRating, formatFor, matchResult, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
+import { entryRating, formatFor, matchResult, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, poolsComplete, type NewDivisionInput } from '../plan';
 import { isAdmin, isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type Division, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
@@ -21,7 +22,7 @@ import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
-import { friendlyDate } from '../dates';
+import { friendlyDate, friendlyTime } from '../dates';
 import { preflight, type PreflightItem } from '../preflight';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -227,6 +228,21 @@ function EntryPicker({ d, players, pmap, onChange, label }: { d: DivDraft; playe
 
 export type View = 'schedule' | 'pools' | 'knockouts';
 
+/** Pill tabs in the v1.2 look. A labelled group of toggle buttons, so screen readers hear which one is on. */
+function Tabs<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
+  return (
+    <div className="tabs" role="group" aria-label={label}>
+      {options.map((o) => <button key={o.value} type="button" className={o.value === value ? 'tab on' : 'tab'} aria-pressed={o.value === value} onClick={() => onChange(o.value)}>{o.label}</button>)}
+    </div>
+  );
+}
+const cardPad = { padding: 20, display: 'flex', flexDirection: 'column', gap: 12 } as const;
+const small = { fontSize: 12, margin: 0 } as const;
+/** Each player's DUPR, in entry order: "DUPR 3.95 · Unrated". */
+function duprLine(ids: string[], pmap: Map<string, ClubPlayer>, kind: DivisionKind): string {
+  return `DUPR ${ids.map((id) => { const r = playerRating(pmap.get(id), kind); return r === undefined ? 'Unrated' : r.toFixed(2); }).join(' · ')}`;
+}
+
 export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
   const b = backend();
   const state = useLoad(async () => {
@@ -250,7 +266,12 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmDone, setConfirmDone] = useState(false);
   const d = state.data;
-  if (!d) return <main className="screen wide-ok pq-matchday pq-proto" aria-labelledby="t-title"><Header id="t-title" title="Tournament" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  if (!d) return (
+    <OrgShell go={go} active="draw">
+      <PageHead cap="Pools & knockouts" title="Tournament" actions={<><ModeButton /><button type="button" className="btn ghost sm" onClick={onBack}>Back</button></>} />
+      <Status error={state.error} loading={state.loading} />
+    </OrgShell>
+  );
   const staff = isStaff(d.role);
   const t = d.tournament;
   const approved = isApproved(t);
@@ -265,88 +286,139 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   }
   // Round-robin-only events that are fully played: offer knockouts (TPC follow-up, Phase 3).
   const rrDone = d.divisions.filter((x) => x.advance === 0 && x.shape !== 'ko' && d.matches.some((m) => m.divisionId === x.id && m.stage === 'pool') && poolsComplete(x.id, d.matches) && !d.matches.some((m) => m.divisionId === x.id && m.stage !== 'pool' && m.status !== 'void'));
+  // One ball-yellow button: the next step for this tournament.
+  const next: 'entries' | 'start' | 'desk' | 'results' | 'share' | null = !staff ? (t.isPublic && approved ? 'share' : null) : !approved ? 'entries' : t.status === 'draft' ? 'start' : t.status === 'done' ? 'results' : 'desk';
+  const cls = (k: typeof next) => (k === next ? 'btn' : 'btn ghost');
+  const status = t.cancelledAt ? <span className="st no">Cancelled</span> : t.status === 'live' ? <span className="chip live">Live</span> : t.status === 'done' ? <span className="st off">Finished</span> : t.registrationOpen ? <span className="st ok">Entries open</span> : <span className="st off">Entries closed</span>;
+  const teams = division ? d.entries.filter((e) => e.divisionId === division.id && e.status !== 'withdrawn').length : 0;
   return (
-    <main className="screen wide-ok pq-matchday pq-proto" aria-labelledby="t-title">
-      <div className="pq-event-layout"><div className="pq-event-main"><EventPhotoHeader id="t-title" title={t.name} poster={t.posterUrl} status={t.cancelledAt ? "Cancelled" : t.status === "live" ? "Live" : t.status === "done" ? "Finished" : t.registrationOpen ? "Entries open" : "Entries closed"} date={t.startDate} time={t.startTime} club={d.club.name} logoUrl={d.club.logoUrl} venue={t.venue} onBack={onBack} />
-      {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
-      <nav className="pq-tournament-tabs" aria-label="Tournament sections">{staff && approved && <button type="button" className="btn btn-outline" onClick={() => go("club-entries",t.id)}>{t.entryMode === "registration" && !t.drawnAt ? "Entries and draw" : "Entries"}</button>}<Segmented label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} /></nav>
-      <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />
-</div><aside className="pq-event-sidebar"><TournamentEntrySummary d={d} b={b} go={go} />{staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}</aside></div>
-      {!staff&&<PosterImage src={t.posterUrl} name={t.name} size="thumb" />}
-      <DemoNote b={b} />
-
-      {t.cancelledAt && <div role="status" className="msg msg-bad">This tournament was cancelled{t.cancelReason ? `: ${t.cancelReason}` : ''}.</div>}
-      {staff && b && <ApprovalCard b={b} t={t} onChanged={state.reload} />}
+    <OrgShell go={go} active="draw" clubName={d.club.name} clubId={d.club.id} tournament={{ id: t.id, name: t.name, slug: t.publicSlug }}>
+      <PageHead
+        cap={<>Pools &amp; knockouts{division ? ` · ${division.name} · ${teams} ${division.kind === 'singles' ? 'players' : 'teams'}` : ''}</>}
+        title={t.name}
+        sub={<span className="row" style={{ flexWrap: 'wrap', gap: 8 }}>{status}<span>{[friendlyDate(t.startDate), friendlyTime(t.startTime), t.venue].filter(Boolean).join(' · ')}</span></span>}
+        actions={<><ModeButton /><button type="button" className="btn ghost sm" onClick={onBack}>Back</button></>}
+      />
+      {t.cancelledAt && <div role="status" className="warn">This tournament was cancelled{t.cancelReason ? `: ${t.cancelReason}` : ''}.</div>}
+      {msg && <div role="status" className="note">{msg}</div>}
       {staff && !approved && (
-        <nav className="meta" aria-label="Set up the tournament">
-          <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>Entries</button>
+        <nav className="row" style={{ flexWrap: 'wrap' }} aria-label="Set up the tournament">
+          <button type="button" className={cls('entries')} onClick={() => go('club-entries', t.id)}>Entries</button>
         </nav>
       )}
       {staff && approved && (
-        <nav className="meta" aria-label="Run the tournament">
-          {t.status === 'draft' && <button type="button" className="btn btn-primary" onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
-          <button type="button" className={`btn ${t.status === 'draft' ? 'btn-outline' : 'btn-primary'}`} onClick={() => go('club-desk', t.id)}>Desk view</button>
-          <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>
-
-          {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>}
-          {t.status !== 'draft' && <button type="button" className="btn btn-outline" onClick={() => go('club-results-dupr', t.id)}>Results and DUPR</button>}
+        <nav className="row" style={{ flexWrap: 'wrap' }} aria-label="Run the tournament">
+          {t.status === 'draft' && <button type="button" className={cls('start')} onClick={() => set({ status: 'live' }, 'The tournament is live')}>Start tournament</button>}
+          <button type="button" className={cls('desk')} onClick={() => go('club-desk', t.id)}>Desk view</button>
+          <button type="button" className="btn ghost" onClick={() => go('club-scorers', t.id)}>Referee links</button>
+          {t.status !== 'draft' && <button type="button" className="btn ghost" onClick={() => go('club-dupr', t.id)}>Send to DUPR</button>}
+          {t.status !== 'draft' && <button type="button" className={cls('results')} onClick={() => go('club-results-dupr', t.id)}>Results and DUPR</button>}
         </nav>
       )}
-      {staff && b && <ListingCard b={b} t={t} role={d.role} onChanged={state.reload} />}
-      {staff && !t.cancelledAt && (
-        <details className="card section">
-          <summary><b>Promote this tournament</b> <span className="small muted">· posts, story, results card, A4 poster with QR</span></summary>
-          <PromoStudio events={[{ id: t.id, name: t.name, club: d.club.name, startDate: t.startDate, startTime: t.startTime, courts: t.courts, slug: t.publicSlug }]} />
-        </details>
-      )}
-      {t.entryMode === 'registration' && !t.drawnAt && <p className="small muted" style={{ margin: 0 }}>Players are registering. The pools and schedule appear here once you make the draw in Entries.</p>}
-      {t.isPublic && approved && (
-        <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={async () => setMsg(await shareLink(`${t.name} results`, link))}>
-          <span>Share the results link (no login needed)</span><span>›</span>
-        </button>
-      )}
-      {staff && approved && !t.isPublic && <button type="button" className="btn btn-outline" onClick={() => set({ isPublic: true }, 'Results link is on')}>Turn on the results link</button>}
-      {msg && <div role="status" className="msg msg-ok">{msg}</div>}
+      {staff && b && t.status !== 'done' && approved && <Preflight b={b} d={d} go={go} />}
       {staff && approved && t.status === 'live' && rrDone.map((x) => {
-        const teams = d.entries.filter((e) => e.divisionId === x.id && e.status !== 'withdrawn').length;
+        const n = d.entries.filter((e) => e.divisionId === x.id && e.status !== 'withdrawn').length;
         return (
-          <section key={x.id} className="card section" aria-label={`${x.name}: round robin finished`}>
-            <h2 style={{ fontSize: 16 }}>{x.name}: every round-robin game is played</h2>
-            <p className="small muted" style={{ margin: 0 }}>It was set up as round robin only, so no knockouts were made. Crown the table winner by marking the tournament finished, or add knockouts from the table now.</p>
-            <div className="meta">
-              {teams >= 4 && <button type="button" className="btn btn-primary" onClick={() => void addKnockouts(x, 4)}>Add semi-finals and a final (top 4)</button>}
-              {teams >= 2 && <button type="button" className={`btn ${teams >= 4 ? 'btn-outline' : 'btn-primary'}`} onClick={() => void addKnockouts(x, 2)}>Add a final (top 2)</button>}
+          <section key={x.id} className="card" style={cardPad} aria-label={`${x.name}: round robin finished`}>
+            <h2 className="disp" style={{ fontSize: 24 }}>{x.name}: every round-robin game is played</h2>
+            <p className="mut" style={{ margin: 0 }}>It was set up as round robin only, so no knockouts were made. Crown the table winner by marking the tournament finished, or add knockouts from the table now.</p>
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              {n >= 4 && <button type="button" className="btn alt" onClick={() => void addKnockouts(x, 4)}>Add semi-finals and a final (top 4)</button>}
+              {n >= 2 && <button type="button" className="btn ghost" onClick={() => void addKnockouts(x, 2)}>Add a final (top 2)</button>}
             </div>
           </section>
         );
       })}
+      <div className="between">
+        {d.divisions.length > 1 ? <Tabs label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} /> : <span />}
+        <nav className="row" style={{ flexWrap: 'wrap' }} aria-label="Tournament sections">
+          {staff && approved && <button type="button" className="btn ghost sm" onClick={() => go('club-entries', t.id)}>{t.entryMode === 'registration' && !t.drawnAt ? 'Entries and draw' : 'Entries'}</button>}
+          <Tabs<View> label="Tournament view" value={view} options={[{ value: 'schedule', label: 'Schedule' }, { value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }]} onChange={setView} />
+        </nav>
+      </div>
+      {t.entryMode === 'registration' && !t.drawnAt && <p className="note" style={{ margin: 0 }}>Players are registering. The pools and schedule appear here once you make the draw in Entries.</p>}
+      {division && view === 'pools' && division.shape !== 'ko' && <DrawPools d={d} division={division} pmap={pmap} />}
+      {division && <DivisionBody d={d} divisionId={division.id} view={view} onScore={staff ? (mid) => go('club-score', mid) : undefined} label={(e) => (e ? `${names(e.playerIds, pmap)}${e.status === 'withdrawn' ? ' (withdrawn)' : ''}` : 'To be decided')} />}
+      {t.isPublic && approved && (
+        <div className="card" style={{ padding: '14px 18px' }}>
+          <div className="between">
+            <span><b>Results link</b><span className="mut" style={{ display: 'block', fontSize: 13 }}>Anyone with the link sees pools, knockouts and scores. No login needed.</span></span>
+            <button type="button" className={cls('share')} onClick={async () => setMsg(await shareLink(`${t.name} results`, link))}>Share the results link (no login needed)</button>
+          </div>
+        </div>
+      )}
+      {staff && approved && !t.isPublic && <div><button type="button" className="btn ghost" onClick={() => set({ isPublic: true }, 'Results link is on')}>Turn on the results link</button></div>}
+      {/* Cards shared with other organiser pages keep their own look until those pages are rebuilt. */}
+      <div className="pq-matchday pq-proto" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {staff && b && <ApprovalCard b={b} t={t} onChanged={state.reload} />}
+        {staff && b && <ListingCard b={b} t={t} role={d.role} onChanged={state.reload} />}
+        {staff && !t.cancelledAt && (
+          <details className="card section">
+            <summary><b>Promote this tournament</b> <span className="small muted">· posts, story, results card, A4 poster with QR</span></summary>
+            <PromoStudio events={[{ id: t.id, name: t.name, club: d.club.name, startDate: t.startDate, startTime: t.startTime, courts: t.courts, slug: t.publicSlug }]} />
+          </details>
+        )}
+        <TournamentEntrySummary d={d} b={b} go={go} />
+        {!staff && <PosterImage src={t.posterUrl} name={t.name} size="thumb" />}
+      </div>
       {staff && approved && t.status === 'done' && isAdmin(d.role) && (
-        <section className="card section" aria-label="Share your experience">
-          <h2 style={{ fontSize: 16 }}>That’s a wrap! How did it go?</h2>
-          <p className="small muted" style={{ margin: 0 }}>Two lines from you help other clubs try RallyQ. It takes 30 seconds.</p>
-          <button type="button" className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-view', d.club.id)}>Share your experience</button>
+        <section className="card" style={cardPad} aria-label="Share your experience">
+          <h2 className="disp" style={{ fontSize: 24 }}>That’s a wrap! How did it go?</h2>
+          <p className="mut" style={{ margin: 0 }}>Two lines from you help other clubs try RallyQ. It takes 30 seconds.</p>
+          <div><button type="button" className="btn ghost" onClick={() => go('club-view', d.club.id)}>Share your experience</button></div>
         </section>
       )}
       {staff && approved && (
-        <section className="card section" aria-label="When it’s over">
-          <h2 style={{ fontSize: 16 }}>When it’s over</h2>
-          {t.status === 'live' && !confirmDone && <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(true)}>Mark as finished</button>}
+        <section className="card" style={cardPad} aria-label="When it’s over">
+          <h2 className="disp" style={{ fontSize: 24 }}>When it’s over</h2>
+          {t.status === 'live' && !confirmDone && <div><button type="button" className="btn ghost" onClick={() => setConfirmDone(true)}>Mark as finished</button></div>}
           {t.status === 'live' && confirmDone && (
-            <section className="section" aria-label="Finish the tournament">
-              <p className="small" style={{ margin: 0 }}>Mark it as finished? The referee links and the desk link stop working. You can reopen it later if needed.</p>
-              <div className="meta">
-                <button type="button" className="btn btn-primary" onClick={() => { setConfirmDone(false); void set({ status: 'done' }, 'Marked as finished'); }}>Yes, mark as finished</button>
-                <button type="button" className="btn btn-outline" onClick={() => setConfirmDone(false)}>Cancel</button>
+            <section className="panel2" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Finish the tournament">
+              <p style={{ margin: 0 }}>Mark it as finished? The referee links and the desk link stop working. You can reopen it later if needed.</p>
+              <div className="row" style={{ flexWrap: 'wrap' }}>
+                <button type="button" className="btn alt" onClick={() => { setConfirmDone(false); void set({ status: 'done' }, 'Marked as finished'); }}>Yes, mark as finished</button>
+                <button type="button" className="btn ghost" onClick={() => setConfirmDone(false)}>Cancel</button>
               </div>
             </section>
           )}
-          {t.status === 'done' && <button type="button" className="btn btn-outline" onClick={() => set({ status: 'live' }, 'Reopened: the tournament is live again')}>Reopen tournament</button>}
-          {t.status === 'draft' && <p className="small muted" style={{ margin: 0 }}>Start the tournament first; you can mark it finished after the final.</p>}
-          {t.isPublic && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => set({ isPublic: false }, 'Results link turned off')}>Turn off the results link</button>}
+          {t.status === 'done' && <div><button type="button" className="btn ghost" onClick={() => set({ status: 'live' }, 'Reopened: the tournament is live again')}>Reopen tournament</button></div>}
+          {t.status === 'draft' && <p className="mut" style={{ margin: 0 }}>Start the tournament first; you can mark it finished after the final.</p>}
+          {t.isPublic && <button type="button" className="tlink" style={{ alignSelf: 'flex-start' }} onClick={() => set({ isPublic: false }, 'Results link turned off')}>Turn off the results link</button>}
         </section>
       )}
-      {b && isAdmin(d.role) && <LifecycleCard b={b} d={d} go={go} onChanged={state.reload} />}
-    </main>
+      <div className="pq-matchday pq-proto" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {b && isAdmin(d.role) && <LifecycleCard b={b} d={d} go={go} onChanged={state.reload} />}
+        <DemoNote b={b} />
+      </div>
+    </OrgShell>
+  );
+}
+
+/** The draw at a glance: each pool's teams in seed order with every player's DUPR. */
+function DrawPools({ d, division, pmap }: { d: TournamentBundle; division: Division; pmap: Map<string, ClubPlayer> }) {
+  const entries = d.entries.filter((e) => e.divisionId === division.id);
+  const pools = [...new Set(entries.map((e) => e.pool ?? 1))].sort((a, b) => a - b);
+  if (!entries.length) return null;
+  return (
+    <section aria-label="The draw" className="grid g4">
+      {pools.map((p) => (
+        <section key={p} className="card" aria-label={`Pool ${poolLetter(p)} draw`} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="between"><b className="disp" style={{ fontSize: 22 }}>Pool {poolLetter(p)}</b><span className="cap">Seed · DUPR</span></div>
+          {entries.filter((e) => (e.pool ?? 1) === p).sort((a, b) => (a.seed ?? 99) - (b.seed ?? 99)).map((e) => {
+            const avg = entryRating(e.playerIds, pmap, division.kind);
+            return (
+              <div key={e.id} className="card2" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2, fontSize: 14 }}>
+                <span className="between" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
+                  <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{e.seed !== undefined && <b>{e.seed}. </b>}{e.playerIds.map((id) => displayPlayerName(pmap.get(id)?.name ?? 'Unknown')).join(' / ')}{e.status === 'withdrawn' ? ' (withdrawn)' : ''}</span>
+                  {e.playerIds.length > 1 && avg !== undefined && <span className="n" style={{ fontSize: 16 }}>{avg.toFixed(2)}</span>}
+                </span>
+                <span className="mut" style={{ fontSize: 12 }}>{duprLine(e.playerIds, pmap, division.kind)}</span>
+              </div>
+            );
+          })}
+        </section>
+      ))}
+    </section>
   );
 }
 
@@ -369,54 +441,77 @@ function Preflight({ b, d, go }: { b: ClubBackend; d: TournamentBundle; go: Go }
   const done = items.filter((x) => x.ok).length;
   const all = done === items.length;
   const fix = (x: PreflightItem) => x.fix && (
-    <button type="button" className="link-btn" onClick={() => go(x.fix === 'inbox' ? 'club-inbox' : x.fix === 'links' ? 'club-scorers' : 'club-entries', t.id)}>
+    <button type="button" className="tlink" style={{ marginLeft: 10 }} onClick={() => go(x.fix === 'inbox' ? 'club-inbox' : x.fix === 'links' ? 'club-scorers' : 'club-entries', t.id)}>
       {x.fix === 'inbox' ? 'Open the entries inbox' : x.fix === 'links' ? 'Create referee links' : 'Open entries'}
     </button>
   );
   return (
-    <section className={`card section pq-preflight${all ? ' pq-preflight-ok' : ''}`} aria-label="Ready for the day?">
-      <div className="row">
-        <h2 style={{ fontSize: 16 }}>{all ? 'Ready for the day ✓' : 'Ready for the day?'}</h2>
-        <span className={all ? 'pq-badge' : 'pq-badge pq-badge-gold'}>{done} of {items.length} done</span>
+    <section className="card" style={cardPad} aria-label="Ready for the day?">
+      <div className="between">
+        <h2 className="disp" style={{ fontSize: 24 }}>{all ? 'Ready for the day ✓' : 'Ready for the day?'}</h2>
+        <span className={all ? 'st ok' : 'st wait'}>{done} of {items.length} done</span>
       </div>
       {(!all || open) && (
-        <ul className="pq-checks">
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
           {items.map((x) => (
-            <li key={x.key} className={x.ok ? 'ok' : 'todo'}>
-              <span className="pq-check-mark" aria-hidden="true">{x.ok ? '✓' : '!'}</span>
-              <span className="pq-check-text"><span className="sr-only">{x.ok ? 'Done: ' : 'To do: '}</span>{x.text}{!x.ok && fix(x)}</span>
+            <li key={x.key} className={x.ok ? 'check on' : 'check'} style={{ cursor: 'default', flexWrap: 'wrap' }}>
+              <span className="bx" aria-hidden="true">{x.ok ? '✓' : ''}</span>
+              <span style={{ flex: '1 1 200px', minWidth: 0 }}><span className="sr-only">{x.ok ? 'Done: ' : 'To do: '}</span>{x.text}{!x.ok && fix(x)}</span>
             </li>
           ))}
         </ul>
       )}
-      {all && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide the checks' : 'Show the checks'}</button>}
+      {all && <button type="button" className="tlink" style={{ alignSelf: 'flex-start' }} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide the checks' : 'Show the checks'}</button>}
     </section>
   );
 }
 
-/** Shared by the club's tournament view and the public results page. */
-export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<TournamentBundle, 'divisions' | 'entries' | 'matches'> & { tournament: { startTime: string; slotMinutes: number } }; divisionId: string; view: View; onScore?: (matchId: string) => void; label: (e?: Entry) => string }) {
+type BodyData = Pick<TournamentBundle, 'divisions' | 'entries' | 'matches'> & { tournament: { startTime: string; slotMinutes: number }; players?: ClubPlayer[] };
+
+/** Shared by the club's tournament view, the desk and the public results page.
+ * DUPR per player shows wherever the players are loaded (organiser pages); the public feed carries names and scores only. */
+export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyData; divisionId: string; view: View; onScore?: (matchId: string) => void; label: (e?: Entry) => string }) {
   const division = d.divisions.find((x) => x.id === divisionId);
   const entries = d.entries.filter((e) => e.divisionId === divisionId);
   const emap = new Map(entries.map((e) => [e.id, e]));
   const matches = d.matches.filter((m) => m.divisionId === divisionId);
+  const pmap = useMemo(() => (d.players ? new Map(d.players.map((p) => [p.id, p])) : null), [d.players]);
   if (!division) return null;
+  const dupr = (id?: string) => { const e = emap.get(id ?? ''); return e && pmap ? duprLine(e.playerIds, pmap, division.kind) : undefined; };
+  const name = (id?: string) => label(emap.get(id ?? ''));
+  const time = (m: ClubMatch) => (m.slot !== undefined ? slotTime(d.tournament.startTime, m.slot, d.tournament.slotMinutes) : undefined);
   if (view === 'schedule') {
-    const bySlot = new Map<number, ClubMatch[]>();
-    for (const m of [...matches].sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0) || (a.court ?? 0) - (b.court ?? 0))) bySlot.set(m.slot ?? -1, [...(bySlot.get(m.slot ?? -1) ?? []), m]);
+    const sorted = [...matches].sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0) || (a.court ?? 0) - (b.court ?? 0));
+    const slots = [...new Set(sorted.map((m) => m.slot ?? -1))];
+    const courts = [...new Set(sorted.filter((m) => m.court).map((m) => m.court as number))].sort((a, b) => a - b);
+    const noCourt = sorted.some((m) => !m.court);
+    const cell = (ms: ClubMatch[]) => (ms.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{ms.map((m) => <FixtureRow key={m.id} m={m} a={name(m.entryA)} b={m.entryB || m.stage === 'pool' ? name(m.entryB) : 'Bye'} onScore={onScore} />)}</div> : <span className="mut">—</span>);
     return (
-      <section className="section" aria-label="Schedule">
-        {[...bySlot.entries()].map(([slot, ms]) => (
-          <div key={slot} className="section">
-            <div className="label">{slot >= 0 ? slotTime(d.tournament.startTime, slot, d.tournament.slotMinutes) : 'Time to be set'}</div>
-            {ms.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} onScore={onScore} />)}
+      <section className="card" aria-label="Schedule">
+        {sorted.length === 0 ? <p className="empty" style={{ margin: 0 }}>No matches yet. They appear here once the draw is made.</p> : (
+          <div className="scroll">
+            <table className="tbl" aria-label="Schedule by court" style={{ minWidth: Math.max(320, 90 + (courts.length + (noCourt ? 1 : 0)) * 210) }}>
+              <thead><tr><th>Time</th>{courts.map((c) => <th key={c}>Court {c}</th>)}{noCourt && <th>Court to be set</th>}</tr></thead>
+              <tbody>
+                {slots.map((s) => {
+                  const ms = sorted.filter((m) => (m.slot ?? -1) === s);
+                  return (
+                    <tr key={s} style={{ verticalAlign: 'top' }}>
+                      <td className="n" style={{ fontSize: 18, whiteSpace: 'nowrap' }}>{s >= 0 ? slotTime(d.tournament.startTime, s, d.tournament.slotMinutes) : <span className="mut" style={{ fontSize: 13 }}>Time to be set</span>}</td>
+                      {courts.map((c) => <td key={c}>{cell(ms.filter((m) => m.court === c))}</td>)}
+                      {noCourt && <td>{cell(ms.filter((m) => !m.court))}</td>}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ))}
+        )}
       </section>
     );
   }
   if (view === 'pools') {
-    if (division.shape === 'ko') return <p className="small muted">This event is a knockout only: see Knockouts.</p>;
+    if (division.shape === 'ko') return <p className="mut" style={{ margin: 0 }}>This event is a knockout only: see Knockouts.</p>;
     const pools = [...new Set(entries.map((e) => e.pool ?? 1))].sort((a, b) => a - b);
     const poolMatches = matches.filter((m) => m.stage === 'pool');
     const q = (division.extra ?? 0) > 0 ? poolQualifiers(division, entries, poolMatches) : null;
@@ -425,103 +520,167 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: Pick<
     const allDone = poolMatches.length > 0 && poolMatches.every((m) => m.status === 'done' || m.status === 'void');
     const bestIds = new Set(q && allDone ? q.runnersUp.slice(0, q.extra).map((r) => r.entryId) : []);
     return (
-      <section className="section" aria-label="Pools">
+      <section aria-label="Pools" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {pools.map((p) => {
           const ids = entries.filter((e) => (e.pool ?? 1) === p).map((e) => e.id);
-          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => poolDone(p) && r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={(id) => label(emap.get(id))} matches={poolMatches} />;
+          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => poolDone(p) && r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={name} dupr={pmap ? dupr : undefined} matches={poolMatches} />;
         })}
         {q && q.runnersUp.length > 0 && (
-          <div className="card section">
-            <h3 style={{ fontSize: 16 }}>Best {division.advance === 1 ? 'runners-up' : `${division.advance + 1}-placed`} ({q.extra} go through)</h3>
-            <PoolTable title={`Best ${division.advance === 1 ? 'runners-up' : 'next-placed'}`} bare rows={q.runnersUp.map((r, i) => ({ ...r, rank: i + 1 }))} through={(r) => allDone && r.rank <= q.extra} label={(id) => `${label(emap.get(id))} (${poolLetter(emap.get(id)?.pool)})`} />
-            <p className="small muted" style={{ margin: 0 }}>{RUNNERS_UP_TEXT}</p>
+          <div className="card" style={cardPad}>
+            <h3 className="disp" style={{ fontSize: 24 }}>Best {division.advance === 1 ? 'runners-up' : `${division.advance + 1}-placed`} ({q.extra} go through)</h3>
+            <PoolTable title={`Best ${division.advance === 1 ? 'runners-up' : 'next-placed'}`} bare rows={q.runnersUp.map((r, i) => ({ ...r, rank: i + 1 }))} through={(r) => allDone && r.rank <= q.extra} label={(id) => `${name(id)} (${poolLetter(emap.get(id)?.pool)})`} dupr={pmap ? dupr : undefined} />
+            <p className="mut" style={small}>{RUNNERS_UP_TEXT}</p>
           </div>
         )}
-        <p className="small muted" style={{ margin: 0 }}>P played · W won · L lost · PF points scored · PA points conceded · +/− points difference.</p>
-        <p className="small muted" style={{ margin: 0 }}>{TIE_BREAK_TEXT}</p>
+        <p className="mut" style={small}>P played · W won · L lost · Pts won and Pts lost: points scored and conceded (PF, PA) · Diff: points difference (+/−).{pmap ? ' DUPR is shown for each player; “Unrated” means no DUPR rating yet.' : ''}</p>
+        <p className="mut" style={small}>{TIE_BREAK_TEXT}</p>
       </section>
     );
   }
   const bronze = matches.filter(isBronzeMatch);
   const ko = matches.filter((m) => m.stage !== 'pool' && !isBronzeMatch(m)).sort((a, b) => (a.round ?? 0) - (b.round ?? 0) || (a.bracketPos ?? 0) - (b.bracketPos ?? 0));
   const rounds = [...new Set(ko.map((m) => m.round ?? 1))];
+  // First knockout round: "A1 v D2", read from the finished pool tables (never guessed). Shown only when both sides are known.
+  const place = new Map<string, string>();
+  if (division.shape !== 'ko' && division.advance > 0) {
+    const poolMatches = matches.filter((m) => m.stage === 'pool' && m.status !== 'void');
+    for (const p of [...new Set(entries.map((e) => e.pool ?? 1))]) {
+      const ms = poolMatches.filter((m) => (m.pool ?? 1) === p);
+      if (!ms.length || !ms.every((m) => m.status === 'done')) continue;
+      const ids = entries.filter((e) => (e.pool ?? 1) === p).map((e) => e.id);
+      for (const r of standings(ids, ms, (id) => emap.get(id)?.seed ?? 99)) place.set(r.entryId, `${poolLetter(p)}${r.rank}`);
+    }
+  }
+  const firstRound = rounds[0];
+  const lab = (m: ClubMatch) => { const a = place.get(m.entryA ?? ''), b = place.get(m.entryB ?? ''); return (m.round ?? 1) === firstRound && a && b ? `${a} v ${b}` : undefined; };
+  const box = (m: ClubMatch, final?: boolean) => <MatchBox key={m.id} m={m} a={name(m.entryA)} b={m.entryB ? name(m.entryB) : 'Bye'} da={dupr(m.entryA)} db={dupr(m.entryB)} meta={[m.court ? `Court ${m.court}` : '', time(m) ?? ''].filter(Boolean).join(' · ')} onScore={onScore} final={final} lab={lab(m)} />;
   return (
-    <section className="section pq-knockout" aria-label="Knockouts">
-      {division.advance === 0 && division.shape !== 'ko' && <p className="small muted">This event has no knockouts.</p>}
-      {division.advance > 0 && ko.length === 0 && <p className="small muted">Knockouts are drawn once every pool match is finished.</p>}
-      {rounds.map((r) => {
-        const ms = ko.filter((m) => (m.round ?? 1) === r);
-        const stage = ms[0].stage as KnockoutStage;
-        if (stage === 'sf') return ms.map((m, index) => <div key={m.id} className="section"><h3 style={{ fontSize: 16 }}>Semifinal {index + 1}</h3><FixtureRow m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} onScore={onScore} /></div>);
-        const f = formatFor(division, stage);
-        return (
-          <div key={r} className="section">
-            {stage === 'final' && bronze.length > 0 && <section className="section" aria-label="Bronze match"><h3>Bronze match</h3>{bronze.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={label(emap.get(m.entryB ?? ''))} />)}</section>}
-            <h3 style={{ fontSize: 16 }}>{ROUND_LABEL[stage] ?? STAGE_LABEL[stage]}</h3>
-            <p className="small muted" style={{ margin: 0 }}>{f.bestOf === 3 ? 'Best of 3 games' : 'One game'} to {f.pointsTo}{f.golden ? ', golden point' : ''}</p>
-            {ms.map((m) => <FixtureRow key={m.id} m={m} a={label(emap.get(m.entryA ?? ''))} b={m.entryB ? label(emap.get(m.entryB)) : 'Bye'} onScore={onScore} />)}
+    <section className="card" aria-label="Knockouts" style={cardPad}>
+      {division.advance === 0 && division.shape !== 'ko' && ko.length === 0 && <p className="mut" style={{ margin: 0 }}>This event has no knockouts.</p>}
+      {division.advance > 0 && ko.length === 0 && <p className="mut" style={{ margin: 0 }}>Knockouts are drawn once every pool match is finished.</p>}
+      {division.shape === 'ko' && ko.length === 0 && <p className="mut" style={{ margin: 0 }}>The knockout draw appears here once it is made.</p>}
+      {rounds.length > 0 && (
+        <div className="scroll">
+          <div className="bracket" style={{ minWidth: rounds.length * 238 - 18, alignItems: 'stretch' }}>
+            {rounds.map((r) => {
+              const ms = ko.filter((m) => (m.round ?? 1) === r);
+              const stage = ms[0].stage as KnockoutStage;
+              const f = formatFor(division, stage);
+              return (
+                <div key={r} className="col">
+                  <div>
+                    <h3 className="cap" style={{ margin: 0 }}>{ROUND_LABEL[stage] ?? STAGE_LABEL[stage]}</h3>
+                    <span className="mut" style={{ fontSize: 12 }}>{f.bestOf === 3 ? 'Best of 3 games' : 'One game'} to {f.pointsTo}{f.golden ? ', golden point' : ''}</span>
+                  </div>
+                  {ms.map((m) => box(m, stage === 'final'))}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      )}
+      {bronze.length > 0 && (
+        <section aria-label="Bronze match" style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 320 }}>
+          <h3 className="cap" style={{ margin: 0 }}>Bronze match</h3>
+          {bronze.map((m) => <MatchBox key={m.id} m={m} a={name(m.entryA)} b={name(m.entryB)} da={dupr(m.entryA)} db={dupr(m.entryB)} meta="" />)}
+        </section>
+      )}
     </section>
   );
 }
 
-/** A pool table: P · W · L · PF · PA · +/−. Names wrap so it fits a 320 px phone. */
-function PoolTable({ title, rows, through, best, label, bare, matches }: { matches?: ClubMatch[]; title: string; rows: StandingRow[]; through: (r: StandingRow) => boolean; best?: (r: StandingRow) => boolean; label: (id: string) => string; bare?: boolean }) {
+/** A pool table: # · Team (and DUPR) · P · W · L · Pts won · Pts lost · Diff · Through. Wide, so it sits in a scroll box. */
+function PoolTable({ title, rows, through, best, label, dupr, bare, matches }: { matches?: ClubMatch[]; title: string; rows: StandingRow[]; through: (r: StandingRow) => boolean; best?: (r: StandingRow) => boolean; label: (id: string) => string; dupr?: (id: string) => string | undefined; bare?: boolean }) {
   const [expanded, setExpanded] = useState<string>();
+  const num = { fontSize: 18 } as const;
   const table = (
-    <table className="table pool-table" aria-label={title} style={{ fontSize: 13, tableLayout: 'auto', width: '100%' }}>
-      <thead><tr><th>#</th><th style={{ width: '100%' }}>Name</th><th>P</th><th>W</th><th>L</th><th>PF</th><th>PA</th><th>+/−</th></tr></thead>
-      <tbody>
-        {rows.map((r) => {
-          const pill = through(r) ? 'Through' : best?.(r) ? 'Best runner-up' : null;
-          return (
-            <Fragment key={r.entryId}><tr style={pill ? { fontWeight: 600 } : undefined}>
-              <td>{r.rank}</td><td style={{ wordBreak: 'break-word' }}>{matches ? <button type="button" className="link-btn" style={{ minHeight: 44, textAlign: 'left', overflowWrap: 'anywhere' }} aria-expanded={expanded === r.entryId} onClick={() => setExpanded(expanded === r.entryId ? undefined : r.entryId)}>{label(r.entryId)}</button> : label(r.entryId)}{pill && <><br /><span className="pill pill-ok">{pill}</span></>}</td>
-              <td>{r.played}</td><td>{r.wins}</td><td>{r.losses}</td><td>{r.pointsFor}</td><td>{r.pointsAgainst}</td><td>{r.diff > 0 ? `+${r.diff}` : r.diff}</td>
-            </tr>
-            {expanded === r.entryId && matches && <tr><td colSpan={8}>
-              <strong>Pool matches</strong>
-              {matches.filter((match) => match.entryA === r.entryId || match.entryB === r.entryId).map((match) => {
-                const first = match.entryA === r.entryId;
-                const opponent = first ? match.entryB : match.entryA;
-                const score = match.games.map((game) => first ? `${game.a}–${game.b}` : `${game.b}–${game.a}`).join(', ');
-                const status = { done: 'Completed', live: 'Live', scheduled: 'Scheduled', void: 'Cancelled' }[match.status];
-                return <p key={match.id}>vs {opponent ? label(opponent) : 'To be decided'} · {status}{score && ` · ${score}`}</p>;
-              })}
-              {!matches.some((match) => match.entryA === r.entryId || match.entryB === r.entryId) && <p>No pool matches scheduled.</p>}
-            </td></tr>}
-            </Fragment>
-          );
-        })}
-      </tbody>
-    </table>
+    <div className="scroll">
+      <table className="tbl" aria-label={title}>
+        <thead><tr><th>#</th><th>{dupr ? 'Team and DUPR' : 'Team'}</th><th>P</th><th>W</th><th>L</th><th>Pts won</th><th>Pts lost</th><th>Diff</th><th aria-label="Qualified" /></tr></thead>
+        <tbody>
+          {rows.map((r) => {
+            const pill = through(r) ? 'Through' : best?.(r) ? 'Best runner-up' : null;
+            const line = dupr?.(r.entryId);
+            return (
+              <Fragment key={r.entryId}><tr>
+                <td className="n" style={{ fontSize: 22 }}>{r.rank}</td>
+                <td style={{ minWidth: 180 }}>{matches ? <button type="button" className="tlink" style={{ textAlign: 'left', overflowWrap: 'anywhere' }} aria-expanded={expanded === r.entryId} onClick={() => setExpanded(expanded === r.entryId ? undefined : r.entryId)}>{label(r.entryId)}</button> : <b>{label(r.entryId)}</b>}{line && <div className="mut" style={{ fontSize: 12 }}>{line}</div>}</td>
+                <td className="n" style={num}>{r.played}</td><td className="n acc" style={{ fontSize: 20 }}>{r.wins}</td><td className="n" style={num}>{r.losses}</td><td className="n" style={num}>{r.pointsFor}</td><td className="n" style={num}>{r.pointsAgainst}</td><td className="n" style={num}>{r.diff > 0 ? `+${r.diff}` : r.diff < 0 ? `−${-r.diff}` : 0}</td>
+                <td>{pill && <span className="st ok">{pill}</span>}</td>
+              </tr>
+              {expanded === r.entryId && matches && <tr className="expand"><td colSpan={9}>
+                <strong>Pool matches</strong>
+                {matches.filter((match) => match.entryA === r.entryId || match.entryB === r.entryId).map((match) => {
+                  const first = match.entryA === r.entryId;
+                  const opponent = first ? match.entryB : match.entryA;
+                  const score = match.games.map((game) => first ? `${game.a}–${game.b}` : `${game.b}–${game.a}`).join(', ');
+                  const status = { done: 'Completed', live: 'Live', scheduled: 'Scheduled', void: 'Cancelled' }[match.status];
+                  return <p key={match.id} style={{ margin: '6px 0 0' }}>vs {opponent ? label(opponent) : 'To be decided'} · {status}{score && ` · ${score}`}</p>;
+                })}
+                {!matches.some((match) => match.entryA === r.entryId || match.entryB === r.entryId) && <p style={{ margin: '6px 0 0' }}>No pool matches scheduled.</p>}
+              </td></tr>}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
   if (bare) return table;
-  return <div className="card section"><h3 style={{ fontSize: 16 }}>{title}</h3>{table}</div>;
+  return <div className="card" style={cardPad}><h3 className="disp" style={{ fontSize: 24 }}>{title}</h3>{table}</div>;
 }
 
-function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; onScore?: (id: string) => void }) {
-  const r = matchResult(m);
-  const winner = r.winner ?? (m.status === 'done' ? m.winner : undefined);
-  const where = `${m.court ? `Court ${m.court}` : ''}${m.stage === 'pool' && m.pool ? ` · Pool ${poolLetter(m.pool)}` : ''}`;
-  const score = m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : '';
-  const body = (
-    <>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontWeight: winner === 'A' ? 600 : 400 }}>{a}</span>
-        <span style={{ display: 'block', fontWeight: winner === 'B' ? 600 : 400 }}>{b}</span>
-        <span className="small muted">{where}</span>
-      </span>
-      <span className="small pq-score" style={{ textAlign: 'right' }}>
-        {m.status === 'void' ? <span className="pill">Cancelled</span> : m.status === 'done' && !m.entryB && !m.sideB.length && m.stage !== 'pool' ? 'Through (bye)' : m.status === 'done' && !m.games.length ? 'Walkover' : m.status === 'done' ? score : m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : onScore ? <span className="pill">Score</span> : <span className="pill">To play</span>}
-      </span>
-    </>
+/** What a match shows instead of a score: a word, never colour alone. Null when the games say it all. */
+function matchState(m: Pick<ClubMatch, 'status' | 'games' | 'entryB' | 'stage'> & { sideB?: string[] }, scorable: boolean) {
+  if (m.status === 'void') return <span className="st off">Cancelled</span>;
+  if (m.status === 'done') return !m.entryB && !m.sideB?.length && m.stage !== 'pool' ? <span className="st off">Through (bye)</span> : !m.games.length ? <span className="st off">Walkover</span> : null;
+  if (m.status === 'live') return <span className="st live">Live</span>;
+  return scorable ? null : <span className="st wait">To play</span>;
+}
+const scoreButton = (m: ClubMatch, a: string, b: string, onScore: (id: string) => void) => (
+  <button type="button" className="btn ghost sm" aria-label={`Score ${a} against ${b}`} onClick={() => onScore(m.id)}>{m.status === 'live' ? 'Keep scoring' : 'Score'}</button>
+);
+
+/** One knockout match in the bracket. The winner turns ball-yellow only once the match is finished; the final turns gold only with a champion. */
+function MatchBox({ m, a, b, da, db, meta, onScore, final, lab }: { m: ClubMatch; a: string; b: string; da?: string; db?: string; meta: string; onScore?: (id: string) => void; final?: boolean; lab?: string }) {
+  const winner = m.status === 'done' ? matchResult(m).winner ?? m.winner : undefined;
+  const can = !!onScore && m.status !== 'done' && m.status !== 'void';
+  const champion = !!final && m.status === 'done' && !!winner;
+  const state = matchState(m, can);
+  const side = (who: 'A' | 'B', text: string, line?: string) => (
+    <div className={winner === who ? 'w' : undefined}>
+      <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{text}{line && <span className="mut" style={{ display: 'block', fontSize: 12, fontWeight: 400 }}>{line}</span>}</span>
+      <span className="n" style={{ whiteSpace: 'nowrap' }}>{m.games.length ? m.games.map((g) => (who === 'A' ? g.a : g.b)).join(' · ') : '–'}</span>
+    </div>
   );
-  return onScore && m.status !== 'done' && m.status !== 'void'
-    ? <button type="button" className="match-row" aria-label={`Score ${a} against ${b}`} onClick={() => onScore(m.id)}>{body}</button>
-    : <div className="match-row">{body}{m.stage === "final" && m.status === "done" && winner && <span className="pq-champion">Champion · {winner === "A" ? a : b}</span>}</div>;
+  return (
+    <div className={champion ? 'm champ' : 'm'} style={champion ? { boxShadow: 'inset 0 0 0 2px var(--gold)' } : final ? { boxShadow: 'inset 0 0 0 2px var(--ball)' } : undefined}>
+      {lab && <div className="cap" style={{ justifyContent: 'flex-start', padding: '8px 14px 0' }}>{lab}</div>}
+      {champion && <div className="cap" style={{ color: 'var(--gold)', justifyContent: 'flex-start' }}>Champion · {winner === 'A' ? a : b}</div>}
+      {side('A', a, da)}
+      {side('B', b, db)}
+      {(state || meta || can) && <div style={{ alignItems: 'center', flexWrap: 'wrap', fontWeight: 400 }}><span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>{state}{meta && <span className="mut" style={{ fontSize: 12 }}>{meta}</span>}</span>{can && scoreButton(m, a, b, onScore)}</div>}
+    </div>
+  );
+}
+
+/** One match in the schedule table. */
+function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; onScore?: (id: string) => void }) {
+  const winner = m.status === 'done' ? matchResult(m).winner ?? m.winner : undefined;
+  const can = !!onScore && m.status !== 'done' && m.status !== 'void';
+  const score = m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : '';
+  const state = matchState(m, can);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 170 }}>
+      <span className="cap">{m.stage === 'pool' ? (m.pool ? `Pool ${poolLetter(m.pool)}` : 'Pool') : STAGE_LABEL[m.stage]}</span>
+      <span className={winner === 'A' ? 'acc' : undefined} style={{ fontWeight: winner === 'A' ? 700 : 500, overflowWrap: 'anywhere' }}>{a}</span>
+      <span className={winner === 'B' ? 'acc' : undefined} style={{ fontWeight: winner === 'B' ? 700 : 500, overflowWrap: 'anywhere' }}>{b}</span>
+      <span className="row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+        {state}{score && <span className="n" style={{ fontSize: 16 }}>{score}</span>}
+        {can && scoreButton(m, a, b, onScore)}
+      </span>
+    </div>
+  );
 }
 
 const MY_NAME = 'pq-my-name';
@@ -555,42 +714,77 @@ function MyMatches({ d }: { d: PublicTournament }) {
   const [q, setQ] = useState(() => { try { return localStorage.getItem(MY_NAME) ?? ''; } catch { return ''; } });
   const list = myMatchesFor(d, q);
   const next = list.find((m) => m.status === 'live' || m.status === 'scheduled');
+  const rest = list.filter((m) => m !== next);
   function change(v: string) { setQ(v); try { localStorage.setItem(MY_NAME, v); } catch { /* private mode */ } }
   return (
-    <section className="card section" aria-label="My matches">
-      <h2 style={{ fontSize: 18 }}>My matches</h2>
-      <input className="input" aria-label="Your name" placeholder="Type your name to see your matches" value={q} onChange={(e) => change(e.target.value)} autoComplete="name" />
-      {q.trim().length >= 3 && list.length === 0 && <p className="small muted" style={{ margin: 0 }}>No matches for “{q.trim()}” yet. Check the spelling, or ask the desk.</p>}
+    <section className="card" style={cardPad} aria-label="My matches">
+      <div className="between">
+        <h2 className="disp" style={{ fontSize: 30 }}>My matches</h2>
+        <div className="search"><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg><input className="inp" aria-label="Your name" placeholder="Type your name to see your matches" value={q} onChange={(e) => change(e.target.value)} autoComplete="name" /></div>
+      </div>
+      {q.trim().length >= 3 && list.length === 0 && <p className="mut" style={{ margin: 0 }}>No matches for “{q.trim()}” yet. Check the spelling, or ask the desk.</p>}
       {next && (
-        <div className="pq-next" style={{ padding: 16, gap: 6 }} aria-label="Your next match" role="group">
-          <span className="pq-next-kicker">{next.status === 'live' ? 'ON COURT NOW' : 'YOUR NEXT MATCH'}</span>
-          <b style={{ fontSize: 20, color: 'var(--pq-on-brand)' }}>{next.court ? `Court ${next.court}` : 'Court to be called'}{next.time ? ` · ${next.time}` : ''}</b>
-          <span className="pq-next-meta">vs {next.opponent}</span>
-          <span className="pq-next-meta">{next.event}</span>
+        <div className="note" style={{ display: 'flex', flexDirection: 'column', gap: 6 }} aria-label="Your next match" role="group">
+          <span className="row" style={{ gap: 8 }}>{next.status === 'live' && <span className="st live">Live</span>}<span className="cap">{next.status === 'live' ? 'On court now' : 'Your next match'}</span></span>
+          <b className="disp" style={{ fontSize: 28 }}>{next.court ? `Court ${next.court}` : 'Court to be called'}{next.time ? ` · ${next.time}` : ''}</b>
+          <span>vs {next.opponent}</span>
+          <span className="mut" style={{ fontSize: 13 }}>{next.event}</span>
         </div>
       )}
-      {list.filter((m) => m !== next).map((m) => (
-        <div key={m.id} className="match-row">
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontWeight: 600 }}>vs {m.opponent}</span>
-            <span className="small muted">{m.event}{m.court ? ` · Court ${m.court}` : ''}{m.time && m.status !== 'done' ? ` · ${m.time}` : ''}</span>
-          </span>
-          <span className="small pq-score" style={{ textAlign: 'right' }}>
-            {m.status === 'done' ? <><span className={`pill${m.won ? ' pill-ok' : ''}`}>{m.won ? 'Won' : 'Lost'}</span> {m.score}</> : m.status === 'live' ? <span className="pill pill-warn">Live {m.score}</span> : <span className="pill">To play</span>}
-          </span>
+      {rest.length > 0 && (
+        <div className="list">
+          {rest.map((m) => (
+            <div key={m.id} style={{ paddingInline: 0 }}>
+              <span className="grow">
+                <b style={{ display: 'block' }}>vs {m.opponent}</b>
+                <span className="mut" style={{ fontSize: 13 }}>{m.event}{m.court ? ` · Court ${m.court}` : ''}{m.time && m.status !== 'done' ? ` · ${m.time}` : ''}</span>
+              </span>
+              <span className="row" style={{ gap: 8 }}>
+                {m.status === 'done' ? <><span className={m.won ? 'st ok' : 'st off'}>{m.won ? 'Won' : 'Lost'}</span><span className="n" style={{ fontSize: 18 }}>{m.score}</span></> : m.status === 'live' ? <><span className="st live">Live</span><span className="n" style={{ fontSize: 18 }}>{m.score}</span></> : m.status === 'void' ? <span className="st off">Cancelled</span> : <span className="st wait">To play</span>}
+              </span>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </section>
   );
 }
 
+type PublicMatch = PublicTournament['matches'][number];
+const gameScore = (m: PublicMatch, winnerFirst: boolean) => m.games.map((g) => ((m.winner === 'A') === winnerFirst ? `${g.a}–${g.b}` : `${g.b}–${g.a}`)).join(' · ');
+
+/** The confirmed champion of one category, or null. Same rule as the organiser's results report:
+ * exactly one final, finished, with a recorded winner and both sides present. */
+export function publicChampion(d: PublicTournament, divisionId: string): ChampionInfo | null {
+  const division = d.divisions.find((x) => x.id === divisionId);
+  const ms = d.matches.filter((m) => m.divisionId === divisionId && m.status !== 'void');
+  const finals = ms.filter((m) => m.stage === 'final');
+  const f = finals[0];
+  if (!division || finals.length !== 1 || f.status !== 'done' || !f.winner || !f.entryA || !f.entryB) return null;
+  const namesOf = (id?: string) => (d.entries.find((e) => e.id === id)?.names ?? []).map(displayPlayerName);
+  const champ = f.winner === 'A' ? f.entryA : f.entryB, other = f.winner === 'A' ? f.entryB : f.entryA;
+  const winners = namesOf(champ), runnersUp = namesOf(other);
+  if (!winners.length || !runnersUp.length) return null;
+  const played = ms.filter((m) => m.status === 'done' && m.entryA && m.entryB && (m.entryA === champ || m.entryB === champ));
+  return {
+    category: division.name, winners, runnersUp, score: gameScore(f, true), lostScore: gameScore(f, false),
+    semiFinalists: ms.filter((m) => m.stage === 'sf' && m.status === 'done' && m.winner && m.entryA && m.entryB).map((m) => namesOf(m.winner === 'A' ? m.entryB : m.entryA).join(' / ')).filter(Boolean),
+    won: played.filter((m) => (m.winner === 'A' ? m.entryA : m.entryB) === champ).length, played: played.length,
+  };
+}
+
+/** Navigation for the public page when the router hands it none: plain hash links. */
+const hashGo: Go = (name, id) => { window.location.hash = routeHash({ name, id }); };
+
 /** Public results: no login, names and scores only. Refreshes every 20 seconds while the tournament is live. */
-export function Results({ slug, onBack }: { slug: string; onBack: () => void }) {
-  const [publicSlug,query]=slug.split('?');
-  const requestedCourt=Number(new URLSearchParams(query).get('court'))||undefined;
-  const state=usePublicScores(publicSlug);
+export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: () => void; go?: Go }) {
+  const [publicSlug, query] = slug.split('?');
+  const requestedCourt = Number(new URLSearchParams(query).get('court')) || undefined;
+  const state = usePublicScores(publicSlug);
   const [div, setDiv] = useState<string | null>(null);
   const [view, setView] = useState<View>('pools');
+  const [msg, setMsg] = useState<string | null>(null);
+  // The club's own logo, where it has uploaded one (the shell header shows its initials).
   const logo = useLoad(async () => {
     for (const src of await publicSourcesFor(publicSlug)) {
       try { const r = await src.publicClubLogo(publicSlug); if (r) return r; } catch { /* next place */ }
@@ -599,67 +793,85 @@ export function Results({ slug, onBack }: { slug: string; onBack: () => void }) 
   }, [publicSlug]);
   const d = state.data;
   const division = d?.divisions.find((x) => x.id === div) ?? d?.divisions[0];
+  const champion = useMemo(() => (d && division ? publicChampion(d, division.id) : null), [d, division]);
+  const link = appLink(`#/results/${publicSlug}`);
+  const played = d?.matches.filter((m) => m.status === 'done' && m.games.length > 0) ?? [];
+  const points = played.reduce((n, m) => n + m.games.reduce((s, g) => s + g.a + g.b, 0), 0);
+  const teams = d?.entries.length ?? 0;
+  const body: BodyData | null = d && division ? {
+    divisions: d.divisions.map((x) => ({ ...x, tournamentId: '', clubId: '', sort: 0 })),
+    entries: d.entries.map((e) => ({ ...e, clubId: '', playerIds: e.names })),
+    matches: d.matches.map((m): ClubMatch => {
+      const dv = d.divisions.find((x) => x.id === m.divisionId) ?? division;
+      return { ...m, clubId: '', sideA: [], sideB: [], format: formatFor(dv, m.stage), updatedAt: '' };
+    }),
+    tournament: { startTime: d.startTime, slotMinutes: d.slotMinutes },
+  } : null;
   return (
-    <main className={"screen wide-ok pq-matchday pq-proto"+(d?.status==='live'?' pq-live-results':'')} aria-labelledby="results-title">
-      {d?.status!=='live'&&<ResultsHero />}
+    <PublicShell go={go} host={d ? { marks: [clubMark(d.club)], name: d.club } : undefined} footNote={d?.status === 'live' ? 'Scores update every 20 seconds.' : undefined}>
       <PublicScoreAnnouncement slug={publicSlug} data={d} />
-      <div className="pq-live-event-heading"><Header id="results-title" title={d?.name ?? 'Results'} onBack={onBack} /></div>
+      <PageHead
+        cap={d ? <span className={d.status === 'done' ? 'acc' : undefined}>{d.status === 'done' ? `Final results · ${d.club}` : d.status === 'live' ? `Results so far · ${d.club}` : `Draw and schedule · ${d.club}`}</span> : undefined}
+        title={d?.name ?? 'Results'}
+        sub={d ? <span className="row" style={{ flexWrap: 'wrap', gap: 8 }}>{logo.data?.logoUrl && <ClubLogo src={logo.data.logoUrl} club={d.club} size={32} />}{d.status === 'live' && <span className="chip live">Live</span>}<span>{[friendlyDate(d.startDate), d.club, `${teams} ${teams === 1 ? 'entry' : 'entries'}`, `${d.divisions.length} ${d.divisions.length === 1 ? 'category' : 'categories'}`, d.status === 'live' ? 'updates every 20 seconds' : d.status === 'done' ? 'Finished' : ''].filter(Boolean).join(' · ')}</span></span> : undefined}
+        actions={<><button type="button" className="tlink" onClick={onBack}>Back</button>{d && <button type="button" className="btn" onClick={async () => setMsg(await shareLink(`${d.name} results`, link))}>Share results</button>}</>}
+      />
+      {msg && <div role="status" className="note">{msg}</div>}
       <Status error={state.error} loading={state.loading && !d} />
-      {!state.loading && !d && !state.error && <p className="muted">These results aren’t available. The link may be turned off.</p>}
-      {d && division && (
+      {!state.loading && !d && !state.error && <p className="mut" style={{ margin: 0 }}>These results aren’t available. The link may be turned off.</p>}
+      {d && division && body && (
         <>
-          {d.status!=='live'&&<ClubLogo src={logo.data?.logoUrl} club={d.club} />}
-          <p className="small muted" style={{ margin: 0 }}>{d.club} · {friendlyDate(d.startDate)}{d.status === 'live' ? ' · Live, updates every 20 seconds' : d.status === 'done' ? ' · Finished' : ''}</p>
-          {d.status==='live'&&<LiveCourts key={publicSlug+':'+(requestedCourt??'default')} d={d} initialCourt={requestedCourt}/>}
+          {d.status === 'live' && <div className="pq-matchday pq-proto pq-live-results"><LiveCourts key={publicSlug + ':' + (requestedCourt ?? 'default')} d={d} initialCourt={requestedCourt} /></div>}
+          {d.divisions.length > 1 && <Tabs label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
+          {champion && <ChampionHero c={champion} club={d.club} />}
+          {champion && played.length > 0 && (
+            <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span className="cap">{d.name} in numbers</span>
+              <span className="row" style={{ gap: 22, flexWrap: 'wrap' }}>
+                <span><span className="n acc" style={{ fontSize: 44 }}>{played.length}</span><span className="mut" style={{ display: 'block', fontSize: 12 }}>matches played</span></span>
+                <span><span className="n" style={{ fontSize: 44 }}>{points}</span><span className="mut" style={{ display: 'block', fontSize: 12 }}>points scored</span></span>
+              </span>
+            </div>
+          )}
+          {champion && d.status === 'done' && <ResultsPosters c={champion} event={d.name} club={d.club} date={friendlyDate(d.startDate)} link={link} />}
           <MyMatches d={d} />
-          {d.divisions.length > 1 && <Segmented label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
-          <Segmented label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
-          {view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody
-            d={{
-              divisions: d.divisions.map((x) => ({ ...x, tournamentId: '', clubId: '', sort: 0 })),
-              entries: d.entries.map((e) => ({ ...e, clubId: '', playerIds: e.names })),
-              matches: d.matches.map((m): ClubMatch => {
-                const dv = d.divisions.find((x) => x.id === m.divisionId) ?? division;
-                return { ...m, clubId: '', sideA: [], sideB: [], format: formatFor(dv, m.stage), updatedAt: '' };
-              }),
-              tournament: { startTime: d.startTime, slotMinutes: d.slotMinutes },
-            }}
-            divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')}
-          />}
-          <p className="small muted" style={{ margin: 0 }}>Live scores by <a aria-label={d.status==='live'?'RallyQ: live scores. Run your club’s tournament at paddleq.in':undefined} href="https://paddleq.in/" style={{ color: 'var(--accent)', fontWeight: 600 }}>RallyQ</a> · run your club’s tournament at paddleq.in</p>
+          <Tabs<View> label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
+          {view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody d={body} divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')} />}
+          <p className="mut" style={{ margin: 0, fontSize: 13 }}>Live scores by <a aria-label={d.status === 'live' ? 'RallyQ: live scores. Run your club’s tournament at paddleq.in' : undefined} href="https://paddleq.in/" className="acc" style={{ fontWeight: 700 }}>RallyQ</a> · run your club’s tournament at paddleq.in</p>
         </>
       )}
-    </main>
+    </PublicShell>
   );
 }
 
 /** Public results, Matches tab: each group's matches together (live first, then to play, then played), then the knockouts. */
 function GroupedMatches({ d, divisionId }: { d: PublicTournament; divisionId: string }) {
-  const names = new Map(d.entries.map((e) => [e.id, e.names.join(' / ')]));
+  const names = new Map(d.entries.map((e) => [e.id, e.names.map(displayPlayerName).join(' / ')]));
   const ms = d.matches.filter((m) => m.divisionId === divisionId && m.status !== 'void');
-  const order = (m: (typeof ms)[number]) => (m.status === 'live' ? 0 : m.status === 'scheduled' ? 1 : 2);
-  const sort = (a: (typeof ms)[number], b: (typeof ms)[number]) => order(a) - order(b) || (a.slot ?? 0) - (b.slot ?? 0);
+  const order = (m: PublicMatch) => (m.status === 'live' ? 0 : m.status === 'scheduled' ? 1 : 2);
+  const sort = (a: PublicMatch, b: PublicMatch) => order(a) - order(b) || (a.slot ?? 0) - (b.slot ?? 0);
   const pools = [...new Set(ms.filter((m) => m.stage === 'pool').map((m) => m.pool ?? 1))].sort((a, b) => a - b);
   const stages = KNOCKOUT_ORDER.filter((st) => ms.some((m) => m.stage === st));
-  const row = (m: (typeof ms)[number]) => {
+  const row = (m: PublicMatch) => {
     const score = m.games.map((g) => `${g.a}–${g.b}`).join(', ');
+    const w = m.status === 'done' ? m.winner : undefined;
     return (
-      <div key={m.id} className="match-row">
-        <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: 'block', fontWeight: m.winner === 'A' ? 700 : 400 }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
-          <span style={{ display: 'block', fontWeight: m.winner === 'B' ? 700 : 400 }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
-          {m.court ? <span className="small muted">Court {m.court}</span> : null}
+      <div key={m.id}>
+        <span className="grow">
+          <span className={w === 'A' ? 'acc' : undefined} style={{ display: 'block', fontWeight: w === 'A' ? 700 : 500 }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
+          <span className={w === 'B' ? 'acc' : undefined} style={{ display: 'block', fontWeight: w === 'B' ? 700 : 500 }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
+          {m.court ? <span className="mut" style={{ fontSize: 13 }}>Court {m.court}</span> : null}
         </span>
-        {m.status === 'live' ? <span className="pill pill-warn">Live {score}</span> : m.status === 'done' ? <span className="small pq-score">{score || 'Walkover'}</span> : <span className="pill">To play</span>}
+        {m.status === 'live' ? <span className="row" style={{ gap: 8 }}><span className="st live">Live</span><span className="n" style={{ fontSize: 18 }}>{score}</span></span> : m.status === 'done' ? (score ? <span className="n" style={{ fontSize: 18 }}>{score}</span> : <span className="st off">Walkover</span>) : <span className="st wait">To play</span>}
       </div>
     );
   };
-  const block = (title: string, list: typeof ms) => {
+  const block = (title: string, list: PublicMatch[]) => {
     const done = list.filter((m) => m.status === 'done').length;
     return (
-      <section key={title} className="card section" aria-label={title}>
-        <h3 style={{ fontSize: 16, margin: 0 }}>{title} <span className="small muted" style={{ fontWeight: 400 }}>· {done} of {list.length} played</span></h3>
-        {[...list].sort(sort).map(row)}
+      <section key={title} className="card" aria-label={title}>
+        <div className="between" style={{ padding: '16px 18px 6px' }}><h3 className="disp" style={{ fontSize: 24 }}>{title}</h3><span className="mut" style={{ fontSize: 13 }}>{done} of {list.length} played</span></div>
+        <div className="list">{[...list].sort(sort).map(row)}</div>
       </section>
     );
   };
