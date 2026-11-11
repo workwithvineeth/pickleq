@@ -191,7 +191,11 @@ describe('Club mode', () => {
     await user.click(screen.getByRole('button', { name: 'Create tournament' }));
     await screen.findByRole('heading', { name: 'Friday Ladder' });
     expect(screen.getAllByRole('button', { name: /^Score / })).toHaveLength(6);
-    expect(screen.getAllByText(/Court [12]/).length).toBe(6);
+    // The schedule is a table by court: every match sits in the Court 1 or Court 2 column.
+    const sched = screen.getByRole('table', { name: 'Schedule by court' });
+    expect(within(sched).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Time', 'Court 1', 'Court 2']);
+    const scoreCells = within(sched).getAllByRole('row').slice(1).flatMap((r) => within(r).getAllByRole('cell').slice(1).filter((c) => within(c).queryAllByRole('button', { name: /^Score / }).length > 0));
+    expect(scoreCells.reduce((n, c) => n + within(c).getAllByRole('button', { name: /^Score / }).length, 0)).toBe(6);
   });
 
   it('public results open without signing in and show names and scores only', async () => {

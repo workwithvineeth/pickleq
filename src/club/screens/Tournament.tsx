@@ -19,7 +19,7 @@ import { LifecycleCard } from './Lifecycle';
 import { PromoStudio } from './PromoStudio';
 import { ApprovalCard } from './Approvals';
 import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
-import { PosterImage, PosterPicker } from './Poster';
+import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 import { friendlyDate, friendlyTime } from '../dates';
@@ -540,7 +540,20 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyD
   const bronze = matches.filter(isBronzeMatch);
   const ko = matches.filter((m) => m.stage !== 'pool' && !isBronzeMatch(m)).sort((a, b) => (a.round ?? 0) - (b.round ?? 0) || (a.bracketPos ?? 0) - (b.bracketPos ?? 0));
   const rounds = [...new Set(ko.map((m) => m.round ?? 1))];
-  const box = (m: ClubMatch, final?: boolean) => <MatchBox key={m.id} m={m} a={name(m.entryA)} b={m.entryB ? name(m.entryB) : 'Bye'} da={dupr(m.entryA)} db={dupr(m.entryB)} meta={[m.court ? `Court ${m.court}` : '', time(m) ?? ''].filter(Boolean).join(' · ')} onScore={onScore} final={final} />;
+  // First knockout round: "A1 v D2", read from the finished pool tables (never guessed). Shown only when both sides are known.
+  const place = new Map<string, string>();
+  if (division.shape !== 'ko' && division.advance > 0) {
+    const poolMatches = matches.filter((m) => m.stage === 'pool' && m.status !== 'void');
+    for (const p of [...new Set(entries.map((e) => e.pool ?? 1))]) {
+      const ms = poolMatches.filter((m) => (m.pool ?? 1) === p);
+      if (!ms.length || !ms.every((m) => m.status === 'done')) continue;
+      const ids = entries.filter((e) => (e.pool ?? 1) === p).map((e) => e.id);
+      for (const r of standings(ids, ms, (id) => emap.get(id)?.seed ?? 99)) place.set(r.entryId, `${poolLetter(p)}${r.rank}`);
+    }
+  }
+  const firstRound = rounds[0];
+  const lab = (m: ClubMatch) => { const a = place.get(m.entryA ?? ''), b = place.get(m.entryB ?? ''); return (m.round ?? 1) === firstRound && a && b ? `${a} v ${b}` : undefined; };
+  const box = (m: ClubMatch, final?: boolean) => <MatchBox key={m.id} m={m} a={name(m.entryA)} b={m.entryB ? name(m.entryB) : 'Bye'} da={dupr(m.entryA)} db={dupr(m.entryB)} meta={[m.court ? `Court ${m.court}` : '', time(m) ?? ''].filter(Boolean).join(' · ')} onScore={onScore} final={final} lab={lab(m)} />;
   return (
     <section className="card" aria-label="Knockouts" style={cardPad}>
       {division.advance === 0 && division.shape !== 'ko' && ko.length === 0 && <p className="mut" style={{ margin: 0 }}>This event has no knockouts.</p>}
@@ -629,7 +642,7 @@ const scoreButton = (m: ClubMatch, a: string, b: string, onScore: (id: string) =
 );
 
 /** One knockout match in the bracket. The winner turns ball-yellow only once the match is finished; the final turns gold only with a champion. */
-function MatchBox({ m, a, b, da, db, meta, onScore, final }: { m: ClubMatch; a: string; b: string; da?: string; db?: string; meta: string; onScore?: (id: string) => void; final?: boolean }) {
+function MatchBox({ m, a, b, da, db, meta, onScore, final, lab }: { m: ClubMatch; a: string; b: string; da?: string; db?: string; meta: string; onScore?: (id: string) => void; final?: boolean; lab?: string }) {
   const winner = m.status === 'done' ? matchResult(m).winner ?? m.winner : undefined;
   const can = !!onScore && m.status !== 'done' && m.status !== 'void';
   const champion = !!final && m.status === 'done' && !!winner;
@@ -642,6 +655,7 @@ function MatchBox({ m, a, b, da, db, meta, onScore, final }: { m: ClubMatch; a: 
   );
   return (
     <div className={champion ? 'm champ' : 'm'} style={champion ? { boxShadow: 'inset 0 0 0 2px var(--gold)' } : final ? { boxShadow: 'inset 0 0 0 2px var(--ball)' } : undefined}>
+      {lab && <div className="cap" style={{ justifyContent: 'flex-start', padding: '8px 14px 0' }}>{lab}</div>}
       {champion && <div className="cap" style={{ color: 'var(--gold)', justifyContent: 'flex-start' }}>Champion · {winner === 'A' ? a : b}</div>}
       {side('A', a, da)}
       {side('B', b, db)}
@@ -770,6 +784,13 @@ export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: (
   const [div, setDiv] = useState<string | null>(null);
   const [view, setView] = useState<View>('pools');
   const [msg, setMsg] = useState<string | null>(null);
+  // The club's own logo, where it has uploaded one (the shell header shows its initials).
+  const logo = useLoad(async () => {
+    for (const src of await publicSourcesFor(publicSlug)) {
+      try { const r = await src.publicClubLogo(publicSlug); if (r) return r; } catch { /* next place */ }
+    }
+    return null;
+  }, [publicSlug]);
   const d = state.data;
   const division = d?.divisions.find((x) => x.id === div) ?? d?.divisions[0];
   const champion = useMemo(() => (d && division ? publicChampion(d, division.id) : null), [d, division]);
@@ -792,7 +813,7 @@ export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: (
       <PageHead
         cap={d ? <span className={d.status === 'done' ? 'acc' : undefined}>{d.status === 'done' ? `Final results · ${d.club}` : d.status === 'live' ? `Results so far · ${d.club}` : `Draw and schedule · ${d.club}`}</span> : undefined}
         title={d?.name ?? 'Results'}
-        sub={d ? <span className="row" style={{ flexWrap: 'wrap', gap: 8 }}>{d.status === 'live' && <span className="chip live">Live</span>}<span>{[friendlyDate(d.startDate), d.club, `${teams} ${teams === 1 ? 'entry' : 'entries'}`, `${d.divisions.length} ${d.divisions.length === 1 ? 'category' : 'categories'}`, d.status === 'live' ? 'updates every 20 seconds' : d.status === 'done' ? 'Finished' : ''].filter(Boolean).join(' · ')}</span></span> : undefined}
+        sub={d ? <span className="row" style={{ flexWrap: 'wrap', gap: 8 }}>{logo.data?.logoUrl && <ClubLogo src={logo.data.logoUrl} club={d.club} size={32} />}{d.status === 'live' && <span className="chip live">Live</span>}<span>{[friendlyDate(d.startDate), d.club, `${teams} ${teams === 1 ? 'entry' : 'entries'}`, `${d.divisions.length} ${d.divisions.length === 1 ? 'category' : 'categories'}`, d.status === 'live' ? 'updates every 20 seconds' : d.status === 'done' ? 'Finished' : ''].filter(Boolean).join(' · ')}</span></span> : undefined}
         actions={<><button type="button" className="tlink" onClick={onBack}>Back</button>{d && <button type="button" className="btn" onClick={async () => setMsg(await shareLink(`${d.name} results`, link))}>Share results</button>}</>}
       />
       {msg && <div role="status" className="note">{msg}</div>}
