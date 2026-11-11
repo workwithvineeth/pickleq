@@ -62,14 +62,14 @@ test.describe('Referee PIN and desk access (real server)', () => {
     await page.getByLabel('Password', { exact: true }).fill('wrong-password-1');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText(/That email and password don.t match/);
-    await expect(page.getByRole('button', { name: /Create an account/ })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Create account' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Forgot password?' })).toBeVisible();
   });
 
   test('the admin sign-in page refuses a wrong password and offers no sign-up', async ({ page }) => {
     await page.goto('#/admin-login');
     await expect(page.getByRole('heading', { name: 'PaddleQ admin' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Create an account/ })).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: 'Create account' })).toHaveCount(0);
     await page.getByLabel('Email').fill('nobody-robot@example.com');
     await page.getByLabel('Password', { exact: true }).fill('wrong-password-1');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();

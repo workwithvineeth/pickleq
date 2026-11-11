@@ -444,7 +444,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
       <span className="hint">From RallyQ &lt;hello@paddleq.in&gt;. Works for one hour.</span>
     </div>
   );
-  const message = msg && <div role={msg.ok ? 'status' : 'alert'} className="note" style={msg.ok ? undefined : { background: 'transparent', boxShadow: 'inset 0 0 0 1.5px var(--err)' }}>{msg.ok ? msg.text : <><b>Problem: </b>{msg.text}</>}</div>;
+  const message = msg && <div role={msg.ok ? 'status' : 'alert'} className="note" style={msg.ok ? undefined : { background: 'transparent', boxShadow: 'inset 0 0 0 1.5px var(--err)' }}>{msg.text}</div>;
   // One ball-yellow button per state: the step's next action.
   const primary = (label: string, busyLabel: string, fn: () => void) => (
     <button type="button" className="btn" style={{ width: '100%' }} disabled={busy || !b} onClick={fn}>{busy ? busyLabel : label}</button>

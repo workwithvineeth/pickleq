@@ -119,7 +119,7 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
     await route.fulfill({ json: result });
   });
   await page.goto('#/club-signin');
-  await page.getByRole('button', { name: 'Create an account' }).click();
+  await page.getByRole('tab', { name: 'Create account' }).click();
   await page.getByLabel('Email', { exact: true }).fill('fixture@example.test');
   await page.getByLabel('Choose a password').fill('FixturePassword982');
   await page.getByLabel('Password again', { exact: true }).fill('FixturePassword982');

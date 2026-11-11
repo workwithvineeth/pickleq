@@ -26,9 +26,7 @@ test.describe('PaddleQ app', () => {
     for (const t of ['Home', 'Train', 'Stats', 'Coach']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Log a match' })).toHaveCount(0);
     // Signed out, My clubs is the sign-in page; the demo lives in the admin dashboard, not here.
-    await expect(page.getByRole('heading', { name: 'RallyQ', level: 1 })).toBeVisible();
-    await expect(page.getByText('Out of the kitchen, into the stats.')).toBeVisible();
-    await expect(page.getByRole('img', { name: 'RallyQ logo' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Your court\./, level: 1 })).toBeVisible();
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: /Got an invite from a club/ }).click();
     await expect(page.getByRole('region', { name: 'Join a club' })).toBeVisible();
