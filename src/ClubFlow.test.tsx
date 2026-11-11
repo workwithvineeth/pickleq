@@ -230,8 +230,8 @@ describe('Club mode', () => {
     await screen.findByRole('heading', { name: 'Referee links' });
     await user.click(screen.getByRole('button', { name: 'Create referee links (6)' }));
     await screen.findByText('Made 6 court links');
-    await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
-    await screen.findByText('Made an any-court link');
+    await user.click(screen.getByRole('button', { name: 'Add a roaming referee link' }));
+    await screen.findByText('Made a roaming referee link');
     const link = demoState().scorerLinks.find((l: { court?: number }) => !l.court);
     // The PIN is hidden until the organiser asks to see it.
     expect(screen.queryByLabelText(`Referee PIN ${link.pin}`)).not.toBeInTheDocument();
@@ -283,8 +283,8 @@ describe('Club mode', () => {
     await user.click(screen.getByRole('button', { name: 'Referee links' }));
     await user.click(await screen.findByRole('button', { name: 'Create referee links (6)' }));
     await screen.findByText('Made 6 court links');
-    await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
-    await screen.findByText('Made an any-court link');
+    await user.click(screen.getByRole('button', { name: 'Add a roaming referee link' }));
+    await screen.findByText('Made a roaming referee link');
     const pins = new Set(demoState().scorerLinks.map((l: { pin: string }) => l.pin));
     expect(pins.size).toBe(1);
     const [first] = [...pins] as string[];

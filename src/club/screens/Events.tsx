@@ -65,7 +65,7 @@ function spotsText(e: PublicEvent): string {
   return e.drawn ? 'Draw made' : 'Entries closed';
 }
 function hostLine(clubs: number): string {
-  const rest = 'enter in a minute, and see every score as it happens.';
+  const rest = 'send your entry and see live scores as the referees enter them.';
   if (clubs === 0) return `Pick a tournament, ${rest}`;
   if (clubs === 1) return `1 club is hosting this week. Pick an event, ${rest}`;
   return `${clubs} clubs are hosting this week. Pick one, ${rest}`;
@@ -344,7 +344,7 @@ const PAY_CHOICES: { value: PayChoice; name: string; sub: string; short: string 
   { value: 'venue', name: 'Pay at the desk', sub: 'Cash or UPI on match day', short: 'At the desk' },
   { value: 'unpaid', name: 'Pay later', sub: 'Agree it with the club before you play', short: 'Later' },
 ];
-const STEP_NAMES = ['Category', 'Partner', 'Pay', 'Done'];
+const STEP_NAMES = ['Category', 'Partner', 'Pay', 'Sent'];
 
 export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
   const [slug, divId] = id.split('~');
@@ -517,7 +517,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
               <span className={done === 'waitlist' ? 'st off' : 'st ok'} style={{ alignSelf: 'flex-start' }}>{done === 'waitlist' ? 'On the waitlist' : 'Entry sent'}</span>
               <h2 className="disp" style={{ fontSize: 34 }}>{done === 'waitlist' ? 'You’re on the waitlist.' : 'You’re in the queue.'}</h2>
               <div role="status" className="mut">{done === 'waitlist' ? `${d.name} is full, so you’re on the waitlist. The organiser will tell you if a place opens.` : `You’re entered in ${d.name}. The organiser will confirm your entry.`}</div>
-              <div className="mut" style={{ fontSize: 13 }}>Status: {REG_STATUS_LABEL[done]}. Follow it in My entries.</div>
+              <div className="mut" style={{ fontSize: 13 }}>Status: {REG_STATUS_LABEL[done]}. Check it in My entries.</div>
             </div>
             <div className="between">{back('Back to the event', () => go('event', slug))}<button type="button" className="btn" onClick={() => go('my-entries')}>See my entries</button></div>
           </>
@@ -530,7 +530,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
         <div className="list" style={{ marginInline: -20 }}>
           <div><span className="grow mut">Category</span><b style={{ textAlign: 'right' }}>{chosen?.name ?? 'Not picked yet'}</b></div>
           {doubles && <div><span className="grow mut">Partner</span><b style={{ textAlign: 'right', overflowWrap: 'anywhere' }}>{partner.name.trim() || 'Not added yet'}</b></div>}
-          <div><span className="grow mut">Pay</span><b style={{ textAlign: 'right' }}>{(chosen?.rules?.fee ?? 0) > 0 ? `₹${chosen!.rules.fee} · ${payName}` : 'No entry fee'}</b></div>
+          <div><span className="grow mut">Pay</span><b style={{ textAlign: 'right' }}>{(chosen?.rules?.fee ?? 0) > 0 ? `₹${chosen!.rules.fee}${chosen!.kind === 'doubles' ? ' a team' : ''} · ${step >= 3 ? payName : 'choose how at Pay'}` : 'No entry fee'}</b></div>
         </div>
         {e.entriesClose && <div className="mut" style={{ fontSize: 12 }}>Entries close {dayLabel(e.entriesClose)}.</div>}
       </aside>

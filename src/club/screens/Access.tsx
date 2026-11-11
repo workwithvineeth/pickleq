@@ -64,7 +64,7 @@ export function AccessCards({ b, tournamentId, name, finished }: { b: ClubBacken
           <button type="button" className="tlink mut" disabled={busy || !a} onClick={() => { setEditing('referee'); setTyped(''); setMsg(null); }}>Set my own</button>
         </>}
         {typeBox('referee')}
-        <p className="mut" style={{ margin: 0, fontSize: 13, flexBasis: '100%' }}>Referees type it on their court link. It opens only that court’s matches, never the desk. Only organisers see the PIN; change it after each event.</p>
+        <p className="mut" style={{ margin: 0, fontSize: 13, flexBasis: '100%' }}>Referees type it on their court link. It opens only that court’s matches, never the desk. Only organisers can see it here: tell your referees by voice or in a separate message, and make a new PIN after each event.</p>
       </section>
       <section className="card" aria-label="Desk access" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         {pin('desk', 'Desk PIN', a?.deskPin)}

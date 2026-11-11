@@ -122,7 +122,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     <div className="pq-results-heading"><h2 style={{ margin: 0 }}>{data.tournament.name}</h2>
       <p className="small muted">{[data.club.name, data.tournament.venue, data.tournament.city, friendlyDate(data.tournament.startDate), data.tournament.status === 'done' ? 'Finished' : data.tournament.status === 'live' ? 'Live' : 'Not started', `${data.matches.filter((m) => m.status !== 'void').length} matches on ${data.tournament.courts} courts`].filter(Boolean).join(' · ')}</p>
     </div>
-    <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}><span className={missing.size ? 'st wait' : 'st ok'}>{missing.size ? `${missing.size} DUPR ratings missing` : 'All DUPR ratings in'}</span>
+    <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}><span className={missing.size ? 'st wait' : 'st ok'}>{missing.size ? `${missing.size} DUPR ratings missing` : 'Every player has a DUPR rating'}</span>
       {staff && <button className="btn sm" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
       {staff && <button className="btn ghost sm" disabled={dirty || busy} onClick={() => go('club-dupr', data.tournament.id)}>File for DUPR</button>}
       <button className="btn ghost sm" disabled={dirty || busy} onClick={csv}>Download results (CSV)</button>
@@ -130,7 +130,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       <button className="btn ghost sm" disabled={dirty || busy} onClick={savePage}>Save this page</button>
       {data.tournament.publicSlug && <button className="tlink" onClick={() => go('results', data.tournament.publicSlug!)}>Public results page and posters →</button>}
     </div>
-    <p className="small muted no-print">{staff ? `${admin ? 'Admin' : 'Organiser'}: add or edit the ratings and IDs in the boxes below each group, then choose Save DUPR details. Saved details are available to authorised club organisers and RallyQ admins.` : 'Results and saved DUPR details. Editing is available only to authorised club organisers and RallyQ admins.'} These stored ratings have not been synchronised or verified with DUPR.</p>
+    <p className="small muted no-print">{staff ? `${admin ? 'Admin' : 'Organiser'}: add or edit the ratings and IDs in the boxes below each group, then choose Save DUPR details. Saved details are available to authorised club organisers and RallyQ admins.` : 'Results and saved DUPR details. Editing is available only to authorised club organisers and RallyQ admins.'} These ratings were entered by the club. They are not synced with DUPR.</p>
     {staff && <p className="small muted no-print">Changes update this club’s player ratings wherever they appear. Ratings are stored to two decimal places.</p>}
     {dirty && <p role="status" className="small no-print">Save your edits before exporting. Exports use saved details.</p>}
     {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}

@@ -21,6 +21,8 @@ const matchLabel = (m: ClubMatch, d: TournamentBundle) => {
   const div = d.divisions.find((x) => x.id === m.divisionId);
   return [div?.name, m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].filter(Boolean).join(' · ');
 };
+/** "15:20" → "3:20 pm" (the app's 12-hour clock). */
+const clock12 = (hm: string) => { const [h, m] = hm.split(':').map(Number); return Number.isFinite(h) ? `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}` : hm; };
 const ago = (iso: string, now: number) => Math.max(0, Math.round((now - Date.parse(iso)) / 60000));
 const LINES = <svg className="lines" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true"><g><rect x="1" y="1" width="198" height="298" /><line x1="1" y1="150" x2="199" y2="150" strokeWidth="3" /><line x1="1" y1="105" x2="199" y2="105" /><line x1="1" y1="195" x2="199" y2="195" /><line x1="100" y1="1" x2="100" y2="105" /><line x1="100" y1="195" x2="100" y2="299" /></g></svg>;
 
@@ -122,11 +124,11 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
             <progress aria-label="Matches completed" max={real.length} value={played} style={{ width: '100%', height: 6, accentColor: '#D9F24A', marginTop: 8 }} /></div>
           <div className="card stat" style={{ padding: 16 }}><div className="cap">On court</div><div className="n acc">{board.filter((s) => s.now).length}</div><div className="mut" style={{ fontSize: 13 }}>live now</div></div>
           <div className="card stat" style={{ padding: 16 }}><div className="cap">In the queue</div><div className="n">{active.filter((m) => m.status === 'scheduled').length}</div><div className="mut" style={{ fontSize: 13 }}>waiting to play</div></div>
-          {real.some((m) => m.slot !== undefined) && <div className="card stat" style={{ padding: 16 }}><div className="cap">Planned finish</div><div className="n" style={{ fontSize: 34 }}>{slotTime(t.startTime, Math.max(...real.map((m) => m.slot ?? 0)) + 1, t.slotMinutes)}</div><div className="mut" style={{ fontSize: 13 }}>from the schedule</div></div>}
+          {real.some((m) => m.slot !== undefined) && <div className="card stat" style={{ padding: 16 }}><div className="cap">Scheduled finish</div><div className="n" style={{ fontSize: 34 }}>{clock12(slotTime(t.startTime, Math.max(...real.map((m) => m.slot ?? 0)) + 1, t.slotMinutes))}</div><div className="mut" style={{ fontSize: 13 }}>from the schedule</div></div>}
         </div>
         : <p className="mut" role="status">No matches scheduled yet. Open entries to make the draw.</p>}
 
-      <div className="between"><h2 className="cap">Courts · tap a court to fix its match</h2><span className="mut" style={{ fontSize: 12 }}>Scores come from the referee on each court</span></div>
+      <div className="between"><h2 className="cap">Courts · tap a court to manage its match</h2><span className="mut" style={{ fontSize: 12 }}>Referees enter scores on their phones. You can also enter results here.</span></div>
       <section className="grid g4" aria-label="Courts">
         {board.map((s) => <CourtCard key={s.court} court={s.court} now={s.now} next={s.next} d={d} pmap={pmap} at={now}
           selected={!!selected && selected.id === (s.now ?? s.next)?.id} nextUp={s.now || s.next ? undefined : (nextMatchToCall(active, s.court) ?? null)}
@@ -134,8 +136,8 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
           onPick={() => { const m = s.now ?? s.next; if (m) setSel(m.id); }} />)}
       </section>
       {freeCourt && <div className="card" style={{ padding: '16px 18px', display: 'flex', flexWrap: 'wrap', gap: '12px 20px', alignItems: 'center' }}>
-        <span className="grow"><b>Court {freeCourt.court} is free.</b> <span className="mut">{toCall ? `Next: ${who(toCall)}${toCall.court ? ` (booked for court ${toCall.court})` : ''}. Call them when the court is clear.` : 'The queue is empty.'}</span></span>
-        <button type="button" className={draft ? 'btn alt' : 'btn'} disabled={busy || !toCall} onClick={() => toCall && void moveTo(toCall, freeCourt.court)}>{toCall ? `Call to Court ${freeCourt.court}` : 'Queue empty'}</button>
+        <span className="grow"><b>Court {freeCourt.court} is free.</b> <span className="mut">{toCall ? `Next: ${who(toCall)}${toCall.court ? ` (booked for court ${toCall.court})` : ''}. Call them when the court is clear.` : 'No match is ready for it yet. Matches already booked on another court stay there.'}</span></span>
+        <button type="button" className={draft ? 'btn alt' : 'btn'} disabled={busy || !toCall} onClick={() => toCall && void moveTo(toCall, freeCourt.court)}>{toCall ? `Call to Court ${freeCourt.court}` : 'No match ready to call'}</button>
       </div>}
       {!desk && missingLinks > 0 && <div className="warn" role="note" aria-label="Needs you"><span className="grow">Referee links not made for {missingLinks} court{missingLinks > 1 ? 's' : ''}.</span><button type="button" className="tlink" onClick={() => go('club-scorers', t.id)}>Create referee links</button></div>}
 
@@ -204,7 +206,7 @@ function CourtCard({ court, now, next, nextUp, d, pmap, at, selected, link, onPi
           {quiet >= 5 ? <span className="st no wrapok" style={{ fontSize: 12 }}>No new score for {quiet} min</span> : <span className="mut" style={{ fontSize: 12 }}>Last score {quiet ? `${quiet} min ago` : 'just now'}{next ? ` · Next: ${names(next.sideA, pmap)} v ${names(next.sideB, pmap)}` : ''}</span>}
         </>}
         {!now && next && <span style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}><span className="mut" style={{ fontSize: 13 }}>Booked next:</span><b style={{ fontSize: 15 }}>{names(next.sideA, pmap)}</b><span style={{ fontSize: 15, color: '#C9D9CD' }}>{names(next.sideB, pmap)}</span></span>}
-        {!m && <span style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}><span className="mut" style={{ fontSize: 13 }}>Free. Next up:</span><b style={{ fontSize: 16 }}>{nextUp ? `${names(nextUp.sideA, pmap)} vs ${names(nextUp.sideB, pmap)}` : 'Queue empty'}</b></span>}
+        {!m && <span style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}><span className="mut" style={{ fontSize: 13 }}>{nextUp ? 'Free. Next up:' : 'Free'}</span><b style={{ fontSize: 16 }}>{nextUp ? `${names(nextUp.sideA, pmap)} vs ${names(nextUp.sideB, pmap)}` : 'No match ready for this court'}</b></span>}
         {link === 'none' && <span className="st no wrapok" style={{ fontSize: 12 }}>No referee link yet</span>}
         {link === 'unopened' && <span className="mut" style={{ fontSize: 12 }}>Referee link not opened yet</span>}
       </span>
@@ -281,7 +283,7 @@ function MatchTools({ m, d, pmap, board, busy, onResult, onWalkover, onMove, onS
         : <p className="mut" style={{ margin: 0 }}>Both sides aren’t known yet.</p>)}
       {tool === 'move' && (
         <section aria-label="Change court" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div className="mut" style={{ fontSize: 13 }}>Move the match to another court. The referee link for that court and the TV board follow it.</div>
+          <div className="mut" style={{ fontSize: 13 }}>Move the match to another court. It then shows on that court’s referee link and on the TV board.</div>
           <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
             {board.map((c) => {
               const here = c.court === m.court;

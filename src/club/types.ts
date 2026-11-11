@@ -175,7 +175,7 @@ export interface EntryPerson {
 export type RegistrationStatus = 'pending' | 'accepted' | 'waitlist' | 'rejected' | 'withdrawn';
 export type Payment = 'unpaid' | 'venue' | 'claimed' | 'paid';
 export const REG_STATUS_LABEL: Record<RegistrationStatus, string> = { pending: 'Waiting for the organiser', accepted: 'Accepted', waitlist: 'On the waitlist', rejected: 'Not accepted', withdrawn: 'Withdrawn' };
-export const PAYMENT_LABEL: Record<Payment, string> = { unpaid: 'Not paid', venue: 'Paying at the venue', claimed: 'Paid by UPI (to confirm)', paid: 'Paid' };
+export const PAYMENT_LABEL: Record<Payment, string> = { unpaid: 'Not paid', venue: 'Paying at the venue', claimed: 'Paid by UPI · not checked yet', paid: 'Paid' };
 
 export interface Registration {
   id: string;

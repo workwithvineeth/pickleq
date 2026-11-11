@@ -18,7 +18,7 @@ import { friendlyDate, friendlyDateTime } from '../dates';
 
 type Filter = 'check' | 'waiting' | 'accepted' | 'waitlist' | 'out' | 'all';
 const FILTERS: { value: Filter; label: string }[] = [
-  { value: 'check', label: 'To check' }, { value: 'waiting', label: 'To decide' }, { value: 'accepted', label: 'Accepted' }, { value: 'waitlist', label: 'Waitlist' }, { value: 'out', label: 'Not in' }, { value: 'all', label: 'All' },
+  { value: 'check', label: 'Payments to check' }, { value: 'waiting', label: 'To decide' }, { value: 'accepted', label: 'Accepted' }, { value: 'waitlist', label: 'Waitlist' }, { value: 'out', label: 'Not in' }, { value: 'all', label: 'All' },
 ];
 const isOut = (r: Registration) => r.status === 'rejected' || r.status === 'withdrawn';
 const toCheck = (r: Registration) => r.payment === 'claimed' && !isOut(r);
@@ -91,9 +91,9 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         <div className="tabs" role="group" aria-label="Event">{d.t.divisions.map((x) => <button key={x.id} type="button" className={`tab${x.id === div.id ? ' on' : ''}`} aria-pressed={x.id === div.id} onClick={() => { setDivId(x.id); setOpen(null); }}>{x.name}</button>)}</div>
       )}
       <section className="grid g4" aria-label={`${div.name} entries`}>
-        <div className="card stat" style={{ padding: 18 }}><div className="cap">To check</div><div className={`n${nCheck ? ' acc' : ''}`}>{nCheck}</div><div className="mut" style={{ fontSize: 13 }}>UPI payments to match</div></div>
-        <div className="card stat" style={{ padding: 18 }}><div className="cap">Accepted</div><div className="n">{counts.accepted}</div><div className="mut" style={{ fontSize: 13 }}>{cap !== undefined ? `of ${cap} spots` : 'teams in'}{fee > 0 && counts.unpaidAccepted ? ` · ${counts.unpaidAccepted} not paid yet` : ''}</div></div>
-        <div className="card stat" style={{ padding: 18 }}><div className="cap">To decide</div><div className="n">{counts.pending}</div><div className="mut" style={{ fontSize: 13 }}>new entries</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Payments to check</div><div className={`n${nCheck ? ' acc' : ''}`}>{nCheck}</div><div className="mut" style={{ fontSize: 13 }}>players say they paid by UPI</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Accepted</div><div className="n">{counts.accepted}</div><div className="mut" style={{ fontSize: 13 }}>{cap !== undefined ? `of ${cap} ${div.kind === 'doubles' ? 'team' : 'player'} spots` : div.kind === 'doubles' ? 'teams in' : 'players in'}{fee > 0 && counts.unpaidAccepted ? ` · ${counts.unpaidAccepted} not paid yet` : ''}</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">To decide</div><div className="n">{counts.pending}</div><div className="mut" style={{ fontSize: 13 }}>new entries waiting for you</div></div>
         <div className="card stat" style={{ padding: 18 }}><div className="cap">Waitlist</div><div className="n">{counts.waitlist}</div><div className="mut" style={{ fontSize: 13 }}>move up when a spot frees</div></div>
       </section>
       <p className="mut" style={{ margin: 0, fontSize: 13 }}>{rulesLine(div.kind, div.rules)}</p>
@@ -127,7 +127,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
                 <td>{div.name}</td>
                 <td>{PAYMENT_LABEL[r.payment]}</td>
                 <td className="n" style={{ fontSize: 20, letterSpacing: '.05em' }}>{r.paymentRef ?? <span className="mut" style={{ fontSize: 13, letterSpacing: 0 }}>—</span>}</td>
-                <td><span className={STATUS_CLS[r.status]}>{r.entryId ? 'In the draw' : REG_STATUS_LABEL[r.status]}</span>{r.note && <div className="mut" style={{ fontSize: 12, marginTop: 4 }}>Note to player: {r.note}</div>}</td>
+                <td><span className={STATUS_CLS[r.status]}>{r.entryId ? 'In the draw' : r.status === 'pending' ? 'To decide' : REG_STATUS_LABEL[r.status]}</span>{r.note && <div className="mut" style={{ fontSize: 12, marginTop: 4 }}>Note to player: {r.note}</div>}</td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   {a && <button type="button" className={firstAct?.id === r.id && !panel ? 'btn sm' : 'btn ghost sm'} disabled={busy} onClick={a.act}>{a.label}</button>}
                   {!r.entryId && r.status !== 'withdrawn' && <button type="button" className="tlink mut" style={{ marginLeft: 10 }} aria-expanded={panel === 'more'} onClick={() => toggle(r, 'more')}>More</button>}
@@ -135,7 +135,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
               </tr>
               {panel && <tr className="expand"><td colSpan={6}>
                 {panel === 'pay' && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 28px', alignItems: 'center', padding: '6px 2px' }}>
-                  <span><span className="cap" style={{ display: 'block' }}>Amount</span><b>₹{fee}{div.kind === 'doubles' ? ' per player' : ''}</b></span>
+                  <span><span className="cap" style={{ display: 'block' }}>Entry fee</span><b>₹{fee}{div.kind === 'doubles' ? ' a team' : ''}</b></span>
                   <span><span className="cap" style={{ display: 'block' }}>UPI reference</span><span className="n" style={{ fontSize: 26, letterSpacing: '.06em' }}>{r.paymentRef ?? 'None given'}</span></span>
                   <button type="button" className={ticked === r.id ? 'check on' : 'check'} aria-pressed={ticked === r.id} onClick={() => setTicked(ticked === r.id ? null : r.id)}><span className="bx" aria-hidden="true">{ticked === r.id ? '✓' : ''}</span>It matches a payment in my bank app</button>
                   <span className="row" style={{ marginLeft: 'auto', gap: 10 }}>
@@ -167,7 +167,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         </tbody></table></div>}
         {shown.length === 0 && <div className="empty">{needle ? 'No team or UPI reference matches that.' : f === 'check' ? 'No payments to check. You’re all caught up.' : 'No entries here.'}</div>}
       </div>
-      {fee > 0 && <div className="note">Match the UPI reference with your bank app before you confirm. RallyQ never holds money: players pay your club directly. Accepted teams go into the draw.</div>}
+      {fee > 0 && <div className="note">Players pay your club directly; RallyQ never holds money. Two separate steps: check the UPI reference in your bank app, then Confirm paid. Accept decides who gets a place. Payments to check can include teams you already accepted.</div>}
       <Draw b={b} t={t} divisions={d.t.divisions} regs={d.regs} primary={!firstAct} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
     </OrgShell>
   );
@@ -259,7 +259,7 @@ function Draw({ b, t, divisions, regs, onDrawn, go, primary = true }: { b: ClubB
   return (
     <section className="card" aria-label="Draw" style={{ padding: 22 }}><Legacy className="section">
       <h2 className="disp" style={{ fontSize: 24 }}>Make the draw</h2>
-      <p className="small muted" style={{ margin: 0 }}>You choose the format for each event. Accepted entries are seeded by DUPR, and every match gets a court and a time. Entries close when you draw.</p>
+      <p className="small muted" style={{ margin: 0 }}>You choose the format for each event. Accepted entries are seeded by DUPR, and every match gets a court and a time. Online entries close when you make the draw; you can still add late entries after it.</p>
       {withEntries.length === 0 && <p className="small muted" style={{ margin: 0 }}>Accept some entries first.</p>}
       {withEntries.length > 0 && <>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>

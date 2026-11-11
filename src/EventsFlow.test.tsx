@@ -155,7 +155,7 @@ describe('Entering a tournament', () => {
     await user.click(screen.getByRole('button', { name: 'See my entries' }));
     const entry = await screen.findByRole('region', { name: 'PQ Demo Night: Men’s Doubles 3.5' });
     expect(within(entry).getByText('Waiting for the organiser')).toBeInTheDocument();
-    expect(within(entry).getByText('Paid by UPI (to confirm)')).toBeInTheDocument();
+    expect(within(entry).getByText('Paid by UPI · not checked yet')).toBeInTheDocument();
     await user.click(within(entry).getByRole('button', { name: 'Withdraw…' }));
     await user.click(within(entry).getByRole('button', { name: 'Yes, withdraw' }));
     expect(await screen.findByText('Withdrawn from Men’s Doubles 3.5')).toBeInTheDocument();
@@ -174,7 +174,7 @@ describe('Organiser: entries inbox and draw', () => {
     await user.click(screen.getByRole('button', { name: 'Entries and draw' }));
     await screen.findByRole('heading', { name: 'Entries & UPI' });
     const counts = screen.getByRole('region', { name: 'Men’s Doubles 3.5 entries' });
-    expect(counts).toHaveTextContent('Accepted3of 8 spots');
+    expect(counts).toHaveTextContent('Accepted3of 8 team spots');
     expect(counts).toHaveTextContent('To decide2');
     const imran = screen.getByRole('row', { name: 'Imran Khan / Tarun Bose' });
     await user.click(within(imran).getByRole('button', { name: 'Accept' }));
@@ -195,7 +195,7 @@ describe('Organiser: entries inbox and draw', () => {
     await fillPerson(user, 'Player 2', { name: 'Desk Two', phone: '', dupr: '3.0', age: '46', gender: 'Man' });
     await user.click(screen.getByRole('button', { name: 'Add entry' }));
     expect(await screen.findByText('Desk One / Desk Two added')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Men’s Doubles 3.5 entries' })).toHaveTextContent('Accepted5of 8 spots');
+    expect(screen.getByRole('region', { name: 'Men’s Doubles 3.5 entries' })).toHaveTextContent('Accepted5of 8 team spots');
 
     await user.click(screen.getByRole('button', { name: 'Close entries' }));
     expect(await screen.findByText(/Entries closed\./)).toBeInTheDocument();

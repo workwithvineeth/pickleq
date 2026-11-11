@@ -57,7 +57,7 @@ function DeskAgain() {
 
 // ---------- Scorer links ----------
 
-const courtName = (c?: number) => (c ? `Court ${c}` : 'Any court');
+const courtName = (c?: number) => (c ? `Court ${c}` : 'Roaming referee (any court)');
 
 const COURT_LINES = <svg viewBox="0 0 300 200" preserveAspectRatio="none" aria-hidden="true"><g><rect x="1" y="1" width="298" height="198" /><line x1="150" y1="1" x2="150" y2="199" strokeWidth="4" /><line x1="105" y1="1" x2="105" y2="199" /><line x1="195" y1="1" x2="195" y2="199" /><line x1="1" y1="100" x2="105" y2="100" /><line x1="195" y1="100" x2="299" y2="100" /></g></svg>;
 const shortUrl = (u: string) => u.replace(/^https?:\/\//, '').replace(/^(.{14}).*(.{10})$/, '$1…$2');
@@ -97,11 +97,11 @@ export function ScorerLinks({ id, go, onBack }: { id: string; go?: Go; onBack: (
       <PageHead cap={t.name} title={<span id="links-title">Referee links</span>} />
       <RefTabs go={go} id={t.id} on="links" />
       <Legacy><DemoNote b={b} /></Legacy>
-      <div className="note">One link per court. The referee opens it on their phone, types the referee PIN and scores. No account, no app. A court link only shows that court’s matches.</div>
+      <div className="note">For a court referee: send the court link and the referee PIN. They open it on their phone and score; no account, no app, only that court’s matches. A roaming referee link works on any court (they pick one). For a desk helper: send the desk link and desk PIN below; desk access does more, so share it only with people running the day.</div>
       {(missing.length > 0 || !have.has(0)) && (
         <div className="row" style={{ flexWrap: 'wrap', gap: 10 }}>
           {missing.length > 0 && <button type="button" className="btn" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, missing), `Made ${missing.length} court link${missing.length > 1 ? 's' : ''}`)}>{have.size ? `Add links for ${missing.length} more court${missing.length > 1 ? 's' : ''}` : `Create referee links (${t.courts})`}</button>}
-          {!have.has(0) && <button type="button" className="btn ghost" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, [null]), 'Made an any-court link')}>Add an any-court link</button>}
+          {!have.has(0) && <button type="button" className="btn ghost" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, [null]), 'Made a roaming referee link')}>Add a roaming referee link</button>}
         </div>
       )}
       {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}

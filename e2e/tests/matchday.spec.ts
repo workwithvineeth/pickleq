@@ -28,5 +28,5 @@ test('match day keeps tournament tabs, desk and point scoring usable on a phone'
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
  const originalId=deskUrl.split("/").at(-1)!;
  const emptyId=await page.evaluate(originalId=>{const k="pq-club-demo-v1",d=JSON.parse(localStorage.getItem(k)!),id=crypto.randomUUID(),t=d.tournaments.find((t:{id:string})=>t.id===originalId),v=d.divisions.find((v:{tournamentId:string})=>v.tournamentId===originalId);d.tournaments.push({...t,id,name:"Empty match-day fixture",status:"draft",drawnAt:undefined,isPublic:false,publicSlug:"empty-"+id});d.divisions.push({...v,id:crypto.randomUUID(),tournamentId:id,advance:0});localStorage.setItem(k,JSON.stringify(d));return id;},originalId);
- await page.goto("#/club-desk/"+emptyId);await page.reload();await expect(page.getByText("Queue empty",{exact:true}).first()).toBeVisible();await expect(page.getByRole("progressbar",{name:"Matches completed"})).toHaveCount(0);
+ await page.goto("#/club-desk/"+emptyId);await page.reload();await expect(page.getByText("No match ready to call",{exact:true}).first()).toBeVisible();await expect(page.getByRole("progressbar",{name:"Matches completed"})).toHaveCount(0);
 });
