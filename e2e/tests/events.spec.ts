@@ -215,7 +215,7 @@ test.describe('Create freely, go live with approval (demo club on the phone)', (
     await page.getByLabel('Phone number').fill('98765 43210');
     await page.getByRole('button', { name: 'Create club' }).click();
     await page.getByRole('region',{name:'Your tournaments'}).getByRole('button', { name: 'Create tournament',exact:true }).click();
-    await expect(page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'I pick them' })).toHaveCount(0);
+    await expect(page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'I add the players' })).toHaveCount(0);
     await page.getByLabel('Tournament name').fill('Robot Yard Open');
     await page.getByLabel('City').fill('Pune');
     await page.getByLabel('Venue').fill('Yard Courts');
@@ -350,7 +350,7 @@ test.describe('Club logos and the new demo events (demo club on the phone)', () 
     await page.goto('#/demo');
     await page.getByLabel('Your name in the demo').fill('Robot');
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
-    await page.getByRole('navigation', { name: 'Club / Organiser sections' }).getByRole('button', { name: 'Club profile' }).click();
+    await page.getByRole('group', { name: 'Club sections' }).getByRole('button', { name: 'Club profile' }).click();
     const hero = page.getByRole('region', { name: 'PQ Demo Club club' });
     await expect(hero.getByRole('img', { name: 'PQ Demo Club logo' })).toBeVisible();
     await expect(hero.getByRole('button', { name: 'Change logo' })).toBeVisible();
@@ -372,7 +372,7 @@ test.describe('Admin home in the demo (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await page.goto('#/club');
     await expect(page.getByRole('heading', { name: 'Clubs', exact: true })).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Clubs' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main' }).first().getByRole('link', { name: 'For clubs' })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByRole('region', { name: 'Demo tour' })).toBeVisible();
     await expect(page.getByRole('button', { name: /3 tournaments waiting for your approval/ })).toBeVisible();
     const all = page.getByRole('region', { name: 'All clubs on RallyQ' });

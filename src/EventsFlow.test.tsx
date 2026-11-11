@@ -224,7 +224,7 @@ describe('Posting a tournament and approving it', () => {
     const clubId = window.location.hash.split('/')[2];
     window.location.hash = `#/club-tournament-new/${clubId}`;
     await screen.findByRole('heading', { name: 'Create tournament' });
-    await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'They register' }));
+    await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'Players request entry' }));
     await user.type(screen.getByLabelText('Tournament name'), 'Robot Mixed Cup');
     await user.type(screen.getByLabelText('City'), 'Hyderabad');
     await user.type(screen.getByLabelText('Venue'), 'Robot Courts');
@@ -255,15 +255,15 @@ describe('Posting a tournament and approving it', () => {
     const clubId = window.location.hash.split('/')[2];
     window.location.hash = `#/club-tournament-new/${clubId}`;
     await screen.findByRole('heading', { name: 'Create tournament' });
-    await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'List only' }));
+    await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'Listing only' }));
     expect(screen.queryByRole('group', { name: 'Courts' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Tournament name'), 'Robot Listed Open');
     await user.type(screen.getByLabelText('City'), 'Hyderabad');
     await user.type(screen.getByLabelText('Venue'), 'Robot Park');
-    await user.click(screen.getByRole('button', { name: 'Post the listing' }));
+    await user.click(screen.getByRole('button', { name: 'Submit listing for approval' }));
     expect(await screen.findByText('Add a contact number or a link so players can enter')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Contact number for entries'), '90000 11111');
-    await user.click(screen.getByRole('button', { name: 'Post the listing' }));
+    await user.click(screen.getByRole('button', { name: 'Submit listing for approval' }));
     await screen.findByRole('heading', { name: 'Robot Listed Open' });
     expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('Listed');
     expect(screen.queryByRole('button', { name: 'Entries and draw' })).not.toBeInTheDocument();
@@ -294,7 +294,7 @@ describe('Create freely, go live with approval', () => {
     await user.click(within(await screen.findByRole('region',{name:'Your tournaments'})).getByRole('button', { name: 'Create tournament' }));
     await screen.findByRole('heading', { name: 'Create tournament' });
     // Picking players makes the draw at once, so a club that isn't trusted only gets "They register" and "List only".
-    expect(within(screen.getByRole('group', { name: 'How do players enter?' })).queryByRole('button', { name: 'I pick them' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('group', { name: 'How do players enter?' })).queryByRole('button', { name: 'I add the players' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Tournament name'), 'Smash Yard Open');
     await user.type(screen.getByLabelText('City'), 'Pune');
     await user.type(screen.getByLabelText('Venue'), 'Yard Courts');

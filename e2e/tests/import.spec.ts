@@ -19,11 +19,10 @@ test.describe('PaddleQ app', () => {
     await page.getByRole('link', { name: 'Club sign in' }).locator('visible=true').first().click();
     await expect(page).toHaveURL(/#\/club(-signin)?$/);
     await page.goto('#/club');
-    const nav = page.getByRole('navigation', { name: 'Main' });
-    for (const t of ['Events', 'My club', 'Results']) await expect(nav.getByRole('button', { name: t })).toBeVisible();
-    // The separate Tournaments tab is gone (Phase 3): tournaments live under My clubs.
-    await expect(nav.getByRole('button', { name: 'Tournaments' })).toHaveCount(0);
-    for (const t of ['Home', 'Train', 'Stats', 'Coach']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
+    // v1.2: the public shell's menu (no personal-app tabs anywhere).
+    const nav = page.getByRole('navigation', { name: 'Main' }).first();
+    for (const t of ['Live scores', 'Events', 'Player Studio', 'For clubs']) await expect(nav.getByRole('link', { name: t })).toHaveCount(1);
+    for (const t of ['Home', 'Train', 'Stats', 'Coach', 'Tournaments']) await expect(nav.getByRole('button', { name: t })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Log a match' })).toHaveCount(0);
     // Signed out, My clubs is the sign-in page; the demo lives in the admin dashboard, not here.
     await expect(page.getByRole('heading', { name: /Your court\./, level: 1 })).toBeVisible();
@@ -34,8 +33,7 @@ test.describe('PaddleQ app', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
     await page.goto('#/stats');
     await expect(page.getByRole('heading', { name: /Your court\./, level: 1 })).toBeVisible();
-    await nav.getByRole('button', { name: 'Results' }).click();
-    await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
+
   });
 });
 
@@ -46,7 +44,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
     await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
     await page.getByRole('region',{name:'Your tournaments'}).getByRole('button', { name: 'Create tournament',exact:true }).click();
-    await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
+    await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'Players request entry' }).click();
     await page.getByLabel('Tournament name').fill('Robot Split Form Cup');
     await page.getByLabel('City').fill('Hyderabad');
     await page.getByLabel('Venue').fill('Robot Courts');
@@ -82,7 +80,7 @@ test.describe('Google Form import to draw (demo club on the phone)', () => {
 
     // A tournament where players register (on a Google Form), with a team-average DUPR cap for doubles.
     await page.getByRole('region',{name:'Your tournaments'}).getByRole('button', { name: 'Create tournament',exact:true }).click();
-    await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'They register' }).click();
+    await page.getByRole('group', { name: 'How do players enter?' }).getByRole('button', { name: 'Players request entry' }).click();
     await page.getByLabel('Tournament name').fill('Robot Form Cup');
     await page.getByLabel('City').fill('Hyderabad');
     await page.getByLabel('Venue').fill('Robot Courts');

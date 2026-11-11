@@ -31,8 +31,8 @@ describe('Admin dashboard numbers', () => {
   });
 
   it('says how this week compares with last week', () => {
-    expect(trend([{ matches: 3 }, { matches: 5 }])).toBe('up 2 on last week');
-    expect(trend([{ matches: 5 }, { matches: 1 }])).toBe('down 4 on last week');
+    expect(trend([{ matches: 3 }, { matches: 5 }])).toBe('2 more than last week');
+    expect(trend([{ matches: 5 }, { matches: 1 }])).toBe('4 fewer than last week');
     expect(trend([{ matches: 2 }, { matches: 2 }])).toBe('same as last week');
   });
 });

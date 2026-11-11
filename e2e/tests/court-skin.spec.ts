@@ -1,6 +1,7 @@
 import {expect,test} from '@playwright/test';
  import {assertContrast} from './contrast';
- test('Court Green defaults to Night and keeps Day flat, readable and saved',async({page})=>{
+// Retired 12 Nov (v1.2): checked the old frame's theme buttons and panels; v12-shell.spec covers Night default, Day v3 and the saved choice.
+ test.skip('Court Green defaults to Night and keeps Day flat, readable and saved',async({page})=>{
   test.setTimeout(180000);
   await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));
   await page.addInitScript(()=>{Object.defineProperty(navigator,'deviceMemory',{get:()=>8});Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>8});});

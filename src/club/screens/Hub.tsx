@@ -629,7 +629,7 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
   }
   return (
     <PublicShell go={go} active="clubs">
-      <PageHead cap="For clubs" title={<span id="newclub-title">Create a club</span>} sub="Your club leads on every page players see. RallyQ signs off small and last." actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <PageHead cap="For clubs" title={<span id="newclub-title">Create a club</span>} sub="Your club’s name and logo come first on event pages, scores and results. RallyQ stays in the background." actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
       <section className="card" style={{ padding: 22, maxWidth: 640 }}><Legacy style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <Field label="Club name"><input className="input" aria-label="Club name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
       <Field label="City (optional)"><input className="input" aria-label="City" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} /></Field>

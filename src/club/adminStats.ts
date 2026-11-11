@@ -32,5 +32,5 @@ export function trend(weeks: { matches: number }[]): string {
   const now = weeks[weeks.length - 1].matches;
   const before = weeks[weeks.length - 2].matches;
   if (now === before) return 'same as last week';
-  return now > before ? `up ${now - before} on last week` : `down ${before - now} on last week`;
+  return now > before ? `${now - before} more than last week` : `${before - now} fewer than last week`;
 }

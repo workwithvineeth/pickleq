@@ -115,7 +115,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       <section className="card" style={{ flex: '999 1 560px', minWidth: 0, padding: 22 }}><Legacy style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Status error={club.error} loading={club.loading && !club.data} />
       <Field label="How do players enter?">
-        <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I pick them' }] : []), { value: 'registration', label: 'They register' }, ...(club.data?.platformDraft ? [] : [{ value: 'listed' as const, label: 'List only' }])]} onChange={setPost} />
+        <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I add the players' }] : []), { value: 'registration', label: 'Players request entry' }, ...(club.data?.platformDraft ? [] : [{ value: 'listed' as const, label: 'Listing only' }])]} onChange={setPost} />
       </Field>
       {club.data && !pickOk && <p className="small muted" style={{ margin: 0 }}>Set it up and add your entries now; RallyQ approves the tournament before the draw, links and entry link open. Submit at least 24 hours before your event.</p>}
       <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on RallyQ.'}</p>
@@ -166,10 +166,10 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       <button type="button" className="btn btn-outline" onClick={() => setDivs((ds) => [...ds, newDraft(ds.some((x) => x.kind === 'doubles') ? 'singles' : 'doubles')])}>Add another event</button>
       {post === 'roster' && b && club.data && <WalkIn b={b} clubId={clubId} onAdded={(p) => { setMsg(null); club.reload(); setDivs((ds) => ds.map((d, j) => (j === ds.length - 1 ? { ...d, picked: [...d.picked, p.id] } : d))); }} />}
       {post === 'roster' && <DayEstimateBox events={divs.map((d) => ({ name: d.name, entries: entryCount(d), ...d.fmt }))} courts={courts} slotMinutes={slot} startTime={time} finishBy={finishBy} onFinishBy={setFinishBy} onUse={(i, c) => update(i, { fmt: { ...divs[i].fmt, ...c } })} />}
-      {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players are seeded by DUPR and spread across pools so the strongest don’t meet early. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
+      {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players with a DUPR rating are seeded across pools, so the top seeds start in different pools; players without one show as Unrated. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
       {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by RallyQ before it shows on the board. Adults only (18+).</p>}
       {msg && <div role="status" className="warn">{msg}</div>}
-      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Post the listing' : post === 'registration' ? 'Save draft' : 'Create tournament'}</button>
+      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Submit listing for approval' : post === 'registration' ? 'Save draft' : 'Create tournament'}</button>
       </Legacy></section>
       {post !== 'roster' && <aside className="card" aria-label="Preview on Events" style={{ flex: '1 1 300px', minWidth: 0, padding: 20, display: 'flex', flexDirection: 'column', gap: 10, position: 'sticky', top: 20 }}>
         <div className="cap">Preview on Events</div>

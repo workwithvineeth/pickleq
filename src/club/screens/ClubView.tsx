@@ -39,7 +39,7 @@ export function ClubView({ clubId: routeId, go }: { clubId: string; go: Go; onBa
   return (
     <OrgShell go={go} active={tab === 'events' ? 'tournaments' : tab === 'overview' ? 'home' : 'club'} clubName={d?.club.name} clubId={clubId}>
       {tab !== 'overview' && <PageHead cap={d ? `${d.club.city ? `${d.club.city} · ` : ''}${ROLE_LABEL[d.role]}` : 'Club'} title={<span id="clubview-title">{d?.club.name ?? 'Club'}</span>} actions={d?.club.trusted ? <span className="st ok">Trusted</span> : undefined} />}
-      {tab === 'overview' && <h1 id="clubview-title" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{isClubApp() ? 'Overview' : d?.club.name ?? 'Club'}</h1>}
+      {tab === 'overview' && <PageHead cap={isClubApp() ? <span role="heading" aria-level={2}>Overview</span> : 'Overview'} title={<span id="clubview-title">{d?.club.name ?? 'Club'}</span>} actions={d?.club.trusted ? <span className="st ok">Trusted</span> : undefined} />}
       <Legacy cards style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Status error={state.error} loading={state.loading && !d} />
       {tab !== 'overview' && <DemoNote b={b} />}

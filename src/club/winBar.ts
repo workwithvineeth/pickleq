@@ -21,7 +21,7 @@ export function winBarFrom(e: WinEstimate | null, nameA: string, nameB: string):
     a: `${first(nameA)} ${e.a}%`,
     b: `${first(nameB)} ${e.b}%`,
     wa: `${e.a}%`,
-    note: e.basis === 'dupr' ? 'Before the match: from DUPR' : e.basis === 'rallies' ? 'From every rally so far' : 'From DUPR and every rally so far',
+    note: e.basis === 'dupr' ? 'Before the match: from DUPR' : e.basis === 'rallies' ? 'Based on the match score so far' : 'Based on DUPR ratings and the match score so far',
     clsA: lead ? 'wp-lead' : 'wp-other',
     clsB: lead ? 'wp-other' : 'wp-lead',
     // A's share on the left, B's on the right; the leader's part is ball-yellow, the other muted.

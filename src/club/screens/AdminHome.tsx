@@ -30,7 +30,7 @@ export function AdminCommandCentre({ go }: { go: Go }) {
         <div className="pq-kpis">
           <Kpi label="Clubs" value={d.o.clubs} sub={`${d.o.verifiedClubs} trusted${reviewClubs.length ? ` · ${reviewClubs.length} requesting review` : ''}`} onClick={() => go('admin', 'clubs')} />
           <Kpi label="Active events" value={d.o.live + d.o.upcoming} sub={`${d.o.live} live · ${d.o.upcoming} coming up`} onClick={() => go('admin', 'tournaments')} />
-          <Kpi label="To approve" value={waiting.length} sub={`${entries} player entries open · ${d.o.entriesWeek} this week`} onClick={() => go('admin', 'approvals')} />
+          <Kpi label="To approve" value={waiting.length} sub={`${entries} player entries in open events · ${d.o.entriesWeek} new this week`} onClick={() => go('admin', 'approvals')} />
           <Kpi label="Matches this week" value={d.o.matchesWeek} sub={trend(d.o.weeks)} onClick={() => go('admin', 'results')} />
         </div>
         <div className="pq-panels">

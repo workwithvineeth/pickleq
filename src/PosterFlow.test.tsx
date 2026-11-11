@@ -39,14 +39,14 @@ describe('Poster upload', () => {
     await screen.findByRole('heading', { name: 'PQ Demo Club' });
     window.location.hash = `#/club-tournament-new/${window.location.hash.split('/')[2]}`;
     await screen.findByRole('heading', { name: 'Create tournament' });
-    await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'List only' }));
+    await user.click(within(screen.getByRole('group', { name: 'How do players enter?' })).getByRole('button', { name: 'Listing only' }));
     await user.upload(screen.getByLabelText('Poster picture'), new File(['photo'], 'poster.png', { type: 'image/png' }));
     expect(await screen.findByText(/Poster ready/)).toBeInTheDocument();
     await user.type(screen.getByLabelText('Tournament name'), 'Robot Poster Cup');
     await user.type(screen.getByLabelText('City'), 'Hyderabad');
     await user.type(screen.getByLabelText('Venue'), 'Robot Park');
     await user.type(screen.getByLabelText('Contact number for entries'), '90000 11111');
-    await user.click(screen.getByRole('button', { name: 'Post the listing' }));
+    await user.click(screen.getByRole('button', { name: 'Submit listing for approval' }));
     const card = await screen.findByRole('region', { name: 'Events board' });
     expect(within(card).getByRole('img', { name: 'Poster for Robot Poster Cup' }).getAttribute('src')).toMatch(/^data:image\/jpeg/);
   });

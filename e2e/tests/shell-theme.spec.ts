@@ -73,7 +73,8 @@ test.skip('shell matrix: themes, scroll strip, WCAG contrast and twenty screensh
   await page.reload(); await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
-test('rail, switch and visible focus follow keyboard order', async ({ page }) => {
+// Retired 12 Nov (v1.2): the old 'Where you are' bar, rail and Auto/Light/Dark buttons are gone from club pages; v12-shell.spec covers the new Day/Night switch.
+test.skip('rail, switch and visible focus follow keyboard order', async ({ page }) => {
   await page.setViewportSize({ width: 1100, height: 900 }); await demo(page);
   const rail = page.getByRole('navigation', { name: 'Club / Organiser menu' });
   await rail.getByRole('button', { name: 'Overview', exact: true }).focus(); await page.keyboard.press('Tab');
@@ -98,7 +99,8 @@ test('saved theme runs before app JavaScript and obeys CSP', async ({ page }) =>
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe('rgb(6, 20, 13)');
 });
 
-test('live chip uses public demo courts, has readable labels and opens existing results', async ({ page }) => {
+// Retired 12 Nov (v1.2): the old 'Where you are' bar, rail and Auto/Light/Dark buttons are gone from club pages; v12-shell.spec covers the new Day/Night switch.
+test.skip('live chip uses public demo courts, has readable labels and opens existing results', async ({ page }) => {
   await page.setViewportSize({ width: 1100, height: 900 }); await demo(page);
   const count = await page.evaluate(() => {
     const data = JSON.parse(localStorage.getItem('pq-club-demo-v1')!);
@@ -121,7 +123,8 @@ test('live chip uses public demo courts, has readable labels and opens existing 
   await expect(page.locator('[data-score-announcement]')).toHaveAttribute('aria-live', 'polite');
 });
 
-test('phone Settings and its theme choices work with the keyboard', async ({ page }) => {
+// Retired 12 Nov (v1.2): the old 'Where you are' bar, rail and Auto/Light/Dark buttons are gone from club pages; v12-shell.spec covers the new Day/Night switch.
+test.skip('phone Settings and its theme choices work with the keyboard', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 }); await demo(page);
   await page.getByLabel('Account menu').click();
   const settings = page.getByRole('banner', { name: 'Where you are' }).locator('.pq-theme-settings');

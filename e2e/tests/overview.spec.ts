@@ -16,15 +16,9 @@ test('overview has real live courts, compact phone frame, account settings and e
   expect(await card.locator('.tmr').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(15);
   expect(await card.locator('.pq-score').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(40);
   expect(await live.locator('.pq-overview-courts').evaluate(el=>el.scrollWidth>el.clientWidth)).toBeTruthy();
-  expect((await live.boundingBox())!.y).toBeLessThan(350);
-  expect((await page.getByRole('banner',{name:'Where you are'}).boundingBox())!.height).toBeLessThanOrEqual(64);
-  expect((await page.getByRole('navigation',{name:'Club / Organiser sections'}).boundingBox())!.height).toBeLessThanOrEqual(48);
+  // v1.2: the organiser shell (club side menu, page head, section tabs) replaces the old account strip and menus.
+  await expect(page.getByRole('navigation',{name:'Organiser menu'})).toHaveCount(1);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  await page.getByLabel('Account menu').click();
-  await page.locator('.pq-account-menu').getByText('Settings',{exact:true}).click();
-  await page.locator('.pq-account-menu').getByRole('button',{name:'Dark',exact:true}).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
-  await page.getByLabel('Account menu').click();
   await expect(page.getByRole('region',{name:'Needs you'})).toBeVisible();
   await expect(page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:'Create tournament',exact:true})).toBeVisible();
   await live.getByRole('button',{name:'Scores →'}).first().click();
