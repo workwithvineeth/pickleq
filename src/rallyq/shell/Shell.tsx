@@ -19,7 +19,10 @@ export function ModeButton({auto=false}:{auto?:boolean}={}){const day=useDay(),s
 export function Signoff({text='Scores by',onClick}:{text?:string;onClick?:()=>void}){const inner=<><span>{text}</span><QMark/><span className="word">RallyQ</span></>;return onClick?<a className="signoff" href="#/" onClick={e=>{e.preventDefault();onClick()}}>{inner}</a>:<span className="signoff">{inner}</span>;}
 export interface Host{marks:string[];cap?:string;name:string}
 export const ALL_CLUBS:Host={marks:['R33','LP','TPC','EP'],cap:'Hosted by',name:'Hyderabad’s clubs'};
-export function clubMark(name:string){return name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase();}
+/** Short club name: "Rally33 at Crosscourts" → "Rally33". */
+export function clubShort(name:string){return name.trim().split(/\s+(?:at|@)\s+/i)[0]||name.trim();}
+/** Club tile letters: "Rally33 at Crosscourts" → "R33", "The Pickleball Company" → "TPC", "Loki" → "LOK". */
+export function clubMark(name:string){const w=clubShort(name).split(/\s+/).filter(Boolean);if(w.length===1){const m=w[0].match(/^(\p{L})\p{L}*(\d+)$/u);return(m?m[1]+m[2]:w[0]).slice(0,3).toUpperCase();}return w.map(x=>x[0]).join('').slice(0,3).toUpperCase();}
 export function HostBlock({host,onClick}:{host:Host;onClick?:()=>void}){
  const tiles=host.marks.map((m,i)=><span key={i} className="tile">{m}</span>);
  return <a className="host" href="#/" onClick={e=>{e.preventDefault();onClick?.()}}>{host.marks.length>1?<span className="tiles">{tiles}</span>:tiles}<span><span className="cap">{host.cap??'Hosted by'}</span><b>{host.name}</b></span></a>;
@@ -50,7 +53,7 @@ export function OrgShell({go,active,clubName='Your club',clubId,tournament,child
  const reg=useCallback((k:'mode'|'head')=>{setN(c=>({...c,[k]:c[k]+1}));return()=>setN(c=>({...c,[k]:c[k]-1}));},[]);
  const slot=useMemo(()=>({reg,hasMode:n.mode>0}),[reg,n.mode]);
  return <Frame><div className="shell"><aside className="side" aria-label="Organiser menu"><HostBlock host={{marks:[clubMark(clubName)],name:clubName}} onClick={()=>go('club')}/>
-  <span className="cap grp">Club</span>{item('home','Home',()=>go('club'))}{item('tournaments','Tournaments',()=>go('club-tournaments'))}{clubId&&item('club','Club & team',()=>go('club-view',clubId))}{t?.slug&&item('social','Social studio',()=>go('club-social',t.slug!))}
+  <span className="cap grp">{clubShort(clubName)}</span>{item('home','Home',()=>go('club'))}{item('tournaments','Tournaments',()=>go('club-tournaments'))}{clubId&&item('club','Club & team',()=>go('club-view',clubId))}{t?.slug&&item('social','Social studio',()=>go('club-social',t.slug!))}
   {t&&<><span className="cap grp">{t.name}</span>{item('entries','Entries & UPI',()=>go('club-inbox',t.id))}{item('draw','Pools & knockouts',()=>go('club-tournament',t.id))}{item('desk','Desk',()=>go('club-desk',t.id))}{item('referees','Referees & results',()=>go('club-scorers',t.id))}{t.slug&&item('tv','TV board',()=>go('club-tv',t.slug!))}</>}
   <Signoff text="Run on" onClick={()=>go('club')}/></aside>
   <main className="main" style={{display:'flex',flexDirection:'column',gap:22}}><OrgSlot.Provider value={slot}>{n.mode===0&&n.head===0&&<div className="row" style={{justifyContent:'flex-end'}}><ModeButton auto/></div>}{children}</OrgSlot.Provider></main></div></Frame>;
