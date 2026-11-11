@@ -57,15 +57,15 @@ describe('Events tab (Club builds only)', () => {
     await openDemo(user);
     window.location.hash = '#/home';
     await goTab(user, 'Events');
-    expect(await screen.findByRole('heading', { name: 'Events' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Find your next main event.' })).toBeInTheDocument();
     for (const name of ['PQ Demo Night', 'PQ Demo Sunday Social', 'PQ Demo Women’s Open']) {
       const card = await screen.findByRole('button', { name });
       expect(within(card).getByRole('img', { name: `Poster for ${name}` })).toBeInTheDocument();
     }
     for (const name of ['PQ Demo Ladder Cup', 'PQ Demo Corporate Cup']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     const recent = screen.getByRole('region', { name: 'Recent results' });
-    expect(within(recent).getByRole('button', { name: 'PQ Demo Diwali Doubles results' })).toBeInTheDocument();
-    expect(within(recent).getByRole('button', { name: 'PQ Demo Monsoon Singles results' })).toBeInTheDocument();
+    expect(within(recent).getByRole('link', { name: 'PQ Demo Diwali Doubles results' })).toBeInTheDocument();
+    expect(within(recent).getByRole('link', { name: 'PQ Demo Monsoon Singles results' })).toBeInTheDocument();
     await user.click(within(screen.getByRole('group', { name: 'Show' })).getByRole('button', { name: 'Entries open' }));
     expect(screen.queryByRole('button', { name: 'PQ Demo Sunday Social' })).not.toBeInTheDocument();
 
@@ -99,7 +99,7 @@ describe('Events tab (Club builds only)', () => {
     const user = userEvent.setup();
     await openDemo(user);
     window.location.hash = '#/events';
-    await user.click(await screen.findByRole('button', { name: 'PQ Demo Diwali Doubles results' }));
+    await user.click(await screen.findByRole('link', { name: 'PQ Demo Diwali Doubles results' }));
     expect(await screen.findByRole('heading', { name: 'PQ Demo Diwali Doubles' })).toBeInTheDocument();
     expect(screen.getByText(/Finished/)).toBeInTheDocument();
     expect(within(screen.getByRole('table', { name: 'Pool A' })).getAllByRole('row')).toHaveLength(7);
@@ -127,21 +127,28 @@ describe('Entering a tournament', () => {
     expect(within(men).getByText('Men · Doubles · DUPR 3.5 and under · ₹600')).toBeInTheDocument();
     expect(within(men).getByText('3 of 8 left')).toBeInTheDocument();
     await user.click(within(men).getByRole('button', { name: 'Enter Men’s Doubles 3.5' }));
-    await screen.findByRole('heading', { name: 'Enter Men’s Doubles 3.5' });
+    await screen.findByRole('heading', { name: 'Who’s your partner?' });
+    expect(screen.getByRole('complementary', { name: 'Your entry' })).toHaveTextContent('Men’s Doubles 3.5');
     await fillPerson(user, 'You', { name: 'Robot Player', phone: '98111 11111', dupr: '3.62', age: '30', gender: 'Man' });
     await fillPerson(user, 'Partner', { name: 'Robot Partner', phone: '98111 11112', dupr: '3.1', age: '17', gender: 'Man' });
-    await user.click(screen.getByRole('button', { name: 'Send my entry' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Robot Player: rating 3.62 is above this event’s cap of 3.5');
     await fillPerson(user, 'You', { name: 'Robot Player', phone: '98111 11111', dupr: '3.42', age: '30', gender: 'Man' });
-    await user.click(screen.getByRole('button', { name: 'Send my entry' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('18 or over');
     await fillPerson(user, 'Partner', { name: 'Robot Partner', phone: '98111 11112', dupr: '3.1', age: '27', gender: 'Man' });
-    await user.click(within(screen.getByRole('group', { name: 'How you’ll pay' })).getByRole('button', { name: 'Paid by UPI' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByRole('heading', { name: 'Pay the club.' });
+    expect(screen.getByText(/RallyQ never holds money/)).toBeInTheDocument();
+    // A UPI payment needs its reference before the entry can go.
+    await user.click(within(screen.getByRole('group', { name: 'How you’ll pay' })).getByRole('button', { name: /^UPI now/ }));
+    await user.click(screen.getByRole('button', { name: 'Send my entry' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Add the UPI reference number');
     expect(screen.getByRole('link', { name: 'Pay ₹600 by UPI to pqdemo@upi' }).getAttribute('href')).toMatch(/^upi:\/\/pay\?pa=pqdemo%40upi&.*am=600/);
     await user.type(screen.getByLabelText('UPI reference number'), '412398765432');
     await user.click(screen.getByRole('button', { name: 'Send my entry' }));
     expect(await screen.findByText(/You’re entered in Men’s Doubles 3.5/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'My entries' }));
+    await user.click(screen.getByRole('button', { name: 'See my entries' }));
     const entry = await screen.findByRole('region', { name: 'PQ Demo Night: Men’s Doubles 3.5' });
     expect(within(entry).getByText('Waiting for the organiser')).toBeInTheDocument();
     expect(within(entry).getByText('Paid by UPI (to confirm)')).toBeInTheDocument();

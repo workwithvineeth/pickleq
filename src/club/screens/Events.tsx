@@ -1,6 +1,6 @@
 import { EventPhotoHeader } from './MatchdayHeader';
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
-import { Field, Segmented } from '../../components/Controls';
+import { Segmented } from '../../components/Controls';
 import { routeHash, type Go, type RouteName } from '../../navigation';
 import { clubMark, PageHead, PublicShell } from '../../rallyq/shell/Shell';
 import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backend';
