@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Field } from '../../components/Controls';
 import type { NewMatch } from '../../db/matches';
 import type { Go } from '../../navigation';
@@ -7,7 +7,8 @@ import { backend, demoBackend, serverBackend, takeReturn } from '../index';
 import { emailOk, MIN_PASSWORD, passwordProblem } from '../authText';
 import { BigLogo } from './Poster';
 import { joinPhone, PhoneField, phoneProblem } from './Phone';
-import { Arrow, BrandMark, FlowHeader, LandingHero } from './Brand';
+import { BrandMark } from './Brand';
+import { PublicShell } from '../../rallyq/shell/Shell';
 import type { AdminClub, ClubBackend, MyClub, TournamentAccess } from '../backend';
 import { PinPair } from './Access';
 import { isApproved, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
@@ -341,7 +342,7 @@ type SignInStep = 'signin' | 'signup' | 'confirm' | 'forgot' | 'reset';
 /** Organisers and admins: email + password (at least 8 characters). New accounts confirm their email with a 6-digit
  * code; "Forgot password" sends a code too. `admin` is the RallyQ admin sign-in page: no new accounts, and it only
  * lets platform admins through to the admin dashboard. */
-export function ClubSignIn({ go, onBack, admin = false, landing = false, onSignedIn }: { go: Go; onBack: () => void; admin?: boolean; landing?: boolean; onSignedIn?: () => void }) {
+export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: { go: Go; onBack: () => void; admin?: boolean; landing?: boolean; onSignedIn?: () => void }) {
   const [step, setStep] = useState<SignInStep>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -411,142 +412,141 @@ export function ClubSignIn({ go, onBack, admin = false, landing = false, onSigne
 
   const enter = (fn: () => void) => (e: React.KeyboardEvent) => { if (e.key === 'Enter') fn(); };
   const pwOk = { len: password.length >= MIN_PASSWORD, mix: /[A-Za-z]/.test(password) && /\d/.test(password) };
+  const showBtn = <button type="button" className="tlink" style={{ minHeight: 44, fontSize: 13 }} aria-pressed={show} onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</button>;
   const emailField = (
-    <div className="pq-field">
-      <label className="pq-label" htmlFor="pq-email">Email</label>
-      <input id="pq-email" className="input pq-input" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email}
+    <div className="fld">
+      <label htmlFor="pq-email">Email</label>
+      <input id="pq-email" className="inp" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email}
         onChange={(e) => setEmail(e.target.value)} disabled={step === 'confirm' || step === 'reset'} />
     </div>
   );
   const newPasswordFields = (onEnter: () => void) => (
     <>
-      <div className="pq-field">
-        <label className="pq-label" htmlFor="pq-new">{step === 'reset' ? 'New password' : 'Choose a password'}</label>
-        <div className="pq-pw">
-          <input id="pq-new" className="input pq-input" type={show ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <button type="button" className="pq-show" aria-pressed={show} onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</button>
-        </div>
-        <ul className="pq-rules" aria-label="Password rules">
-          <li className={pwOk.len ? 'pq-ok' : ''}>{pwOk.len && <Tick />}{MIN_PASSWORD}+ characters</li>
-          <li className={pwOk.mix ? 'pq-ok' : ''}>{pwOk.mix && <Tick />}Letters and numbers</li>
+      <div className="fld">
+        <div className="between"><label htmlFor="pq-new">{step === 'reset' ? 'New password' : 'Choose a password'}</label>{showBtn}</div>
+        <input id="pq-new" className="inp" type={show ? 'text' : 'password'} autoComplete="new-password" placeholder={`At least ${MIN_PASSWORD} characters`} value={password} onChange={(e) => setPassword(e.target.value)} />
+        <ul aria-label="Password rules" className="row" style={{ listStyle: 'none', margin: 0, padding: 0, gap: 16, flexWrap: 'wrap', fontSize: 13 }}>
+          <li className={pwOk.len ? undefined : 'mut'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{pwOk.len && <Tick />}{MIN_PASSWORD}+ characters</li>
+          <li className={pwOk.mix ? undefined : 'mut'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{pwOk.mix && <Tick />}Letters and numbers</li>
         </ul>
       </div>
-      <div className="pq-field">
-        <label className="pq-label" htmlFor="pq-again">Type it again</label>
-        <input id="pq-again" className="input pq-input" type={show ? 'text' : 'password'} autoComplete="new-password" aria-label="Password again" value={again} onChange={(e) => setAgain(e.target.value)} onKeyDown={enter(onEnter)} />
+      <div className="fld">
+        <label htmlFor="pq-again">Type it again</label>
+        <input id="pq-again" className="inp" type={show ? 'text' : 'password'} autoComplete="new-password" aria-label="Password again" value={again} onChange={(e) => setAgain(e.target.value)} onKeyDown={enter(onEnter)} />
       </div>
     </>
   );
   const codeField = (onEnter: () => void) => (
-    <div className="pq-field">
-      <label className="pq-label" htmlFor="pq-code">6-digit code</label>
-      <input id="pq-code" className="input pq-input pq-code" inputMode="numeric" autoComplete="one-time-code" maxLength={7} placeholder="••••••" value={code}
+    <div className="fld">
+      <label htmlFor="pq-code">6-digit code</label>
+      <input id="pq-code" className="inp n" style={{ fontSize: 24, letterSpacing: '.3em' }} inputMode="numeric" autoComplete="one-time-code" maxLength={7} placeholder="••••••" value={code}
         onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, ''))} onKeyDown={enter(onEnter)} />
-      <span className="small muted">From RallyQ &lt;hello@paddleq.in&gt;. Works for one hour.</span>
+      <span className="hint">From RallyQ &lt;hello@paddleq.in&gt;. Works for one hour.</span>
     </div>
   );
-  const message = msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>;
+  const message = msg && <div role={msg.ok ? 'status' : 'alert'} className="note" style={msg.ok ? undefined : { background: 'transparent', boxShadow: 'inset 0 0 0 1.5px var(--err)' }}>{msg.text}</div>;
+  // One ball-yellow button per state: the step's next action.
   const primary = (label: string, busyLabel: string, fn: () => void) => (
-    <button type="button" className="btn btn-primary pq-big" disabled={busy || !b} onClick={fn}>{busy ? busyLabel : <>{label}<Arrow /></>}</button>
+    <button type="button" className="btn" style={{ width: '100%' }} disabled={busy || !b} onClick={fn}>{busy ? busyLabel : label}</button>
   );
-  const textLink = (label: string, fn: () => void) => <button type="button" className="pq-text-link" onClick={fn}>{label}</button>;
+  const textLink = (label: string, fn: () => void) => <button type="button" className="tlink" onClick={fn}>{label}</button>;
   const back = () => to('signin');
-  const mailInfo = (
-    <div className="pq-info">
-      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
-      <span>Not there in a minute? Check Spam or Promotions. Keep this screen open: copy the code from your email and come back.</span>
+  const mailInfo = <div className="mut" style={{ fontSize: 13 }}>Not there in a minute? Check Spam or Promotions. Keep this screen open: copy the code from your email and come back.</div>;
+  const title = (text: ReactNode) => <h2 className="disp" style={{ fontSize: 36, margin: 0 }}>{text}</h2>;
+  const tabs = !admin && (step === 'signin' || step === 'signup') && (
+    <div className="tabs" role="tablist" aria-label="Account">
+      {([['signin', 'Sign in'], ['signup', 'Create account']] as const).map(([k, label]) => (
+        <button key={k} type="button" role="tab" aria-selected={step === k} className={step === k ? 'tab on' : 'tab'} style={{ minHeight: 44 }} onClick={() => step !== k && to(k)}>{label}</button>
+      ))}
     </div>
   );
 
   return (
-    <main className="screen pq-screen" aria-labelledby="signin-title">
-      {step === 'signin' && (admin
-        ? <FlowHeader title="RallyQ admin" sub="For RallyQ admins only." onBack={onBack} />
-        : landing ? <LandingHero /> : <FlowHeader title="Sign in" sub="For clubs and organisers." onBack={onBack} />)}
-      {step === 'signup' && <FlowHeader title="Create your account" sub="Run your club’s tournaments on RallyQ." onBack={back} step={1} />}
-      {step === 'confirm' && <FlowHeader title="Check your email" sub={<>We sent a 6-digit code to <b>{email.trim()}</b></>} onBack={back} step={2} />}
-      {(step === 'forgot' || step === 'reset') && <FlowHeader title="Reset your password" sub={step === 'forgot' ? 'We’ll email you a 6-digit code.' : <>We sent a code to <b>{email.trim()}</b></>} onBack={back} />}
-      {!b && <div role="alert" className="msg msg-bad">The club server isn’t set up in this version.</div>}
+    <PublicShell go={go} active={admin ? null : 'clubs'} right={<></>}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'stretch' }}>
+        <section className="cglass" aria-label={admin ? 'RallyQ admin' : 'For clubs and players'} style={{ flex: '1 1 360px', minHeight: 'min(520px, 70vh)', padding: 'clamp(22px, 4vw, 32px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, borderRadius: 24, minWidth: 0 }}>
+          <svg className="lines" viewBox="0 0 440 600" preserveAspectRatio="none" aria-hidden="true" style={{ inset: 24, width: 'calc(100% - 48px)', height: 'calc(100% - 48px)' }}><g><rect x="1" y="1" width="438" height="598" /><line x1="1" y1="300" x2="439" y2="300" strokeWidth="4" /><line x1="1" y1="210" x2="439" y2="210" /><line x1="1" y1="390" x2="439" y2="390" /><line x1="220" y1="1" x2="220" y2="210" /><line x1="220" y1="390" x2="220" y2="599" /></g></svg>
+          <span className="cap" style={{ color: '#F1F4EA' }}>{admin ? 'For RallyQ admins only' : 'For clubs and players'}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <h1 id="signin-title" className="disp" style={{ fontSize: 'clamp(40px, 5vw, 72px)', margin: 0 }}>{admin ? 'RallyQ admin' : <>Your court.<br />The main event.</>}</h1>
+            <div style={{ color: '#DDEBDF', maxWidth: 440 }}>{admin ? 'Approvals, clubs and listings. Organisers sign in on the normal sign-in page.' : 'One account. Organisers run the day, players keep their Player Studio. Referees don’t need one: they open the link from the desk.'}</div>
+          </div>
+        </section>
 
-      {step === 'signin' && (
-        <>
-          {landing && !admin && (
-            <div>
-              <h2 className="pq-h2">Sign in</h2>
-              <p className="pq-sub">For clubs and organisers.</p>
+        <section className="card" aria-label="Account" style={{ flex: '1 1 420px', padding: 'clamp(20px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+          {tabs}
+          {!b && <div role="alert" className="note"><b>Not available: </b>The club server isn’t set up in this version.</div>}
+
+          {step === 'signin' && (
+            <div className="form">
+              {title(admin ? 'Admin sign in.' : 'Welcome back.')}
+              {emailField}
+              <div className="fld">
+                <div className="between">
+                  <label htmlFor="pq-password">Password</label>
+                  <span className="row" style={{ gap: 14 }}>{showBtn}<button type="button" className="tlink" style={{ minHeight: 44, fontSize: 13 }} onClick={() => to('forgot')}>Forgot password?</button></span>
+                </div>
+                <input id="pq-password" className="inp" type={show ? 'text' : 'password'} autoComplete="current-password" placeholder="Your password" value={password}
+                  onChange={(e) => setPassword(e.target.value)} onKeyDown={enter(signIn)} />
+              </div>
+              {message}
+              {primary('Sign in', 'Signing in…', signIn)}
+              {landing && !admin && <MoreWays go={go} />}
             </div>
           )}
-          {emailField}
-          <div className="pq-field">
-            <div className="pq-label-row">
-              <label className="pq-label" htmlFor="pq-password">Password</label>
-              {textLink('Forgot password?', () => to('forgot'))}
+          {step === 'signup' && (
+            <div className="form">
+              {title('Start on RallyQ.')}
+              {emailField}
+              {newPasswordFields(signUp)}
+              {message}
+              {primary('Create account', 'Creating…', signUp)}
+              <div className="mut" style={{ fontSize: 13 }}>We email you a 6-digit code to confirm it’s really you. Then create your club and prepare a tournament. RallyQ approves each tournament before it goes live; trusted clubs skip that step.</div>
             </div>
-            <div className="pq-pw">
-              <input id="pq-password" className="input pq-input" type={show ? 'text' : 'password'} autoComplete="current-password" value={password}
-                onChange={(e) => setPassword(e.target.value)} onKeyDown={enter(signIn)} />
-              <button type="button" className="pq-show" aria-pressed={show} onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</button>
-            </div>
-          </div>
-          {message}
-          {primary('Sign in', 'Signing in…', signIn)}
-          {!admin && (
-            <>
-              <div className="pq-or">New to RallyQ?</div>
-              <button type="button" className="btn btn-outline pq-big" onClick={() => to('signup')}>Create an account</button>
-            </>
           )}
-          {landing && !admin && <MoreWays go={go} />}
-          {!admin && <p className="pq-note">Referee or on the desk? Open the link your organiser sent you. No account needed.</p>}
-        </>
-      )}
-      {step === 'signup' && (
-        <>
-          {emailField}
-          {newPasswordFields(signUp)}
-          {message}
-          {primary('Create account', 'Creating…', signUp)}
-          <div className="pq-info">
-            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
-            <span>We email you a 6-digit code to confirm it’s really you. Then create your club and prepare a tournament. RallyQ approves each tournament before it goes live; trusted clubs skip that step.</span>
-          </div>
-          <p className="pq-note">Already have an account? {textLink('Sign in', back)}</p>
-        </>
-      )}
-      {step === 'confirm' && (
-        <>
-          {message}
-          {codeField(confirm)}
-          {primary('Confirm and sign in', 'Checking…', confirm)}
-          <div className="pq-row-split">
-            {textLink('Send a new code', () => void run(async () => { await b?.resendConfirm?.(email); setMsg({ ok: true, text: 'New code sent. Use the latest email.' }); }))}
-            {textLink('Use a different email', () => to('signup'))}
-          </div>
-          {mailInfo}
-        </>
-      )}
-      {step === 'forgot' && (
-        <>
-          {emailField}
-          {message}
-          {primary('Email me a code', 'Sending…', forgot)}
-          {textLink('Back to sign in', back)}
-        </>
-      )}
-      {step === 'reset' && (
-        <>
-          {message}
-          {codeField(reset)}
-          {newPasswordFields(reset)}
-          {primary('Save password and sign in', 'Saving…', reset)}
-          <div className="pq-row-split">
-            {textLink('Send a new code', () => void run(async () => { await b?.sendPasswordReset?.(email); setMsg({ ok: true, text: 'New code sent. Use the latest email.' }); }))}
-            {textLink('Back to sign in', back)}
-          </div>
-          {mailInfo}
-        </>
-      )}
-    </main>
+          {step === 'confirm' && (
+            <div className="form">
+              {title('Check your email')}
+              <div className="mut">We sent a 6-digit code to <b style={{ color: 'var(--ink)' }}>{email.trim()}</b></div>
+              {message}
+              {codeField(confirm)}
+              {primary('Confirm and sign in', 'Checking…', confirm)}
+              <div className="between" style={{ flexWrap: 'wrap' }}>
+                {textLink('Send a new code', () => void run(async () => { await b?.resendConfirm?.(email); setMsg({ ok: true, text: 'New code sent. Use the latest email.' }); }))}
+                {textLink('Use a different email', () => to('signup'))}
+              </div>
+              {mailInfo}
+            </div>
+          )}
+          {step === 'forgot' && (
+            <div className="form">
+              {title('Reset your password.')}
+              <div className="mut">We’ll email you a 6-digit code.</div>
+              {emailField}
+              {message}
+              {primary('Email me a code', 'Sending…', forgot)}
+              {textLink('← Back to sign in', back)}
+            </div>
+          )}
+          {step === 'reset' && (
+            <div className="form">
+              {title('Reset your password.')}
+              <div className="mut">We sent a code to <b style={{ color: 'var(--ink)' }}>{email.trim()}</b></div>
+              {message}
+              {codeField(reset)}
+              {newPasswordFields(reset)}
+              {primary('Save password and sign in', 'Saving…', reset)}
+              <div className="between" style={{ flexWrap: 'wrap' }}>
+                {textLink('Send a new code', () => void run(async () => { await b?.sendPasswordReset?.(email); setMsg({ ok: true, text: 'New code sent. Use the latest email.' }); }))}
+                {textLink('← Back to sign in', back)}
+              </div>
+              {mailInfo}
+            </div>
+          )}
+          {!admin && <div className="note">Referee or desk helper? Open the link your organiser sent you. No account needed.</div>}
+        </section>
+      </div>
+    </PublicShell>
   );
 }
 
@@ -560,16 +560,15 @@ function MoreWays({ go }: { go: Go }) {
   const [v, setV] = useState('');
   const code = (v.match(/club-join\/([^/?#\s]+)/)?.[1] ?? v.trim()).replace(/[^A-Za-z0-9-]/g, '');
   return (
-    <div className="pq-links">
-      <button type="button" className="pq-link-row" aria-expanded={joining} onClick={() => setJoining(!joining)}>
-        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+      <button type="button" className="tlink" aria-expanded={joining} onClick={() => setJoining(!joining)}>
         <span><b>Got an invite from a club?</b> Join it</span>
-        <span aria-hidden="true" className="pq-chev">{joining ? '⌄' : '›'}</span>
+        <span aria-hidden="true">{joining ? '⌄' : '›'}</span>
       </button>
       {joining && (
-        <section className="pq-join" aria-label="Join a club">
-          <input className="input pq-input" aria-label="Invite link or code" placeholder="Paste the invite link" value={v} onChange={(e) => setV(e.target.value)} />
-          <button type="button" className="btn btn-outline" disabled={code.length < 4} onClick={() => go('club-join', code)}>Join</button>
+        <section aria-label="Join a club" className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+          <input className="inp" style={{ flex: '1 1 200px' }} aria-label="Invite link or code" placeholder="Paste the invite link" value={v} onChange={(e) => setV(e.target.value)} />
+          <button type="button" className="btn ghost" disabled={code.length < 4} onClick={() => go('club-join', code)}>Join</button>
         </section>
       )}
     </div>

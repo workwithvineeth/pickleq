@@ -25,7 +25,7 @@ test.describe('Events board and registration (real server, no account)', () => {
     await page.getByRole('button', { name: "Enter Men's Doubles 3.5", exact: true }).click();
     await expect(page.getByRole('button', { name: 'Sign in to enter' })).toBeVisible();
     await page.getByRole('button', { name: 'Sign in to enter' }).click();
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pq-club-return') ?? '{}').h)).toBe(`#/event-enter/${encodeURIComponent(`${EVENT}~e2e00000-0000-4000-8000-000000000311`)}`);
   });
 
@@ -312,9 +312,9 @@ test.describe('Sign-in pages (no account needed)', () => {
   test('password sign-in, create account and admin pages fit a small phone', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 });
     await page.goto('#/club-signin');
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-    await page.getByRole('button', { name: /Create an account/ }).click();
-    await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Create account' }).click();
+    await expect(page.getByRole('heading', { name: 'Start on RallyQ.' })).toBeVisible();
     await page.getByLabel('Email').fill('robot@example.com');
     await page.getByLabel('Choose a password').fill('short');
     await page.getByLabel('Password again').fill('short');
@@ -338,7 +338,7 @@ test.describe('Sign-in pages (no account needed)', () => {
 
   test('no "works offline" popup covers the sign-in form', async ({ page }) => {
     await page.goto('#/club-signin');
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
     await expect(page.getByText(/now works offline/)).toHaveCount(0);
     await expect(page.locator('.toast:not(.toast-inline)')).toHaveCount(0);
   });
