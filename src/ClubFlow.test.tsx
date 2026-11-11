@@ -78,6 +78,8 @@ describe('Club mode', () => {
     await user.click(within(screen.getByRole('group', { name: 'Tournament view' })).getByRole('button', { name: 'Knockouts' }));
     expect(screen.getByRole('heading', { name: 'Quarter-finals' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Final' })).toBeInTheDocument();
+    // The first round carries each side's pool place, read from the finished pool tables (e.g. "A1 v D2"); later rounds don't.
+    expect(screen.getAllByText(/^[A-D][12] v [A-D][12]$/)).toHaveLength(4);
   });
 
   it('live-scores a doubles semi-final point by point, then draws the final', async () => {
@@ -207,6 +209,8 @@ describe('Club mode', () => {
     expect(screen.getByText(/run your club’s tournament at paddleq.in/)).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Pool A' })).toBeInTheDocument();
     expect(screen.queryByText(/DUPR/)).not.toBeInTheDocument();
+    // Still live: no posters yet.
+    expect(screen.queryByRole('region', { name: 'Posters for the winners' })).not.toBeInTheDocument();
   });
 
   it('closing the demo deletes it from the phone', async () => {
