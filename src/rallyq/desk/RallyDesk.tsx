@@ -113,7 +113,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
       <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
         {(!desk || t.entryMode !== 'registration' || t.drawnAt) && <button type="button" className="btn ghost sm" onClick={() => go('club-entries', t.id)}>Entries</button>}
         <button type="button" className="btn ghost sm" onClick={() => go('club-tournament', t.id)}>Standings and draw</button>
-        <button type="button" className="tlink mut" onClick={() => document.getElementById('desk-tools')?.scrollIntoView({ block: 'start' })}>Results, walkovers and court changes ↓</button>
+        <button type="button" className="tlink mut" onClick={() => document.getElementById('desk-tools')?.scrollIntoView?.({ block: 'start' })}>Results, walkovers and court changes ↓</button>
       </div>
       <Say msg={msg} />
       {real.length > 0
