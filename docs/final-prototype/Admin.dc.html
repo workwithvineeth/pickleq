@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Admin</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Admin menu"><a class="host" href="Main.dc.html"><span class="tile ball" style="padding:9px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#0B2418;--a:#0B2418"><use href="#fq"></use></svg></span><span><span class="cap">RallyQ team only</span><b>Platform admin</b></span></a>
+<span class="cap grp">Control</span>
+<sc-for list="{{menu}}" as="m" hint-placeholder-count="5"><a class="{{m.cls}}" href="Admin.dc.html" onClick="{{m.pick}}">{{m.name}}<span class="mut" style="margin-left:auto;font-size:12px">{{m.count}}</span></a></sc-for>
+<span class="cap grp">Views</span><a href="Overview.dc.html">Organiser view ↗</a><a href="Main.dc.html">Public site ↗</a>
+</aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap">Platform admin · Wed 11 Nov</span><h1 class="disp">{{title}}</h1></div>
+<button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button>
+</div>
+<sc-if value="{{isOver}}" hint-placeholder-val="{{ true }}">
+<div class="grid g4">
+<div class="card stat" style="padding:18px"><div class="cap">Clubs live</div><div class="n acc">6</div><div class="mut" style="font-size:13px">2 more waiting</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Events this week</div><div class="n">4</div><div class="mut" style="font-size:13px">all on Sun 15 Nov</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Matches live now</div><div class="n">7</div><div class="mut" style="font-size:13px">across 3 clubs</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Waiting for you</div><div class="n">{{pending}}</div><div class="mut" style="font-size:13px">approvals</div></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<section class="card" style="flex:999 1 480px;min-width:0"><div class="cap" style="padding:16px 18px 4px">Needs you</div><div class="list">
+<a href="Admin.dc.html" onClick="{{goAppr}}"><span class="tile">LP</span><span class="grow"><b style="display:block">Approve Loki’s DUPR Night</b><span class="mut" style="font-size:13px">Sun 15 Nov · 24 teams · asked 2 h ago</span></span><span class="st wait">Waiting</span></a>
+<a href="Admin.dc.html" onClick="{{goAppr}}"><span class="tile">EP</span><span class="grow"><b style="display:block">Approve Elite Women’s Open</b><span class="mut" style="font-size:13px">Sat 21 Nov · entries open Monday</span></span><span class="st wait">Waiting</span></a>
+<a href="Admin.dc.html" onClick="{{goClubs}}"><span class="tile">R33</span><span class="grow"><b style="display:block">Referee offline on Rally33 Court 3</b><span class="mut" style="font-size:13px">2 min · the desk has been told</span></span><span class="st no">Check</span></a>
+</div></section>
+<section class="card" style="flex:1 1 320px;min-width:0"><div class="between" style="padding:16px 18px 4px"><div class="cap">Latest activity</div><button class="tlink" style="min-height:32px;font-size:13px" onClick="{{goAudit}}">Audit log →</button></div><div class="list">
+<sc-for list="{{audit3}}" as="a" hint-placeholder-count="3"><div><span class="n mut" style="font-size:16px;width:44px">{{a.t}}</span><span class="grow" style="font-size:14px"><b>{{a.who}}</b> <span class="mut">{{a.what}}</span></span></div></sc-for>
+</div></section>
+</div>
+</sc-if>
+
+<sc-if value="{{isAppr}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<section class="card" style="flex:1 1 340px;min-width:0"><div class="list">
+<sc-for list="{{appr}}" as="a" hint-placeholder-count="3"><button style="{{a.sty}}" onClick="{{a.pick}}"><span class="tile">{{a.mark}}</span><span class="grow" style="min-width:0;text-align:left"><b class="ell" style="display:block">{{a.name}}</b><span class="mut" style="font-size:13px">{{a.when}}</span></span><span class="{{a.st}}">{{a.state}}</span></button></sc-for>
+</div></section>
+<section class="card" style="flex:999 1 480px;min-width:0;padding:24px;display:flex;flex-direction:column;gap:16px">
+<div class="row" style="gap:14px"><span class="tile lg">{{sel.mark}}</span><span><span class="cap" style="display:block">Hosted by {{sel.club}}</span><b class="disp" style="font-size:32px">{{sel.name}}</b></span></div>
+<div class="grid g2" style="gap:10px">
+<div class="panel2"><span class="cap" style="display:block">When and where</span><b>{{sel.when}}</b><div class="mut" style="font-size:13px">{{sel.venue}}</div></div>
+<div class="panel2"><span class="cap" style="display:block">Organiser</span><b>{{sel.org}}</b><div class="mut" style="font-size:13px">{{sel.contact}}</div></div>
+<div class="panel2"><span class="cap" style="display:block">Format</span><b>{{sel.format}}</b><div class="mut" style="font-size:13px">{{sel.size}}</div></div>
+<div class="panel2"><span class="cap" style="display:block">How it runs</span><b>{{sel.mode}}</b><div class="mut" style="font-size:13px">Entries paid to the club by UPI</div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px"><span class="cap">Checks</span><sc-for list="{{sel.checks}}" as="c" hint-placeholder-count="3"><span class="row" style="gap:10px;font-size:14px"><span class="{{c.st}}">{{c.state}}</span>{{c.text}}</span></sc-for></div>
+<sc-if value="{{sel.open}}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{back}}" hint-placeholder-val="{{ false }}"><div class="fld"><label for="why">Why are you sending it back?</label><textarea id="why" class="inp" placeholder="For example: please add the club logo and the venue’s court count."></textarea><span class="hint">The organiser gets this message by email and WhatsApp.</span></div></sc-if>
+<div class="row" style="flex-wrap:wrap;gap:10px"><button class="btn ghost" onClick="{{sendBack}}">{{backLabel}}</button><button class="btn" onClick="{{approve}}">Approve and list it</button></div>
+</sc-if>
+<sc-if value="{{sel.closed}}" hint-placeholder-val="{{ false }}"><div class="note">{{sel.result}}</div></sc-if>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{isClubs}}" hint-placeholder-val="{{ false }}">
+<div class="card"><div class="scroll"><table class="tbl" style="min-width:760px"><thead><tr><th>Club</th><th>Area</th><th>Members</th><th>Next event</th><th>Status</th><th></th></tr></thead><tbody>
+<sc-for list="{{clubs}}" as="c" hint-placeholder-count="6"><tr><td><span class="row" style="gap:10px"><span class="tile">{{c.mark}}</span><b>{{c.name}}</b></span></td><td class="mut">{{c.area}}</td><td class="n" style="font-size:18px">{{c.mem}}</td><td>{{c.next}}</td><td><span class="{{c.st}}">{{c.state}}</span></td><td style="text-align:right;white-space:nowrap"><button class="btn ghost sm" onClick="{{c.trust}}">{{c.trustLabel}}</button> <button class="btn ghost sm" onClick="{{c.support}}">{{c.supportLabel}}</button></td></tr></sc-for>
+</tbody></table></div></div>
+<div class="note">Support sessions are logged in the audit log with who opened them and why.</div>
+</sc-if>
+
+<sc-if value="{{isList}}" hint-placeholder-val="{{ false }}">
+<div class="card"><div class="scroll"><table class="tbl" style="min-width:680px"><thead><tr><th>Event</th><th>Hosted by</th><th>Date</th><th>How</th><th>On Events</th></tr></thead><tbody>
+<sc-for list="{{listings}}" as="l" hint-placeholder-count="4"><tr><td><b>{{l.name}}</b></td><td>{{l.club}}</td><td class="mut">{{l.date}}</td><td>{{l.src}}</td><td><button class="{{l.sw}}" aria-label="{{l.aria}}" onClick="{{l.toggle}}"><span></span></button></td></tr></sc-for>
+</tbody></table></div></div>
+</sc-if>
+
+<sc-if value="{{isAudit}}" hint-placeholder-val="{{ false }}">
+<div class="card list">
+<sc-for list="{{audit}}" as="a" hint-placeholder-count="6"><div><span class="n mut" style="font-size:18px;width:56px">{{a.t}}</span><span class="grow"><b>{{a.who}}</b> <span class="mut">{{a.what}}</span></span><span class="st off">{{a.where}}</span></div></sc-for>
+</div>
+</sc-if>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a class="on" href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1150}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { v: 'Overview', sel: 1, ap: {}, back: false, list: {1:true,2:true,3:false,4:true}, trust: {1:true,2:true}, sup: {} }; }
+
+renderVals() {
+const s = this.state;
+const V = ['Overview','Approvals','Clubs','Event listings','Audit log'];
+const A = [
+  {id:1,mark:'LP',name:'Loki’s DUPR Night',club:'Loki’s Pickleball Club',when:'Sun 15 Nov · 6:30 pm',venue:'Loki’s, Gachibowli · 6 courts',org:'Karthik M.',contact:'organiser@example.com',format:'Men’s doubles 3.5 · Mixed',size:'24 teams · pools of 4',mode:'Run on RallyQ',checks:[['ok','Club logo added'],['ok','UPI ID added'],['ok','Venue and courts confirmed']]},
+  {id:2,mark:'EP',name:'Elite Women’s Open',club:'ElitePicklers Bowenpally',when:'Sat 21 Nov · 8:00 am',venue:'ElitePicklers, Bowenpally · 4 courts',org:'Priya S.',contact:'elite@example.com',format:'Women’s singles · Women’s doubles',size:'16 teams each',mode:'Run on RallyQ',checks:[['ok','Venue and courts confirmed'],['ok','UPI ID added'],['no','Club logo missing (initials used)']]},
+  {id:3,mark:'TPC',name:'TPC Night Ladder',club:'TPC Narapally',when:'Every Tuesday · 7:00 pm',venue:'TPC, Narapally · 4 courts',org:'Ravi T.',contact:'tpc@example.com',format:'Open doubles ladder',size:'Up to 32 players',mode:'Listed only',checks:[['ok','Club logo added'],['ok','Venue confirmed'],['wait','Ladder rules not added yet']]}
+];
+const AU = [['6:41','Sana (Rally33 desk)','saved a walkover on Court 3','Rally33 Open'],['6:12','Kiran (Rally33)','moved a match to Court 4','Rally33 Open'],['5:58','RallyQ support','opened a support session','Loki’s'],['5:40','Vineeth (Rally33)','confirmed 3 payments','Rally33 Open'],['4:05','Admin','approved TPC Night Ladder','TPC'],['3:30','Kiran (Rally33)','was made an organiser by Vineeth','Rally33']];
+const C = [[1,'R33','Rally33 at Crosscourts','Hyderabad',3,'Rally33 Open · 15 Nov'],[2,'LP','Loki’s Pickleball Club','Gachibowli',3,'DUPR Night · 15 Nov'],[3,'TPC','TPC Narapally','Narapally',1,'Night Ladder · Tue'],[4,'EP','ElitePicklers Bowenpally','Bowenpally',2,'Women’s Open · 21 Nov'],[5,'PY','Pickleyard','Malkajgiri',1,'Classic · 21 Nov'],[6,'PC','Pickleball Central','Hyderabad',2,'Showdown · 28 Nov']];
+const L = [[1,'Rally33 Open','Rally33','Sun 15 Nov','Run on RallyQ'],[2,'Loki’s DUPR Night','Loki’s','Sun 15 Nov','Run on RallyQ'],[3,'Gachibowli Social','Pickleyard','Sat 14 Nov','Listed by club'],[4,'TPC Night Ladder','TPC','Tue 17 Nov','Listed only']];
+const pending = A.filter(a => !s.ap[a.id]).length;
+const go = v => e => { if (e && e.preventDefault) e.preventDefault(); this.setState({v}); };
+const sa = A.find(a => a.id===s.sel) || A[0]; const done = s.ap[sa.id];
+const lab = {ok:['Done','st ok'], no:['Missing','st no'], wait:['To add','st wait']};
+return { rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+  menu: V.map(n => ({name:n, count: n==='Approvals' ? (pending || '') : '', cls: n===s.v ? 'on' : '', pick: go(n)})),
+  title: s.v==='Overview' ? 'Everything on RallyQ today' : s.v, isOver: s.v==='Overview', isAppr: s.v==='Approvals', isClubs: s.v==='Clubs', isList: s.v==='Event listings', isAudit: s.v==='Audit log',
+  pending, goAppr: go('Approvals'), goClubs: go('Clubs'), goAudit: go('Audit log'),
+  audit3: AU.slice(0,3).map(([t,who,what]) => ({t,who,what})),
+  appr: A.map(a => { const st = s.ap[a.id]; const on = a.id===sa.id; return {mark:a.mark, name:a.name, when:a.when, state: st==='yes' ? 'Approved' : st==='no' ? 'Sent back' : 'Waiting', st: st==='yes' ? 'st ok' : st==='no' ? 'st no' : 'st wait',
+    sty: 'display:flex;align-items:center;gap:14px;width:100%;min-height:72px;padding:12px 18px;border:0;border-bottom:1px solid var(--line);cursor:pointer;font:inherit;color:inherit;background:'+(on ? 'var(--c2)' : 'transparent')+';box-shadow:'+(on ? 'inset 3px 0 0 var(--ball)' : 'none'),
+    pick: () => this.setState({sel:a.id, back:false})}; }),
+  sel: {...sa, checks: sa.checks.map(([k,text]) => ({text, state: lab[k][0], st: lab[k][1]})), open: !done, closed: !!done, result: done==='yes' ? 'Approved by you just now. It is listed on Events and the organiser has been told. Logged.' : 'Sent back to the organiser with your note. Logged.'},
+  back: !!s.back, backLabel: s.back ? 'Send it back' : 'Send back…',
+  sendBack: () => s.back ? this.setState({ap: {...s.ap, [sa.id]:'no'}, back:false}) : this.setState({back:true}),
+  approve: () => this.setState({ap: {...s.ap, [sa.id]:'yes'}, back:false}),
+  clubs: C.map(([id,mark,name,area,mem,next]) => ({mark,name,area,mem,next, state: s.trust[id] ? 'Trusted' : 'New', st: s.trust[id] ? 'st ok' : 'st off', trust: () => this.setState({trust: {...s.trust, [id]: !s.trust[id]}}), trustLabel: s.trust[id] ? 'Remove trust' : 'Mark trusted', support: () => this.setState({sup: {...s.sup, [id]: !s.sup[id]}}), supportLabel: s.sup[id] ? 'End support (logged)' : 'Support session'})),
+  listings: L.map(([id,name,club,date,src]) => ({name,club,date,src, sw: s.list[id] ? 'sw on' : 'sw', aria: (s.list[id] ? 'Hide ' : 'Show ')+name+' on Events', toggle: () => this.setState({list: {...s.list, [id]: !s.list[id]}})})),
+  audit: AU.map(([t,who,what,where]) => ({t,who,what,where}))
+};
+}
+}
+</script>
+</body>
+</html>

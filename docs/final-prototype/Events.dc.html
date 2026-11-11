@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Events and Tournaments</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tiles"><span class="tile">R33</span><span class="tile">LP</span><span class="tile">TPC</span><span class="tile">EP</span></span><span><span class="cap">Hosted by</span><b>Hyderabad’s clubs</b></span></a><nav class="nav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a class="on" href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><a class="tlink" href="SignIn.dc.html">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a><a href="SignIn.dc.html">Club sign in</a></nav></sc-if>
+
+<main class="wrap" style="padding-block:28px 72px;display:flex;flex-direction:column;gap:28px">
+<div class="between" style="align-items:flex-end">
+<div class="pg-h"><span class="cap acc">Hyderabad · pickleball</span><h1 class="disp">Find your next main event.</h1><span class="mut">{{hostLine}}</span></div>
+<a class="btn ghost" href="MyEntries.dc.html">My entries</a>
+</div>
+
+<div class="between">
+<div class="tabs" role="tablist" aria-label="Show"><sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button role="tab" class="{{f.cls}}" onClick="{{f.pick}}">{{f.name}}</button></sc-for></div>
+<span class="mut" style="font-size:13px">{{countLabel}}</span>
+</div>
+
+<div class="grid g3">
+<sc-for list="{{events}}" as="e" hint-placeholder-count="4">
+<article class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+<div class="between"><span class="row" style="gap:10px"><span class="tile">{{e.mark}}</span><span><span class="cap" style="display:block">Hosted by</span><b style="font-size:14px">{{e.club}}</b></span></span><span class="{{e.chip}}">{{e.status}}</span></div>
+<div><div class="cap">{{e.when}}</div><h2 class="disp" style="font-size:30px;margin-top:6px">{{e.name}}</h2><div class="mut" style="font-size:14px;margin-top:6px">{{e.venue}}</div></div>
+<div class="row" style="gap:6px;flex-wrap:wrap"><sc-for list="{{e.cats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for></div>
+<div class="between" style="margin-top:auto;padding-top:6px"><span class="mut" style="font-size:13px">{{e.meta}}</span><a class="{{e.btn}}" href="{{e.href}}">{{e.cta}}</a></div>
+</article>
+</sc-for>
+</div>
+
+<section style="display:flex;flex-direction:column;gap:12px">
+<div class="between"><h2 class="disp" style="font-size:32px">Recent results</h2><a class="tlink" href="Results.dc.html">All results →</a></div>
+<div class="card list">
+<a href="Results.dc.html"><span class="tile">LP</span><span class="grow"><b>Loki’s DUPR Night</b><span class="mut" style="display:block;font-size:13px">Sun 8 Nov · 24 teams · Champions: Varun / Neel</span></span><span class="st ok">Results</span></a>
+<a href="Results.dc.html"><span class="tile">TPC</span><span class="grow"><b>TPC Monday Social</b><span class="mut" style="display:block;font-size:13px">Mon 2 Nov · 16 teams · Champions: Asha / Lata</span></span><span class="st ok">Results</span></a>
+</div>
+</section>
+
+<section class="card" style="padding:24px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;position:relative;overflow:hidden">
+<div class="grow" style="flex:1 1 320px"><div class="cap acc">For clubs</div><h2 class="disp" style="font-size:30px;margin-top:6px">Give players a reason to choose your court.</h2><div class="mut" style="margin-top:6px">List your tournament or run it here: entries, the draw, a referee on every court and live results.</div></div>
+<a class="btn ghost" href="SignIn.dc.html">Club sign in</a>
+</section>
+</main>
+<div class="wrap pfoot"><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a class="on" href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { f: 'All' }; }
+renderVals() {
+  const s = this.state;
+  const all = [
+    {mark:'R33',club:'Rally33 at Crosscourts',when:'Sun 15 Nov · 5:00 pm',name:'Rally33 Open',venue:'Crosscourts, Hyderabad · 4 courts',cats:['Men’s doubles','Women’s doubles','Mixed'],status:'Entries open',kind:'open',meta:'24 of 32 teams',cta:'Enter',href:'MyEntries.dc.html'},
+    {mark:'LP',club:'Loki’s Pickleball Club',when:'Sun 15 Nov · 6:30 pm',name:'Loki’s DUPR Night',venue:'Loki’s, Gachibowli · 6 courts',cats:['Men’s doubles 3.5','Mixed'],status:'Entries open',kind:'open',meta:'18 of 24 teams',cta:'Enter',href:'MyEntries.dc.html'},
+    {mark:'TPC',club:'TPC Narapally',when:'Today · 7:00 pm',name:'TPC Night Ladder',venue:'TPC, Narapally · 4 courts',cats:['Open doubles'],status:'Live',kind:'live',meta:'3 courts live',cta:'See live scores',href:'Live.dc.html'},
+    {mark:'EP',club:'ElitePicklers Bowenpally',when:'Sat 21 Nov · 8:00 am',name:'Elite Women’s Open',venue:'ElitePicklers, Bowenpally · 4 courts',cats:['Women’s singles','Women’s doubles'],status:'Soon',kind:'soon',meta:'Entries open Mon',cta:'Details',href:'MyEntries.dc.html'}
+  ];
+  const F = ['All','Entries open','Live now','This week'];
+  const keep = e => this.state.f==='All' || (this.state.f==='Entries open' && e.kind==='open') || (this.state.f==='Live now' && e.kind==='live') || (this.state.f==='This week' && e.kind!=='soon');
+  const events = all.filter(keep).map(e => ({...e, chip: e.kind==='live' ? 'chip live' : e.kind==='open' ? 'st ok' : 'st off', btn: 'btn ghost sm'}));
+  const lead = events.find(e => e.kind==='open'); if (lead) lead.btn = 'btn sm';
+  return {
+    rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+    filters: F.map(n => ({name:n, cls: n===this.state.f ? 'tab on' : 'tab', pick: () => this.setState({f:n})})),
+    hostLine: (new Set(all.map(e => e.club))).size + ' clubs are hosting this week. Pick one, enter in a minute, and see every score as it happens.',
+    events, countLabel: events.length + (events.length===1 ? ' event' : ' events') + ' in Hyderabad'
+  };
+}
+}
+</script>
+</body>
+</html>

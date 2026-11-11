@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Event</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><nav class="nav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a class="on" href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><a class="tlink" href="SignIn.dc.html">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a><a href="SignIn.dc.html">Club sign in</a></nav></sc-if>
+
+<section class="photo ph-group" style="min-height:400px;display:flex;align-items:flex-end">
+<div class="wrap" style="width:100%;padding-block:48px;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+<div class="row"><span class="st ok">Entries open</span><span class="cap" style="color:#DDE7DC">Sun 15 Nov · 5:00 pm · Crosscourts</span></div>
+<h1 class="disp" style="font-size:clamp(48px,7vw,96px)">Rally33 Open</h1>
+<div class="row" style="flex-wrap:wrap;gap:8px"><span class="chip">Men’s doubles</span><span class="chip">Women’s doubles</span><span class="chip">Mixed</span><span class="chip">4 courts</span></div>
+</div>
+<div class="cta" style="display:flex;flex-direction:column;gap:12px;min-width:0">
+<div class="card" style="padding:16px 18px;display:flex;gap:14px;align-items:center;background:rgba(13,34,24,.85)">
+<div style="width:64px;height:64px;border-radius:16px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:18px">R33</div>
+<div><div class="cap">Hosted by</div><div style="font-weight:800;font-size:20px">Rally33 at Crosscourts</div><div class="mut" style="font-size:13px">Run on RallyQ</div></div>
+</div>
+<a class="btn" href="MyEntries.dc.html">Enter the event</a>
+</div>
+</div>
+</section>
+
+<div class="wrap" style="padding-block:28px 64px;display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="tabs" role="tablist" aria-label="Event sections"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button role="tab" class="{{t.cls}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div>
+<a class="tlink" href="Live.dc.html">See live scores →</a>
+</div>
+
+<sc-if value="{{isEntries}}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<div class="card scroll" style="flex:999 1 560px;min-width:0;padding:6px 8px">
+<table class="tbl"><thead><tr><th>#</th><th>Team</th><th>Category</th><th>DUPR</th><th>Status</th></tr></thead>
+<tbody><sc-for list="{{entries}}" as="e" hint-placeholder-count="8"><tr><td class="n mut" style="font-size:18px">{{e.no}}</td><td style="font-weight:600">{{e.team}}</td><td class="mut">{{e.cat}}</td><td class="n" style="font-size:18px">{{e.dupr}}</td><td><span class="{{e.cls}}">{{e.st}}</span></td></tr></sc-for></tbody></table>
+</div>
+<div style="flex:1 1 280px;display:flex;flex-direction:column;gap:12px">
+<div class="card" style="padding:20px"><div class="cap">Spots filled</div><div class="row" style="align-items:baseline;margin-top:6px"><span class="n acc" style="font-size:56px">{{filled}}</span><span class="mut">of 32 teams</span></div><div class="bar" style="margin-top:12px"><i style="width:{{pct}}"></i></div></div>
+<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:6px"><div class="cap">Entry</div><div style="font-weight:700">[YOUR PRICE] per team</div><div class="mut" style="font-size:13px">Paid to the club at the desk. Closes Fri 13 Nov, 9 pm.</div></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isPools}}" hint-placeholder-val="{{ false }}">
+<div class="grid g2">
+<sc-for list="{{pools}}" as="p" hint-placeholder-count="2">
+<div class="card" style="padding:18px"><div class="between"><div class="disp" style="font-size:28px">{{p.name}}</div><span class="cap">Court {{p.court}}</span></div>
+<table class="tbl" style="margin-top:8px"><thead><tr><th>Team</th><th>W</th><th>L</th><th>Pts diff</th></tr></thead><tbody>
+<sc-for list="{{p.rows}}" as="r" hint-placeholder-count="4"><tr><td style="{{r.style}}">{{r.t}}</td><td class="n" style="font-size:18px">{{r.w}}</td><td class="n mut" style="font-size:18px">{{r.l}}</td><td class="n" style="font-size:18px">{{r.d}}</td></tr></sc-for>
+</tbody></table></div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{isKo}}" hint-placeholder-val="{{ false }}">
+<div class="scroll"><div style="display:grid;grid-template-columns:repeat(3,minmax(240px,1fr));gap:20px;min-width:780px;align-items:center">
+<div style="display:flex;flex-direction:column;gap:14px"><div class="cap">Quarter-finals</div><sc-for list="{{qf}}" as="m" hint-placeholder-count="4"><div class="card" style="padding:12px 14px"><div class="score"><span class="t" style="{{m.as}}">{{m.a}}</span><span class="n" style="font-size:20px">{{m.sa}}</span><span class="t" style="{{m.bs}}">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for></div>
+<div style="display:flex;flex-direction:column;gap:60px"><div class="cap">Semi-finals</div><sc-for list="{{sf}}" as="m" hint-placeholder-count="2"><div class="card" style="padding:12px 14px"><div class="between"><span class="chip live">Live</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for></div>
+<div style="display:flex;flex-direction:column;gap:14px"><div class="cap gold">Final · 8:15 pm</div><div class="card" style="padding:20px;box-shadow:inset 0 0 0 2px #E8C35A"><div class="disp gold" style="font-size:30px">Champions crowned here</div><div class="mut" style="font-size:13px;margin-top:6px">Once the club confirms the final, the champions poster is made for the winners to share.</div><a class="tlink" href="Results.dc.html" style="margin-top:6px">See how results and posters look →</a></div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{isInfo}}" hint-placeholder-val="{{ false }}">
+<div class="grid g3">
+<div class="card" style="padding:20px"><div class="cap">Format</div><p style="margin:8px 0 0">Pools of 4, top 2 to knockouts. Games to 11, win by 2. Finals best of 3.</p></div>
+<div class="card" style="padding:20px"><div class="cap">Venue</div><p style="margin:8px 0 0">Crosscourts, Hyderabad. 4 outdoor courts under lights. Parking on site.</p></div>
+<div class="card" style="padding:20px"><div class="cap">Contact</div><p style="margin:8px 0 0">Rally33 desk on WhatsApp: [CLUB NUMBER]</p></div>
+</div>
+</sc-if>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a class="on" href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { tab: 'Entries', joined: false }; }
+renderVals() {
+  const s = this.state;
+  const T = ['Entries','Pools','Knockout','Info'];
+  const names = ['Varun / Neel','Imran / Joseph','Asha / Lata','Gita / Rekha','Kabir / Omar','Sid / Rahul','Fatima / Zara','Dev / Yash','Ishaan / Arav','Leela / Tara'];
+  const cats = ['Men’s','Men’s','Women’s','Women’s','Men’s','Men’s','Women’s','Mixed','Mixed','Women’s'];
+  const entries = names.map((t,i) => ({no: String(i+1).padStart(2,'0'), team:t, cat:cats[i], dupr:(3.2 + ((i*37)%12)/10).toFixed(2)+' · '+(3.15 + ((i*53)%11)/10).toFixed(2), st: i>7 ? 'Waitlist' : 'Confirmed', cls: i>7 ? 'st wait' : 'st ok'}));
+  if (this.state.joined) entries.unshift({no:'NEW', team:'You / Partner', cat:'Mixed', dupr:'3.80', st:'Pending', cls:'st wait'});
+  const pool = (name, court, ts) => ({name, court, rows: ts.map((t,i) => ({t, w:3-i, l:i, d: (['+14','+6','−5','−15'])[i], style: i<2 ? 'font-weight:700;color:#D9F24A' : 'color:#9FB4A6'}))});
+  const filled = 24 + (this.state.joined ? 1 : 0);
+  return {
+    rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+    tabs: T.map(n => ({name:n, cls: n===this.state.tab ? 'tab on' : 'tab', pick: () => this.setState({tab:n})})),
+    isEntries: this.state.tab==='Entries', isPools: this.state.tab==='Pools', isKo: this.state.tab==='Knockout', isInfo: this.state.tab==='Info',
+    entries, filled, pct: Math.round(filled/32*100) + '%',
+    join: () => this.setState({joined: true, tab: 'Entries'}),
+    joinLabel: this.state.joined ? 'Entry sent ✓' : 'Enter the event',
+    pools: [pool('Pool A',1,['Varun / Neel','Kabir / Omar','Sid / Rahul','Dev / Yash']), pool('Pool B',2,['Imran / Joseph','Ishaan / Arav','Asha / Lata','Gita / Rekha'])],
+    qf: [['Varun / Neel','Dev / Yash',11,6],['Imran / Joseph','Sid / Rahul',11,9],['Kabir / Omar','Ishaan / Arav',8,11],['Asha / Lata','Gita / Rekha',11,4]].map(([a,b,sa,sb]) => ({a,b,sa,sb, as: sa>sb ? 'font-weight:700' : 'color:#9FB4A6', bs: sb>sa ? 'font-weight:700' : 'color:#9FB4A6'})),
+    sf: [{a:'Varun / Neel',b:'Imran / Joseph',sa:10,sb:10,court:'Court 1'},{a:'Ishaan / Arav',b:'Asha / Lata',sa:7,sb:5,court:'Court 2'}]
+  };
+}
+}
+</script>
+</body>
+</html>

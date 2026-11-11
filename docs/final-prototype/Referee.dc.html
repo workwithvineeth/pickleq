@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Referee Scorer</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fs" viewBox="0 0 100 100"><path d="M60 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V60" fill="none" style="stroke:var(--c)" stroke-width="12" stroke-linecap="butt"></path><circle cx="83" cy="83" r="12.5" style="fill:var(--a)"></circle></symbol></svg>
+<div class="rq" style="width:390px;height:844px;overflow:hidden;display:flex;flex-direction:column;padding:16px;gap:12px">
+<div class="between">
+<a href="Desk.dc.html" class="row" style="gap:8px;font-size:13px;color:#9FB4A6;min-height:44px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A;width:22px;height:22px"><use href="#fs"></use></svg>← Desk</a>
+<span class="chip live">Live</span>
+</div>
+<div><div class="cap">Court 2 · Mixed SF · Game {{game}}</div><div class="n" style="font-size:44px;margin-top:6px;color:#D9F24A" aria-live="polite">{{call}}</div><div class="mut" style="font-size:12px">Score call · server {{srv}}</div></div>
+
+<button onClick="{{winA}}" style="{{cardA}}">
+<div class="between" style="width:100%"><span style="font-weight:700;font-size:15px">Ishaan / Arav</span><span class="{{chipA}}">{{tagA}}</span></div>
+<div class="n" style="font-size:120px;line-height:.9">{{sa}}</div>
+<div class="mut" style="font-size:12px">Tap if they won the rally</div>
+</button>
+<button onClick="{{winB}}" style="{{cardB}}">
+<div class="between" style="width:100%"><span style="font-weight:700;font-size:15px">Asha / Lata</span><span class="{{chipB}}">{{tagB}}</span></div>
+<div class="n" style="font-size:120px;line-height:.9">{{sb}}</div>
+<div class="mut" style="font-size:12px">Tap if they won the rally</div>
+</button>
+
+<sc-if value="{{gameOnly}}" hint-placeholder-val="{{ false }}">
+<div class="card" style="padding:14px;box-shadow:inset 0 0 0 2px #D9F24A;display:flex;flex-direction:column;gap:10px">
+<div><div class="cap acc">Game {{game}} won · match goes on</div><div style="font-weight:700;margin-top:4px">{{winner}} take game {{game}} · games {{gA}}–{{gB}}</div></div>
+<button class="btn sm" onClick="{{nextGame}}">Start game {{nextNo}}</button>
+</div>
+</sc-if>
+<sc-if value="{{matchOver}}" hint-placeholder-val="{{ false }}">
+<div class="card" style="padding:14px;box-shadow:inset 0 0 0 2px #F1F4EA;display:flex;flex-direction:column;gap:10px">
+<div><div class="cap" style="color:#F1F4EA">Match finished · not final until you confirm</div><div style="font-weight:700;margin-top:4px">{{winner}} win {{gA}}–{{gB}} in games</div></div>
+<sc-if value="{{notConfirmed}}" hint-placeholder-val="{{ true }}"><button class="btn sm" onClick="{{confirm}}">Confirm final result</button></sc-if>
+<sc-if value="{{confirmed}}" hint-placeholder-val="{{ false }}"><div class="row" style="gap:8px 16px;flex-wrap:wrap"><span class="st ok">Result confirmed · locked</span><a class="tlink" href="Desk.dc.html">Back to the desk →</a></div></sc-if>
+</div>
+</sc-if>
+<div class="row" style="margin-top:auto;gap:8px">
+<button class="btn ghost sm" style="flex:1" onClick="{{undo}}">Undo</button>
+<button class="btn ghost sm" style="flex:1" onClick="{{reset}}">Reset game</button>
+</div>
+<div class="mut" style="font-size:11px;text-align:center">Every tap updates the live page and TV board.</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { sa: 7, sb: 5, serving: 'A', srv: 1, game: 2, hist: [], wA: 1, wB: 0, confirmed: false }; }
+rally(w){
+  const s = this.state; if (this.isOver(s)) return;
+  const h = s.hist.concat([{sa:s.sa,sb:s.sb,serving:s.serving,srv:s.srv}]);
+  if (w === s.serving) { this.setState(w==='A' ? {sa:s.sa+1,hist:h} : {sb:s.sb+1,hist:h}); }
+  else if (s.srv === 1) { this.setState({srv:2,hist:h}); }
+  else { this.setState({serving:w,srv:1,hist:h}); }
+}
+isOver(s){ return (s.sa>=11||s.sb>=11) && Math.abs(s.sa-s.sb)>=2; }
+renderVals() {
+  const s = this.state, over = this.isOver(s);
+  const card = (on) => 'border:0;cursor:pointer;font:inherit;color:inherit;text-align:left;flex:1;border-radius:22px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;width:100%;' + (on ? 'background:#133022;box-shadow:inset 0 0 0 2px #D9F24A' : 'background:#0D2218;box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)');
+  const call = s.serving==='A' ? `${s.sa}–${s.sb}–${s.srv}` : `${s.sb}–${s.sa}–${s.srv}`;
+  const aWon = s.sa > s.sb;
+  const gA = s.wA + (over && aWon ? 1 : 0), gB = s.wB + (over && !aWon ? 1 : 0);
+  const matchOver = over && (gA >= 2 || gB >= 2);
+  return {
+    gA, gB, matchOver, gameOnly: over && !matchOver,
+    confirmed: s.confirmed, notConfirmed: !s.confirmed,
+    confirm: () => this.setState({confirmed: true}),
+    sa: s.sa, sb: s.sb, srv: s.srv, game: s.game, nextNo: s.game+1, call, over,
+    winner: s.sa > s.sb ? 'Ishaan / Arav' : 'Asha / Lata',
+    cardA: card(s.serving==='A'), cardB: card(s.serving==='B'),
+    chipA: s.serving==='A' ? 'chip ball' : 'chip', tagA: s.serving==='A' ? 'Serving' : 'Receiving',
+    chipB: s.serving==='B' ? 'chip ball' : 'chip', tagB: s.serving==='B' ? 'Serving' : 'Receiving',
+    winA: () => this.rally('A'), winB: () => this.rally('B'),
+    undo: () => { const h = s.hist.slice(); const last = h.pop(); if (last) this.setState({...last, hist:h}); },
+    reset: () => this.setState({sa:0,sb:0,serving:'A',srv:2,hist:[],confirmed:false}),
+    nextGame: () => this.setState({sa:0,sb:0,serving:'B',srv:2,hist:[],game:s.game+1,wA:gA,wB:gB})
+  };
+}
+}
+</script>
+</body>
+</html>

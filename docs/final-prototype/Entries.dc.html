@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Entries and UPI</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><span class="cap grp">Rally33</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Rally33 Open · Sun 15 Nov</span><a class="on" href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap">Rally33 Open · Sun 15 Nov · entries close Fri 13 Nov, 9 pm</span><h1 class="disp">Entries &amp; UPI</h1></div>
+<div class="row"><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="btn ghost sm" onClick="{{walkIn}}">Add a walk-in</button></div>
+</div>
+<div class="grid g4">
+<div class="card stat" style="padding:18px"><div class="cap">To check</div><div class="n acc">{{nCheck}}</div><div class="mut" style="font-size:13px">payments to match</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Confirmed</div><div class="n">{{nOk}}</div><div class="mut" style="font-size:13px">of 32 spots</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Waitlist</div><div class="n">{{nWait}}</div><div class="mut" style="font-size:13px">move up when a spot frees</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Payment issues</div><div class="n">{{nIssue}}</div><div class="mut" style="font-size:13px">reference not found</div></div>
+</div>
+<div class="between">
+<div class="tabs" role="tablist" aria-label="Show"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="5"><button role="tab" class="{{t.cls}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div>
+<label class="search"><span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Search by team or UPI reference</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input class="inp" placeholder="Search team or UPI reference" value="{{q}}" onInput="{{onQ}}"></label>
+</div>
+<div class="card">
+<div class="scroll"><table class="tbl"><thead><tr><th>Team</th><th>Category</th><th>Paid by</th><th>UPI reference</th><th>Status</th><th></th></tr></thead><tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+<tr><td><b>{{r.team}}</b><div class="mut" style="font-size:12px">{{r.sub}}</div></td><td>{{r.cat}}</td><td>{{r.payer}}</td><td class="n" style="font-size:20px;letter-spacing:.05em">{{r.utr}}</td><td><span class="{{r.st}}">{{r.status}}</span><div class="mut" style="font-size:12px;margin-top:4px">{{r.by}}</div></td>
+<td style="text-align:right;white-space:nowrap"><sc-if value="{{r.canAct}}" hint-placeholder-val="{{ true }}"><button class="{{r.btn}}" onClick="{{r.toggle}}">{{r.actLabel}}</button></sc-if></td></tr>
+<sc-if value="{{r.open}}" hint-placeholder-val="{{ false }}"><tr class="expand"><td colspan="6"><div style="display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;padding:6px 2px">
+<span><span class="cap" style="display:block">Amount</span><b>[YOUR PRICE]</b></span>
+<span><span class="cap" style="display:block">UPI reference</span><span class="n" style="font-size:26px;letter-spacing:.06em">{{r.utr}}</span></span>
+<button class="{{r.chk}}" onClick="{{r.tick}}"><span class="bx">{{r.tickMark}}</span>It matches a payment in my bank app</button>
+<span class="row" style="margin-left:auto;gap:10px"><button class="tlink mut" onClick="{{r.decline}}">Mark as issue</button><button class="btn sm" disabled="{{r.blocked}}" onClick="{{r.confirm}}">Confirm paid</button></span>
+</div></td></tr></sc-if>
+</sc-for>
+</tbody></table></div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}"><div class="empty">Nothing here. You’re all caught up.</div></sc-if>
+</div>
+<div class="note">Match the UPI reference with your bank app before you confirm. Every confirmation is saved with who did it and when. Confirmed teams get a WhatsApp message and go into the draw.</div>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a class="on" href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { tab: 'To check', st: { 1:'check', 2:'check', 3:'check', 4:'ok', 5:'ok', 6:'wait', 7:'issue' }, by: { 4:'Confirmed by Kiran · 9 Nov', 5:'Paid at the desk · Sana' }, tick: {}, open: 0, walk: 0, q: '' }; }
+
+renderVals() {
+const s = this.state;
+const base = [
+  [1,'Meera Patel / Divya Iyer','Mixed doubles','Meera','431298765012','DUPR 3.95 · 3.92'],
+  [2,'Kabir Shah / Omar Ali','Men’s doubles','Kabir','431277120988','DUPR 3.90 · 3.86'],
+  [3,'Asha Rao / Lata Nair','Women’s doubles','Asha','431244019873','DUPR 4.02 · Unrated'],
+  [4,'Varun Rao / Neel Iyer','Men’s doubles','Varun','431201776540','DUPR 4.36 · 4.26'],
+  [5,'Fatima Khan / Zara Ali','Women’s doubles','At the desk','—','DUPR 3.71 · 3.66'],
+  [6,'Dev Mehta / Yash Jain','Men’s doubles','—','—','DUPR 3.74 · 3.68'],
+  [7,'Rohan Krishnamurthy / Ajay Subramanyam','Mixed doubles','Rohan','431299000017','DUPR 3.82 · 3.78']
+];
+for (let i=0;i<s.walk;i++) base.push([100+i,'Walk-in team '+(i+1),'Men’s doubles','At the desk','—','Added at the desk']);
+const lab = {check:['To check','st wait'], ok:['Confirmed','st ok'], wait:['Waitlist','st off'], issue:['Payment issue','st no']};
+const st = id => s.st[id] ?? 'ok';
+const map = {'To check':'check','Confirmed':'ok','Waitlist':'wait','Issues':'issue'};
+const q = (s.q||'').toLowerCase();
+const shown = base.filter(r => st(r[0])===map[s.tab]).filter(r => !q || r[1].toLowerCase().includes(q) || r[4].includes(q));
+const firstCheck = shown.find(r => st(r[0])==='check');
+const rows = shown.map(([id,team,cat,payer,utr,sub]) => { const open = s.open===id; const ticked = !!s.tick[id]; const c = st(id);
+  return {team,cat,payer,utr,sub, status: lab[c][0], st: lab[c][1], by: s.by[id] || (c==='issue' ? 'Reference not found in bank app' : ''),
+  canAct: c==='check', open,
+  btn: open ? 'btn ghost sm' : (firstCheck && firstCheck[0]===id ? 'btn sm' : 'btn ghost sm'), actLabel: open ? 'Close' : 'Check payment',
+  toggle: () => this.setState({open: open ? 0 : id}),
+  chk: ticked ? 'check on' : 'check', tickMark: ticked ? '✓' : '', tick: () => this.setState({tick: {...s.tick, [id]: !ticked}}),
+  blocked: !ticked,
+  confirm: () => { if (!ticked) return; this.setState({st: {...s.st, [id]:'ok'}, by: {...s.by, [id]:'Confirmed by Vineeth · 6:41 pm'}, open:0}); },
+  decline: () => this.setState({st: {...s.st, [id]:'issue'}, by: {...s.by, [id]:'Marked by Vineeth · ask the team for the right reference'}, open:0})}; });
+const count = v => base.filter(r => st(r[0])===v).length;
+return { rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+  tabs: Object.keys(map).map(n => ({name: n+' · '+count(map[n]), cls: n===s.tab ? 'tab on' : 'tab', pick: () => this.setState({tab:n, open:0})})),
+  rows, empty: rows.length===0, q: s.q||'', onQ: e => this.setState({q: e.target.value}),
+  nCheck: count('check'), nOk: count('ok')+22, nWait: count('wait'), nIssue: count('issue'),
+  walkIn: () => this.setState({walk: s.walk+1, st: {...s.st, [100+s.walk]: 'ok'}, by: {...s.by, [100+s.walk]:'Paid at the desk · Sana'}, tab: 'Confirmed'})
+};
+}
+}
+</script>
+</body>
+</html>

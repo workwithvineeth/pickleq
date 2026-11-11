@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Club and members</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><span class="cap grp">Rally33</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a class="on" href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Rally33 Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap">Rally33 at Crosscourts</span><h1 class="disp">{{title}}</h1></div>
+<button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button>
+</div>
+<div class="tabs" role="tablist" aria-label="Section"><sc-for list="{{views}}" as="v" hint-placeholder-count="3"><button role="tab" class="{{v.cls}}" onClick="{{v.pick}}">{{v.name}}</button></sc-for></div>
+
+<sc-if value="{{isMem}}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<section class="card" style="flex:999 1 520px;min-width:0">
+<sc-if value="{{hasAsk}}" hint-placeholder-val="{{ false }}"><div class="warn" style="margin:16px 16px 0"><span class="grow">{{askText}}</span><sc-if value="{{askOk}}" hint-placeholder-val="{{ true }}"><button class="tlink mut" onClick="{{askNo}}">Cancel</button><button class="btn sm" onClick="{{askYes}}">Confirm</button></sc-if><sc-if value="{{askBlock}}" hint-placeholder-val="{{ false }}"><button class="tlink" onClick="{{askNo}}">OK</button></sc-if></div></sc-if>
+<div class="list">
+<sc-for list="{{members}}" as="m" hint-placeholder-count="3">
+<div><span class="tile">{{m.ini}}</span><span class="grow" style="min-width:0"><b class="ell" style="display:block">{{m.name}}</b><span class="mut" style="font-size:13px">{{m.email}}</span></span><span class="tabs"><sc-for list="{{m.roles}}" as="r" hint-placeholder-count="3"><button class="{{r.cls}}" style="min-height:34px;padding:0 12px;font-size:13px" onClick="{{r.pick}}">{{r.name}}</button></sc-for></span></div>
+</sc-for>
+</div>
+</section>
+<section class="card" style="flex:1 1 300px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<h2 class="disp" style="font-size:26px">Invite someone</h2>
+<div class="fld"><label for="ie">Email</label><input id="ie" class="inp" placeholder="name@example.com"></div>
+<div class="fld"><span class="lbl">Role</span><div class="tabs"><sc-for list="{{inviteRoles}}" as="r" hint-placeholder-count="3"><button class="{{r.cls}}" onClick="{{r.pick}}">{{r.name}}</button></sc-for></div><span class="hint">{{roleHint}}</span></div>
+<button class="btn" onClick="{{invite}}">{{inviteLabel}}</button>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{isProf}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<section class="card" style="flex:999 1 520px;min-width:0;padding:22px;display:flex;flex-direction:column;gap:16px">
+<div class="row" style="gap:16px;flex-wrap:wrap"><span class="tile lg" style="width:96px;height:96px;border-radius:22px;font-size:26px">R33</span><span style="display:flex;flex-direction:column;gap:8px"><b>Club logo</b><span class="mut" style="font-size:13px">Square image. We show it on the TV board, posters, the event page and live cards.</span><button class="btn ghost sm" style="align-self:flex-start" onClick="{{up}}">{{upLabel}}</button></span></div>
+<div class="form two"><div class="fld"><label for="cn">Club name</label><input id="cn" class="inp" value="Rally33"></div><div class="fld"><label for="cv">Venue</label><input id="cv" class="inp" value="Crosscourts, Hyderabad"></div></div>
+<div class="form two"><div class="fld"><label for="cu">UPI ID for entries</label><input id="cu" class="inp" value="[CLUB UPI ID]"></div><div class="fld"><label for="cw">Desk WhatsApp</label><input id="cw" class="inp" value="[CLUB NUMBER]"></div></div>
+<div class="fld"><label for="cd">About the club</label><textarea id="cd" class="inp">4 outdoor courts under lights at Crosscourts. Socials every Monday, tournaments every month.</textarea></div>
+<button class="btn" style="align-self:flex-start" onClick="{{saveP}}">{{savePLabel}}</button>
+</section>
+<aside class="card" style="flex:1 1 300px;padding:20px;display:flex;flex-direction:column;gap:12px">
+<div class="cap">How it shows</div>
+<div class="card2" style="padding:16px;display:flex;align-items:center;gap:12px"><span class="tile lg">R33</span><span><span class="cap" style="display:block">Hosted by</span><b>Rally33 at Crosscourts</b></span><span class="row" style="margin-left:auto;gap:6px;opacity:.7"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:18px;height:18px"><use href="#fq"></use></svg></span></div>
+<div class="mut" style="font-size:12px">Your club always leads. RallyQ sits smaller, last.</div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{isGuide}}" hint-placeholder-val="{{ false }}">
+<div class="grid g2">
+<sc-for list="{{guide}}" as="g" hint-placeholder-count="4">
+<section class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px">
+<div class="between"><b class="disp" style="font-size:24px">{{g.when}}</b><span class="st ok">{{g.done}}</span></div>
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="3"><button class="{{it.cls}}" onClick="{{it.pick}}"><span class="dot"></span><span>{{it.text}}</span></button></sc-for>
+</section>
+</sc-for>
+</div>
+</sc-if>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a class="on" href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { v: 'mem', roles: { 1:'Owner', 2:'Organiser', 3:'Desk' }, inv: 'Desk', done: {} }; }
+ask(id, r){ const s=this.state; const owners=Object.values(s.roles).filter(x=>x==='Owner').length; const M={1:'Vineeth Boomer',2:'Kiran Reddy',3:'Sana Ali'};
+  if (s.roles[id]===r) return;
+  if (s.roles[id]==='Owner' && owners===1) { this.setState({ask:{block:true, text:'A club needs at least one owner. Make someone else an owner first.'}}); return; }
+  if (r==='Owner' || s.roles[id]==='Owner') { this.setState({ask:{id, r, text: (r==='Owner' ? 'Make '+M[id]+' an owner? Owners can change billing and delete the club.' : 'Remove '+M[id]+' as an owner?')+' This is saved in the audit log.'}}); return; }
+  this.setState({roles:{...s.roles,[id]:r}, log:'Saved. '+M[id]+' is now '+r+'. Logged.'}); }
+renderVals() {
+  const s = this.state;
+  const R = ['Owner','Organiser','Desk'];
+  const H = { Owner:'Everything, including billing and deleting the club.', Organiser:'Runs tournaments, entries and the desk.', Desk:'Match day only: desk, check-in and results.' };
+  const M = [[1,'VB','Vineeth Boomer','organiser@example.com'],[2,'KR','Kiran Reddy','kiran@example.com'],[3,'SA','Sana Ali','desk@example.com']];
+  const G = [['The week before',['Publish the event and share the poster','Check payments every evening','Make the draw when entries close']],['Match day morning',['Send referee links for every court','Test the TV board on the venue screen','Print the day’s schedule']],['During play',['Check teams in before calling a court','Fix scores or walkovers from Desk tools','Post live scores on WhatsApp']],['After the final',['Confirm results','Send the CSV to DUPR','Post the champions card']]];
+  return {
+    rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+    views: [['mem','Members & roles'],['prof','Club profile'],['guide','Match-day guide']].map(([k,n]) => ({name:n, cls: s.v===k ? 'tab on' : 'tab', pick: () => this.setState({v:k})})),
+    isMem: s.v==='mem', isProf: s.v==='prof', isGuide: s.v==='guide',
+    title: s.v==='mem' ? 'Members & roles' : s.v==='prof' ? 'Club profile' : 'Match-day guide',
+    hasAsk: !!s.ask, askText: s.ask ? s.ask.text : '', askOk: !!s.ask && !s.ask.block, askBlock: !!s.ask && !!s.ask.block,
+    askNo: () => this.setState({ask:null}), askYes: () => { const a=s.ask; this.setState({roles:{...s.roles,[a.id]:a.r}, ask:null}); },
+    members: M.map(([id,ini,name,email]) => ({ini,name,email, roles: R.map(r => ({name:r, cls: s.roles[id]===r ? 'tab on' : 'tab', pick: () => this.ask(id, r)}))})),
+    inviteRoles: R.filter(r => r!=='Owner').map(r => ({name:r, cls: s.inv===r ? 'tab on' : 'tab', pick: () => this.setState({inv:r})})),
+    roleHint: H[s.inv], invite: () => this.setState({invited:true}), inviteLabel: s.invited ? 'Invite sent ✓' : 'Send invite',
+    up: () => this.setState({up:true}), upLabel: s.up ? 'Logo uploaded ✓' : 'Upload logo',
+    saveP: () => this.setState({savedP:true}), savePLabel: s.savedP ? 'Saved ✓' : 'Save profile',
+    guide: G.map(([when,items],gi) => { const d = items.filter((_,ii) => s.done[gi+'-'+ii]).length; return {when, done: d+' of '+items.length, items: items.map((text,ii) => ({text, cls: s.done[gi+'-'+ii] ? 'opt on' : 'opt', pick: () => this.setState({done: {...s.done, [gi+'-'+ii]: !s.done[gi+'-'+ii]}})}))}; })
+  };
+}
+}
+</script>
+</body>
+</html>

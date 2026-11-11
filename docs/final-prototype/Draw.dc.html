@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Pools and knockouts</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><span class="cap grp">Rally33</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Rally33 Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a class="on" href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap">Rally33 Open · Men’s doubles · 16 teams</span><h1 class="disp">Pools &amp; knockouts</h1></div>
+<div class="row"><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><a class="btn ghost sm" href="Desk.dc.html">Open the desk</a></div>
+</div>
+
+<div class="between">
+<div class="tabs" role="tablist" aria-label="Category"><sc-for list="{{cats}}" as="c" hint-placeholder-count="3"><button role="tab" class="{{c.cls}}" onClick="{{c.pick}}">{{c.name}}</button></sc-for></div>
+<div class="tabs" role="tablist" aria-label="View"><sc-for list="{{views}}" as="v" hint-placeholder-count="4"><button role="tab" class="{{v.cls}}" onClick="{{v.pick}}">{{v.name}}</button></sc-for></div>
+</div>
+
+<sc-if value="{{isDraw}}" hint-placeholder-val="{{ true }}">
+<section class="card" style="padding:22px;display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+<div class="grow" style="flex:1 1 360px"><div class="cap acc">{{drawCap}}</div><h2 class="disp" style="font-size:32px;margin-top:6px">{{drawTitle}}</h2><div class="mut" style="margin-top:6px">Seeded by DUPR so the strongest teams start in different pools. Top 2 of each pool go through, crossing pools: A1 v D2 · B1 v C2 · C1 v B2 · D1 v A2. Shuffle or swap until the first match starts; then the draw locks.</div></div>
+<div class="row" style="flex-wrap:wrap"><button class="btn ghost" onClick="{{shuffle}}">Shuffle</button><button class="btn" onClick="{{make}}">{{makeLabel}}</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{showPools}}" hint-placeholder-val="{{ true }}">
+<div class="grid g4">
+<sc-for list="{{pools}}" as="p" hint-placeholder-count="4">
+<section class="card" style="padding:16px;display:flex;flex-direction:column;gap:8px">
+<div class="between"><b class="disp" style="font-size:22px">{{p.name}}</b><span class="cap">Court {{p.court}}</span></div>
+<sc-for list="{{p.teams}}" as="t" hint-placeholder-count="4"><div class="card2" style="padding:10px 12px;display:flex;flex-direction:column;gap:2px;font-size:14px"><span class="between" style="flex-wrap:nowrap"><span class="ell"><b>{{t.seed}}</b> {{t.name}}</span><span class="n" style="font-size:16px">{{t.dupr}}</span></span><span class="mut" style="font-size:12px">DUPR {{t.each}}</span></div></sc-for>
+</section>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{isKo}}" hint-placeholder-val="{{ false }}">
+<section class="card scroll" style="padding:20px">
+<div class="bracket" style="min-height:420px">
+<div class="col"><div class="cap">Quarter-finals · pools cross</div><sc-for list="{{qf}}" as="m" hint-placeholder-count="4"><div class="m"><div class="cap" style="justify-content:flex-start;padding:8px 14px 0">{{m.lab}}</div><div class="{{m.aw}}"><span>{{m.a}}</span><span class="n">{{m.sa}}</span></div><div class="{{m.bw}}"><span>{{m.b}}</span><span class="n">{{m.sb}}</span></div></div></sc-for></div>
+<div class="col"><div class="cap">Semi-finals</div><sc-for list="{{sf}}" as="m" hint-placeholder-count="2"><div class="m"><div class="{{m.aw}}"><span>{{m.a}}</span><span class="n">{{m.sa}}</span></div><div class="{{m.bw}}"><span>{{m.b}}</span><span class="n">{{m.sb}}</span></div></div></sc-for></div>
+<div class="col"><div class="cap">Final · 8:15 pm</div><div class="m" style="box-shadow:inset 0 0 0 2px var(--ball)"><div><span>Winner SF1</span><span class="n">–</span></div><div><span>Winner SF2</span><span class="n">–</span></div></div><span class="mut" style="font-size:13px">A1 and D1 can only meet in the final.</span></div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{isSched}}" hint-placeholder-val="{{ false }}">
+<section class="card"><div class="scroll"><table class="tbl"><thead><tr><th>Time</th><th>Court 1</th><th>Court 2</th><th>Court 3</th><th>Court 4</th></tr></thead><tbody>
+<sc-for list="{{sched}}" as="r" hint-placeholder-count="5"><tr><td class="n" style="font-size:18px">{{r.t}}</td><td>{{r.c1}}</td><td>{{r.c2}}</td><td>{{r.c3}}</td><td>{{r.c4}}</td></tr></sc-for>
+</tbody></table></div></section>
+</sc-if>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a class="on" href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { cat: 'Men’s doubles', v: 'Draw', made: false, seed: 0 }; }
+renderVals() {
+  const s = this.state;
+  const T = [['Varun / Neel','4.31'],['Arjun / Sai','4.20'],['Imran / Joseph','4.12'],['Mohan / Ravi','3.95'],['Kabir / Omar','3.88'],['Rohan / Ajay','3.80'],['Dev / Yash','3.71'],['Teja / Kiran','3.62'],['Ishaan / Arav','3.60'],['Sid / Rahul','3.55'],['Nikhil / Rishi','3.50'],['Leo / Sam','3.44'],['Vik / Pranav','3.40'],['Aditya / Om','3.38'],['Karan / Ved','3.30'],['Raj / Manu','3.22']];
+  const rot = s.seed % 4;
+  const pools = ['A','B','C','D'].map((n,i) => ({name:'Pool '+n, court: i+1, teams: [0,1,2,3].map(r => { const idx = r*4 + ((r%2===0 ? i : 3-i) + (r>0 ? rot : 0)) % 4; const v=parseFloat(T[idx][1]); return {seed: r===0 ? (i+1)+'.' : '', name: T[idx][0], dupr: T[idx][1], each: idx===11 ? (v+0.05).toFixed(2)+' · Unrated' : (v+0.05).toFixed(2)+' · '+(v-0.05).toFixed(2)}; })}));
+  const V = ['Draw','Pools','Knockout','Schedule'];
+  const M = (a,b,sa,sb) => ({a,b,sa,sb, aw: sa>sb ? 'w' : '', bw: sb>sa ? 'w' : ''});
+  return {
+    rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+    cats: ['Men’s doubles','Women’s doubles','Mixed'].map(n => ({name:n, cls: n===s.cat ? 'tab on' : 'tab', pick: () => this.setState({cat:n})})),
+    views: V.map(n => ({name:n, cls: n===s.v ? 'tab on' : 'tab', pick: () => this.setState({v:n})})),
+    isDraw: s.v==='Draw', showPools: s.v==='Draw' || s.v==='Pools', isKo: s.v==='Knockout', isSched: s.v==='Schedule',
+    drawCap: s.made ? 'Draw made' : '16 teams confirmed', drawTitle: s.made ? '4 pools of 4. Top 2 go to the quarter-finals.' : 'Ready to make the draw.',
+    shuffle: () => this.setState({seed: s.seed+1}), make: () => this.setState({made:true}), makeLabel: s.made ? 'Draw made ✓' : 'Make the draw',
+    pools,
+    qf: [['QF1 · A1 v D2','Varun / Neel','Mohan / Ravi',11,6],['QF2 · B1 v C2','Arjun / Sai','Rohan / Ajay',8,11],['QF3 · C1 v B2','Imran / Joseph','Kabir / Omar',11,9],['QF4 · D1 v A2','Ishaan / Arav','Dev / Yash','–','–']].map(([lab,a,b,sa,sb]) => ({...M(a,b,sa,sb), lab})),
+    sf: [M('Varun / Neel','Rohan / Ajay','–','–'),M('Imran / Joseph','Winner QF4','–','–')],
+    sched: [['5:00','A · Varun / Neel v Dev / Yash','B · Arjun / Sai v Teja / Kiran','C · Imran / Joseph v Leo / Sam','D · Mohan / Ravi v Raj / Manu'],['5:25','A · Kabir / Omar v Ishaan / Arav','B · Rohan / Ajay v Sid / Rahul','C · Nikhil / Rishi v Vik / Pranav','D · Aditya / Om v Karan / Ved'],['5:50','A · Varun / Neel v Kabir / Omar','B · Arjun / Sai v Rohan / Ajay','C · Imran / Joseph v Nikhil / Rishi','D · Mohan / Ravi v Aditya / Om'],['7:30','QF 1','QF 2','QF 3','QF 4'],['8:15','Final','—','—','—']].map(([t,c1,c2,c3,c4]) => ({t,c1,c2,c3,c4}))
+  };
+}
+}
+</script>
+</body>
+</html>
