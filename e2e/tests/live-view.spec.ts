@@ -36,7 +36,7 @@ test('spectator courts: sample data, score refresh, court selection, themes and 
     await page.setViewportSize({ width, height: 900 }); await page.emulateMedia({ colorScheme });
     await page.evaluate(() => document.fonts.ready);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} ${colorScheme}`).toBeLessThanOrEqual(width);
-    if(width<600) expect(await stage.locator('.ph').evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(180);
+    if(width<600) expect(await stage.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(180);
     const score = stage.locator('.pq-flash-score').first();
     expect(await score.evaluate(el => getComputedStyle(el).fontFamily)).toContain('Archivo');
     expect(await page.getByRole('button', { name: 'All courts →' }).evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);

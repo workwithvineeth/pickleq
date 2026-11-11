@@ -77,3 +77,15 @@
 .rallyq-prototype .rq .pq-results-champion b{font-size:22px}
 .rallyq-prototype .rq .pq-results-footer{color:var(--mut);font-size:12px}
 @media (max-width:560px){.rallyq-prototype .rq .pq-result-match{grid-template-columns:1fr;text-align:left}.rallyq-prototype .rq .pq-result-score{text-align:left}}
+/* Older shared buttons inside a v1.2 page: outline buttons look like ghost buttons, never a second yellow one */
+.rallyq-prototype .rq .btn.btn-outline{background:transparent!important;color:var(--ink)!important;box-shadow:inset 0 0 0 1px rgba(241,244,234,.28)!important}
+.rallyq-prototype .rq.day .btn.btn-outline{background:rgba(6,24,15,.25)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)!important}
+.rallyq-prototype .rq .btn.btn-outline.pq-danger{color:var(--ink)!important}
+.rallyq-prototype .rq .pq-results-champion{background:rgba(232,193,90,.08)!important;color:var(--ink)!important}
+.rallyq-prototype .rq .pq-results-champion *{color:inherit}
+@media screen{.rallyq-prototype .rq .pq-results-heading h2{display:none}.rallyq-prototype .rq .pq-results-heading{text-align:left}}
+.rallyq-prototype .rq .pq-results-table td:first-child{display:flex;align-items:flex-start;gap:8px;min-width:170px}
+.rallyq-prototype .rq .pq-results-table th,.rallyq-prototype .rq .pq-results-table td{padding:10px 10px!important;white-space:nowrap}
+.rallyq-prototype .rq .pq-results-table td:first-child{white-space:normal}
+.rallyq-prototype .rq .pq-results-page section.card{max-width:none}
+.rallyq-prototype .rq .pq-result-position{color:var(--ink)!important}
