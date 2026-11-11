@@ -1,6 +1,8 @@
 import {render,screen} from '@testing-library/react';
 import {expect,it,vi} from 'vitest';
 import {RallyDesk} from './RallyDesk';
-vi.mock('../../club/screens/Organiser',()=>({useTournament:()=>({b:{kind:'demo',scorerLinks:async()=>[]},state:{reload:()=>{},data:{club:{name:'Sample Club'},tournament:{id:'private-tournament-id',clubId:'c1',name:'Sample Open',courts:1,status:'live',publicSlug:'sample-public-event'},matches:[],players:[],divisions:[],entries:[]}}})}));
+// One stable backend and bundle, as in the app (a new object on every render would reload for ever).
+const T=vi.hoisted(()=>({b:{kind:'demo',scorerLinks:async()=>[]},state:{reload:()=>{},data:{club:{name:'Sample Club'},tournament:{id:'private-tournament-id',clubId:'c1',name:'Sample Open',courts:1,status:'live',publicSlug:'sample-public-event'},matches:[],players:[],divisions:[],entries:[]}}}));
+vi.mock('../../club/screens/Organiser',()=>({useTournament:()=>T}));
 it('opens public TV, social and live screens using the event public slug',()=>{render(<RallyDesk id="private-tournament-id" go={vi.fn()} onBack={()=>{}}/>);for(const [name,path] of [['TV board','club-tv'],['Social studio','club-social'],['Public live scores','event']])expect(screen.getByRole('link',{name:new RegExp('^'+name+' .')})).toHaveAttribute('href','#/'+path+'/sample-public-event')});
 it('an empty desk says the queue is empty and has no progress bar',()=>{render(<RallyDesk id="private-tournament-id" go={vi.fn()} onBack={()=>{}}/>);expect(screen.getAllByText('Queue empty').length).toBeGreaterThan(0);expect(screen.queryByRole('progressbar')).toBeNull();expect(screen.getByRole('heading',{name:'Sample Open · Desk'})).toBeInTheDocument()});

@@ -42,6 +42,10 @@ test.describe('Organiser screens (demo club)', () => {
     await page.getByRole('button', { name: 'Referee links', exact: true }).click();
     const ref = page.getByRole('region', { name: 'Referee PIN' });
     const desk = page.getByRole('region', { name: 'Desk access' });
+    // PINs stay hidden until the organiser asks to see them.
+    await expect(ref.getByLabel('Referee PIN hidden')).toBeVisible();
+    await ref.getByRole('button', { name: 'Show referee PIN' }).click();
+    await desk.getByRole('button', { name: 'Show desk PIN' }).click();
     await expect(ref.getByLabel(/^Referee PIN \d{4}$/)).toBeVisible();
     await expect(desk.getByLabel(/^Desk PIN \d{6}$/)).toBeVisible();
     await ref.getByRole('button', { name: 'Set my own' }).click();

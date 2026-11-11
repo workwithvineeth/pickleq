@@ -172,18 +172,18 @@ describe('Organiser: entries inbox and draw', () => {
     await screen.findByRole('heading', { name: 'PQ Demo Night' });
     expect(screen.getByRole('region', { name: 'Events board' })).toHaveTextContent('On the board');
     await user.click(screen.getByRole('button', { name: 'Entries and draw' }));
-    await screen.findByRole('heading', { name: 'Entries' });
+    await screen.findByRole('heading', { name: 'Entries & UPI' });
     const counts = screen.getByRole('region', { name: 'Men’s Doubles 3.5 entries' });
-    expect(counts).toHaveTextContent('Accepted3 of 8');
+    expect(counts).toHaveTextContent('Accepted3of 8 spots');
     expect(counts).toHaveTextContent('To decide2');
-    const imran = screen.getByRole('region', { name: 'Imran Khan / Tarun Bose' });
+    const imran = screen.getByRole('row', { name: 'Imran Khan / Tarun Bose' });
     await user.click(within(imran).getByRole('button', { name: 'Accept' }));
     expect(await screen.findByText('Imran Khan / Tarun Bose: accepted')).toBeInTheDocument();
     await user.click(within(screen.getByRole('group', { name: 'Show entries' })).getByRole('button', { name: 'Accepted' }));
-    const imran2 = await screen.findByRole('region', { name: 'Imran Khan / Tarun Bose' });
+    const imran2 = await screen.findByRole('row', { name: 'Imran Khan / Tarun Bose' });
     await user.click(within(imran2).getByRole('button', { name: 'Mark paid' }));
     expect(await screen.findByText('Imran Khan / Tarun Bose: paid')).toBeInTheDocument();
-    const aditya = (await screen.findAllByRole('region')).find((r) => r.getAttribute('aria-label') === 'Aditya Kulkarni / Pranav Joshi');
+    const aditya = (await screen.findAllByRole('row')).find((r) => r.getAttribute('aria-label') === 'Aditya Kulkarni / Pranav Joshi');
     expect(aditya).toBeUndefined(); // still to decide, so not in the Accepted list
 
     // Offline entry: adults only; phone optional.
@@ -195,7 +195,7 @@ describe('Organiser: entries inbox and draw', () => {
     await fillPerson(user, 'Player 2', { name: 'Desk Two', phone: '', dupr: '3.0', age: '46', gender: 'Man' });
     await user.click(screen.getByRole('button', { name: 'Add entry' }));
     expect(await screen.findByText('Desk One / Desk Two added')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Men’s Doubles 3.5 entries' })).toHaveTextContent('Accepted5 of 8');
+    expect(screen.getByRole('region', { name: 'Men’s Doubles 3.5 entries' })).toHaveTextContent('Accepted5of 8 spots');
 
     await user.click(screen.getByRole('button', { name: 'Close entries' }));
     expect(await screen.findByText(/Entries closed\./)).toBeInTheDocument();

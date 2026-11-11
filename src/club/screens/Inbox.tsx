@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
+import { OrgShell, PageHead } from '../../rallyq/shell/Shell';
+import { Legacy, SR } from './InboxLegacy';
 import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
 import type { ClubBackend, TournamentDetails } from '../backend';
@@ -14,14 +16,17 @@ import { AddPanel } from './AddPanel';
 import { DayEstimateBox, divisionToDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { friendlyDate, friendlyDateTime } from '../dates';
 
-type Filter = 'waiting' | 'accepted' | 'waitlist' | 'out' | 'all';
+type Filter = 'check' | 'waiting' | 'accepted' | 'waitlist' | 'out' | 'all';
 const FILTERS: { value: Filter; label: string }[] = [
-  { value: 'waiting', label: 'To decide' }, { value: 'accepted', label: 'Accepted' }, { value: 'waitlist', label: 'Waitlist' }, { value: 'out', label: 'Not in' }, { value: 'all', label: 'All' },
+  { value: 'check', label: 'To check' }, { value: 'waiting', label: 'To decide' }, { value: 'accepted', label: 'Accepted' }, { value: 'waitlist', label: 'Waitlist' }, { value: 'out', label: 'Not in' }, { value: 'all', label: 'All' },
 ];
-const inFilter = (r: Registration, f: Filter) => f === 'all' || (f === 'waiting' ? r.status === 'pending' : f === 'out' ? r.status === 'rejected' || r.status === 'withdrawn' : r.status === f);
-const person = (p: EntryPerson) => [p.name, p.dupr !== undefined ? `DUPR ${p.dupr}` : null, p.age ? `${p.age}` : null, p.gender === 'm' ? 'M' : p.gender === 'f' ? 'F' : p.gender === 'x' ? 'Other' : null].filter(Boolean).join(' · ');
+const isOut = (r: Registration) => r.status === 'rejected' || r.status === 'withdrawn';
+const toCheck = (r: Registration) => r.payment === 'claimed' && !isOut(r);
+const inFilter = (r: Registration, f: Filter) => f === 'all' || (f === 'check' ? toCheck(r) : f === 'waiting' ? r.status === 'pending' : f === 'out' ? isOut(r) : r.status === f);
+const dupr = (p: EntryPerson) => `${p.name.split(/\s+/)[0]} ${p.dupr !== undefined ? p.dupr.toFixed(2) : 'Unrated'}`;
+const STATUS_CLS: Record<RegistrationStatus, string> = { pending: 'st wait', accepted: 'st ok', waitlist: 'st wait', rejected: 'st no', withdrawn: 'st off' };
 
-/** The organiser's entries inbox: accept or turn down entries, track payments, add offline entries, close entries and make the draw. */
+/** The organiser's entries inbox: accept or turn down entries, match UPI payments, add offline entries, close entries and make the draw. */
 export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
   const b = backend();
   const state = useLoad(async () => {
@@ -31,101 +36,140 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
     return { t, regs: await b.registrations(id) };
   }, [b, id]);
   const [divId, setDivId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('waiting');
+  const [filter, setFilter] = useState<Filter | null>(null);
+  const [q, setQ] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [rejecting, setRejecting] = useState<string | null>(null);
+  const [open, setOpen] = useState<{ id: string; panel: 'pay' | 'more' | 'edit' | 'reject' } | null>(null);
+  const [ticked, setTicked] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const d = state.data;
-  if (!d || !b) return <main className="screen pq-matchday pq-proto" aria-labelledby="inbox-title"><Header id="inbox-title" title="Entries" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  if (!d || !b) return <main className="screen pq-matchday pq-proto" aria-labelledby="inbox-title"><Header id="inbox-title" title="Entries & UPI" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
   const t = d.t.tournament;
   const div = d.t.divisions.find((x) => x.id === divId) ?? d.t.divisions[0];
   const regs = d.regs.filter((r) => r.divisionId === div.id);
   const counts = inboxCounts(regs, div.rules?.cap);
-  const shown = regs.filter((r) => inFilter(r, filter));
+  const nCheck = regs.filter(toCheck).length;
+  const f: Filter = filter ?? (counts.pending === 0 && nCheck > 0 ? 'check' : 'waiting');
+  const needle = q.trim().toLowerCase();
+  const shown = regs.filter((r) => inFilter(r, f) && (!needle || r.players.some((p) => p.name.toLowerCase().includes(needle)) || (r.paymentRef ?? '').toLowerCase().includes(needle)));
+  const fee = div.rules?.fee ?? 0;
 
   async function run(fn: () => Promise<unknown>, ok: string) {
     setBusy(true); setMsg(null);
-    try { await fn(); setMsg({ ok: true, text: ok }); setEditing(null); setRejecting(null); state.reload(); } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
+    try { await fn(); setMsg({ ok: true, text: ok }); setOpen(null); setTicked(null); state.reload(); } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }
   const who = (r: Registration) => r.players.map((p) => p.name).join(' / ');
   const setStatus = (r: Registration, status: RegistrationStatus, note?: string) => run(() => b.updateRegistration(r.id, { status, ...(note !== undefined ? { note } : {}) }), `${who(r)}: ${REG_STATUS_LABEL[status].toLowerCase()}`);
   const setPaid = (r: Registration, payment: Payment) => run(() => b.updateRegistration(r.id, { payment }), `${who(r)}: ${PAYMENT_LABEL[payment].toLowerCase()}`);
   const drawn = !!t.drawnAt;
+  const toggle = (r: Registration, panel: 'pay' | 'more' | 'edit' | 'reject') => { setTicked(null); setOpen((o) => (o?.id === r.id && o.panel === panel ? null : { id: r.id, panel })); };
+
+  /** The one action a row asks for next (the first one on the screen gets the yellow button). */
+  const nextAction = (r: Registration): { label: string; act: () => void } | null => {
+    if (r.entryId || r.status === 'withdrawn') return null;
+    if (r.status === 'pending') return { label: 'Accept', act: () => setStatus(r, 'accepted') };
+    if (fee > 0 && r.payment === 'claimed') return { label: open?.id === r.id && open.panel === 'pay' ? 'Close' : 'Check payment', act: () => toggle(r, 'pay') };
+    if (fee > 0 && r.status === 'accepted' && r.payment !== 'paid') return { label: 'Mark paid', act: () => setPaid(r, 'paid') };
+    return null;
+  };
+  const firstAct = shown.find((r) => nextAction(r));
+  const cap = div.rules?.cap;
 
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="inbox-title">
-      <Header id="inbox-title" title={drawn ? 'Registrations and payments' : 'Entries'} onBack={onBack} />
-      <DemoNote b={b} />
-      <p className="small muted" style={{ margin: 0 }}>{t.name} · {drawn ? 'Draw made' : t.registrationOpen ? 'Entries open' : 'Entries closed'}</p>
-      {!drawn && (
-        <div className="meta">
-          <button type="button" className="btn btn-outline" disabled={busy || !isApproved(t)} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Open registration'}</button>
-          {isApproved(t) && <button type="button" className="btn btn-outline" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>}
-        </div>
+    <OrgShell go={go} active="entries" clubName={d.t.club.name} clubId={d.t.club.id} tournament={{ id: t.id, name: t.name, slug: t.publicSlug }}>
+      <PageHead cap={`${t.name} · ${drawn ? 'Draw made' : t.registrationOpen ? 'Entries open' : 'Entries closed'}${t.entriesClose && !drawn ? ` · entries close ${friendlyDate(t.entriesClose)}` : ''}`}
+        title={<span id="inbox-title">{drawn ? 'Registrations and payments' : 'Entries & UPI'}</span>}
+        actions={<>
+          {!drawn && isApproved(t) && <button type="button" className="btn ghost sm" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>}
+          {!drawn && <button type="button" className="btn ghost sm" disabled={busy || !isApproved(t)} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Open registration'}</button>}
+          {drawn && <button type="button" className="btn ghost sm" onClick={() => go('club-entries', t.id)}>Entries, withdrawals and late entries</button>}
+        </>} />
+      <Legacy><DemoNote b={b} /></Legacy>
+      {msg && <div role="status" className="note" style={{ margin: 0 }}>{msg.ok ? '' : 'Not saved: '}{msg.text}</div>}
+      {d.t.divisions.length > 1 && (
+        <div className="tabs" role="group" aria-label="Event">{d.t.divisions.map((x) => <button key={x.id} type="button" className={`tab${x.id === div.id ? ' on' : ''}`} aria-pressed={x.id === div.id} onClick={() => { setDivId(x.id); setOpen(null); }}>{x.name}</button>)}</div>
       )}
-      {drawn && <button type="button" className="btn btn-outline" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-entries', t.id)}>Entries, withdrawals and late entries</button>}
-      {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
-      {d.t.divisions.length > 1 && <Segmented label="Event" value={div.id} options={d.t.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setDivId(v); setEditing(null); }} />}
-      <section className="card section" aria-label={`${div.name} entries`}>
-        <div className="small muted">{rulesLine(div.kind, div.rules)}</div>
-        <div className="row"><span>Accepted</span><b>{counts.accepted}{div.rules?.cap !== undefined ? ` of ${div.rules.cap}` : ''}</b></div>
-        <div className="row"><span>To decide</span><b>{counts.pending}</b></div>
-        <div className="row"><span>Waitlist</span><b>{counts.waitlist}</b></div>
-        {(div.rules?.fee ?? 0) > 0 && <div className="row"><span>Accepted but not marked paid</span><b>{counts.unpaidAccepted}</b></div>}
+      <section className="grid g4" aria-label={`${div.name} entries`}>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">To check</div><div className={`n${nCheck ? ' acc' : ''}`}>{nCheck}</div><div className="mut" style={{ fontSize: 13 }}>UPI payments to match</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Accepted</div><div className="n">{counts.accepted}</div><div className="mut" style={{ fontSize: 13 }}>{cap !== undefined ? `of ${cap} spots` : 'teams in'}{fee > 0 && counts.unpaidAccepted ? ` · ${counts.unpaidAccepted} not paid yet` : ''}</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">To decide</div><div className="n">{counts.pending}</div><div className="mut" style={{ fontSize: 13 }}>new entries</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Waitlist</div><div className="n">{counts.waitlist}</div><div className="mut" style={{ fontSize: 13 }}>move up when a spot frees</div></div>
       </section>
+      <p className="mut" style={{ margin: 0, fontSize: 13 }}>{rulesLine(div.kind, div.rules)}</p>
       {!drawn && (
-        <AddPanel modes={[{ value: 'one', label: 'Person or team' }, { value: 'import', label: 'Import a sheet' }]}>
-          {(mode, { close }) => mode === 'import'
-            ? <ImportEntries b={b} t={t} divisions={d.t.divisions} regs={d.regs} onClose={close} onDone={() => state.reload()} />
-            : <>
-              <p className="small muted" style={{ margin: 0 }}>For players who entered by phone or at the desk. A phone number is optional here.</p>
-              <EntryForm b={b} t={t} divisions={d.t.divisions} divisionId={div.id} busy={busy} offline onSave={(players, divisionId, extra) => run(() => b.addOfflineEntry({ tournamentId: t.id, divisionId, clubId: t.clubId, players, status: extra?.status ?? 'accepted', payment: extra?.payment ?? 'unpaid' }), `${players.map((p) => p.name).join(' / ')} added`)} />
-            </>}
-        </AddPanel>
+        <Legacy>
+          <AddPanel modes={[{ value: 'one', label: 'Person or team' }, { value: 'import', label: 'Import a sheet' }]}>
+            {(mode, { close }) => mode === 'import'
+              ? <ImportEntries b={b} t={t} divisions={d.t.divisions} regs={d.regs} onClose={close} onDone={() => state.reload()} />
+              : <>
+                <p className="small muted" style={{ margin: 0 }}>For players who entered by phone or at the desk. A phone number is optional here.</p>
+                <EntryForm b={b} t={t} divisions={d.t.divisions} divisionId={div.id} busy={busy} offline onSave={(players, divisionId, extra) => run(() => b.addOfflineEntry({ tournamentId: t.id, divisionId, clubId: t.clubId, players, status: extra?.status ?? 'accepted', payment: extra?.payment ?? 'unpaid' }), `${players.map((p) => p.name).join(' / ')} added`)} />
+              </>}
+          </AddPanel>
+        </Legacy>
       )}
-      <Chips label="Show entries" value={filter} options={FILTERS} onChange={setFilter} />
-      {shown.length === 0 && <p className="small muted" style={{ margin: 0 }}>No entries here.</p>}
-      <div className="pq-entry-records">{shown.map((r, index) => (
-        <section key={r.id} className="card section pq-entry-record" aria-label={who(r)} style={r.status === 'rejected' || r.status === 'withdrawn' ? { opacity: 0.65 } : undefined}>
-          <div className="row"><b><span className="pq-score">{index + 1}.</span> {who(r)}</b><span className={`pill${r.status === 'accepted' ? ' pill-ok' : r.status === 'pending' ? ' pill-warn' : ''}`}>{REG_STATUS_LABEL[r.status]}</span></div>
-          <div className="pq-entry-meta"><span>{div.name}</span><span>Avg DUPR {r.players.every(p => p.dupr !== undefined) ? (r.players.reduce((n,p)=>n+(p.dupr??0),0)/r.players.length).toFixed(2) : "—"}</span><span>{PAYMENT_LABEL[r.payment]}</span></div>
-          {r.players.map((p, i) => (
-            <div key={i} className="small" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <span>{person(p)}</span>
-              {p.phone && <a href={`tel:${p.phone.replace(/[^\d+]/g, '')}`}>{p.phone}</a>}
-              {p.duprId && <span className="muted">ID {p.duprId}</span>}
-            </div>
-          ))}
-          <div className="small muted">{r.source === 'offline' ? 'Added by organiser' : 'Entered online'} · {friendlyDateTime(r.createdAt)} · {PAYMENT_LABEL[r.payment]}{r.paymentRef ? ` (ref ${r.paymentRef})` : ''}</div>
-          {r.note && <div className="small">Note to player: {r.note}</div>}
-          {r.entryId && <div className="small muted">In the draw</div>}
-          {!r.entryId && editing !== r.id && rejecting !== r.id && (
-            <div className="meta">
-              {r.status !== 'accepted' && r.status !== 'withdrawn' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => setStatus(r, 'accepted')}>Accept</button>}
-              {(r.status === 'pending' || r.status === 'accepted') && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setStatus(r, 'waitlist')}>Waitlist</button>}
-              {r.status !== 'rejected' && r.status !== 'withdrawn' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => { setRejecting(r.id); setReason(''); }}>Turn down…</button>}
-              {(div.rules?.fee ?? 0) > 0 && r.status !== 'withdrawn' && (r.payment === 'paid'
-                ? <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setPaid(r, 'unpaid')}>Mark not paid</button>
-                : <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setPaid(r, 'paid')}>Mark paid</button>)}
-              {r.status !== 'withdrawn' && <button type="button" className="link-btn" onClick={() => setEditing(r.id)}>Edit</button>}
-            </div>
-          )}
-          {rejecting === r.id && (
-            <>
-              <input className="input" aria-label={`Reason for ${who(r)}`} placeholder="Reason the player will see (optional)" maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} />
-              <div className="meta">
-                <button type="button" className="btn btn-primary" disabled={busy} onClick={() => setStatus(r, 'rejected', reason)}>Turn down</button>
-                <button type="button" className="btn btn-outline" onClick={() => setRejecting(null)}>Cancel</button>
-              </div>
-            </>
-          )}
-          {editing === r.id && <EntryForm b={b} t={t} divisions={d.t.divisions} start={r} busy={busy} onCancel={() => setEditing(null)} onSave={(players, divisionId) => run(() => b.updateRegistration(r.id, { players, divisionId }), `${players.map((p) => p.name).join(' / ')} updated`)} />}
-        </section>
-      ))}</div>
-      <Draw b={b} t={t} divisions={d.t.divisions} regs={d.regs} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
-    </main>
+      <div className="between">
+        <div className="tabs" role="group" aria-label="Show entries">{FILTERS.map((x) => {
+          const n = regs.filter((r) => inFilter(r, x.value)).length;
+          return <button key={x.value} type="button" className={`tab${x.value === f ? ' on' : ''}`} aria-pressed={x.value === f} onClick={() => { setFilter(x.value); setOpen(null); }}>{x.label}<span aria-hidden="true" className="mut"> {n}</span></button>;
+        })}</div>
+        <label className="search"><span style={SR}>Search by team or UPI reference</span><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg><input className="inp" placeholder="Search team or UPI reference" value={q} onChange={(e) => setQ(e.target.value)} /></label>
+      </div>
+      <div className="card">
+        {shown.length > 0 && <div className="scroll"><table className="tbl" aria-label={`${div.name} entries list`}><thead><tr><th>Team and DUPR</th><th>Category</th><th>Payment</th><th>UPI reference</th><th>Status</th><th><span style={SR}>Actions</span></th></tr></thead><tbody>
+          {shown.map((r) => {
+            const a = nextAction(r);
+            const panel = open?.id === r.id ? open.panel : null;
+            return <Fragment key={r.id}>
+              <tr aria-label={who(r)} style={isOut(r) ? { opacity: 0.65 } : undefined}>
+                <td><b>{who(r)}</b><div className="mut" style={{ fontSize: 12 }}>{r.players.map(dupr).join(' · ')}</div><div className="mut" style={{ fontSize: 12 }}>{r.source === 'offline' ? 'Added by organiser' : 'Entered online'} · {friendlyDateTime(r.createdAt)}</div></td>
+                <td>{div.name}</td>
+                <td>{PAYMENT_LABEL[r.payment]}</td>
+                <td className="n" style={{ fontSize: 20, letterSpacing: '.05em' }}>{r.paymentRef ?? <span className="mut" style={{ fontSize: 13, letterSpacing: 0 }}>—</span>}</td>
+                <td><span className={STATUS_CLS[r.status]}>{r.entryId ? 'In the draw' : REG_STATUS_LABEL[r.status]}</span>{r.note && <div className="mut" style={{ fontSize: 12, marginTop: 4 }}>Note to player: {r.note}</div>}</td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {a && <button type="button" className={firstAct?.id === r.id && !panel ? 'btn sm' : 'btn ghost sm'} disabled={busy} onClick={a.act}>{a.label}</button>}
+                  {!r.entryId && r.status !== 'withdrawn' && <button type="button" className="tlink mut" style={{ marginLeft: 10 }} aria-expanded={panel === 'more'} onClick={() => toggle(r, 'more')}>More</button>}
+                </td>
+              </tr>
+              {panel && <tr className="expand"><td colSpan={6}>
+                {panel === 'pay' && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 28px', alignItems: 'center', padding: '6px 2px' }}>
+                  <span><span className="cap" style={{ display: 'block' }}>Amount</span><b>₹{fee}{div.kind === 'doubles' ? ' per player' : ''}</b></span>
+                  <span><span className="cap" style={{ display: 'block' }}>UPI reference</span><span className="n" style={{ fontSize: 26, letterSpacing: '.06em' }}>{r.paymentRef ?? 'None given'}</span></span>
+                  <button type="button" className={ticked === r.id ? 'check on' : 'check'} aria-pressed={ticked === r.id} onClick={() => setTicked(ticked === r.id ? null : r.id)}><span className="bx" aria-hidden="true">{ticked === r.id ? '✓' : ''}</span>It matches a payment in my bank app</button>
+                  <span className="row" style={{ marginLeft: 'auto', gap: 10 }}>
+                    <button type="button" className="tlink mut" disabled={busy} onClick={() => setPaid(r, 'unpaid')}>Not in my bank app</button>
+                    <button type="button" className="btn sm" disabled={busy || ticked !== r.id} onClick={() => setPaid(r, 'paid')}>Confirm paid</button>
+                  </span>
+                </div>}
+                {panel === 'more' && <div className="row" style={{ flexWrap: 'wrap', gap: 8, padding: '6px 2px' }}>
+                  {r.players.map((p, i) => <span key={i} className="mut" style={{ fontSize: 13 }}>{p.name}{p.phone ? <> · <a href={`tel:${p.phone.replace(/[^\d+]/g, '')}`}>{p.phone}</a></> : null}{p.duprId ? ` · DUPR ID ${p.duprId}` : ''}</span>)}
+                  <span style={{ flexBasis: '100%' }} />
+                  {r.status === 'waitlist' || r.status === 'rejected' ? <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setStatus(r, 'accepted')}>Accept</button> : null}
+                  {(r.status === 'pending' || r.status === 'accepted') && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setStatus(r, 'waitlist')}>Waitlist</button>}
+                  {r.status !== 'rejected' && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => { setOpen({ id: r.id, panel: 'reject' }); setReason(''); }}>Turn down…</button>}
+                  {fee > 0 && r.payment === 'paid' && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setPaid(r, 'unpaid')}>Mark not paid</button>}
+                  {fee > 0 && r.payment === 'claimed' && <button type="button" className="btn ghost sm" onClick={() => toggle(r, 'pay')}>Check payment</button>}
+                  <button type="button" className="tlink" onClick={() => setOpen({ id: r.id, panel: 'edit' })}>Edit</button>
+                </div>}
+                {panel === 'reject' && <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '6px 2px' }}>
+                  <input className="inp" aria-label={`Reason for ${who(r)}`} placeholder="Reason the player will see (optional)" maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} />
+                  <div className="row" style={{ gap: 8 }}>
+                    <button type="button" className="btn alt sm" disabled={busy} onClick={() => setStatus(r, 'rejected', reason)}>Turn down</button>
+                    <button type="button" className="btn ghost sm" onClick={() => setOpen(null)}>Cancel</button>
+                  </div>
+                </div>}
+                {panel === 'edit' && <Legacy><EntryForm b={b} t={t} divisions={d.t.divisions} start={r} busy={busy} onCancel={() => setOpen(null)} onSave={(players, divisionId) => run(() => b.updateRegistration(r.id, { players, divisionId }), `${players.map((p) => p.name).join(' / ')} updated`)} /></Legacy>}
+              </td></tr>}
+            </Fragment>;
+          })}
+        </tbody></table></div>}
+        {shown.length === 0 && <div className="empty">{needle ? 'No team or UPI reference matches that.' : f === 'check' ? 'No payments to check. You’re all caught up.' : 'No entries here.'}</div>}
+      </div>
+      {fee > 0 && <div className="note">Match the UPI reference with your bank app before you confirm. RallyQ never holds money: players pay your club directly. Accepted teams go into the draw.</div>}
+      <Draw b={b} t={t} divisions={d.t.divisions} regs={d.regs} primary={!firstAct} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
+    </OrgShell>
   );
 }
 
@@ -169,7 +213,7 @@ function EntryForm({ b, t, divisions, divisionId, start, busy, offline, onSave, 
 }
 
 /** Making the draw: choose the format for each event, see when the day finishes, then create entries, matches, courts and times in one go. */
-function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubTournament; divisions: Division[]; regs: Registration[]; onDrawn: () => void; go: Go }) {
+function Draw({ b, t, divisions, regs, onDrawn, go, primary = true }: { b: ClubBackend; t: ClubTournament; divisions: Division[]; regs: Registration[]; onDrawn: () => void; go: Go; primary?: boolean }) {
   const withEntries = divisions.map((d) => ({ d, n: regs.filter((r) => r.divisionId === d.id && r.status === 'accepted').length })).filter((x) => x.n > 0);
   const [drafts, setDrafts] = useState<Record<string, FormatDraft>>({});
   const [courts, setCourts] = useState(t.courts);
@@ -185,23 +229,23 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
   const problems = useMemo(() => withEntries.map(({ d, n }) => drawProblem(d, n, choice(d, n))).filter(Boolean) as string[], [withEntries, drafts]); // eslint-disable-line react-hooks/exhaustive-deps
   if (t.drawnAt) {
     return (
-      <section className="card section" aria-label="Draw">
-        <h2 style={{ fontSize: 16 }}>Draw made</h2>
+      <section className="card" aria-label="Draw" style={{ padding: 22 }}><Legacy className="section">
+        <h2 className="disp" style={{ fontSize: 24 }}>Draw made</h2>
         <p className="small muted" style={{ margin: 0 }}>Pools and the schedule are ready. Late changes (withdrawals, substitutes) are in Entries.</p>
         <div className="meta">
-          <button type="button" className="btn btn-primary" onClick={() => go('club-tournament', t.id)}>See the draw</button>
-          <button type="button" className="btn btn-outline" onClick={() => go('club-desk', t.id)}>Desk view</button>
+          <button type="button" className={primary ? 'btn' : 'btn alt'} onClick={() => go('club-tournament', t.id)}>See the draw</button>
+          <button type="button" className="btn ghost" onClick={() => go('club-desk', t.id)}>Desk view</button>
         </div>
-      </section>
+      </Legacy></section>
     );
   }
   if (!isApproved(t)) {
     return (
-      <section className="card section" aria-label="Draw">
-        <h2 style={{ fontSize: 16 }}>Make the draw</h2>
+      <section className="card" aria-label="Draw" style={{ padding: 22 }}><Legacy className="section">
+        <h2 className="disp" style={{ fontSize: 24 }}>Make the draw</h2>
         <p className="small muted" style={{ margin: 0 }}>You can make the draw once RallyQ approves this tournament. Keep adding and accepting entries meanwhile; submit it from the tournament page.</p>
-        <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Tournament page</button>
-      </section>
+        <button type="button" className="btn ghost" onClick={() => go('club-tournament', t.id)}>Tournament page</button>
+      </Legacy></section>
     );
   }
   const timing = courts !== t.courts || slot !== t.slotMinutes || start !== t.startTime ? { courts, slotMinutes: slot, startTime: start } : undefined;
@@ -213,8 +257,8 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
   }
   const set = (d: Division, n: number, patch: Partial<FormatDraft>) => { setConfirm(false); setDrafts((c) => ({ ...c, [d.id]: { ...draft(d, n), ...patch } })); };
   return (
-    <section className="card section" aria-label="Draw">
-      <h2 style={{ fontSize: 16 }}>Make the draw</h2>
+    <section className="card" aria-label="Draw" style={{ padding: 22 }}><Legacy className="section">
+      <h2 className="disp" style={{ fontSize: 24 }}>Make the draw</h2>
       <p className="small muted" style={{ margin: 0 }}>You choose the format for each event. Accepted entries are seeded by DUPR, and every match gets a court and a time. Entries close when you draw.</p>
       {withEntries.length === 0 && <p className="small muted" style={{ margin: 0 }}>Accept some entries first.</p>}
       {withEntries.length > 0 && <>
@@ -235,9 +279,9 @@ function Draw({ b, t, divisions, regs, onDrawn, go }: { b: ClubBackend; t: ClubT
       {problems.map((p) => <div key={p} className="msg msg-bad small">{p}</div>)}
       {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
       {withEntries.length > 0 && (confirm
-        ? <div className="meta"><button type="button" className="btn btn-primary" disabled={busy || problems.length > 0} onClick={draw}>Yes, make the draw</button><button type="button" className="btn btn-outline" onClick={() => setConfirm(false)}>Not yet</button></div>
-        : <button type="button" className="btn btn-primary" disabled={problems.length > 0} onClick={() => setConfirm(true)}>Make the draw</button>)}
-    </section>
+        ? <div className="meta"><button type="button" className={primary ? 'btn' : 'btn alt'} disabled={busy || problems.length > 0} onClick={draw}>Yes, make the draw</button><button type="button" className="btn ghost" onClick={() => setConfirm(false)}>Not yet</button></div>
+        : <button type="button" className={primary ? 'btn' : 'btn alt'} disabled={problems.length > 0} onClick={() => setConfirm(true)}>Make the draw</button>)}
+    </Legacy></section>
   );
 }
 

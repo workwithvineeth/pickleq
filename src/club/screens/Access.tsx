@@ -20,6 +20,7 @@ export function AccessCards({ b, tournamentId, name, finished }: { b: ClubBacken
   const [editing, setEditing] = useState<Which | null>(null);
   const [typed, setTyped] = useState('');
   const [confirmLink, setConfirmLink] = useState(false);
+  const [shown, setShown] = useState<Record<Which, boolean>>({ referee: false, desk: false });
   const a = access.data;
 
   async function run(fn: () => Promise<unknown>, ok: string) {
@@ -35,60 +36,58 @@ export function AccessCards({ b, tournamentId, name, finished }: { b: ClubBacken
       which === 'desk' ? 'Desk PIN saved. Tell your desk team.' : 'Referee PIN saved on every court link. Tell your referees.');
   }
   const typeBox = (which: Which) => editing === which && (
-    <div className="pq-pin-edit">
-      <input className="input" inputMode="numeric" autoComplete="off" maxLength={6} aria-label={which === 'desk' ? 'Your desk PIN' : 'Your referee PIN'}
+    <div className="row" style={{ flexWrap: 'wrap', gap: 8, width: '100%' }}>
+      <input className="inp" style={{ maxWidth: 200 }} inputMode="numeric" autoComplete="off" maxLength={6} aria-label={which === 'desk' ? 'Your desk PIN' : 'Your referee PIN'}
         placeholder="4 to 6 digits" value={typed} onChange={(e) => setTyped(e.target.value.replace(/\D/g, ''))}
         onKeyDown={(e) => { if (e.key === 'Enter') saveTyped(which); }} />
-      <button type="button" className="btn btn-primary" disabled={busy} onClick={() => saveTyped(which)}>Save</button>
-      <button type="button" className="btn btn-outline" onClick={() => { setEditing(null); setTyped(''); }}>Cancel</button>
+      <button type="button" className="btn alt sm" disabled={busy} onClick={() => saveTyped(which)}>Save</button>
+      <button type="button" className="btn ghost sm" onClick={() => { setEditing(null); setTyped(''); }}>Cancel</button>
     </div>
   );
+  const pin = (which: Which, label: string, value?: string) => {
+    const open = shown[which];
+    return <>
+      <span className="grow" style={{ flex: '1 1 220px' }}><span className="cap" style={{ display: 'block' }}>{which === 'referee' ? 'Referee PIN · same for every court' : 'Desk PIN · this tournament’s desk only'}</span>
+        {value && (open ? <span className="n" style={{ fontSize: 34, letterSpacing: '.1em' }} aria-label={`${label} ${value}`}>{value}</span> : <span className="n" style={{ fontSize: 34, letterSpacing: '.1em' }} aria-label={`${label} hidden`}>{'•'.repeat(value.length)}</span>)}</span>
+      {value && <button type="button" className="tlink" aria-label={`${open ? 'Hide' : 'Show'} ${which} PIN`} onClick={() => setShown((x) => ({ ...x, [which]: !open }))}>{open ? 'Hide' : 'Show'}</button>}
+    </>;
+  };
 
   return (
     <>
-      {access.error && <div role="alert" className="msg msg-bad">{access.error}</div>}
-      {finished && <div className="msg msg-bad">This tournament is finished, so the referee links and the desk link don’t work. Reopen it to use them again.</div>}
-      <section className="card section" aria-label="Referee PIN">
-        <div className="row">
-          <h2 style={{ fontSize: 18 }}>Referee PIN</h2>
-          {a && <b className="pq-pin" aria-label={`Referee PIN ${a.refereePin}`}>{a.refereePin}</b>}
-        </div>
-        <p className="small muted" style={{ margin: 0 }}>Referees type it on their court link. It opens only that court’s matches, never the desk. Tell it to them by voice or in a separate message.</p>
+      {access.error && <div role="alert" className="note">Not loaded: {access.error}</div>}
+      {finished && <div className="note">This tournament is finished, so the referee links and the desk link don’t work. Reopen it to use them again.</div>}
+      <section className="card" aria-label="Referee PIN" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        {pin('referee', 'Referee PIN', a?.refereePin)}
+        {editing !== 'referee' && <>
+          <button type="button" className="btn ghost sm" disabled={busy || !a} onClick={() => run(() => b.setEventPin(tournamentId), 'New referee PIN on every court link. Tell your referees.')}>New PIN</button>
+          <button type="button" className="tlink mut" disabled={busy || !a} onClick={() => { setEditing('referee'); setTyped(''); setMsg(null); }}>Set my own</button>
+        </>}
         {typeBox('referee')}
-        {editing !== 'referee' && (
-          <div className="meta">
-            <button type="button" className="btn btn-outline" disabled={busy || !a} onClick={() => { setEditing('referee'); setTyped(''); setMsg(null); }}>Set my own</button>
-            <button type="button" className="btn btn-outline" disabled={busy || !a} onClick={() => run(() => b.setEventPin(tournamentId), 'New referee PIN on every court link. Tell your referees.')}>New PIN</button>
-          </div>
-        )}
+        <p className="mut" style={{ margin: 0, fontSize: 13, flexBasis: '100%' }}>Referees type it on their court link. It opens only that court’s matches, never the desk. Only organisers see the PIN; change it after each event.</p>
       </section>
-      <section className="card section" aria-label="Desk access">
-        <div className="row">
-          <h2 style={{ fontSize: 18 }}>Desk access</h2>
-          {a && <b className="pq-pin" aria-label={`Desk PIN ${a.deskPin}`}>{a.deskPin}</b>}
-        </div>
-        <p className="small muted" style={{ margin: 0 }}>For your desk team only: the desk link and this desk PIN open this tournament’s desk (courts, scores, walkovers, late entries). No players’ phone numbers, no other tournaments, no club settings. It stops when you mark the tournament finished.</p>
+      <section className="card" aria-label="Desk access" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        {pin('desk', 'Desk PIN', a?.deskPin)}
+        {editing !== 'desk' && <>
+          <button type="button" className="btn ghost sm" disabled={!a} onClick={async () => a && setMsg({ ok: true, text: await shareLink(`${name}: desk`, deskLink(a.deskToken)) })}>Share desk link</button>
+          <button type="button" className="btn ghost sm" disabled={busy || !a} onClick={() => run(() => b.setDeskPin(tournamentId), 'New desk PIN. Tell your desk team.')}>New PIN</button>
+          <button type="button" className="tlink mut" disabled={busy || !a} onClick={() => { setEditing('desk'); setTyped(''); setMsg(null); }}>Set my own</button>
+        </>}
         {typeBox('desk')}
-        {editing !== 'desk' && (
-          <div className="meta">
-            <button type="button" className="btn btn-primary" disabled={!a} onClick={async () => a && setMsg({ ok: true, text: await shareLink(`${name}: desk`, deskLink(a.deskToken)) })}>Share desk link</button>
-            <button type="button" className="btn btn-outline" disabled={busy || !a} onClick={() => { setEditing('desk'); setTyped(''); setMsg(null); }}>Set my own</button>
-            <button type="button" className="btn btn-outline" disabled={busy || !a} onClick={() => run(() => b.setDeskPin(tournamentId), 'New desk PIN. Tell your desk team.')}>New PIN</button>
-          </div>
-        )}
+        <p className="mut" style={{ margin: 0, fontSize: 13, flexBasis: '100%' }}>For your desk team only: the desk link and this desk PIN open this tournament’s desk (courts, scores, walkovers, late entries). No players’ phone numbers, no other tournaments, no club settings. It stops when you mark the tournament finished.</p>
         {!confirmLink
-          ? <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} disabled={busy || !a} onClick={() => setConfirmLink(true)}>Lost the desk phone? Make a new desk link…</button>
+          ? <button type="button" className="tlink mut" disabled={busy || !a} onClick={() => setConfirmLink(true)}>Lost the desk phone? Make a new desk link…</button>
           : (
-            <div className="section">
-              <p className="small" style={{ margin: 0 }}>The old desk link stops working at once. Share the new one with your desk team.</p>
-              <div className="meta">
-                <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.newDeskLink(tournamentId), 'New desk link made. The old one no longer works.')}>Make a new desk link</button>
-                <button type="button" className="btn btn-outline" onClick={() => setConfirmLink(false)}>Cancel</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexBasis: '100%' }}>
+              <p style={{ margin: 0, fontSize: 14 }}>The old desk link stops working at once. Share the new one with your desk team.</p>
+              <div className="row" style={{ gap: 8 }}>
+                <button type="button" className="btn alt sm" disabled={busy} onClick={() => run(() => b.newDeskLink(tournamentId), 'New desk link made. The old one no longer works.')}>Make a new desk link</button>
+                <button type="button" className="btn ghost sm" onClick={() => setConfirmLink(false)}>Cancel</button>
               </div>
             </div>
           )}
       </section>
-      {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+      {msg && <div role={msg.ok ? 'status' : 'alert'} className="note">{msg.ok ? '' : 'Not saved: '}{msg.text}</div>}
     </>
   );
 }

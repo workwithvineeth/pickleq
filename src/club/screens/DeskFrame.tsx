@@ -66,3 +66,15 @@ export function MatchdayShell({ go, active, d, children }: { go: Go; active: Org
   const t = d?.tournament;
   return <OrgShell go={go} active={active} clubName={d?.club.name} clubId={t?.clubId} tournament={t ? { id: t.id, name: t.name, slug: t.publicSlug || undefined } : undefined}>{children}</OrgShell>;
 }
+
+/** The two match-day tabs of "Referees & results" (prototype RefLinks). */
+export function RefTabs({ go, id, on }: { go?: Go; id: string; on: 'links' | 'results' }) {
+  if (!go) return null;
+  return (
+    <div className="tabs" role="group" aria-label="Referees and results">
+      <button type="button" className={on === 'links' ? 'tab on' : 'tab'} aria-pressed={on === 'links'} onClick={() => go('club-scorers', id)}>Referee links</button>
+      <button type="button" className={on === 'results' ? 'tab on' : 'tab'} aria-pressed={on === 'results'} onClick={() => go('club-results-dupr', id)}>Results &amp; DUPR</button>
+    </div>
+  );
+}
+

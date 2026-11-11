@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TournamentBundle } from './backend';
 import { DemoBackend } from './demo';
 const fake = vi.hoisted(() => ({ currentUser: vi.fn(), resultsBundle: vi.fn(), updatePlayer: vi.fn(), isPlatformAdmin: vi.fn(), adminUpdateTournamentDupr: vi.fn() }));
-vi.mock('./index', () => ({ backend: () => fake, serverBackend: () => fake, rememberReturn: (hash: string) => localStorage.setItem('pq-club-return', hash) }));
+vi.mock('./index', () => ({ backend: () => fake, serverBackend: () => fake, eventsBackend: () => fake, rememberReturn: (hash: string) => localStorage.setItem('pq-club-return', hash) }));
 const { ResultsDupr } = await import('./screens/ResultsDupr');
 let bundle: TournamentBundle;
 beforeEach(async () => {
@@ -28,7 +28,7 @@ describe('results access and editing', () => {
     const match = bundle.matches.find((m) => m.divisionId === div.id)!;
     bundle.matches.push({ ...match, id: 'final-fixture', stage: 'final', status: 'done', winner: 'A', games: [{ a: 11, b: 7, points: '' }] });
     render(<ResultsDupr id={bundle.tournament.id} go={vi.fn()} onBack={() => {}} />);
-    await screen.findByText(bundle.tournament.name);
+    await screen.findByRole('heading', { name: bundle.tournament.name });
     const final = screen.getByRole('region', { name: `${div.name} Final` });
     expect(within(final).getByText(/11–7/)).toBeInTheDocument();
     expect(final.querySelector('.pq-result-player')?.children[1].textContent).toMatch(/^DUPR /);

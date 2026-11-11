@@ -233,6 +233,9 @@ describe('Club mode', () => {
     await user.click(screen.getByRole('button', { name: 'Add an any-court link' }));
     await screen.findByText('Made an any-court link');
     const link = demoState().scorerLinks.find((l: { court?: number }) => !l.court);
+    // The PIN is hidden until the organiser asks to see it.
+    expect(screen.queryByLabelText(`Referee PIN ${link.pin}`)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show referee PIN' }));
     expect(await screen.findByLabelText(`Referee PIN ${link.pin}`)).toBeInTheDocument();
 
     window.location.hash = `#/court/${link.token}`;
@@ -286,6 +289,7 @@ describe('Club mode', () => {
     expect(pins.size).toBe(1);
     const [first] = [...pins] as string[];
     const card = screen.getByRole('region', { name: 'Referee PIN' });
+    await user.click(within(card).getByRole('button', { name: 'Show referee PIN' }));
     expect(within(card).getByLabelText(`Referee PIN ${first}`)).toBeInTheDocument();
     expect(within(card).queryByRole('button', { name: 'Share desk link' })).not.toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: 'New PIN' }));
@@ -298,6 +302,7 @@ describe('Club mode', () => {
     // Set my own: an easy one and the desk PIN are refused; a good one goes on every link.
     const desk = screen.getByRole('region', { name: 'Desk access' });
     const deskPin = Object.values(demoState().desks as Record<string, { pin: string }>)[0].pin;
+    await user.click(within(desk).getByRole('button', { name: 'Show desk PIN' }));
     expect(within(desk).getByLabelText(`Desk PIN ${deskPin}`)).toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: 'Set my own' }));
     await user.type(within(card).getByLabelText('Your referee PIN'), '1234');
@@ -323,6 +328,7 @@ describe('Club mode', () => {
     const state = () => Object.values(demoState().desks as Record<string, { pin: string; token: string }>)[0];
     const first = state();
     expect(first.pin).toMatch(/^\d{6}$/);
+    await user.click(await within(desk).findByRole('button', { name: 'Show desk PIN' }));
     expect(await within(desk).findByLabelText(`Desk PIN ${first.pin}`)).toBeInTheDocument();
     expect(within(desk).getByRole('button', { name: 'Share desk link' })).toBeInTheDocument();
     expect(within(desk).getByText(/No players’ phone numbers/)).toBeInTheDocument();

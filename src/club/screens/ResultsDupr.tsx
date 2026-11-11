@@ -7,9 +7,11 @@ import { poolLetter, standings, TIE_BREAK_TEXT } from '../domain/engine';
 import { isStaff, KNOCKOUT_STAGES, STAGE_LABEL, type ClubMatch, type Division } from '../types';
 import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resultsReport';
 import { ManualScores } from './ScorePad';
-import { ResultsHero } from './Brand';
 import { displayPlayerName, appLink, errorText, Header, Status, useLoad } from './common';
 import { ClaimLinks } from './studio/Claim';
+import { clubMark, OrgShell, PageHead, PublicShell } from '../../rallyq/shell/Shell';
+import { Legacy } from './InboxLegacy';
+import { RefTabs } from './DeskFrame';
 
 export const resultsDuprLink = (id: string) => appLink(`#/club-results-dupr/${id}`);
 type Edit = { singles?: string; doubles?: string; id?: string };
@@ -116,17 +118,17 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     const url = URL.createObjectURL(new Blob(['<!DOCTYPE html>\n' + doc.documentElement.outerHTML], { type: 'text/html;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = `${data.tournament.name.replace(/[^\w-]+/g, '-')}-results.html`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  return <main className="screen wide-ok pq-results-page" aria-labelledby="rd-title">
-    <ResultsHero label="RESULTS" />
-    <div className="pq-results-heading"><h1 id="rd-title" className="sr-only">Results and DUPR</h1><h2>{data.tournament.name}</h2>
+  const body = <div className="pq-results-page" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="pq-results-heading"><h2 style={{ margin: 0 }}>{data.tournament.name}</h2>
       <p className="small muted">{[data.club.name, data.tournament.venue, data.tournament.city, friendlyDate(data.tournament.startDate), data.tournament.status === 'done' ? 'Finished' : data.tournament.status === 'live' ? 'Live' : 'Not started', `${data.matches.filter((m) => m.status !== 'void').length} matches on ${data.tournament.courts} courts`].filter(Boolean).join(' · ')}</p>
     </div>
-    <div className="meta no-print pq-results-bar"><span className={`pill${missing.size ? ' pill-warn' : ' pill-ok'}`}>{missing.size ? `${missing.size} DUPR ratings missing` : 'All DUPR ratings in'}</span>
-      <button className="btn btn-primary" disabled={dirty || busy} onClick={() => window.print()}>Save as PDF</button>
-      <button className="btn btn-outline" disabled={dirty || busy} onClick={csv}>Download results (CSV)</button>
-      <button className="btn btn-outline" disabled={dirty || busy} onClick={savePage}>Save this page</button>
-      {staff && <button className="btn btn-outline" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
-      <button className="link-btn" onClick={onBack}>Back</button>
+    <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}><span className={missing.size ? 'st wait' : 'st ok'}>{missing.size ? `${missing.size} DUPR ratings missing` : 'All DUPR ratings in'}</span>
+      {staff && <button className="btn sm" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
+      {staff && <button className="btn ghost sm" disabled={dirty || busy} onClick={() => go('club-dupr', data.tournament.id)}>File for DUPR</button>}
+      <button className="btn ghost sm" disabled={dirty || busy} onClick={csv}>Download results (CSV)</button>
+      <button className="btn ghost sm" disabled={dirty || busy} onClick={() => window.print()}>Save as PDF</button>
+      <button className="btn ghost sm" disabled={dirty || busy} onClick={savePage}>Save this page</button>
+      {data.tournament.publicSlug && <button className="tlink" onClick={() => go('results', data.tournament.publicSlug!)}>Public results page and posters →</button>}
     </div>
     <p className="small muted no-print">{staff ? `${admin ? 'Admin' : 'Organiser'}: add or edit the ratings and IDs in the boxes below each group, then choose Save DUPR details. Saved details are available to authorised club organisers and RallyQ admins.` : 'Results and saved DUPR details. Editing is available only to authorised club organisers and RallyQ admins.'} These stored ratings have not been synchronised or verified with DUPR.</p>
     {staff && <p className="small muted no-print">Changes update this club’s player ratings wherever they appear. Ratings are stored to two decimal places.</p>}
@@ -187,5 +189,9 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     {staff && b?.kind === 'server' && data.matches.some((m) => m.status === 'done') && <ClaimLinks tournamentId={data.tournament.id} clubId={data.club.id} tournament={data.tournament.name}
       players={[...new Set(data.entries.flatMap((e) => e.playerIds))].map((pid) => pmap.get(pid)).filter((x): x is NonNullable<typeof x> => !!x && !x.sample)} />}
     <p className="pq-results-footer">Results from RallyQ · paddleq.in · {TIE_BREAK_TEXT}</p>
-  </main>;
+  </div>;
+  const t = data.tournament;
+  const head = <><PageHead cap={t.name} title={<span id="rd-title">Results &amp; DUPR</span>} /><RefTabs go={go} id={t.id} on="results" /></>;
+  if (staff && !admin) return <OrgShell go={go} active="referees" clubName={data.club.name} clubId={data.club.id} tournament={{ id: t.id, name: t.name, slug: t.publicSlug || undefined }}>{head}<Legacy>{body}</Legacy></OrgShell>;
+  return <PublicShell go={go} host={{ marks: [clubMark(data.club.name)], name: data.club.name }}><PageHead cap={t.name} title={<span id="rd-title">Results &amp; DUPR</span>} /><Legacy>{body}</Legacy></PublicShell>;
 }

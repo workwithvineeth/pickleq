@@ -11,6 +11,9 @@ import { isStaff, STAGE_LABEL, type ClubPlayer, type Entry, type ScorerLink, typ
 import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 import { formatRule, ScorePad } from './ScorePad';
 import { AccessCards } from './Access';
+import { MatchdayShell, RefTabs } from './DeskFrame';
+import { Legacy } from './InboxLegacy';
+import { PageHead } from '../../rallyq/shell/Shell';
 import { useClubBackend, useDesk } from './deskContext';
 import { EntriesInbox } from './Inbox';
 import { AddPanel } from './AddPanel';
@@ -56,60 +59,81 @@ function DeskAgain() {
 
 const courtName = (c?: number) => (c ? `Court ${c}` : 'Any court');
 
-export function ScorerLinks({ id, onBack }: { id: string; go?: Go; onBack: () => void }) {
+const COURT_LINES = <svg viewBox="0 0 300 200" preserveAspectRatio="none" aria-hidden="true"><g><rect x="1" y="1" width="298" height="198" /><line x1="150" y1="1" x2="150" y2="199" strokeWidth="4" /><line x1="105" y1="1" x2="105" y2="199" /><line x1="195" y1="1" x2="195" y2="199" /><line x1="1" y1="100" x2="105" y2="100" /><line x1="195" y1="100" x2="299" y2="100" /></g></svg>;
+const shortUrl = (u: string) => u.replace(/^https?:\/\//, '').replace(/^(.{14}).*(.{10})$/, '$1…$2');
+const timeOf = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+export function ScorerLinks({ id, go, onBack }: { id: string; go?: Go; onBack: () => void }) {
   const { b, state } = useTournament(id);
   const [tick, setTick] = useState(0);
   const links = useLoad(async () => (b ? b.scorerLinks(id) : []), [b, id, tick]);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const d = state.data;
   if (!d || !b) return shell('Referee links', onBack, state);
   const t = d.tournament;
-  const have = new Set((links.data ?? []).filter((l) => !l.revoked).map((l) => l.court ?? 0));
+  const all = links.data ?? [];
+  const have = new Set(all.filter((l) => !l.revoked).map((l) => l.court ?? 0));
   const missing = Array.from({ length: t.courts }, (_, i) => i + 1).filter((c) => !have.has(c));
 
   async function run(fn: () => Promise<unknown>, ok: string) {
     setBusy(true); setMsg(null);
-    try { await fn(); setMsg(ok); setTick((x) => x + 1); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
+    try { await fn(); setMsg({ ok: true, text: ok }); setTick((x) => x + 1); } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }
   const url = (l: ScorerLink) => appLink(`#/court/${l.token}`);
+  const onCourt = (c?: number) => c ? d.matches.find((m) => m.court === c && m.status === 'live') : undefined;
+  const label = (m: NonNullable<ReturnType<typeof onCourt>>) => {
+    const div = d.divisions.find((x) => x.id === m.divisionId);
+    const pm = new Map(d.players.map((p) => [p.id, p]));
+    const e = (eid?: string) => { const x = d.entries.find((y) => y.id === eid); return x ? names(x.playerIds, pm) : 'To be decided'; };
+    return `${e(m.entryA)} v ${e(m.entryB)}${div ? ` · ${div.name}` : ''}`;
+  };
+  // The first working link nobody has opened yet gets the one yellow button.
+  const firstToSend = missing.length ? undefined : all.find((l) => !l.revoked && !l.lastUsedAt);
+  const sorted = [...all].sort((x, y) => (x.court ?? 99) - (y.court ?? 99));
 
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="links-title">
-      <Header id="links-title" title="Referee links" onBack={onBack} />
-      <DemoNote b={b} />
-      <p className="small muted" style={{ margin: 0 }}>
-        Give each court’s referee their court’s link. They don’t need an account: just the link and the referee PIN. A court link only shows that court’s matches.
-      </p>
-      <AccessCards b={b} tournamentId={t.id} name={t.name} finished={t.status === 'done'} />
-      <h2 style={{ fontSize: 18 }}>Court links</h2>
-      <div className="meta">
-        {missing.length > 0 && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, missing), `Made ${missing.length} court link${missing.length > 1 ? 's' : ''}`)}>{have.size ? `Add links for ${missing.length} more court${missing.length > 1 ? 's' : ''}` : `Create referee links (${t.courts})`}</button>}
-        {!have.has(0) && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, [null]), 'Made an any-court link')}>Add an any-court link</button>}
-      </div>
-      {msg && <div role="status" className="msg msg-ok">{msg}</div>}
-      <Status error={links.error} loading={links.loading && !links.data} />
-      {(links.data ?? []).map((l) => (
-        <section key={l.id} className="card section" aria-label={`${courtName(l.court)} referee link`} style={l.revoked ? { opacity: 0.6 } : undefined}>
-          <div className="row">
-            <h3 style={{ fontSize: 18 }}>{courtName(l.court)}</h3>
-            {l.revoked ? <span className="pill">Turned off</span> : <span className="pill pill-ok">On</span>}
-          </div>
-          <p className="small muted" style={{ margin: 0 }}>{l.lastUsedAt ? `Last used ${new Date(l.lastUsedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Not used yet'}</p>
-          {!l.revoked && (
-            <div className="meta">
-              <button type="button" className="btn btn-primary" onClick={async () => setMsg(await shareLink(`${t.name}: score ${courtName(l.court)}`, url(l)))}>Share link</button>
-              <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { revoked: true }), `${courtName(l.court)} link turned off`)}>Turn off</button>
+    <MatchdayShell go={go ?? (() => undefined)} active="referees" d={d}>
+      <PageHead cap={t.name} title={<span id="links-title">Referee links</span>} />
+      <RefTabs go={go} id={t.id} on="links" />
+      <Legacy><DemoNote b={b} /></Legacy>
+      <div className="note">One link per court. The referee opens it on their phone, types the referee PIN and scores. No account, no app. A court link only shows that court’s matches.</div>
+      {(missing.length > 0 || !have.has(0)) && (
+        <div className="row" style={{ flexWrap: 'wrap', gap: 10 }}>
+          {missing.length > 0 && <button type="button" className="btn" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, missing), `Made ${missing.length} court link${missing.length > 1 ? 's' : ''}`)}>{have.size ? `Add links for ${missing.length} more court${missing.length > 1 ? 's' : ''}` : `Create referee links (${t.courts})`}</button>}
+          {!have.has(0) && <button type="button" className="btn ghost" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, [null]), 'Made an any-court link')}>Add an any-court link</button>}
+        </div>
+      )}
+      {msg && <div role={msg.ok ? 'status' : 'alert'} className="note">{msg.ok ? '' : 'Not done: '}{msg.text}</div>}
+      <Legacy><Status error={links.error} loading={links.loading && !links.data} /></Legacy>
+      {sorted.length > 0 && <div className="grid g2">{sorted.map((l) => {
+        const m = onCourt(l.court);
+        const text = `${t.name}: score ${courtName(l.court)}. Open this link and type the referee PIN: ${url(l)}`;
+        return (
+          <section key={l.id} className="card mini" aria-label={`${courtName(l.court)} referee link`} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200, ...(l.revoked ? { opacity: 0.6 } : {}) }}>
+            {COURT_LINES}
+            <div className="between"><b className="disp" style={{ fontSize: 26 }}>{courtName(l.court)}</b>
+              <span className={l.revoked ? 'st off' : m ? 'st live' : l.lastUsedAt ? 'st ok' : 'st wait'}>{l.revoked ? 'Turned off' : m ? 'Live' : l.lastUsedAt ? 'Opened' : 'Not opened yet'}</span></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <b style={{ fontSize: 15 }}>{m ? label(m) : l.court ? 'No match on court' : 'For any court: the referee picks one'}</b>
+              <span className="mut" style={{ fontSize: 12 }}>{l.lastUsedAt ? `Last used ${timeOf(l.lastUsedAt)}` : 'Not used yet'}</span>
+              <span className="n" style={{ fontSize: 15, letterSpacing: '.02em' }}>{shortUrl(url(l))}</span>
             </div>
-          )}
-          {l.revoked && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { revoked: false }), `${courtName(l.court)} link is back on`)}>Turn back on</button>}
-        </section>
-      ))}
-    </main>
+            <div className="row" style={{ flexWrap: 'wrap', marginTop: 'auto', gap: 8 }}>
+              {!l.revoked && <>
+                <a className={firstToSend?.id === l.id ? 'btn sm' : 'btn ghost sm'} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer">Send on WhatsApp</a>
+                <button type="button" className="btn ghost sm" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: score ${courtName(l.court)}`, url(l)) })}>Share link</button>
+                <button type="button" className="tlink mut" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { revoked: true }), `${courtName(l.court)} link turned off`)}>Turn off</button>
+              </>}
+              {l.revoked && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { revoked: false }), `${courtName(l.court)} link is back on`)}>Turn back on</button>}
+            </div>
+          </section>
+        );
+      })}</div>}
+      <AccessCards b={b} tournamentId={t.id} name={t.name} finished={t.status === 'done'} />
+    </MatchdayShell>
   );
 }
-
-// ---------- The court page a scorer opens (no account) ----------
 
 function pinKey(token: string) { return `pq-court-pin-${token}`; }
 /** Opens a scorer link on the club server, or in the demo on this phone if the server doesn't know it. */
