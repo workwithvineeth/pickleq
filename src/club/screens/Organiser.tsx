@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
@@ -104,7 +104,7 @@ export function ScorerLinks({ id, go, onBack }: { id: string; go?: Go; onBack: (
           {!have.has(0) && <button type="button" className="btn ghost" disabled={busy} onClick={() => run(() => b.createScorerLinks(t.id, t.clubId, [null]), 'Made an any-court link')}>Add an any-court link</button>}
         </div>
       )}
-      {msg && <div role={msg.ok ? 'status' : 'alert'} className="note">{msg.ok ? '' : 'Not done: '}{msg.text}</div>}
+      {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}
       <Legacy><Status error={links.error} loading={links.loading && !links.data} /></Legacy>
       {sorted.length > 0 && <div className="grid g2">{sorted.map((l) => {
         const m = onCourt(l.court);
@@ -363,35 +363,40 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
   }
 
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="entries-title">
-      <Header id="entries-title" title="Entries" onBack={onBack} />
-      <DemoNote b={b} />
-      {d.divisions.length > 1 && <Segmented label="Event" value={div.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setDivId(v); setOpenEntry(null); }} />}
-      <p className="small muted" style={{ margin: 0 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} · {formatRule(div.format)}</p>
-      {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
-      <div className="pq-entry-grid" role="table" aria-label="Entries"><div className="pq-entry-table-head" role="row"><span role="columnheader">#</span><span role="columnheader">Team</span><span role="columnheader">Category</span><span role="columnheader">Avg DUPR</span><span role="columnheader">Status</span><span role="columnheader">Actions</span></div>
-      {entries.map((e,i) => {
+    <MatchdayShell go={go ?? (() => undefined)} active="entries" d={d}>
+      <PageHead cap={`${t.name} · ${formatRule(div.format)}`} title={<span id="entries-title">Entries</span>}
+        actions={t.entryMode === 'registration' && go ? <button type="button" className="btn ghost sm" onClick={() => go('club-inbox', t.id)}>Registrations and payments</button> : undefined} />
+      <Legacy><DemoNote b={b} /></Legacy>
+      {d.divisions.length > 1 && <div className="tabs" role="group" aria-label="Event">{d.divisions.map((x) => <button key={x.id} type="button" className={x.id === div.id ? 'tab on' : 'tab'} aria-pressed={x.id === div.id} onClick={() => { setDivId(x.id); setOpenEntry(null); }}>{x.name}</button>)}</div>}
+      <p className="mut" style={{ margin: 0, fontSize: 14 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} in the draw. Withdraw, swap a player or add a late entry here.</p>
+      {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}
+      <div className="card"><div className="scroll"><table className="tbl" aria-label="Entries"><thead><tr><th>#</th><th>Team and DUPR</th><th>Pool</th><th>Status</th><th><span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Actions</span></th></tr></thead><tbody>
+      {entries.map((e, i) => {
         const out = e.status === 'withdrawn';
         const isOpen = openEntry === e.id;
-        const ratings=e.playerIds.map(id=>div.kind==='doubles'?pmap.get(id)?.duprDoubles:pmap.get(id)?.duprSingles);
-        const average=ratings.length&&ratings.every((v):v is number=>typeof v==='number')?ratings.reduce((a,b)=>a+b,0)/ratings.length:undefined;
+        const paid = payments.data?.find((r) => r.entryId === e.id)?.payment === 'paid';
         return (
-          <section key={e.id} className="pq-entry-table-row" role="row" aria-label={names(e.playerIds,pmap)} style={out?{opacity:.6}:undefined}>
-            <span role="cell" className="pq-score">{i+1}</span><div role="cell" className="pq-entry-team"><span className="pq-entry-avatar" aria-hidden="true">{names(e.playerIds,pmap).split(/\s+/).filter(Boolean).slice(0,2).map(n=>n[0]).join('')}</span><div><b>{names(e.playerIds,pmap)}</b><small>Pool {poolLetter(e.pool)} · seed {e.seed??'—'}</small></div></div>
-            <span role="cell" data-label="Category">{div.name}</span><span role="cell" data-label="Avg DUPR" className="pq-score">{average?.toFixed(2)??'Not recorded'}</span><span role="cell"><span className="pill">{out?'Withdrawn':'Active'}</span>{payments.data?.find(r=>r.entryId===e.id)?.payment==='paid'&&<span className="pill pill-ok">Paid</span>}</span>
-            <span role="cell">{!out&&<button type="button" className="link-btn" aria-expanded={isOpen} onClick={()=>setOpenEntry(isOpen?null:e.id)}>{isOpen?'Close':'Change'}</button>}</span>
-            {isOpen&&!out&&<div role="cell" className="pq-entry-expanded"><EntryActions e={e} pmap={pmap} free={free} busy={busy} onWithdraw={()=>withdraw(e)} onReplace={(o,n)=>replace(e,o,n)} /></div>}
-          </section>
+          <Fragment key={e.id}>
+            <tr aria-label={names(e.playerIds, pmap)} style={out ? { opacity: 0.6 } : undefined}>
+              <td className="n" style={{ fontSize: 20 }}>{i + 1}</td>
+              <td><b>{names(e.playerIds, pmap)}</b><div className="mut" style={{ fontSize: 12 }}>{e.playerIds.map((pid) => { const p = pmap.get(pid); const r = div.kind === 'doubles' ? p?.duprDoubles : p?.duprSingles; return `${(p?.name ?? 'Unknown').split(/\s+/)[0]} ${r !== undefined ? fmtRating(r) : 'Unrated'}`; }).join(' · ')}</div></td>
+              <td>Pool {poolLetter(e.pool)} · seed {e.seed ?? '—'}</td>
+              <td><span className={out ? 'st off' : 'st ok'}>{out ? 'Withdrawn' : 'Active'}</span>{paid && <span className="st ok" style={{ marginLeft: 6 }}>Paid</span>}</td>
+              <td style={{ textAlign: 'right' }}>{!out && <button type="button" className="btn ghost sm" aria-expanded={isOpen} onClick={() => setOpenEntry(isOpen ? null : e.id)}>{isOpen ? 'Close' : 'Change'}</button>}</td>
+            </tr>
+            {isOpen && !out && <tr className="expand" aria-label={`Change ${names(e.playerIds, pmap)}`}><td colSpan={5}><Legacy><EntryActions e={e} pmap={pmap} free={free} busy={busy} onWithdraw={() => withdraw(e)} onReplace={(o, n) => replace(e, o, n)} /></Legacy></td></tr>}
+          </Fragment>
         );
       })}
-      </div>
-      <AddPanel modes={[{ value: 'late', label: 'Late entry' }, { value: 'walkin', label: 'New player' }]}>
-        {(mode, { setMode }) => mode === 'late'
-          ? <LateEntry kind={div.kind} free={free} busy={busy} onAdd={late} />
-          : <WalkIn b={b} clubId={t.clubId} busy={busy} onAdded={(p) => { setMsg({ ok: true, text: `${p.name} added to the club. Now choose them as a late entry.` }); setMode('late'); state.reload(); }} />}
-      </AddPanel>
-      {t.entryMode === 'registration' && go && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-inbox', t.id)}>Registrations and payments</button>}
-    </main>
+      </tbody></table></div></div>
+      <Legacy>
+        <AddPanel modes={[{ value: 'late', label: 'Late entry' }, { value: 'walkin', label: 'New player' }]}>
+          {(mode, { setMode }) => mode === 'late'
+            ? <LateEntry kind={div.kind} free={free} busy={busy} onAdd={late} />
+            : <WalkIn b={b} clubId={t.clubId} busy={busy} onAdded={(p) => { setMsg({ ok: true, text: `${p.name} added to the club. Now choose them as a late entry.` }); setMode('late'); state.reload(); }} />}
+        </AddPanel>
+      </Legacy>
+    </MatchdayShell>
   );
 }
 
@@ -474,14 +479,14 @@ export function WalkIn({ b, clubId, busy, onAdded }: { b: ClubBackend; clubId: s
 
 // ---------- DUPR export ----------
 
-export function DuprExport({ id, onBack }: { id: string; go?: Go; onBack: () => void }) {
+export function DuprExport({ id, go, onBack }: { id: string; go?: Go; onBack: () => void }) {
   const { b, state } = useTournament(id);
   const [ids, setIds] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const d = state.data;
   const pmap = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
-  if (!d || !b) return shell('Send to DUPR', onBack, state);
+  if (!d || !b) return shell('File for DUPR', onBack, state);
   const t = d.tournament;
   const c = duprCheck(d.matches, pmap);
 
@@ -506,31 +511,32 @@ export function DuprExport({ id, onBack }: { id: string; go?: Go; onBack: () => 
   }
 
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="dupr-title">
-      <Header id="dupr-title" title="Send to DUPR" onBack={onBack} />
-      <DemoNote b={b} />
-      <section className="card section" aria-label="Ready for DUPR">
-        <div className="row"><span>Ready to send</span><b>{c.ready.length}</b></div>
-        <div className="row"><span>Waiting for DUPR IDs</span><b>{c.missingIds.length}</b></div>
-        <div className="row"><span>Not finished yet</span><b>{c.unfinished}</b></div>
-        {c.noScores > 0 && <div className="row"><span>Walkovers (DUPR needs real scores)</span><b>{c.noScores}</b></div>}
+    <MatchdayShell go={go ?? (() => undefined)} active="referees" d={d}>
+      <PageHead cap={t.name} title={<span id="dupr-title">File for DUPR</span>} />
+      <RefTabs go={go} id={t.id} on="results" />
+      <Legacy><DemoNote b={b} /></Legacy>
+      <section className="grid g4" aria-label="Ready for DUPR">
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Ready to send</div><div className="n acc">{c.ready.length}</div><div className="mut" style={{ fontSize: 13 }}>matches</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Waiting for DUPR IDs</div><div className="n">{c.missingIds.length}</div><div className="mut" style={{ fontSize: 13 }}>matches</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Not finished yet</div><div className="n">{c.unfinished}</div><div className="mut" style={{ fontSize: 13 }}>matches</div></div>
+        {c.noScores > 0 && <div className="card stat" style={{ padding: 18 }}><div className="cap">Walkovers</div><div className="n">{c.noScores}</div><div className="mut" style={{ fontSize: 13 }}>DUPR needs real scores</div></div>}
       </section>
-      {msg && <div role="status" className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
+      {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}
       {c.playersMissing.length > 0 && (
-        <section className="section" aria-label="Missing DUPR IDs">
-          <h2 style={{ fontSize: 18 }}>Add missing DUPR IDs</h2>
-          <p className="small muted" style={{ margin: 0 }}>Players find their ID in the DUPR app, under their name. It’s saved on their club profile for next time.</p>
+        <section className="card" aria-label="Missing DUPR IDs" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <h2 className="disp" style={{ fontSize: 24, margin: 0 }}>Add missing DUPR IDs</h2>
+          <p className="mut" style={{ margin: 0, fontSize: 14 }}>Players find their ID in the DUPR app, under their name. It’s saved on their club profile for next time.</p>
           {c.playersMissing.map((p) => (
-            <label key={p.id} className="row" style={{ gap: 8 }}>
+            <label key={p.id} className="between" style={{ gap: 8 }}>
               <span style={{ flex: 1 }}>{p.name}</span>
-              <input className="input" style={{ maxWidth: 160 }} aria-label={`DUPR ID for ${p.name}`} placeholder="DUPR ID" value={ids[p.id] ?? ''} onChange={(e) => setIds((x) => ({ ...x, [p.id]: e.target.value }))} />
+              <input className="inp" style={{ maxWidth: 180 }} aria-label={`DUPR ID for ${p.name}`} placeholder="DUPR ID" value={ids[p.id] ?? ''} onChange={(e) => setIds((x) => ({ ...x, [p.id]: e.target.value }))} />
             </label>
           ))}
-          <button type="button" className="btn btn-outline" disabled={busy || !Object.values(ids).some((v) => v.trim())} onClick={saveIds}>Save DUPR IDs</button>
+          <button type="button" className="btn ghost" style={{ alignSelf: 'flex-start' }} disabled={busy || !Object.values(ids).some((v) => v.trim())} onClick={saveIds}>Save DUPR IDs</button>
         </section>
       )}
-      <button type="button" className="btn btn-primary" disabled={!c.ready.length} onClick={download}>Download the DUPR file ({c.ready.length})</button>
-      <p className="small muted" style={{ margin: 0 }}>Only finished matches with real scores, where every player has a DUPR ID, are included. You can download again later as more IDs are added.</p>
-    </main>
+      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={!c.ready.length} onClick={download}>Download the DUPR file ({c.ready.length})</button>
+      <p className="mut" style={{ margin: 0, fontSize: 14 }}>Only finished matches with real scores, where every player has a DUPR ID, are included. You upload the file in DUPR yourself. You can download again later as more IDs are added.</p>
+    </MatchdayShell>
   );
 }

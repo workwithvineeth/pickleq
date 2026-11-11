@@ -472,8 +472,9 @@ describe('Club mode', () => {
     await user.click(within(screen.getByRole('group', { name: 'Event' })).getByRole('button', { name: 'Open Doubles' }));
     const card = await screen.findByLabelText(out);
     await user.click(within(card).getByRole('button', { name: 'Change' }));
-    await user.click(within(card).getByRole('button', { name: 'Withdraw…' }));
-    await user.click(within(card).getByRole('button', { name: 'Yes, withdraw' }));
+    const changes = screen.getByRole('row', { name: `Change ${out}` });
+    await user.click(within(changes).getByRole('button', { name: 'Withdraw…' }));
+    await user.click(within(changes).getByRole('button', { name: 'Yes, withdraw' }));
     await screen.findByText(/withdrawn\. 0 matches cancelled, 1 walkover/);
     const after = await demoBackend().clubBundle(club.id);
     expect(after.matches.find((m) => m.id === semi.id)).toMatchObject({ status: 'done', winner: 'B' });
@@ -496,14 +497,14 @@ describe('Club mode', () => {
   it('DUPR export: collects missing DUPR IDs and only exports matches that are ready', async () => {
     const user = userEvent.setup();
     await openEvent(user);
-    await user.click(screen.getByRole('button', { name: 'Send to DUPR' }));
-    await screen.findByRole('heading', { name: 'Send to DUPR' });
+    await user.click(screen.getByRole('button', { name: 'File for DUPR' }));
+    await screen.findByRole('heading', { name: 'File for DUPR' });
     expect(screen.getByRole('button', { name: /Download the DUPR file \(0\)/ })).toBeDisabled();
     const inputs = screen.getAllByLabelText(/^DUPR ID for /);
     expect(inputs.length).toBeGreaterThan(10);
     await user.type(inputs[0], 'bad id!');
     await user.click(screen.getByRole('button', { name: 'Save DUPR IDs' }));
-    expect(await screen.findByRole('status')).toHaveTextContent(/3 to 20 letters or numbers/);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/3 to 20 letters or numbers/);
     await user.clear(inputs[0]);
     await user.type(inputs[0], 'ab12cd');
     await user.click(screen.getByRole('button', { name: 'Save DUPR IDs' }));

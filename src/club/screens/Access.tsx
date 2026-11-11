@@ -87,7 +87,7 @@ export function AccessCards({ b, tournamentId, name, finished }: { b: ClubBacken
             </div>
           )}
       </section>
-      {msg && <div role={msg.ok ? 'status' : 'alert'} className="note">{msg.ok ? '' : 'Not saved: '}{msg.text}</div>}
+      {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}
     </>
   );
 }

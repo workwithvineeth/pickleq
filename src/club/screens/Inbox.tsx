@@ -86,7 +86,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
           {drawn && <button type="button" className="btn ghost sm" onClick={() => go('club-entries', t.id)}>Entries, withdrawals and late entries</button>}
         </>} />
       <Legacy><DemoNote b={b} /></Legacy>
-      {msg && <div role="status" className="note" style={{ margin: 0 }}>{msg.ok ? '' : 'Not saved: '}{msg.text}</div>}
+      {msg && <div role="status" className={msg.ok ? 'note' : 'warn'} style={{ margin: 0 }}>{msg.text}</div>}
       {d.t.divisions.length > 1 && (
         <div className="tabs" role="group" aria-label="Event">{d.t.divisions.map((x) => <button key={x.id} type="button" className={`tab${x.id === div.id ? ' on' : ''}`} aria-pressed={x.id === div.id} onClick={() => { setDivId(x.id); setOpen(null); }}>{x.name}</button>)}</div>
       )}
