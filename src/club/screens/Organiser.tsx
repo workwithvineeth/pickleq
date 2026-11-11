@@ -1,19 +1,17 @@
-import { DeskNeedsYou } from './MatchdayHeader';
 import { useEffect, useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
-import type { ClubBackend, TournamentBundle } from '../backend';
-import { matchResult, poolLetter, slotTime } from '../domain/engine';
+import type { ClubBackend } from '../backend';
+import { poolLetter, slotTime } from '../domain/engine';
 import { duprCheck, duprCsv } from '../dupr';
 import { publicSources } from '../index';
-import { courtBoard, enteredPlayers, knockoutMatchesToAdd, nextMatchToCall, planLateEntry, planReplacePlayer, planWithdraw, upNext } from '../plan';
-import { isStaff, STAGE_LABEL, type ClubGame, type ClubMatch, type ClubPlayer, type Entry, type ScorerLink, type ScorerView } from '../types';
-import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, shareText, Status, useLoad } from './common';
-import { formatRule, ManualScores, ScorePad } from './ScorePad';
+import { enteredPlayers, knockoutMatchesToAdd, planLateEntry, planReplacePlayer, planWithdraw } from '../plan';
+import { isStaff, STAGE_LABEL, type ClubPlayer, type Entry, type ScorerLink, type ScorerView } from '../types';
+import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
+import { formatRule, ScorePad } from './ScorePad';
 import { AccessCards } from './Access';
 import { useClubBackend, useDesk } from './deskContext';
-import { DivisionBody } from './Tournament';
 import { EntriesInbox } from './Inbox';
 import { AddPanel } from './AddPanel';
 
@@ -53,11 +51,6 @@ function DeskAgain() {
   if (!desk) return null;
   return <button type="button" className="btn btn-primary" onClick={desk.leave}>Type the desk PIN again</button>;
 }
-
-const matchLabel = (m: ClubMatch, d: TournamentBundle) => {
-  const div = d.divisions.find((x) => x.id === m.divisionId);
-  return `${div?.name ?? ''} · ${m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]}`;
-};
 
 // ---------- Scorer links ----------
 
@@ -291,122 +284,6 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
       )}
       <p className="small muted" style={{ margin: 0 }}>Updates every 15 seconds. Scores are kept on this phone if the signal drops, and sent when it’s back.</p>
       <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setPin(''); setView(null); }}>Stop scoring on this phone</button>
-    </main>
-  );
-}
-
-// ---------- Desk view (laptop at the organiser's table) ----------
-
-export function Desk({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
-  const { b, state } = useTournament(id, 8000);
-  const desk = useDesk();
-  const [entering, setEntering] = useState<string | null>(null);
-  const [walkover, setWalkover] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const d = state.data;
-  const pmap = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
-  if (!d || !b) return shell('Desk', onBack, state, true);
-  const t = d.tournament;
-  const active = d.matches.filter((m) => m.status !== 'void');
-  const board = courtBoard(active, t.courts);
-  const queue = upNext(active, 10);
-  // Byes (no opponent) aren't matches.
-  const real = active.filter((m) => m.entryB || m.sideB.length || m.stage === 'pool' || m.stage === 'friendly');
-  const played = real.filter((m) => m.status === 'done').length;
-
-  async function run(fn: () => Promise<unknown>, ok: string) {
-    setBusy(true); setMsg(null);
-    try { await fn(); setMsg(ok); state.reload(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
-  }
-  const moveTo = (m: ClubMatch, court: number) => run(() => b.patchMatches([{ id: m.id, patch: { court } }]), `Sent to court ${court}`);
-  async function saveFinal(m: ClubMatch, games: ClubGame[]) {
-    const r = matchResult({ games, format: m.format });
-    if (!r.winner) return;
-    await run(() => b!.saveScore(m.id, { games, status: 'done', winner: r.winner, playedOn: m.playedOn ?? t.startDate }), 'Result saved');
-    setEntering(null);
-  }
-  const who = (m: ClubMatch) => `${names(m.sideA, pmap)} v ${names(m.sideB, pmap)}`;
-  /** A no-show (nothing played) or a retirement (games so far are kept): the other side goes through. */
-  async function giveWalkover(m: ClubMatch, winner: 'A' | 'B') {
-    const kept = m.games.filter((g) => g.a > 0 || g.b > 0);
-    await run(() => b!.patchMatches([{ id: m.id, patch: { status: 'done', winner, games: kept } }]),
-      `${names(winner === 'A' ? m.sideA : m.sideB, pmap)} ${kept.length ? 'win: the other side retired' : 'win by walkover'}`);
-    setWalkover(null);
-  }
-
-  return (
-    <main className="screen wide-ok pq-matchday pq-proto pq-desk" aria-labelledby="desk-title">
-      <header className="ptl"><div><p className="cap">Match-day desk · {d.club.name} · {new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</p><h1 id="desk-title" className="screen-title" aria-label={t.name+" · Desk"}>The desk</h1></div><button type="button" className="btn btn-outline" onClick={onBack}>Back</button></header>
-      <DemoNote b={b} />
-      {real.length>0&&<section className="pq-desk-summary pq-glass" aria-label="Match-day progress"><b>Tonight’s progress</b><span className="pill pq-score">{played} of {real.length} done</span><progress aria-label="Matches completed" max={real.length || 1} value={played} />{real.some(m=>m.slot!==undefined) && <span className="small muted">Planned finish ~{slotTime(t.startTime,Math.max(...real.map(m=>m.slot??0))+1,t.slotMinutes)}</span>}</section>}
-      {real.length>0?<p className="small muted" style={{ margin: 0 }}>{played} of {real.length} matches played · {t.status === 'live' ? 'Live' : t.status === 'done' ? 'Finished' : 'Not started'} · refreshes every 8 seconds</p>:<p className="small muted" role="status">No matches scheduled yet. Open entries to make the draw.</p>}
-      <div className="meta">
-        {t.status === 'draft' && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => b.updateTournament(t.id, { status: 'live' }), 'The tournament is live')}>Start tournament</button>}
-        {!desk && <button type="button" className="btn btn-outline" onClick={() => go('club-scorers', t.id)}>Referee links</button>}
-        {(!desk || t.entryMode !== 'registration' || t.drawnAt) && <button type="button" className="btn btn-primary" onClick={() => go('club-entries', t.id)}>Entries</button>}
-        <button type="button" className="btn btn-outline" onClick={() => go('club-tournament', t.id)}>Standings and draw</button>
-      </div>
-      {msg && <div role="status" className="msg msg-ok">{msg}</div>}
-      <section className="pq-courts-grid" aria-label="Courts" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-        {board.map(({ court, now, next }) => {
-          const m = now ?? next;
-          const call = !now && !next ? nextMatchToCall(active, court) : undefined;
-          return (
-            <div key={court} className="card section" aria-label={`Court ${court}`}>
-              <div className="row"><h3 style={{ fontSize: 18 }}>Court {court}</h3>{now ? <span className="pill pq-live-badge"><i className="pq-live-dot" aria-hidden="true" /> LIVE</span> : next ? <span className="pill">Next</span> : <span className="pill">Free</span>}</div>
-              {m && (
-                <>
-                  <div className="small muted">{matchLabel(m, d)}{m.slot !== undefined ? ` · ${slotTime(t.startTime, m.slot, t.slotMinutes)}` : ''}</div>
-                  <div className="pq-desk-team"><b>{names(m.sideA,pmap)}</b>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.a}</b>}</div><div className="pq-desk-team"><span>{names(m.sideB,pmap)}</span>{m.games.length>0&&<b className="pq-score">{m.games.at(-1)?.b}</b>}</div><div className="small muted">{formatRule(m.format)}</div><progress className="pq-court-progress" aria-label="Game progress" max={m.format.pointsTo} value={Math.min(m.format.pointsTo,Math.max(m.games.at(-1)?.a??0,m.games.at(-1)?.b??0))} />{now && next && <p className="small muted">Next: {who(next)}</p>}
-                  {entering === m.id
-                    ? <ManualScores format={m.format} nameA={names(m.sideA, pmap)} nameB={names(m.sideB, pmap)} busy={busy} onSave={(g) => saveFinal(m, g)} onCancel={() => setEntering(null)} />
-                    : walkover === m.id
-                      ? <section className="section" aria-label="Walkover or retired">
-                          <p className="small muted" style={{ margin: 0 }}>Who goes through? Games already played are kept (a retirement); with none, it’s a walkover.</p>
-                          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => void giveWalkover(m, 'A')}>{names(m.sideA, pmap)} go through</button>
-                          <button type="button" className="btn btn-outline" disabled={busy} onClick={() => void giveWalkover(m, 'B')}>{names(m.sideB, pmap)} go through</button>
-                          <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setWalkover(null)}>Cancel</button>
-                        </section>
-                      : <div className="meta">
-                        <button type="button" className="btn btn-primary" onClick={() => go('club-score', m.id)}>Score</button>
-                        <details className="pq-court-more"><summary>More</summary><div className="pq-court-menu"><button type="button" className="btn btn-outline" onClick={() => setEntering(m.id)}>Enter result</button>
-                        <button type="button" className="btn btn-outline" onClick={() => setWalkover(m.id)}>Walkover…</button>
-                        <button type="button" className="btn btn-outline" aria-label={`Call ${who(m)} to court ${court}`}
-                          onClick={async () => setMsg(await shareText(`${t.name} · Court ${court}: ${names(m.sideA, pmap)} v ${names(m.sideB, pmap)} (${matchLabel(m, d)}). Please come to court ${court} now.`))}>Call to court</button></div></details>
-                      </div>}
-                </>
-              )}
-              {!m && call && (
-                <>
-                  <p className="small muted" style={{ margin: 0 }}>Next waiting: {who(call)}{call.court ? ` (booked for court ${call.court})` : ''}</p>
-                  <button type="button" className="btn btn-primary" disabled={busy} onClick={() => moveTo(call, court)}>Bring it to court {court}</button>
-                </>
-              )}
-              {!m && !call && <p className="small muted" style={{ margin: 0 }}>Nothing waiting.</p>}
-            </div>
-          );
-        })}
-      </section>
-      <div className="pq-desk-bottom"><section className="section pq-queue pq-glass" aria-label="Up next">
-        <h2 style={{ fontSize: 24 }}>Queue</h2><p className="small muted">Call 10 min early · Call the teams using the court card.</p>
-        {queue.length === 0 && <p className="small muted" style={{ margin: 0 }}>No matches waiting.{t.status === 'live' ? ' Knockouts are drawn automatically when the pools finish.' : ''}</p>}
-        {queue.length>0&&<div role="table" aria-label="Match queue" className="pq-queue-table">
-          <div role="row" className="pq-queue-row pq-queue-head"><span role="columnheader">Match</span><span role="columnheader">Category and time</span><span role="columnheader">Court</span></div>
-          {queue.map(m=><div role="row" className="pq-queue-row" key={m.id}><b role="cell">{who(m)}</b><span role="cell" className="small muted">{matchLabel(m,d)}{m.slot!==undefined?" · "+slotTime(t.startTime,m.slot,t.slotMinutes):""}</span><span role="cell"><label className="small">Court <select className="input" aria-label={"Court for "+who(m)} value={m.court??""} disabled={busy} onChange={e=>moveTo(m,Number(e.target.value))}>{Array.from({length:t.courts},(_,i)=>i+1).map(c=><option key={c} value={c}>{c}</option>)}</select></label></span></div>)}
-        </div>}
-      </section>
-      {!desk && <DeskNeedsYou b={b} d={d} go={go} />}</div>
-      <details className="card" style={{ padding: 10 }}>
-        <summary>Pool tables</summary>
-        {d.divisions.filter((x) => x.shape !== 'ko').map((x) => (
-          <div key={x.id} className="section" aria-label={`${x.name} pool tables`}>
-            <h2 style={{ fontSize: 16 }}>{x.name}</h2>
-            <DivisionBody d={d} divisionId={x.id} view="pools" label={(e) => (e ? names(e.playerIds, pmap) : 'To be decided')} />
-          </div>
-        ))}
-      </details>
-      {desk && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={desk.leave}>Leave the desk on this phone</button>}
     </main>
   );
 }

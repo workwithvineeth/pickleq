@@ -347,9 +347,10 @@ describe('Club mode', () => {
     expect(document.body.textContent).not.toMatch(/\+91|98\d{8}|@/);
     // A walkover from the desk is saved through the desk link.
     const before = demoState().matches.filter((m: { status: string }) => m.status === 'done').length;
-    await user.click(screen.getAllByText('More', {exact:true})[0]);
-    await user.click(screen.getAllByRole('button', { name: 'Walkover…' })[0]);
-    await user.click(within(screen.getByRole('region', { name: 'Walkover or retired' })).getAllByRole('button', { name: /go through$/ })[0]);
+    await user.click(screen.getByRole('tab', { name: 'Walkover or retired' }));
+    const walk = screen.getByRole('region', { name: 'Walkover or retired' });
+    await user.click(within(walk).getAllByRole('button', { name: /Didn’t turn up or retired/ })[0]);
+    await user.click(within(walk).getByRole('button', { name: /go through$/ }));
     await screen.findByText(/win by walkover|the other side retired/);
     expect(demoState().matches.filter((m: { status: string }) => m.status === 'done').length).toBe(before + 1);
     // "Call to court": a ready message for the players' group (copied when the phone can't share).
@@ -425,17 +426,18 @@ describe('Club mode', () => {
     await openEvent(user);
     await user.click(screen.getByRole('button', { name: 'Desk view' }));
     await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' });
-    // RallyQ desk shows the courts; results, walkovers and moves live one tap away in the classic desk.
     await user.click(await screen.findByRole('button', { name: /Results, walkovers and court changes/ }));
-    await screen.findByRole('heading', { name: 'PQ Demo Open · Desk' });
     for (let c = 1; c <= 6; c++) expect(screen.getByLabelText(`Court ${c}`)).toBeInTheDocument();
-    const card = screen.getAllByText('More',{exact:true})[0].closest('[aria-label^="Court"]') as HTMLElement;
-    await user.click(within(card).getByText('More',{exact:true}));
-    await user.click(within(card).getByRole('button', { name: 'Enter result' }));
+    // Tap a court: its match opens below with the desk's tools.
+    const court = screen.getAllByRole('button', { name: /^Court \d$/ }).find((x) => !(x as HTMLButtonElement).disabled) as HTMLElement;
+    await user.click(court);
+    expect(court).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('tab', { name: 'Enter a result' })).toHaveAttribute('aria-selected', 'true');
+    const card = screen.getByRole('region', { name: 'Final scores' });
     const boxes = within(card).getAllByRole('textbox');
     await user.type(boxes[0], '11'); await user.type(boxes[1], '10');
     await user.click(within(card).getByRole('button', { name: 'Save result' }));
-    expect(await within(card).findByRole('status')).toHaveTextContent(/won by 2/);
+    expect(await within(card).findByRole('alert')).toHaveTextContent(/won by 2/);
     await user.clear(boxes[1]); await user.type(boxes[1], '9');
     await user.type(boxes[2], '11'); await user.type(boxes[3], '7');
     await user.click(within(card).getByRole('button', { name: 'Save result' }));
