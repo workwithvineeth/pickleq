@@ -15,9 +15,9 @@ test('spectator courts: sample data, score refresh, court selection, themes and 
     } });
   });
   await page.goto('#/results/sample-live-view');
-  await expect(page.getByRole('heading', { name: 'Watch live', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Court view', exact: true })).toBeVisible();
   const stage = page.getByRole('region', { name: 'Watch Court 1' });
-  await expect(stage).toContainText('9'); await expect(stage).toContainText('No video linked');
+  await expect(stage).toContainText('9'); await expect(stage).not.toContainText('No video linked');
   await page.getByRole('button',{name:'Live scores',exact:true}).click();
   await expect(page.getByRole('region', { name: 'On court now' }).getByRole('article')).toHaveCount(6);
   await expect(page.getByRole('region', { name: 'Point by point' })).toHaveCount(0);
@@ -25,7 +25,7 @@ test('spectator courts: sample data, score refresh, court selection, themes and 
   await expect(page.getByRole('region',{name:'Head to head'})).toHaveCount(0);
   await page.getByRole('button', { name: 'Watch Court 2' }).click();
   await expect(page.getByRole('region', { name: 'Watch Court 2' })).toContainText('Jamie / Morgan');
-  await expect(page.getByRole('heading', { name: 'Watch live', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Court view', exact: true })).toBeFocused();
   await page.getByRole('button',{name:'Live scores',exact:true}).click();
   await page.getByRole('button', { name: 'Watch Court 1' }).click();
   points = 10;
