@@ -127,7 +127,7 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByRole('heading', { name: 'Pay the club.' })).toBeVisible();
     await page.getByRole('button', { name: 'Send my entry' }).click();
-    await expect(page.getByText(/You’re entered in Men’s Doubles 3.5/)).toBeVisible();
+    await expect(page.getByText(/Your request for Men’s Doubles 3.5 has been sent/)).toBeVisible();
 
     await page.goto('#/club');
     await page.getByRole('region', { name: 'Your clubs' }).getByRole('button', { name: /PQ Demo Club/ }).click();

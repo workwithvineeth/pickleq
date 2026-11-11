@@ -122,7 +122,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     <div className="pq-results-heading"><h2 style={{ margin: 0 }}>{data.tournament.name}</h2>
       <p className="small muted">{[data.club.name, data.tournament.venue, data.tournament.city, friendlyDate(data.tournament.startDate), data.tournament.status === 'done' ? 'Finished' : data.tournament.status === 'live' ? 'Live' : 'Not started', `${data.matches.filter((m) => m.status !== 'void').length} matches on ${data.tournament.courts} courts`].filter(Boolean).join(' · ')}</p>
     </div>
-    <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}><span className={missing.size ? 'st wait' : 'st ok'}>{missing.size ? `${missing.size} DUPR ratings missing` : 'Every player has a DUPR rating'}</span>
+    <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}><span className={missing.size ? 'st wait' : 'st ok'}>{missing.size ? `${missing.size} DUPR ratings missing` : 'All player ratings entered'}</span>
       {staff && <button className="btn sm" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
       {staff && <button className="btn ghost sm" disabled={dirty || busy} onClick={() => go('club-dupr', data.tournament.id)}>File for DUPR</button>}
       <button className="btn ghost sm" disabled={dirty || busy} onClick={csv}>Download results (CSV)</button>

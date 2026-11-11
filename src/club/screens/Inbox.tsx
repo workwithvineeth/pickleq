@@ -259,7 +259,7 @@ function Draw({ b, t, divisions, regs, onDrawn, go, primary = true }: { b: ClubB
   return (
     <section className="card" aria-label="Draw" style={{ padding: 22 }}><Legacy className="section">
       <h2 className="disp" style={{ fontSize: 24 }}>Make the draw</h2>
-      <p className="small muted" style={{ margin: 0 }}>You choose the format for each event. Accepted entries are seeded by DUPR, and every match gets a court and a time. Online entries close when you make the draw; you can still add late entries after it.</p>
+      <p className="small muted" style={{ margin: 0 }}>You choose the format for each event. Accepted entries are seeded by DUPR, and every match gets a court and a time. {t.entriesClose ? `Online entries close ${friendlyDate(t.entriesClose)}, or earlier if you make the draw.` : 'Online entries close when you make the draw.'} You can still add late entries.</p>
       {withEntries.length === 0 && <p className="small muted" style={{ margin: 0 }}>Accept some entries first.</p>}
       {withEntries.length > 0 && <>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>

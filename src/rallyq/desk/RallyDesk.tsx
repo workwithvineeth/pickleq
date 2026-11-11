@@ -65,6 +65,8 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
   const who = (m: ClubMatch) => `${names(m.sideA, pmap)} v ${names(m.sideB, pmap)}`;
   const when = (m: ClubMatch) => (m.slot !== undefined ? slotTime(t.startTime, m.slot, t.slotMinutes) : '');
   const slug = t.publicSlug || id;
+  // The schedule's last slot. Shown only while matches remain; once that time has passed it says so instead of looking like a forecast.
+  const finish = real.some((m) => m.slot !== undefined) ? (() => { const hm = slotTime(t.startTime, Math.max(...real.map((m) => m.slot ?? 0)) + 1, t.slotMinutes); const at = Date.parse(`${t.startDate}T${hm}`); return { hm, past: Number.isFinite(at) && now > at }; })() : null;
 
   async function run(fn: () => Promise<unknown>, ok: string) {
     setBusy(true); setMsg(null);
@@ -124,7 +126,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
             <progress aria-label="Matches completed" max={real.length} value={played} style={{ width: '100%', height: 6, accentColor: '#D9F24A', marginTop: 8 }} /></div>
           <div className="card stat" style={{ padding: 16 }}><div className="cap">On court</div><div className="n acc">{board.filter((s) => s.now).length}</div><div className="mut" style={{ fontSize: 13 }}>live now</div></div>
           <div className="card stat" style={{ padding: 16 }}><div className="cap">In the queue</div><div className="n">{active.filter((m) => m.status === 'scheduled').length}</div><div className="mut" style={{ fontSize: 13 }}>waiting to play</div></div>
-          {real.some((m) => m.slot !== undefined) && <div className="card stat" style={{ padding: 16 }}><div className="cap">Scheduled finish</div><div className="n" style={{ fontSize: 34 }}>{clock12(slotTime(t.startTime, Math.max(...real.map((m) => m.slot ?? 0)) + 1, t.slotMinutes))}</div><div className="mut" style={{ fontSize: 13 }}>from the schedule</div></div>}
+          {finish && played < real.length && <div className="card stat" style={{ padding: 16 }}><div className="cap">{finish.past ? 'Past scheduled finish' : 'Scheduled finish'}</div><div className="n" style={{ fontSize: 34 }}>{clock12(finish.hm)}</div><div className="mut" style={{ fontSize: 13 }}>from the schedule</div></div>}
         </div>
         : <p className="mut" role="status">No matches scheduled yet. Open entries to make the draw.</p>}
 

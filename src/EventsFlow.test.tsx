@@ -151,7 +151,7 @@ describe('Entering a tournament', () => {
     expect(screen.getByRole('link', { name: 'Pay ₹600 by UPI to pqdemo@upi' }).getAttribute('href')).toMatch(/^upi:\/\/pay\?pa=pqdemo%40upi&.*am=600/);
     await user.type(screen.getByLabelText('UPI reference number'), '412398765432');
     await user.click(screen.getByRole('button', { name: 'Send my entry' }));
-    expect(await screen.findByText(/You’re entered in Men’s Doubles 3.5/)).toBeInTheDocument();
+    expect(await screen.findByText(/Your request for Men’s Doubles 3.5 has been sent/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'See my entries' }));
     const entry = await screen.findByRole('region', { name: 'PQ Demo Night: Men’s Doubles 3.5' });
     expect(within(entry).getByText('Waiting for the organiser')).toBeInTheDocument();

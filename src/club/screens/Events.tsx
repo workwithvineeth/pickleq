@@ -399,7 +399,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   const step = choosing ? 1 : done ? 4 : payStep ? 3 : 2;
   const fee = d?.rules.fee ?? 0;
   const players = d?.kind === 'doubles' ? [me, partner] : [me];
-  const title = step === 1 ? 'Pick your category.' : step === 2 ? (doubles ? 'Who’s your partner?' : 'Your details.') : step === 3 ? 'Pay the club.' : 'Entry sent.';
+  const title = step === 1 ? 'Pick your category.' : step === 2 ? (doubles ? 'Who’s your partner?' : 'Your details.') : step === 3 ? 'Pay the club.' : 'Entry request sent.';
   const payName = PAY_CHOICES.find((c) => c.value === pay)!.short;
 
   function toPay() {
@@ -515,8 +515,8 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
           <>
             <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <span className={done === 'waitlist' ? 'st off' : 'st ok'} style={{ alignSelf: 'flex-start' }}>{done === 'waitlist' ? 'On the waitlist' : 'Entry sent'}</span>
-              <h2 className="disp" style={{ fontSize: 34 }}>{done === 'waitlist' ? 'You’re on the waitlist.' : 'You’re in the queue.'}</h2>
-              <div role="status" className="mut">{done === 'waitlist' ? `${d.name} is full, so you’re on the waitlist. The organiser will tell you if a place opens.` : `You’re entered in ${d.name}. The organiser will confirm your entry.`}</div>
+              <h2 className="disp" style={{ fontSize: 34 }}>{done === 'waitlist' ? 'You’re on the waitlist.' : 'Waiting for the organiser.'}</h2>
+              <div role="status" className="mut">{done === 'waitlist' ? `${d.name} is full, so you’re on the waitlist. The organiser will tell you if a place opens.` : `Your request for ${d.name} has been sent to the organiser. They accept it and check your payment.`}</div>
               <div className="mut" style={{ fontSize: 13 }}>Status: {REG_STATUS_LABEL[done]}. Check it in My entries.</div>
             </div>
             <div className="between">{back('Back to the event', () => go('event', slug))}<button type="button" className="btn" onClick={() => go('my-entries')}>See my entries</button></div>
