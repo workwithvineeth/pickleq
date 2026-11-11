@@ -339,10 +339,10 @@ export function PersonFields({ p, onChange, label, v12 }: { p: EntryPerson; onCh
 }
 
 type PayChoice = 'venue' | 'claimed' | 'unpaid';
-const PAY_CHOICES: { value: PayChoice; name: string; sub: string }[] = [
-  { value: 'claimed', name: 'UPI now', sub: 'Pay the club and paste the reference' },
-  { value: 'venue', name: 'Pay at the desk', sub: 'Cash or UPI on match day' },
-  { value: 'unpaid', name: 'Pay later', sub: 'Agree it with the club before you play' },
+const PAY_CHOICES: { value: PayChoice; name: string; sub: string; short: string }[] = [
+  { value: 'claimed', name: 'UPI now', sub: 'Pay the club and paste the reference', short: 'UPI now' },
+  { value: 'venue', name: 'Pay at the desk', sub: 'Cash or UPI on match day', short: 'At the desk' },
+  { value: 'unpaid', name: 'Pay later', sub: 'Agree it with the club before you play', short: 'Later' },
 ];
 const STEP_NAMES = ['Category', 'Partner', 'Pay', 'Done'];
 
@@ -400,7 +400,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   const fee = d?.rules.fee ?? 0;
   const players = d?.kind === 'doubles' ? [me, partner] : [me];
   const title = step === 1 ? 'Pick your category.' : step === 2 ? (doubles ? 'Who’s your partner?' : 'Your details.') : step === 3 ? 'Pay the club.' : 'Entry sent.';
-  const payName = PAY_CHOICES.find((c) => c.value === pay)!.name;
+  const payName = PAY_CHOICES.find((c) => c.value === pay)!.short;
 
   function toPay() {
     const problem = entryProblem(d!.kind, d!.rules, players, true);
