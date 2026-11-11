@@ -40,7 +40,7 @@ export function PlayerStudio({ section, go }: { section: string; go: Go }) {
       {!b && <p className="small muted">Player Studio needs the RallyQ server. It isn’t available in the demo club.</p>}
       {b && !state.loading && !state.error && !d && <section className="card section" aria-label="Sign in">
         <h2>Your game, in one place</h2>
-        <p className="small" style={{ margin: 0 }}>See your official tournament results, and keep a private diary of practice and casual games.</p>
+        <p className="small" style={{ margin: 0 }}>See your referee-scored tournament results, and keep a private diary of practice and casual games.</p>
         <button type="button" className="btn btn-primary" onClick={() => { rememberReturn('#/club-player-studio'); go('club-signin'); }}>Sign in to Player Studio</button>
       </section>}
       {d && b && <div className="pq-studio-layout">

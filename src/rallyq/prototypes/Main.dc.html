@@ -74,10 +74,10 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 <header class="hdr" style="position:relative;z-index:5"><div class="wrap">
 <a class="brand" href="Main.dc.html"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="color:#F1F4EA">RallyQ</span></a>
-<nav class="nav hnav" aria-label="Main"><a href="Live.dc.html">Live on RallyQ</a><a href="Event.dc.html">Events &amp; Tournaments</a><a href="Studio.dc.html">Player Studio</a><a href="#clubs">For clubs</a></nav>
+<nav class="nav hnav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="#clubs">For clubs</a></nav>
 <div class="right"><a class="tlink" href="Overview.dc.html" style="color:#F1F4EA!important">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></div>
 </div></header>
-<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu" style="position:relative;z-index:5"><a href="Live.dc.html">Live on RallyQ</a><a href="Event.dc.html">Events &amp; Tournaments</a><a href="Studio.dc.html">Player Studio</a><a href="#clubs">For clubs</a><a href="Overview.dc.html">Club sign in</a></nav></sc-if>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu" style="position:relative;z-index:5"><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="#clubs">For clubs</a><a href="Overview.dc.html">Club sign in</a></nav></sc-if>
 
 <div class="wrap hbody">
 <div style="min-width:0">
@@ -101,7 +101,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 
 <section class="sec" id="live"><div class="wrap" style="display:flex;flex-direction:column;gap:24px">
-<div class="between"><div><div class="cap acc">01 · Live on RallyQ</div><h2 class="disp h2" style="margin-top:8px">Every point, as it happens.</h2></div><a class="tlink" href="Live.dc.html">All live scores →</a></div>
+<div class="between"><div><div class="cap acc">01 · Live scores</div><h2 class="disp h2" style="margin-top:8px">Every point, as it happens.</h2></div><a class="tlink" href="Live.dc.html">All live scores →</a></div>
 <div class="grid g3">
 <sc-for list="{{live}}" as="m" hint-placeholder-count="3">
 <a class="card glass" href="Live.dc.html" style="padding:18px;display:flex;flex-direction:column;gap:14px">
@@ -178,7 +178,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </section>
 
 <section class="sec" id="events"><div class="wrap" style="display:flex;flex-direction:column;gap:24px">
-<div><div class="cap acc">06 · Events &amp; Tournaments</div><h2 class="disp h2" style="margin-top:8px">This month on court.</h2></div>
+<div><div class="cap acc">06 · Events</div><h2 class="disp h2" style="margin-top:8px">This month on court.</h2></div>
 <div class="grid g3">
 <sc-for list="{{events}}" as="e" hint-placeholder-count="6">
 <a class="card" href="Event.dc.html" style="padding:20px;display:flex;flex-direction:column;gap:12px">

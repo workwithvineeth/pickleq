@@ -20,10 +20,10 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a href="Main.dc.html">Home</a><a class="on" href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a href="MyStudio.dc.html">My Player Studio</a><a href="Overview.dc.html">Organiser</a><a href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a href="Social.dc.html">Social</a><a href="Admin.dc.html">Admin</a></div></nav>
 <header class="hdr"><div class="wrap">
 <a class="brand" href="Main.dc.html"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a>
-<nav class="nav" aria-label="Main"><a class="on" href="Live.dc.html">Live on RallyQ</a><a href="Event.dc.html">Events &amp; Tournaments</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">For clubs</a></nav>
+<nav class="nav" aria-label="Main"><a class="on" href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">For clubs</a></nav>
 <div class="right"><a class="tlink" href="Overview.dc.html">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></div>
 </div></header>
-<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live on RallyQ</a><a href="Event.dc.html">Events &amp; Tournaments</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">For clubs</a><a href="Overview.dc.html">Club sign in</a></nav></sc-if>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">For clubs</a><a href="Overview.dc.html">Club sign in</a></nav></sc-if>
 
 <div class="wrap" style="padding-block:24px 64px;display:flex;flex-direction:column;gap:22px">
 <div class="between"><div><span class="chip live">Live · {{today}}</span><h1 class="disp" style="font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1></div>
