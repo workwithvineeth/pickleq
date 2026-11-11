@@ -21,14 +21,14 @@ background:var(--pg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif
 .chip.gold{background:var(--gold);color:#2A1D00}
 .photo{position:relative;overflow:hidden;background-size:cover;background-position:center;isolation:isolate}
 .photo::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.15) 20%,rgba(6,20,13,.92))}
-.ph-ul{background-image:url(/_blob/0b9a15da42bd9e454eb1adb978b47511)}
-.ph-man{background-image:url(/_blob/2380ef36eac416d5153a483115c63a4b);background-position:center 30%}
-.ph-arena{background-image:url(/_blob/fc4f0d40c47f5f47b225b7f77a787397)}
-.ph-group{background-image:url(/_blob/667708e902955635c36442a4f43f8971)}
-.ph-woman{background-image:url(/_blob/1570b89dcbd62a772c9e03d5c4233958);background-position:center 30%}
-.ph-ball{background-image:url(/_blob/3108aef4e246590ea4615cb3e27eea5c)}
-.ph-day{background-image:url(/_blob/a3211bbaed30446bf4aa18d6873cfabe)}
-.ph-night{background-image:url(/_blob/302bfddfa52d044e71b331ed53b536fb)}
+.ph-ul{background-image:url(./under-lights.jpg)!important}
+.ph-man{background-image:url(./meera.jpg)!important;background-position:center 30%}
+.ph-arena{background-image:url(./arena-night.jpg)!important}
+.ph-group{background-image:url(./group-play.jpg)!important}
+.ph-woman{background-image:url(./meera.jpg)!important;background-position:center 30%}
+.ph-ball{background-image:url(./ball-court.jpg)!important}
+.ph-day{background-image:url(./court-day.jpg)!important}
+.ph-night{background-image:url(./court-night.jpg)!important}
 /* prototype strip */
 .proto{background:#020A06;border-bottom:1px solid var(--line);font-size:12px}
 .proto .wrap{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;min-height:34px;padding-block:4px}
@@ -112,3 +112,229 @@ background:var(--pg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif
 .cta .btn{width:100%}
 }
 @media (max-width:640px){.sec{padding-block:48px}.side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}.side .cap{display:none}}
+/* RallyQ v1.2 · app parts for the remaining screens (forms, lists, steps, status) */
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld label,.fld .lbl{font-size:13px;font-weight:700;color:var(--ink)}
+.fld .hint{font-size:12px;color:var(--mut)}
+.inp{min-height:48px;width:100%;padding:0 14px;border-radius:14px;border:0;background:var(--c2);color:var(--ink);font:inherit;font-size:15px;box-shadow:inset 0 0 0 1px var(--line)}
+.inp::placeholder{color:var(--mut)}
+textarea.inp{min-height:96px;padding:12px 14px;resize:vertical}
+.inp:focus{outline:2px solid var(--ball);outline-offset:1px}
+.form{display:grid;gap:16px}
+.form.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.list{display:flex;flex-direction:column}
+.list > a,.list > div{display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.list > *:last-child{border-bottom:0}
+.list > a:hover{background:var(--c2)}
+.grow{flex:1 1 auto;min-width:0}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile{width:44px;height:44px;border-radius:12px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.tile.lg{width:64px;height:64px;border-radius:16px;font-size:18px}
+.tile.ball{background:var(--ball)}
+.st{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.st.ok{background:rgba(217,242,74,.16);color:var(--ball)}
+.st.wait{background:rgba(232,195,90,.16);color:var(--gold)}
+.st.no{background:rgba(255,138,122,.14);color:var(--err)}
+.st.off{background:var(--c2);color:var(--mut)}
+.steps{display:flex;gap:8px;flex-wrap:wrap}
+.steps button{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 16px 0 8px;border-radius:999px;border:0;font:inherit;font-weight:700;font-size:14px;cursor:pointer;background:var(--c1);color:var(--mut);box-shadow:inset 0 0 0 1px var(--line)}
+.steps button i{font-style:normal;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--c2);font-size:12px}
+.steps button.on{background:var(--ink);color:var(--on)}
+.steps button.on i{background:var(--ball);color:var(--on)}
+.steps button.done i{background:var(--ball);color:var(--on)}
+.opt{display:flex;align-items:center;gap:12px;min-height:56px;padding:12px 16px;border-radius:16px;background:var(--c1);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;border:0;font:inherit;color:var(--ink);text-align:left;width:100%}
+.opt.on{box-shadow:inset 0 0 0 2px var(--ball)}
+.opt .dot{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--mut);flex:none}
+.opt.on .dot{box-shadow:inset 0 0 0 6px var(--ball)}
+.sw{width:48px;height:28px;border-radius:999px;border:0;padding:3px;background:var(--c2);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;display:flex;flex:none}
+.sw span{width:22px;height:22px;border-radius:50%;background:var(--mut)}
+.sw.on{background:var(--ball);justify-content:flex-end}
+.sw.on span{background:var(--on)}
+.empty{padding:28px;text-align:center;color:var(--mut)}
+.pg-h{display:flex;flex-direction:column;gap:6px}
+.pg-h h1{font-size:clamp(36px,4.2vw,56px)}
+.note{border-radius:16px;padding:14px 16px;background:rgba(217,242,74,.08);box-shadow:inset 0 0 0 1px rgba(217,242,74,.22);font-size:14px}
+.bracket{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:18px;align-items:center}
+.bracket .col{display:flex;flex-direction:column;gap:14px;justify-content:space-around;height:100%}
+.m{border-radius:14px;background:var(--c1);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.m > div{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;font-weight:600;font-size:14px}
+.m > div + div{border-top:1px solid var(--line)}
+.m .w{color:var(--ball)}
+.side a.sub{padding-left:40px;font-size:13px;min-height:36px}
+@media (max-width:640px){.side a{flex:none}.side .brand{display:none}}
+/* RallyQ Day mode v3 (Vineeth, 11 Nov): every page = the Home hero look.
+   Court photo + court-green tint behind everything, glass cards on top, white type, ball highlights. */
+.rq.day{--pg:transparent;--alt:rgba(6,24,15,.32);--c1:rgba(8,30,19,.52);--c2:rgba(255,255,255,.09);--ink:#F4F7EE;--mut:#D5E3D8;--ball:#E4F75A;--on:#0B2418;--gold:#F0CF6A;--coral:#FF6B62;--err:#FFB3A8;--line:rgba(255,255,255,.16);
+  background:linear-gradient(180deg,rgba(43,110,75,.80) 0%,rgba(36,95,64,.84) 45%,rgba(24,68,45,.92) 100%),url(./group-play.jpg) center 35%/cover fixed!important}
+.rq.day .card,.rq.day .m,.rq.day .opt,.rq.day .steps button,.rq.day .tab{-webkit-backdrop-filter:blur(16px) saturate(1.1);backdrop-filter:blur(16px) saturate(1.1)}
+.rq.day .card{background:var(--c1);box-shadow:inset 0 0 0 1px var(--line),0 12px 32px rgba(3,15,9,.22)}
+.rq.day .card2{background:rgba(255,255,255,.08)}
+.rq.day .hdr{background:transparent;box-shadow:none}
+.rq.day .side{background:rgba(6,24,15,.38);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-color:var(--line)}
+.rq.day .side a.on{background:rgba(255,255,255,.12);box-shadow:inset 3px 0 0 var(--ball)}
+.rq.day .side a:hover{background:rgba(255,255,255,.08)}
+.rq.day .mpanel{background:rgba(6,24,15,.7);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.rq.day .menu,.rq.day .mode{background:rgba(6,24,15,.45)}
+.rq.day .tab{background:rgba(255,255,255,.08);color:var(--mut)}
+.rq.day .tab.on{background:#F4F7EE;color:#0B2418}
+.rq.day .btn.ghost{background:rgba(6,24,15,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.rq.day .chip{background:rgba(6,24,15,.45);color:var(--ink)}
+.rq.day .tbl th{background:rgba(255,255,255,.06)}
+.rq.day .tbl td,.rq.day .tbl th{border-color:var(--line)}
+.rq.day .inp{background:rgba(6,24,15,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
+.rq.day .inp:focus{outline:2px solid var(--ball)}
+.rq.day .opt{background:rgba(8,30,19,.45)}
+.rq.day .note{background:rgba(228,247,90,.12);box-shadow:inset 0 0 0 1px rgba(228,247,90,.3)}
+.rq.day .list > a:hover{background:rgba(255,255,255,.06)}
+.rq.day .st.ok{background:rgba(228,247,90,.18);color:var(--ball)}
+.rq.day .st.wait{background:rgba(240,207,106,.2);color:#FFE18A}
+.rq.day .st.no{background:rgba(255,107,98,.2);color:#FFC2BA}
+.rq.day .st.off{background:rgba(255,255,255,.1);color:var(--mut)}
+.rq.day .mini{background:rgba(43,110,75,.92)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)!important}
+
+/* ================================================================
+   RallyQ FINAL (11 Nov 2026) · rules on top of the base above.
+   Night default · Day v3 = Home hero look · coral = Live only ·
+   gold = champions only · one ball-yellow button per screen ·
+   club leads, RallyQ small and last.
+   ================================================================ */
+
+/* ---- Status system: text first, colour second ---- */
+.st.live{background:var(--coral);color:#1A0603}
+.st.live::before,.chip.live::before{content:"";width:7px;height:7px;border-radius:50%;background:#1A0603;animation:rqpulse 1.6s ease-in-out infinite}
+.st.wait{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px rgba(241,244,234,.42)}
+.st.no{background:transparent;color:var(--mut);box-shadow:inset 0 0 0 1px rgba(241,244,234,.22)}
+.st.champ{background:var(--gold);color:#2A1D00}
+@keyframes rqpulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.st.live::before,.chip.live::before{animation:none}}
+
+/* ---- Buttons: one ball-yellow primary per screen ---- */
+.btn.alt{background:var(--ink);color:var(--on)!important}
+.btn.alt[disabled],.btn[disabled]{background:var(--c2)!important;color:var(--mut)!important;cursor:not-allowed;box-shadow:none}
+.btn:focus-visible,.tab:focus-visible,.opt:focus-visible,.tlink:focus-visible,.sw:focus-visible,.side a:focus-visible,.nav a:focus-visible,.list > a:focus-visible{outline:2px solid var(--ball);outline-offset:2px}
+
+/* ---- Club leads, RallyQ signs off small and last ---- */
+.host{display:flex;align-items:center;gap:12px;min-width:0}
+.host b{display:block;font-size:15px;line-height:1.2}
+.host .cap{display:block}
+.tiles{display:flex;flex:none}.tiles .tile + .tile{margin-left:-10px;box-shadow:0 0 0 2px var(--pg)}
+.signoff{display:inline-flex;align-items:center;gap:7px;color:var(--mut);font-size:12px;font-weight:600;white-space:nowrap}
+.signoff svg{width:16px;height:16px;flex:none}
+.signoff .word{font-size:15px;color:var(--ink)}
+.side .host{padding:4px 8px 16px}
+.side a.host:hover{background:none}
+.side .signoff{margin-top:auto;padding:18px 12px 4px}
+.side a.signoff:hover{background:none}
+.side .grp{padding:14px 12px 4px}
+.pfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-block:18px 32px;color:var(--mut);font-size:12px}
+
+/* ---- Logo watermark: one big Q off the top-right of the page head, never behind tables ---- */
+.rq{position:relative;overflow-x:clip}
+.wm{position:absolute;top:-120px;right:-150px;width:min(620px,78vw);height:auto;aspect-ratio:1;pointer-events:none;z-index:0;--c:rgba(241,244,234,.055);--a:rgba(217,242,74,.14)}
+.rq.day .wm{--c:rgba(255,255,255,.08);--a:rgba(228,247,90,.2)}
+.rq > :not(.wm){position:relative;z-index:1}
+
+/* ---- Court glass: only where something IS a court (ref: Player Studio card) ---- */
+.cglass,.mini{position:relative;overflow:hidden;isolation:isolate;color:#F4F7EE;border-radius:18px;
+  background:radial-gradient(130% 95% at 28% 18%,rgba(56,104,72,.95) 0%,rgba(30,58,40,.95) 48%,rgba(14,32,22,.97) 100%)!important;
+  box-shadow:inset 0 0 0 1px rgba(217,242,74,.18),inset 0 1px 0 rgba(255,255,255,.06),0 16px 38px rgba(0,0,0,.30)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.1);backdrop-filter:blur(16px) saturate(1.1)}
+.cglass > svg.lines,.mini > svg{position:absolute;inset:14px;width:calc(100% - 28px);height:calc(100% - 28px);pointer-events:none;z-index:-1}
+.cglass > svg.lines g,.mini > svg g{fill:none;stroke:rgba(217,242,74,.22)!important;stroke-width:1.5}
+.cglass > :not(svg.lines),.mini > :not(svg){position:relative}
+.cglass .mut,.cglass .cap,.mini .mut,.mini .cap{color:#C9D9CD}
+.cglass.sel,.mini.sel{box-shadow:inset 0 0 0 2px var(--ball),0 16px 38px rgba(0,0,0,.30)!important}
+.rq.day .cglass,.rq.day .mini{background:radial-gradient(130% 95% at 28% 18%,rgba(52,100,68,.86) 0%,rgba(22,50,33,.9) 52%,rgba(8,26,16,.94) 100%)!important}
+
+/* ---- Data glass (Day): more opaque, no lines, readable over the photo ---- */
+.rq.day{--c1:rgba(6,22,14,.74);--c2:rgba(255,255,255,.08);
+  background:linear-gradient(180deg,rgba(43,110,75,.82) 0%,rgba(30,84,56,.88) 45%,rgba(14,46,29,.95) 100%),url(./group-play.jpg) center 35%/cover fixed!important}
+.rq.day .card{background:var(--c1);-webkit-backdrop-filter:blur(18px) saturate(1.05);backdrop-filter:blur(18px) saturate(1.05)}
+.rq.day .side{background:rgba(6,22,14,.62)}
+.rq.day .m{background:rgba(6,22,14,.7)}
+.rq.day .tiles .tile + .tile{box-shadow:0 0 0 2px rgba(8,30,19,.7)}
+.rq.day .st.wait{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}
+.rq.day .st.no{box-shadow:inset 0 0 0 1px rgba(255,255,255,.32)}
+
+/* ---- Posters (brand-kit templates) ---- */
+.poster{position:relative;overflow:hidden;border-radius:16px;display:flex;flex-direction:column;justify-content:space-between;padding:18px;color:#F1F4EA;background:#06140D;box-shadow:0 18px 46px rgba(0,0,0,.4);isolation:isolate}
+.poster.ph::before{content:"";position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 25%}
+.poster.ph::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.25) 15%,rgba(6,20,13,.92) 72%)}
+.poster.p-woman::before{background-image:url(./meera.jpg)}
+.poster.p-man::before{background-image:url(./meera.jpg);background-position:60% 10%}
+.poster.p-hero::before{background-image:url(./meera-hero.jpg);background-position:70% 0%}
+.poster.p-ball::before{background-image:url(./ball-court.jpg)}
+.poster.champ{box-shadow:inset 0 0 0 2px var(--gold),0 18px 46px rgba(0,0,0,.4)}
+.poster .corner{position:absolute;width:44px;height:44px;border:3px solid #F1F4EA;opacity:.9}
+.poster .c1{top:12px;left:12px;border-right:0;border-bottom:0}.poster .c2{bottom:12px;right:12px;border-left:0;border-top:0}
+.poster .ptile{width:40px;height:40px;border-radius:10px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+.wa{background:#0B141A;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;color:#E9EDEF;font-size:13px}
+.wa .bub{background:#005C4B;border-radius:10px 10px 2px 10px;padding:8px;align-self:flex-end;max-width:92%}
+.wa .prev{background:#06140D;border-radius:8px;overflow:hidden;margin-bottom:6px}
+
+/* ---- Inline confirm rows, panels ---- */
+.expand td{background:var(--c2)}
+.panel2{border-radius:16px;background:var(--c2);padding:16px}
+.warn{border-radius:14px;padding:12px 14px;font-size:14px;box-shadow:inset 0 0 0 1px rgba(241,244,234,.3);display:flex;gap:10px;align-items:flex-start}
+.check{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-weight:600;font-size:14px;background:none;border:0;color:var(--ink);padding:0;font-family:inherit;text-align:left}
+.check .bx{width:22px;height:22px;border-radius:6px;box-shadow:inset 0 0 0 2px var(--mut);flex:none;display:grid;place-items:center;font-size:13px;font-weight:800;color:var(--on)}
+.check.on .bx{background:var(--ball);box-shadow:none}
+.search{position:relative;max-width:360px;width:100%}
+.search .inp{padding-left:40px}
+.search svg{position:absolute;left:13px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:var(--mut)}
+.skel{border-radius:10px;background:linear-gradient(90deg,var(--c2),rgba(241,244,234,.12),var(--c2));background-size:200% 100%;animation:skel 1.4s linear infinite}
+@keyframes skel{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+
+/* ---- Prototype strip (prototype only, not part of the app) ---- */
+.proto{border-top:1px solid var(--line)}
+.proto .wrap{justify-content:flex-start}
+.proto i{font-style:normal;color:var(--mut);opacity:.7;padding:0 4px}
+
+/* ---- Phones ---- */
+@media (max-width:760px){
+  .hdr .host b{font-size:14px;max-width:44vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr .signoff,.tiles .tile:nth-child(n+3){display:none}
+  .wm{width:420px;top:-90px;right:-190px}
+}
+@media (max-width:640px){
+  .side{gap:2px;padding:10px 12px}
+  .side .host{padding:0 8px 0 0;flex:none}.side .host > span:last-child,.side .signoff,.side .grp{display:none}
+}
+/* layout fixes found in review */
+.wrap{width:100%}
+.wm{width:min(480px,64vw);top:-170px;right:-170px}
+.st.wrapok{white-space:normal;min-height:24px;padding-block:3px;line-height:1.3}
+figcaption{flex-wrap:wrap;gap:8px}
+/* Day keeps the colour rules: coral = Live, gold = champions, ball = wins; waiting/issues stay neutral */
+.rq.day .chip.live,.rq.day .st.live{background:var(--coral);color:#1A0603}
+.rq.day .chip.gold,.rq.day .st.champ{background:var(--gold);color:#2A1D00}
+.rq.day .chip.ball{background:var(--ball);color:var(--on)}
+.rq.day .st.wait{background:transparent;color:var(--ink)}
+.rq.day .st.no{background:transparent;color:#E6EEE8}
+.wm{--c:rgba(241,244,234,.045);--a:rgba(217,242,74,.05)}
+.rq.day .wm{--c:rgba(255,255,255,.07);--a:rgba(228,247,90,.06)}
+.rq{box-sizing:border-box}
+/* phone fixes */
+.scroll > .tbl{min-width:680px}
+@media (max-width:640px){.side{align-items:center}.list > div,.list > a{flex-wrap:wrap}.side a.on{box-shadow:inset 0 -3px 0 var(--ball)}}
+/* Meera Patel sample photo (same as the app, 11 Nov): drifts inside its card, never steps out */
+@keyframes rqDrift{from{background-position:65% 0%}to{background-position:65% 14%}}
+.rq .ph-man{animation:rqDrift 12s ease-in-out infinite alternate}
+@media (prefers-reduced-motion:reduce){.rq .ph-man{animation:none}}
+@media (min-width:761px){.rq .slides .s1{background-image:url(./meera-hero.jpg)!important;background-size:cover!important;background-position:100% 0%!important}}
+/* Watermark: as visible as Prototype 2 (Vineeth, 11 Nov 13:15) */
+.wm{top:-90px!important;right:-140px!important;width:620px!important;opacity:.9;--c:rgba(241,244,234,.07)!important;--a:rgba(217,242,74,.55)!important}
+.rq.day .wm{--c:rgba(255,255,255,.1)!important;--a:rgba(228,247,90,.6)!important}
+@media (max-width:760px){.wm{width:380px!important;right:-150px!important;top:-60px!important}}
+.rq.day .photo{background-size:cover!important;background-position:center 40%!important}
+/* v1.2 shell (app): narrow phones keep the header on one line, host name shortens first */
+.hdr .host{flex:1 1 auto}
+.hdr .host > span:last-child{min-width:0;overflow:hidden}
+.hdr .host .cap,.hdr .host b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr .right{flex:none}
+@media (max-width:760px){.hdr .host b{max-width:none}}
+@media (max-width:360px){.hdr .tiles .tile:nth-child(n+2){display:none}}
+/* 44 px tap area on the Night/Day switch without changing how it looks */
+.mode{position:relative;flex:none}
+.mode::after{content:"";position:absolute;inset:-6px -2px}

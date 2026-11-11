@@ -328,3 +328,13 @@ figcaption{flex-wrap:wrap;gap:8px}
 .rq.day .wm{--c:rgba(255,255,255,.1)!important;--a:rgba(228,247,90,.6)!important}
 @media (max-width:760px){.wm{width:380px!important;right:-150px!important;top:-60px!important}}
 .rq.day .photo{background-size:cover!important;background-position:center 40%!important}
+/* v1.2 shell (app): narrow phones keep the header on one line, host name shortens first */
+.hdr .host{flex:1 1 auto}
+.hdr .host > span:last-child{min-width:0;overflow:hidden}
+.hdr .host .cap,.hdr .host b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr .right{flex:none}
+@media (max-width:760px){.hdr .host b{max-width:none}}
+@media (max-width:360px){.hdr .tiles .tile:nth-child(n+2){display:none}}
+/* 44 px tap area on the Night/Day switch without changing how it looks */
+.mode{position:relative;flex:none}
+.mode::after{content:"";position:absolute;inset:-6px -2px}
