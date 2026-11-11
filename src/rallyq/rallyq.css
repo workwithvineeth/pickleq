@@ -95,3 +95,9 @@
 .rallyq-prototype .rq .list>button:hover{background:rgba(255,255,255,.06)}
 .rallyq-prototype .rq .list>button:focus-visible{outline:2px solid var(--ball);outline-offset:-2px}
 .rallyq-prototype .rq .list>.empty{padding:16px 18px}
+.rallyq-prototype .rallyq-prototype svg.wm{display:none}
+/* Win predictor bar (live score cards on Home, Live, Event, TV): an estimate, leader ball-yellow, the other muted */
+.rallyq-prototype .wp{display:flex;flex-direction:column;gap:6px;width:100%}
+.rallyq-prototype .wp-bar{height:6px;border-radius:999px;overflow:hidden}
+.rallyq-prototype .wp-lead{color:#D9F24A}
+.rallyq-prototype .wp-other{color:#9FB4A6;font-weight:600}

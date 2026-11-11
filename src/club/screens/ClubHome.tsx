@@ -52,7 +52,7 @@ export function ClubHome({ d, go }: { d: ClubBundle; go: Go }) {
           <div className="pq-overview-court-body lgd"><div className="cap">{STAGE_LABEL[m.stage]}</div>
             <div className="tmr"><b>{names(m.sideA,players)}</b><b className="n pq-score">{game?.a??0}</b></div>
             <div className="tmr"><span>{names(m.sideB,players)}</span><b className="n pq-score">{game?.b??0}</b></div>
-            {t.isPublic && <button type="button" className="pq-watch-link" onClick={()=>go("results",t.publicSlug)}>Watch →</button>}
+            {t.isPublic && <button type="button" className="pq-watch-link" onClick={()=>go("results",t.publicSlug)}>Scores →</button>}
           </div></article>;
       })}</div>
     </section>}

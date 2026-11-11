@@ -1,0 +1,35 @@
+import { it } from 'vitest';
+import { buildSampleClub } from './domain/sample';
+import { rng } from './domain/simulate';
+import { winEstimate, type WinInput } from './winPredictor';
+const Ks = [0.15, 0.25, 0.35, 0.5, 0.7, 0.9, 1.2];
+function score(samples: { inp: WinInput; aWon: boolean }[], k: number) { let brier = 0, ll = 0, n = 0; for (const s of samples) { const e = winEstimate(s.inp, k); if (!e) continue; const p = e.a / 100; const y = s.aWon ? 1 : 0; brier += (p - y) ** 2; ll += -(y * Math.log(p) + (1 - y) * Math.log(1 - p)); n++; } return { brier: brier / n, ll: ll / n, n }; }
+function replay(rA: (number|undefined)[], rB: (number|undefined)[], games: { points?: string; a: number; b: number }[], pointsTo: number, bestOf: number, aWon: boolean, doubles: boolean, every = 4) {
+  const out: { inp: WinInput; aWon: boolean }[] = []; let gA = 0, gB = 0, rAll = 0, rBll = 0;
+  out.push({ inp: { ratingsA: rA, ratingsB: rB, ralliesA: 0, ralliesB: 0, gamesA: 0, gamesB: 0, pointsA: 0, pointsB: 0, pointsTo, bestOf, doubles }, aWon });
+  for (const g of games) { let a = 0, b = 0, i = 0; for (const c of g.points ?? '') { if (c === 'A') { a++; rAll++; } else { b++; rBll++; } if (++i % every === 0) out.push({ inp: { ratingsA: rA, ratingsB: rB, ralliesA: rAll, ralliesB: rBll, gamesA: gA, gamesB: gB, pointsA: a, pointsB: b, pointsTo, bestOf, doubles }, aWon }); } if (g.a > g.b) gA++; else gB++; }
+  return out;
+}
+it('back-test', () => {
+  // 1) Demo matches (sample club, several seeds)
+  const demo: { inp: WinInput; aWon: boolean }[] = []; const demoPre: { inp: WinInput; aWon: boolean }[] = [];
+  for (let seed = 1; seed <= 8; seed++) {
+    const d = buildSampleClub('u', 'You', new Date('2026-11-10'), 20261028 + seed);
+    const pm = new Map(d.players.map((p) => [p.id, p])); const em = new Map(d.entries.map((e) => [e.id, e]));
+    for (const m of d.matches) { if (m.status !== 'done' || !m.winner || !m.entryA || !m.entryB || !m.games.length) continue; const div = d.divisions.find((x) => x.id === m.divisionId)!; const dbl = div.kind === 'doubles';
+      const r = (eid: string) => em.get(eid)!.playerIds.map((pid) => (dbl ? pm.get(pid)?.duprDoubles : pm.get(pid)?.duprSingles));
+      const fmt = div.format; const rows = replay(r(m.entryA), r(m.entryB), m.games, fmt.pointsTo, fmt.bestOf, m.winner === 'A', dbl); demo.push(...rows); demoPre.push(rows[0]); }
+  }
+  // 2) Simulated side-out doubles matches: true rally chance from DUPR with each team's form on the day.
+  const rand = rng(7); const sim: { inp: WinInput; aWon: boolean }[] = []; const simPre: typeof sim = [];
+  const normal = () => Math.sqrt(-2 * Math.log(rand() || 1e-9)) * Math.cos(2 * Math.PI * rand());
+  for (let i = 0; i < 1500; i++) {
+    const ra = [3 + rand() * 1.8, 3 + rand() * 1.8], rb = [3 + rand() * 1.8, 3 + rand() * 1.8]; const gap = (ra[0] + ra[1] - rb[0] - rb[1]) / 2 + normal() * 0.35;
+    const p = 1 / (1 + Math.exp(-0.35 * gap)); const games: { points: string; a: number; b: number }[] = []; let gA = 0, gB = 0;
+    while (gA < 2 && gB < 2) { let a = 0, b = 0, s = rand() < 0.5 ? 'A2' : 'B2', pts = ''; while (!((a >= 11 && a - b >= 2) || (b >= 11 && b - a >= 2))) { const aw = rand() < p; if (s[0] === 'A') { if (aw) { a++; pts += 'A'; } else s = s === 'A1' ? 'A2' : 'B1'; } else { if (!aw) { b++; pts += 'B'; } else s = s === 'B1' ? 'B2' : 'A1'; } } games.push({ points: pts, a, b }); if (a > b) gA++; else gB++; }
+    const rows = replay(ra, rb, games, 11, 3, gA > gB, true); sim.push(...rows); simPre.push(rows[0]);
+  }
+  const fmt = (x: { brier: number; ll: number; n: number }) => `Brier ${x.brier.toFixed(4)} · log-loss ${x.ll.toFixed(4)} (n=${x.n})`;
+  for (const k of Ks) console.log(`K=${k}\n  demo all: ${fmt(score(demo, k))}\n  demo pre: ${fmt(score(demoPre, k))}\n  sim all : ${fmt(score(sim, k))}\n  sim pre : ${fmt(score(simPre, k))}`);
+  console.log('coin-flip Brier = 0.25');
+}, 600000);

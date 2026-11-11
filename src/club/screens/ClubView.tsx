@@ -1,3 +1,5 @@
+import { OrgShell, PageHead } from '../../rallyq/shell/Shell';
+import { Legacy } from './InboxLegacy';
 import { TestimonialsCard } from './Testimonials';
 import { useMemo, useState } from 'react';
 import { Segmented } from '../../components/Controls';
@@ -10,7 +12,7 @@ import { backend } from '../index';
 import { isClubApp } from '../config';
 import { isAdmin, isApproved, isStaff, ROLE_LABEL, STAGE_LABEL, type ClubMatch, type ClubPlayer, type Role, type Share, type SummaryData } from '../types';
 import { ClubHero, LogoPicker } from './Poster';
-import { appLink, DemoNote, errorText, fmtRating, Header, names, RoleBadge, shareLink, Status, useLoad } from './common';
+import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
 import { friendlyDate } from '../dates';
 import { DayOfGuide } from './ClubHome';
 import { RallyOverview } from '../../rallyq/organiser/RallyOverview';
@@ -19,7 +21,7 @@ type Tab = 'overview' | 'events' | 'players' | 'squad' | 'members' | 'profile' |
 const TAB_IDS: Tab[] = ['overview', 'events', 'players', 'squad', 'members', 'profile', 'guide'];
 
 /** One club. The route id is "<club id>" or "<club id>.<section>" so the workspace menu can open a section directly. */
-export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: Go; onBack: () => void }) {
+export function ClubView({ clubId: routeId, go }: { clubId: string; go: Go; onBack: () => void }) {
   const b = backend();
   const [clubId, sectionId] = routeId.split('.');
   const state = useLoad(async () => { if (!b) throw new Error('Open Club mode first'); return b.clubBundle(clubId); }, [b, clubId]);
@@ -35,16 +37,18 @@ export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: 
   ];
   const people: { value: Tab; label: string }[] = [{ value: 'members', label: 'Members & roles' }, { value: 'players', label: 'Players' }, ...(staff ? [{ value: 'squad' as Tab, label: 'Coach view' }] : [])];
   return (
-    <main className={"screen wide-ok"+(tab==="overview"?" pq-overview-screen":"")} aria-labelledby="clubview-title">
-      <Header id="clubview-title" title={tab==='overview'&&isClubApp()?'Overview':d?.club.name ?? 'Club'} onBack={tab==='overview'&&isClubApp()?undefined:onBack} right={d && <RoleBadge role={d.role} />} />
+    <OrgShell go={go} active={tab === 'events' ? 'tournaments' : tab === 'overview' ? 'home' : 'club'} clubName={d?.club.name} clubId={clubId}>
+      {tab !== 'overview' && <PageHead cap={d ? `${d.club.city ? `${d.club.city} · ` : ''}${ROLE_LABEL[d.role]}` : 'Club'} title={<span id="clubview-title">{d?.club.name ?? 'Club'}</span>} actions={d?.club.trusted ? <span className="st ok">Trusted</span> : undefined} />}
+      {tab === 'overview' && <h1 id="clubview-title" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{isClubApp() ? 'Overview' : d?.club.name ?? 'Club'}</h1>}
+      <Legacy cards style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Status error={state.error} loading={state.loading && !d} />
       {tab !== 'overview' && <DemoNote b={b} />}
       {d && (
         <>
           {(tab === 'events' || tab === 'profile') && <ClubHero b={b} clubId={d.club.id} club={d.club.name} city={d.club.city} logoUrl={d.club.logoUrl} canEdit={staff && !!b} onChanged={state.reload}
             badge={d.club.trusted ? <span className="pq-badge">Trusted</span> : undefined} />}
-          <Segmented label="Club sections" value={tab} options={tabs} onChange={setTab} />
-          {(tab === 'members' || tab === 'players' || tab === 'squad') && <Segmented label="People" value={tab} options={people} onChange={setTab} />}
+          <div className="tabs" role="group" aria-label="Club sections" style={{ flexWrap: 'wrap' }}>{tabs.map((x) => <button key={x.value} type="button" className={x.value === tab ? 'tab on' : 'tab'} aria-pressed={x.value === tab} onClick={() => setTab(x.value)}>{x.label}</button>)}</div>
+          {(tab === 'members' || tab === 'players' || tab === 'squad') && <div className="tabs" role="group" aria-label="People" style={{ flexWrap: 'wrap' }}>{people.map((x) => <button key={x.value} type="button" className={x.value === tab ? 'tab on' : 'tab'} aria-pressed={x.value === tab} onClick={() => setTab(x.value)}>{x.label}</button>)}</div>}
           {tab === 'overview' && <RallyOverview d={d} go={go} />}
           {tab === 'guide' && <DayOfGuide d={d} go={go} />}
           {tab === 'events' && <Events d={d} go={go} reload={state.reload} />}
@@ -55,7 +59,8 @@ export function ClubView({ clubId: routeId, go, onBack }: { clubId: string; go: 
           {tab === 'members' && <Members d={d} go={go} reload={state.reload} />}
         </>
       )}
-    </main>
+      </Legacy>
+    </OrgShell>
   );
 }
 

@@ -27,7 +27,7 @@ test('overview has real live courts, compact phone frame, account settings and e
   await page.getByLabel('Account menu').click();
   await expect(page.getByRole('region',{name:'Needs you'})).toBeVisible();
   await expect(page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:'Create tournament',exact:true})).toBeVisible();
-  await live.getByRole('button',{name:'Watch →'}).first().click();
+  await live.getByRole('button',{name:'Scores →'}).first().click();
   await expect(page).toHaveURL(/#\/results\//);
   await page.evaluate(()=>{const k='pq-club-demo-v1',d=JSON.parse(localStorage.getItem(k)!);for(const t of d.tournaments){if(t.status==='live')t.status='done';if(t.status==='draft')t.startDate='2000-01-01';}localStorage.setItem(k,JSON.stringify(d));});
   await page.goto(overviewUrl);await page.reload();await expect(page.getByRole('heading',{name:'Overview',exact:true})).toBeVisible();

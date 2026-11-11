@@ -1,3 +1,4 @@
+import {liveWinBar,winBarHtml} from '../../club/winBar';
 import {useState} from 'react';
 import type {Go} from '../../navigation';
 import type {PublicEvent,PublicTournament} from '../../club/backend';
@@ -22,7 +23,9 @@ const R:[string,string][]=[
  ['Pools of 4, top 2 to knockouts. Games to 11, win by 2. Finals best of 3.','{{infoFormat}}'],
  ['Crosscourts, Hyderabad. 4 outdoor courts under lights. Parking on site.','{{infoVenue}}'],
  ['Rally33 desk on WhatsApp: [CLUB NUMBER]','{{infoContact}}']];
-const source=holes(raw,R);
+// Semi-final cards: the status chip comes from the match (coral only while live) and live ones carry the win chance.
+const SF_CARD='<span class="chip live">Live</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for>';
+const source=holes(raw,R).replace(SF_CARD,'<span class="{{m.chip}}">{{m.st}}</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div>'+winBarHtml('m.win')+'</div></sc-for>');
 
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 type Tab='Entries'|'Pools'|'Knockout'|'Info';
@@ -39,7 +42,7 @@ export function poolTables(d:PublicTournament){
    out.push({name:(pools.length>1?'Pool '+String.fromCharCode(64+pool):div.name),court:div.name,rows});}}
  return out;
 }
-function koRows(d:PublicTournament,stage:'qf'|'sf'){return d.matches.filter(m=>m.stage===stage).map(m=>{const v=matchView(d,m);return{a:v.a,b:v.b,sa:v.pointsA,sb:v.pointsB,court:m.court?'Court '+m.court:'',as:m.winner==='A'?'font-weight:700':'color:#9FB4A6',bs:m.winner==='B'?'font-weight:700':'color:#9FB4A6'};});}
+function koRows(d:PublicTournament,stage:'qf'|'sf'){return d.matches.filter(m=>m.stage===stage).map(m=>{const v=matchView(d,m);return{a:v.a,b:v.b,sa:v.pointsA,sb:v.pointsB,court:m.court?'Court '+m.court:'',win:liveWinBar(d,m),chip:m.status==='live'?'chip live':'chip',st:m.status==='live'?'Live':m.status==='done'?'Final':'Next',as:m.winner==='A'?'font-weight:700':'color:#9FB4A6',bs:m.winner==='B'?'font-weight:700':'color:#9FB4A6'};});}
 
 export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:string|undefined,tab:Tab,setTab:(t:Tab)=>void,enter:()=>void){
  const taken=e.divisions.reduce((s,x)=>s+x.taken,0);

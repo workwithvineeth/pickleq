@@ -6,15 +6,22 @@ import {useLoad} from '../../club/screens/common';
 import {usePublicScores} from '../../club/screens/usePublicScores';
 import {courtMatches,matchView,pointHistory} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
+import {liveWinBar,NO_WIN_BAR,winBarFrom,winBarHtml,type WinBar} from '../../club/winBar';
+import {winEstimate} from '../../club/winPredictor';
+import liveRaw from '../prototypes/Live.dc.html?raw';
+/** The Live board with the win chance under the big score. */
+const LIVE_SOURCE=liveRaw.replace('scored by court referee</span></div>','scored by court referee</span></div>'+winBarHtml('sel.win'));
+/** Sample win chance for the labelled sample (made-up ratings), so the sample shows what the bar looks like. */
+const sampleWin=(a:string,b:string,sa:number,sb:number,gA:number,gB:number,rA:number[],rB:number[])=>winBarFrom(winEstimate({ratingsA:rA,ratingsB:rB,ralliesA:sa+gA*11,ralliesB:sb+gB*11,gamesA:gA,gamesB:gB,pointsA:sa,pointsB:sb,pointsTo:11,bestOf:3}),a,b);
 
-interface Court {court:string;stage:string;a:string;b:string;sa:number;sb:number;game:number;games:string[];status:string;run:number;next:string;pts:string}
+interface Court {court:string;stage:string;a:string;b:string;sa:number;sb:number;game:number;games:string[];status:string;run:number;next:string;pts:string;win?:WinBar}
 interface Venue {name:string;club:string;mark:string;courts:Court[];slug?:string}
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 /** Prototype sample, shown (and labelled) only when no event is live. */
 export const SAMPLE:Venue[]=[
  {name:'Loki’s',club:'Loki’s Pickleball Club',mark:'LP',courts:[
-  {court:'Court 1',stage:'Pool A',a:'Teja / Kiran',b:'Rohan / Ajay',sa:8,sb:5,game:1,games:[],status:'Live',run:4,next:'Pool A · Sana / Pooja vs Leela / Tara',pts:'AABAAB'},
-  {court:'Court 2',stage:'Men’s QF',a:'Rao / Iyer',b:'Khan / Patel',sa:9,sb:7,game:2,games:['11–8'],status:'Live',run:5,next:'QF 2 · Reddy / Naidu vs Das / Jain',pts:'ABAAAB'},
+  {court:'Court 1',stage:'Pool A',a:'Teja / Kiran',b:'Rohan / Ajay',sa:8,sb:5,game:1,games:[],status:'Live',run:4,next:'Pool A · Sana / Pooja vs Leela / Tara',pts:'AABAAB',win:sampleWin('Teja / Kiran','Rohan / Ajay',8,5,0,0,[4.1,3.9],[3.9,3.8])},
+  {court:'Court 2',stage:'Men’s QF',a:'Rao / Iyer',b:'Khan / Patel',sa:9,sb:7,game:2,games:['11–8'],status:'Live',run:5,next:'QF 2 · Reddy / Naidu vs Das / Jain',pts:'ABAAAB',win:sampleWin('Rao / Iyer','Khan / Patel',9,7,1,0,[4.3,4.22],[4.1,4.0])},
   {court:'Court 3',stage:'Women’s SF',a:'Meera / Divya',b:'Ananya / Ritu',sa:11,sb:6,game:2,games:['11–9','11–6'],status:'Final',run:6,next:'Final at 7:40 pm',pts:'AAAABA'}]},
  {name:'Rally33',club:'Rally33 · Crosscourts',mark:'R33',courts:[
   {court:'Court 1',stage:'Open SF',a:'Varun / Neel',b:'Imran / Joseph',sa:10,sb:10,game:3,games:['11–7','8–11'],status:'Live',run:3,next:'Final at 8:15 pm',pts:'ABABAB'}]},
@@ -26,7 +33,7 @@ export const SAMPLE:Venue[]=[
 function longestRun(pts:string){let best=0,cur=0,prev='';for(const p of pts){cur=p===prev?cur+1:1;prev=p;best=Math.max(best,cur);}return best;}
 export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?:number})=>void){
  const venue=venues[v]??venues[0];const courts=venue?.courts??[];const ci=Math.min(c,Math.max(0,courts.length-1));
- const mk=(x:Court)=>({...x,chip:x.status==='Live'?'chip live':'chip gold'});
+ const mk=(x:Court)=>({...x,win:x.status==='Live'?x.win??NO_WIN_BAR:NO_WIN_BAR,chip:x.status==='Live'?'chip live':'chip'});
  const s=courts[ci]?mk(courts[ci]):mk({court:'Court 1',stage:'',a:'No matches live right now',b:'Check back soon',sa:0,sb:0,game:1,games:[],status:'Waiting',run:0,next:'',pts:''});
  const first=(n:string)=>n.split(' / ')[0];
  return {venue:venue?.name??'',clubName:venue?.club??'',clubMark:venue?.mark??'',
@@ -43,9 +50,9 @@ export function RallyLive({go}:{go:Go}){
  if(events.length){
   venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
    const courts:Court[]=d?courtMatches(d).map(({court,match})=>{const view=matchView(d,match);const pts=String((match as {points?:string}).points??'');const ok=pointHistory(pts,view.pointsA,view.pointsB).length?pts:'';
-    return {court:'Court '+court,stage:view.division?.name??d.name,a:view.a,b:view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok};}):[];
+    return {court:'Court '+court,stage:view.division?.name??d.name,a:view.a,b:view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok,win:liveWinBar(d,match)};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
  const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today:new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
- return <PrototypeScreen name="Live" go={go} values={values}/>;
+ return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }
