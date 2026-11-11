@@ -73,8 +73,9 @@ describe('Sign in with a password', () => {
     const user = userEvent.setup();
     fake.signUp.mockResolvedValue(true);
     render(<ClubSignIn go={go} onBack={() => {}} />);
-    await user.click(screen.getByRole('button', { name: /Create an account/ }));
-    expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Create account' }));
+    expect(screen.getByRole('heading', { name: 'Start on RallyQ.' })).toBeInTheDocument();
+    expect(screen.getByText('Referee or desk helper? Open the link your organiser sent you. No account needed.')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Email'), 'new@example.com');
     await user.type(screen.getByLabelText('Choose a password'), 'short');
     await user.type(screen.getByLabelText('Password again'), 'short');
@@ -114,14 +115,13 @@ describe('Sign in with a password', () => {
     expect(fake.resetPassword).toHaveBeenCalledWith('organiser@example.com', '654321', 'brandnew99');
   });
 
-  it('as the landing page: welcome, logo, join by invite link, and stays put after signing in', async () => {
+  it('as the landing page: welcome, join by invite link, and stays put after signing in', async () => {
     const go = vi.fn(); const done = vi.fn();
     const user = userEvent.setup();
     render(<ClubSignIn go={go} onBack={() => {}} landing onSignedIn={done} />);
-    expect(screen.getByRole('heading', { name: 'RallyQ', level: 1 })).toBeInTheDocument();
-    expect(screen.getByText('Out of the kitchen, into the stats.')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'RallyQ logo' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Sign in', level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Your court.The main event.', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Welcome back.', level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Sign in', selected: true })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Join a club' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Got an invite from a club/ }));
@@ -141,7 +141,7 @@ describe('Sign in with a password', () => {
     fake.isPlatformAdmin.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     render(<ClubSignIn admin go={go} onBack={() => {}} />);
     expect(screen.getByRole('heading', { name: 'RallyQ admin' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Create an account/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Create account' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Email'), 'organiser@example.com');
     await user.type(screen.getByLabelText('Password'), 'rightpass1');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
