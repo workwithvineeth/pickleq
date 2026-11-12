@@ -105,7 +105,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="grid g3">
 <sc-for list="{{live}}" as="m" hint-placeholder-count="3">
 <a class="card glass" href="Live.dc.html" style="padding:18px;display:flex;flex-direction:column;gap:14px">
-<div class="between"><span class="chip live">Live</span><span class="row" style="gap:8px;font-size:12px;color:var(--mut)"><span style="width:24px;height:24px;border-radius:6px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-size:8px;font-weight:800">{{m.mark}}</span>{{m.court}} · {{m.club}}</span></div>
+<div class="between"><span class="{{liveChipCls}}">{{liveChip}}</span><span class="row" style="gap:8px;font-size:12px;color:var(--mut)"><span style="width:24px;height:24px;border-radius:6px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-size:8px;font-weight:800">{{m.mark}}</span>{{m.court}} · {{m.club}}</span></div>
 <div class="score"><span class="t"><span class="serve"></span>{{m.a}}</span><span class="n p lead">{{m.sa}}</span><span class="t mut">{{m.b}}</span><span class="n p">{{m.sb}}</span></div>
 <div class="mut" style="font-size:13px">{{m.stage}} · Game {{m.game}}</div>
 </a>
@@ -123,7 +123,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div style="position:relative;display:flex;flex-direction:column;gap:16px;padding-top:48px;min-width:0">
 <div class="cap" style="color:#D9F24A">Player Studio · Player of the week</div>
 <div class="disp" style="font-size:clamp(44px,5.6vw,76px)">KIRAN REDDY</div>
-<div style="color:#C9D6CC;font-size:17px;line-height:1.5">Loki’s Pickleball Club · Men’s and mixed doubles. Nine straight wins in tournament play.</div>
+<div style="color:#C9D6CC;font-size:17px;line-height:1.5">Sample profile · Men’s and mixed doubles. Nine straight wins in tournament play.</div>
 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
 <div style="background:rgba(241,244,234,.07);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);border-radius:18px;padding:14px"><div class="n" style="font-size:42px;color:#D9F24A">4.62</div><div style="font-size:12px;color:#9FB4A6;margin-top:6px">DUPR doubles</div></div>
 <div style="background:rgba(241,244,234,.07);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);border-radius:18px;padding:14px"><div class="n" style="font-size:42px">71%</div><div style="font-size:12px;color:#9FB4A6;margin-top:6px">Win rate, last 20</div></div>
@@ -232,7 +232,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 <footer class="foot"><div class="wrap between">
 <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:22px;height:22px"><use href="#fq"></use></svg><span class="word" style="font-size:18px">RallyQ</span><span style="margin-left:8px">Your court. The main event.</span></div>
-<div>Hyderabad · rallyq.[domain]</div>
+<div>Hyderabad · rallyq.in</div>
 </div></footer>
 </div>
 </x-dc>
