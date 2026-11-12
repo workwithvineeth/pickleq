@@ -10,7 +10,7 @@ const SPLIT = fileURLToPath(new URL('../fixtures/google-form-split.csv', import.
 
 test.describe('PaddleQ app', () => {
   test('has its own tabs, and no personal-app tabs', async ({ page }) => {
-    // Signed out, paddleq.in opens on the public home page; Sign in leads to the sign-in page.
+    // Signed out, rallyq.in opens on the public home page; Sign in leads to the sign-in page.
     await page.goto('./');
     await expect(page.getByRole('heading', { level: 1, name: 'Your court. The main event.' })).toBeVisible();
     await expect(page.getByRole('link', { name: /See live scores/ }).first()).toBeVisible();

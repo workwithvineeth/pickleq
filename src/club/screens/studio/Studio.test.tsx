@@ -207,7 +207,7 @@ describe('Claim', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Email results to 1 player' }));
     await waitFor(() => expect(fixture.emailClaimLinks).toHaveBeenCalledWith('t1', ['p1']));
     expect(await screen.findByRole('status')).toHaveTextContent('Emailed 1 player.');
-    expect(screen.getByText('1 of 3 have an email. Emails come from hello@paddleq.in.')).toBeInTheDocument();
+    expect(screen.getByText('1 of 3 have an email. Emails come from hello@rallyq.in.')).toBeInTheDocument();
   });
 
   it('shows the reason when email isn’t switched on yet', async () => {

@@ -62,7 +62,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   }
 
   const signedIn = state.data;
-  // RallyQ (the club app): signed out, My club is the sign-in page, so paddleq.in opens on it.
+  // RallyQ (the club app): signed out, My club is the sign-in page, so rallyq.in opens on it.
   if (isClubApp() && server && !state.loading && !state.error && !signedIn) return <ClubSignIn go={go} onBack={onBack} landing onSignedIn={state.reload} />;
   if (signedIn && isClubApp()) return (
     <PublicShell go={go} active="clubs" host={signedIn.clubs.length === 1 ? { marks: [clubMark(signedIn.clubs[0].club.name)], name: signedIn.clubs[0].club.name, cap: 'Hosted by' } : undefined}>
@@ -433,7 +433,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
       <label htmlFor="pq-code">6-digit code</label>
       <input id="pq-code" className="inp n" style={{ fontSize: 24, letterSpacing: '.3em' }} inputMode="numeric" autoComplete="one-time-code" maxLength={7} placeholder="••••••" value={code}
         onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, ''))} onKeyDown={enter(onEnter)} />
-      <span className="hint">From RallyQ &lt;hello@paddleq.in&gt;. Works for one hour.</span>
+      <span className="hint">From RallyQ &lt;hello@rallyq.in&gt;. Works for one hour.</span>
     </div>
   );
   const message = msg && <div role={msg.ok ? 'status' : 'alert'} className="note" style={msg.ok ? undefined : { background: 'transparent', boxShadow: 'inset 0 0 0 1.5px var(--err)' }}>{msg.text}</div>;
@@ -546,7 +546,7 @@ function Tick() {
   return <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>;
 }
 
-/** Below the sign-in on paddleq.in: join a club by its invite link. */
+/** Below the sign-in on rallyq.in: join a club by its invite link. */
 function MoreWays({ go }: { go: Go }) {
   const [joining, setJoining] = useState(false);
   const [v, setV] = useState('');

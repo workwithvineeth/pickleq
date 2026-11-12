@@ -864,7 +864,7 @@ export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: (
           <MyMatches d={d} />
           <Tabs<View> label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
           {view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody d={body} divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')} />}
-          <p className="mut" style={{ margin: 0, fontSize: 13 }}>Live scores by <a aria-label={d.status === 'live' ? 'RallyQ: live scores. Run your club’s tournament at paddleq.in' : undefined} href="https://paddleq.in/" className="acc" style={{ fontWeight: 700 }}>RallyQ</a> · run your club’s tournament at paddleq.in</p>
+          <p className="mut" style={{ margin: 0, fontSize: 13 }}>Live scores by <a aria-label={d.status === 'live' ? 'RallyQ: live scores. Run your club’s tournament at rallyq.in' : undefined} href="https://rallyq.in/" className="acc" style={{ fontWeight: 700 }}>RallyQ</a> · run your club’s tournament at rallyq.in</p>
         </>
       )}
     </PublicShell>

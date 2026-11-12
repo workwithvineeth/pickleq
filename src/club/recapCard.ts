@@ -117,7 +117,7 @@ export async function drawRecap(canvas: HTMLCanvasElement, r: Recap, name: strin
   // Footer.
   c.fillStyle = DEEP; c.fillRect(40, RECAP_H - 112, RECAP_W - 80, 72);
   c.fillStyle = CREAM; c.font = `600 28px ${BODY}`; c.textBaseline = 'middle';
-  c.fillText('Official results on paddleq.in', 80, RECAP_H - 76);
+  c.fillText('Official results on rallyq.in', 80, RECAP_H - 76);
   c.textAlign = 'right'; c.fillStyle = SOFT; c.font = `400 26px ${BODY}`; c.fillText('Player Studio', RECAP_W - 80, RECAP_H - 76);
   c.textAlign = 'left'; c.textBaseline = 'alphabetic';
 }

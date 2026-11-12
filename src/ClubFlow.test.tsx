@@ -207,8 +207,8 @@ describe('Club mode', () => {
     await openDemo(user);
     window.location.hash = '#/results/pq-demo-open';
     await screen.findByRole('heading', { name: 'PQ Demo Open' });
-    expect(screen.getByRole('link', { name: /RallyQ: live scores/ })).toHaveAttribute('href', 'https://paddleq.in/');
-    expect(screen.getByText(/run your club’s tournament at paddleq.in/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /RallyQ: live scores/ })).toHaveAttribute('href', 'https://rallyq.in/');
+    expect(screen.getByText(/run your club’s tournament at rallyq.in/)).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Pool A' })).toBeInTheDocument();
     // Since 12 Nov (Vineeth): DUPR shows for every player wherever players are listed, public pages too.
     expect(screen.getAllByText(/DUPR/).length).toBeGreaterThan(0);

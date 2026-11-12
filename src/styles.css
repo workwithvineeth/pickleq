@@ -455,7 +455,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-organiser { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 16px; }
 .pq-organiser-name { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
 
-/* ---------- RallyQ brand across the whole club app (paddleq.in only; the personal app keeps its look) ---------- */
+/* ---------- RallyQ brand across the whole club app (rallyq.in only; the personal app keeps its look) ---------- */
 /* Page headers: a maroon band with cream title, like the sign-in and flow screens. */
 .pq-brand .screen > .header:first-child {
   background: var(--pq-maroon); color:var(--pq-on-brand); margin: calc(-18px - var(--safe-top)) -16px 4px;
@@ -733,7 +733,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .pq-claim-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .pq-claim-row .meta { justify-content: flex-end; }
 @media (max-width: 420px) { .pq-claim-row { grid-template-columns: minmax(0, 1fr); } .pq-claim-row .meta { justify-content: flex-start; } }
-/* ---------- Public home page (paddleq.in for visitors): full width, brand maroon and cream ---------- */
+/* ---------- Public home page (rallyq.in for visitors): full width, brand maroon and cream ---------- */
 .pq-landing { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
 .pq-landing h1, .pq-landing h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; margin: 0; }
 .pq-landing p { margin: 0; }

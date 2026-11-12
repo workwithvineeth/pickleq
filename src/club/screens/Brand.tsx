@@ -21,10 +21,10 @@ export function LandingHero() {
   );
 }
 
-/** RallyQ's brand strip on results and live-score pages: compact, so the scores start on the first screen. Links to paddleq.in. */
+/** RallyQ's brand strip on results and live-score pages: compact, so the scores start on the first screen. Links to rallyq.in. */
 export function ResultsHero({ label = 'LIVE SCORES' }: { label?: string }) {
   return (
-    <a href="https://paddleq.in/" className="pq-hero pq-hero-results" aria-label={`RallyQ: ${label === 'RESULTS' ? 'tournament results' : 'live scores'}. Run your club’s tournament at paddleq.in`} style={{ textDecoration: 'none' }}>
+    <a href="https://rallyq.in/" className="pq-hero pq-hero-results" aria-label={`RallyQ: ${label === 'RESULTS' ? 'tournament results' : 'live scores'}. Run your club’s tournament at rallyq.in`} style={{ textDecoration: 'none' }}>
       <span aria-hidden="true" className="pq-court" />
       <span aria-hidden="true" className="pq-court-mid" />
       <BrandMark size={52} />

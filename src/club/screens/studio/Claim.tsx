@@ -84,7 +84,7 @@ export const claimMessage = (tournament: string, name: string, token: string) =>
 
 /**
  * Organisers: send each player of a tournament their private claim link, on WhatsApp (one at a time) or by email
- * (everyone with an email, from hello@paddleq.in). Add a missing email here; undo a claim if the wrong person claimed.
+ * (everyone with an email, from hello@rallyq.in). Add a missing email here; undo a claim if the wrong person claimed.
  */
 export function ClaimLinks({ tournamentId, clubId, tournament, players }: { tournamentId: string; clubId: string; tournament: string; players: ClubPlayer[] }) {
   const b = serverBackend();
@@ -138,7 +138,7 @@ export function ClaimLinks({ tournamentId, clubId, tournament, players }: { tour
         <button type="button" className="btn btn-primary" disabled={busy || !canEmail.length} onClick={() => void emailAll()}>
           {canEmail.length ? `Email results to ${plural(canEmail.length, 'player')}` : 'Email results'}
         </button>
-        <span className="small muted">{st ? `${withEmail} of ${players.length} have an email. Emails come from hello@paddleq.in.` : ''}</span>
+        <span className="small muted">{st ? `${withEmail} of ${players.length} have an email. Emails come from hello@rallyq.in.` : ''}</span>
       </div>
       {msg && <p role={msg.ok ? 'status' : 'alert'} className="small" style={{ margin: 0 }}>{msg.text}</p>}
       <ul className="pq-plain-list">

@@ -110,6 +110,6 @@ export function buildRecaps(official: OfficialMatch[]): Recap[] {
 export function recapCaption(r: Recap, name: string): string {
   const bits = [`${name} at ${r.tournament}${r.division ? ` (${r.division})` : ''}: ${r.finish === 'Pool stage' ? `${r.won}–${r.lost}` : r.finish}.`];
   if (r.comeback) bits.push(`Came back from ${r.comeback.from} to win ${r.comeback.final}.`);
-  bits.push('Results on RallyQ: paddleq.in');
+  bits.push('Results on RallyQ: rallyq.in');
   return bits.join(' ');
 }
