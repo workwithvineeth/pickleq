@@ -323,10 +323,10 @@ figcaption{flex-wrap:wrap;gap:8px}
 .rq .ph-man{animation:rqDrift 12s ease-in-out infinite alternate}
 @media (prefers-reduced-motion:reduce){.rq .ph-man{animation:none}}
 @media (min-width:761px){.rq .slides .s1{background-image:url(%BASE%rallyq/meera-hero.jpg)!important;background-size:cover!important;background-position:100% 0%!important}}
-/* Watermark: as visible as Prototype 2 (Vineeth, 11 Nov 13:15) */
-.wm{top:-90px!important;right:-140px!important;width:620px!important;opacity:.9;--c:rgba(241,244,234,.07)!important;--a:rgba(217,242,74,.55)!important}
+/* Watermark: as visible as Prototype 2 (Vineeth, 11 Nov 13:15); moved down so its line clears the page header (Vineeth, 12 Nov) */
+.wm{top:-30px!important;right:-140px!important;width:620px!important;opacity:.9;--c:rgba(241,244,234,.07)!important;--a:rgba(217,242,74,.55)!important}
 .rq.day .wm{--c:rgba(255,255,255,.1)!important;--a:rgba(228,247,90,.6)!important}
-@media (max-width:760px){.wm{width:380px!important;right:-150px!important;top:-60px!important}}
+@media (max-width:760px){.wm{width:380px!important;right:-150px!important;top:10px!important}}
 .rq.day .photo{background-size:cover!important;background-position:center 40%!important}
 /* v1.2 shell (app): narrow phones keep the header on one line, host name shortens first */
 .hdr .host{flex:1 1 auto}
