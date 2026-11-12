@@ -64,4 +64,38 @@ describe('referee scoring choice', () => {
     await user.click(screen.getByRole('button', { name: 'Final scores only' }));
     expect(screen.getByRole('region', { name: 'Final scores' })).toBeInTheDocument();
   });
+
+  it('side-out edge cases: a game ends at 11, win by 2 or golden point, and game 2 asks who serves again', async () => {
+    const user = userEvent.setup();
+    const bo3 = { bestOf: 3, pointsTo: 11, golden: false, scoring: 'sideout' } as const;
+    const send = vi.fn(async (_p: ScorePatch) => undefined);
+    render(<ScorePad matchKey="m2" initialGames={[]} format={bo3 as unknown as typeof fmt} nameA="Asha / Lata" nameB="Gita / Rekha" send={send} onFinished={() => undefined} canScore doubles />);
+    await user.click(screen.getByRole('button', { name: 'Asha / Lata' }));
+    const A = () => user.click(screen.getByRole('button', { name: 'Rally to Asha / Lata' }));
+    const B = () => user.click(screen.getByRole('button', { name: 'Rally to Gita / Rekha' }));
+    for (let i = 0; i < 10; i++) await A();            // 10-0-2
+    await B();                                          // opening side out
+    for (let i = 0; i < 10; i++) await B();            // 10-10, Gita / Rekha serving
+    expect(screen.getByLabelText(/Score call 10-10-1/)).toBeInTheDocument();
+    await B();                                          // 11-10: win by 2, so the game goes on
+    expect(screen.getByRole('button', { name: 'Rally to Gita / Rekha' })).toBeEnabled();
+    await B();                                          // 12-10: game over
+    expect(screen.getByRole('button', { name: 'Rally to Gita / Rekha' })).toBeDisabled();
+    expect(screen.getByText('Game 1 won · match goes on')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Start game 2' }));
+    expect(screen.getByRole('region', { name: 'First serve' })).toBeInTheDocument();
+  });
+
+  it('golden point: at 10-10 the next point wins', async () => {
+    const user = userEvent.setup();
+    const g = { bestOf: 1, pointsTo: 11, golden: true, scoring: 'sideout' } as const;
+    render(<ScorePad matchKey="m3" initialGames={[]} format={g as unknown as typeof fmt} nameA="Asha / Lata" nameB="Gita / Rekha" send={vi.fn(async () => undefined)} onFinished={() => undefined} canScore doubles />);
+    await user.click(screen.getByRole('button', { name: 'Asha / Lata' }));
+    for (let i = 0; i < 10; i++) await user.click(screen.getByRole('button', { name: 'Rally to Asha / Lata' }));
+    for (let i = 0; i < 11; i++) await user.click(screen.getByRole('button', { name: 'Rally to Gita / Rekha' }));
+    await user.click(screen.getByRole('button', { name: 'Rally to Gita / Rekha' }));
+    expect(screen.getByText('Match finished')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save result' })).toBeInTheDocument();
+  });
 });
+

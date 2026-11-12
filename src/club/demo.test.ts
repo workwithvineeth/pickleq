@@ -164,3 +164,24 @@ describe('Owner’s phone (same rule as the server, club_mode_19)', () => {
     expect((await asAdmin.clubBundle(clubId)).club.hostingPhone).toBe('+91 9876501234');
   });
 });
+
+describe('Demo: accepting stays within the category limit (same rule as the server)', () => {
+  it('refuses an accept past the cap and allows it after a withdrawal', async () => {
+    const b = new DemoBackend(memoryStorage());
+    const id = await b.start('Robot');
+    const t = (await b.clubBundle(id)).tournaments.find((x) => x.name === 'PQ Demo Night')!;
+    const regs = await b.registrations(t.id);
+    const div = regs[0].divisionId;
+    const inDiv = regs.filter((r) => r.divisionId === div && r.status !== 'accepted' && r.status !== 'withdrawn');
+    const accepted = regs.filter((r) => r.divisionId === div && r.status === 'accepted');
+    // Set the limit to what's already accepted, so the next accept is one too many.
+    const store = (b as unknown as { s: { divisions: { id: string; name: string; rules?: { cap?: number } }[] }; save: () => void });
+    const d = store.s.divisions.find((x) => x.id === div)!;
+    d.rules = { ...d.rules, cap: accepted.length }; store.save();
+    await expect(b.updateRegistration(inDiv[0].id, { status: 'accepted' })).rejects.toThrow(`${d.name} is full (${accepted.length} of ${accepted.length} accepted)`);
+    if (accepted[0]) {
+      await b.updateRegistration(accepted[0].id, { status: 'withdrawn' });
+      await expect(b.updateRegistration(inDiv[0].id, { status: 'accepted' })).resolves.toBeUndefined();
+    }
+  });
+});

@@ -944,6 +944,13 @@ export class DemoBackend implements ClubBackend {
       const problem = entryProblem(d.kind, d.rules, patch.players ?? r.players, r.source === 'online');
       if (problem) throw new ClubError(problem);
     }
+    // Same rule as the server (accept_within_cap): accepting can't take a category past its limit.
+    if (patch.status === 'accepted' && r.status !== 'accepted') {
+      const d = this.s.divisions.find((x) => x.id === (patch.divisionId ?? r.divisionId));
+      const cap = d?.rules?.cap;
+      const taken = this.regs().filter((x) => x.divisionId === d?.id && x.status === 'accepted' && x.id !== r.id).length;
+      if (d && typeof cap === 'number' && taken >= cap) throw new ClubError(`${d.name} is full (${taken} of ${cap} accepted). Raise the limit in the tournament settings, or move someone out first.`);
+    }
     if (patch.status) r.status = patch.status;
     if (patch.payment) r.payment = patch.payment;
     if (patch.note !== undefined) r.note = patch.note?.trim() || undefined;
