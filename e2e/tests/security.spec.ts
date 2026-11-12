@@ -76,7 +76,8 @@ test.describe('Server security (no account)', () => {
     const pub = JSON.stringify((await rpc('public_tournament', { slug: TEST.slug })).body);
     const view = JSON.stringify((await rpc('scorer_open', { p_token: box.links.court2.token, p_pin: box.links.court2.pin })).body);
     for (const [name, json] of [['results', pub], ['scorer view', view]]) {
-      for (const secret of ['dupr', 'user_id', 'email', 'claim', 'invite', 'token', '"pin"']) expect(json, `${name}: ${secret}`).not.toContain(secret);
+      // DUPR is public on results by choice (Vineeth, 13 Nov); the scorer view still never carries it.
+      for (const secret of [...(name === 'results' ? [] : ['dupr']), 'user_id', 'email', 'claim', 'invite', 'token', '"pin"']) expect(json, `${name}: ${secret}`).not.toContain(secret);
     }
     expect(pub).not.toContain('"points"'); // the point-by-point order stays private
     expect(pub).toContain('Asha Test');
