@@ -83,7 +83,7 @@ export function MarketingPerformance({ previewOnly = false }: { previewOnly?: bo
       <span className="small muted">Fictional metrics are shown only in this view.</span>
     </label>}
     {!sample && !previewOnly ? <section className="card section">
-      <h3 style={{ margin: 0 }}>Real Data · Not connected</h3>
+      <h3 style={{ margin: 0 }}>Real data · not connected</h3>
       <p className="small muted">Instagram, Facebook and campaign attribution are not connected. Website, event, results and QR traffic are unavailable here.</p>
       <p>Review available accounts in <a href="https://business.facebook.com/" target="_blank" rel="noreferrer">Meta Business Suite</a>. An approved account connection and measurement setup are required before RallyQ can report live campaign results.</p>
     </section> : <>
@@ -135,14 +135,14 @@ export function CircuitPreview() {
         <h3 style={{ margin: 0 }}>{title}</h3>
         <ol>{names.map((name) => <li key={name}>{name}</li>)}</ol>
       </section>)}
-    </> : <p className="muted">Real Data · Rankings are unavailable pending rulebook approval.</p>}
+    </> : <p className="muted">Real data · rankings stay off until the rulebook is approved.</p>}
   </>;
 }
 
 export function AdminOverviewPreview() {
   // Fictional overview values from the Agent 06 emergency BI handoff.
   return <>
-    <p className="msg" role="status">Demo Preview · Fictional data. No production records or writes.</p>
+    <p className="msg" role="status">Sample data · made-up numbers. Nothing real is read or changed.</p>
     <section className="card section">
       <h3 style={{ margin: 0 }}>Clubs and tournaments</h3>
       <p>12 qualified clubs · 9 invited · 7 confirmed organisers · 6 clubs created</p>
@@ -153,7 +153,7 @@ export function AdminOverviewPreview() {
       <p>28 submitted · 24 accepted · 2 pending · 2 withdrawn</p>
       <p>14 club-confirmed payments · 12 matched to the club ledger</p>
     </section>
-    <h3 style={{ margin: 0 }}>Marketing Performance</h3>
+    <h3 style={{ margin: 0 }}>Growth numbers</h3>
     <MarketingPerformance previewOnly />
   </>;
 }

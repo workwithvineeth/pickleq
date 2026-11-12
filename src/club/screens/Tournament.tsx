@@ -307,7 +307,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   return (
     <OrgShell go={go} active="draw" clubName={d.club.name} clubId={d.club.id} tournament={{ id: t.id, name: t.name, slug: t.publicSlug }}>
       <PageHead
-        cap={<>Pools &amp; knockouts{division ? ` · ${division.name} · ${teams} ${division.kind === 'singles' ? 'players' : 'teams'}` : ''}</>}
+        cap={<>Pools &amp; knockouts{division ? ` · ${division.name}${teams ? ` · ${teams} ${division.kind === 'singles' ? 'players' : 'teams'} in the draw` : ' · no draw yet'}` : ''}</>}
         title={t.name}
         sub={<span className="row" style={{ flexWrap: 'wrap', gap: 8 }}>{status}<span>{[friendlyDate(t.startDate), friendlyTime(t.startTime), t.venue].filter(Boolean).join(' · ')}</span></span>}
         actions={<><ModeButton /><button type="button" className="btn ghost sm" onClick={onBack}>Back</button></>}

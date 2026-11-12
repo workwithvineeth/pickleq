@@ -51,7 +51,7 @@ export function AdminCommandCentre({ go }: { go: Go }) {
             <Bars label="Matches scored per week" data={d.o.weeks.map((w) => ({ label: weekLabel(w.week).split(' ')[0], value: w.matches }))} />
             <p className="small muted" style={{ margin: '6px 0 0' }}>Weeks start on Monday. The robot’s test club isn’t counted.</p>
           </Panel>
-          <Panel title="Club Circuit · admin workspace" action={<MiniBtn onClick={() => go('admin', 'circuit')}>See proposals</MiniBtn>}>
+          <Panel title="Club circuit · admin only" action={<MiniBtn onClick={() => go('admin', 'circuit')}>See proposals</MiniBtn>}>
             <p style={{ margin: 0 }}>Interclub and individual ranking ideas stay admin-only until you approve the points and finals rules.</p>
             <Row title="Results & DUPR" sub={`${d.o.finished} finished tournaments`} onClick={() => go('admin', 'results')} />
             <Row title="Accounts" sub={`${d.o.accounts} in all · ${d.o.accountsWeek} new this week`} />

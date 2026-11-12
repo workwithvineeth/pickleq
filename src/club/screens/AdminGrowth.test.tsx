@@ -28,7 +28,7 @@ it('shows editable artwork and isolates fictional numbers from real mode', async
   fireEvent.click(screen.getByRole('radio', { name: /A4 poster with QR/ }));
   expect(screen.getByLabelText('A4 poster with QR preview').innerHTML).toContain('SCAN TO REGISTER');
   view.rerender(<AdminDashboard section="marketing" {...props} />);
-  expect(screen.getByText('Real Data · Not connected')).toBeTruthy();
+  expect(screen.getByText('Real data · not connected')).toBeTruthy();
   expect(screen.queryByText('Attributed registration sessions')).toBeNull();
   fireEvent.click(screen.getByRole('checkbox', { name: /Sample Data Preview/ }));
   expect(screen.getByText('51')).toBeTruthy();
@@ -59,18 +59,18 @@ it('requires Platform Admin access and explicit opt-in for fictional Circuit ran
   expect(screen.queryByText('Demo Player A')).toBeNull();
 });
 
-it('keeps overview demo data opt-in and uses live loaders only in Real Data mode', async () => {
+it('keeps overview demo data opt-in and uses live loaders only in Real data mode', async () => {
   const props = { go: vi.fn(), onBack: vi.fn() };
   backend.isPlatformAdmin.mockResolvedValue(false);
   const denied = render(<AdminDashboard section="overview" {...props} />);
   await screen.findByText('Only RallyQ admins can see this.');
-  expect(screen.queryByRole('button', { name: 'Demo Preview' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Sample data' })).toBeNull();
   denied.unmount();
 
   backend.isPlatformAdmin.mockResolvedValue(true);
   render(<AdminDashboard section="overview" {...props} />);
-  const demo = await screen.findByRole('button', { name: 'Demo Preview' });
-  expect(screen.getByRole('button', { name: 'Real Data' }).getAttribute('aria-pressed')).toBe('true');
+  const demo = await screen.findByRole('button', { name: 'Sample data' });
+  expect(screen.getByRole('button', { name: 'Real data' }).getAttribute('aria-pressed')).toBe('true');
   expect(screen.queryByText('Cedar Court Rally Day')).toBeNull();
   await waitFor(() => expect(backend.adminOverview).toHaveBeenCalledTimes(1));
   await waitFor(() => expect(backend.approvalQueue).toHaveBeenCalledTimes(1));
@@ -79,7 +79,7 @@ it('keeps overview demo data opt-in and uses live loaders only in Real Data mode
   expect(screen.getByText('Attributed registration sessions')).toBeTruthy();
   await waitFor(() => expect(backend.adminOverview).toHaveBeenCalledTimes(1));
   await waitFor(() => expect(backend.approvalQueue).toHaveBeenCalledTimes(1));
-  fireEvent.click(screen.getByRole('button', { name: 'Real Data' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Real data' }));
   expect(screen.queryByText('Cedar Court Rally Day')).toBeNull();
   expect(screen.queryByText('Attributed registration sessions')).toBeNull();
   await waitFor(() => expect(backend.adminOverview).toHaveBeenCalledTimes(2));

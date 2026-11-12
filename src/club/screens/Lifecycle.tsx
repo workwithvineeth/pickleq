@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Go } from '../../navigation';
 import type { ClubBackend, TournamentBundle } from '../backend';
-import { errorText } from './common';
+import { errorText, useLoad } from './common';
 
 /**
  * Remove or tidy a tournament without losing anything (Phase 3):
@@ -15,7 +15,9 @@ export function LifecycleCard({ b, d, go, onChanged }: { b: ClubBackend; d: Tour
   const [text, setText] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const empty = d.entries.length === 0 && !d.matches.some((m) => m.status !== 'void');
+  // Online entries (registrations) count as people too, as on the server (tournament_has_people).
+  const regs = useLoad(() => b.registrations(t.id).catch(() => []), [b, t.id]);
+  const empty = d.entries.length === 0 && !d.matches.some((m) => m.status !== 'void') && !regs.loading && (regs.data?.length ?? 0) === 0;
   async function run(fn: () => Promise<void>, after?: () => void) {
     setBusy(true); setMsg(null);
     try { await fn(); setMode('none'); setText(''); (after ?? onChanged)(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }

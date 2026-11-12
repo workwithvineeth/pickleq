@@ -62,6 +62,12 @@ test('organiser menu has My Player Studio and Sign out', async ({ page }) => {
   await page.goto('#/demo'); await page.getByLabel('Your name in the demo').fill('Robot Organiser');
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
   await expect(page.getByRole('heading', { name: 'PQ Demo Club', exact: true })).toBeVisible();
+  // My clubs: the next-tournament card keeps PINs hidden until asked.
+  await page.goto('#/club');
+  await expect(page.getByLabel('Referee PIN hidden')).toBeVisible();
+  await page.getByRole('button', { name: 'Show referee pin' }).click();
+  await expect(page.getByLabel(/^Referee PIN \d{4}$/)).toBeVisible();
+  await page.getByRole('button', { name: 'PQ Demo Club', exact: false }).first().click();
   const menu = page.getByRole('complementary', { name: 'Organiser menu' });
   await expect(menu.getByRole('link', { name: 'My Player Studio' })).toBeVisible();
   await menu.getByRole('link', { name: 'Sign out' }).click();

@@ -103,11 +103,14 @@ export function PinPair({ b, tournamentId, access, onChanged, light }: { b: Club
       else onChanged({ ...access, refereePin: await b.setEventPin(tournamentId) });
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }
+  // PINs stay hidden until asked for, as on the Referee links page: this card is often on a screen others can see.
+  const [open, setOpen] = useState<Record<Which, boolean>>({ referee: false, desk: false });
   const row = (which: Which, label: string, pin: string) => (
     <div className="pq-pin-row">
       <span>{label}</span>
-      <b aria-label={`${label} ${pin}`}>{pin}</b>
-      <button type="button" className={light ? 'pq-pin-new pq-pin-new-light' : 'pq-pin-new'} disabled={busy} aria-label={`New ${label.toLowerCase()}`} onClick={() => void fresh(which)}>New PIN</button>
+      {open[which] ? <b aria-label={`${label} ${pin}`}>{pin}</b> : <b aria-label={`${label} hidden`}>••••</b>}
+      <button type="button" className="tlink" style={{ minHeight: 44 }} aria-label={`${open[which] ? 'Hide' : 'Show'} ${label.toLowerCase()}`} onClick={() => setOpen((x) => ({ ...x, [which]: !x[which] }))}>{open[which] ? 'Hide' : 'Show'}</button>
+      <button type="button" className={light ? 'pq-pin-new pq-pin-new-light' : 'pq-pin-new'} disabled={busy} aria-label={`New ${label.toLowerCase()}`} onClick={() => { setOpen((x) => ({ ...x, [which]: true })); void fresh(which); }}>New PIN</button>
     </div>
   );
   return (

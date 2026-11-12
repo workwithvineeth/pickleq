@@ -25,9 +25,9 @@ const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
   { id: 'results', label: 'Results & DUPR', title: 'Tournament results & DUPR' },
   { id: 'testimonials', label: 'Testimonials', title: 'Testimonials' },
   { id: 'admins', label: 'Admins', title: 'RallyQ admins' },
-  { id: 'branding', label: 'Branding & Club Kits', title: 'Branding & Club Kits' },
-  { id: 'marketing', label: 'Marketing Performance', title: 'Marketing Performance' },
-  { id: 'circuit', label: 'Club Circuit', title: 'Club Circuit' },
+  { id: 'branding', label: 'Club kits', title: 'Club kits' },
+  { id: 'marketing', label: 'Growth numbers', title: 'Growth numbers' },
+  { id: 'circuit', label: 'Club circuit', title: 'Club circuit' },
   { id: 'desk', label: 'Desk access', title: 'Desk access' },
   { id: 'audit', label: 'Audit log', title: 'Audit log' },
 ];
@@ -108,8 +108,8 @@ function OverviewMode({ go }: { go: Go }) {
   const [sample, setSample] = useState(false);
   return <>
     <div className="seg seg-wrap" role="group" aria-label="Overview data mode">
-      <button type="button" aria-pressed={!sample} onClick={() => setSample(false)}>Real Data</button>
-      <button type="button" aria-pressed={sample} onClick={() => setSample(true)}>Demo Preview</button>
+      <button type="button" aria-pressed={!sample} onClick={() => setSample(false)}>Real data</button>
+      <button type="button" aria-pressed={sample} onClick={() => setSample(true)}>Sample data</button>
     </div>
     {sample ? <AdminOverviewPreview /> : <AdminCommandCentre go={go} />}
   </>;

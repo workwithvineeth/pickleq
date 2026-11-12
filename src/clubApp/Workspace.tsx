@@ -83,10 +83,10 @@ function groups(kind: WorkspaceKind, c: { clubId?: string; tournamentId?: string
         { key: 'results', label: 'Results & DUPR', glyph: '◷', to: ['admin', 'results'] },
       ] },
       { label: 'Admin only', items: [
-        { key: 'circuit', label: 'Club Circuit', glyph: '◇', to: ['admin', 'circuit'] },
+        { key: 'circuit', label: 'Club circuit', glyph: '◇', to: ['admin', 'circuit'] },
         { key: 'marketing', label: 'Growth numbers', glyph: '▥', to: ['admin', 'marketing'] },
         { key: 'testimonials', label: 'Testimonials', glyph: '❞', to: ['admin', 'testimonials'] },
-        { key: 'branding', label: 'Brand & club kits', glyph: '✦', to: ['admin', 'branding'] },
+        { key: 'branding', label: 'Club kits', glyph: '✦', to: ['admin', 'branding'] },
         { key: 'admins', label: 'Permissions', glyph: '⚙', to: ['admin', 'admins'] },
         { key: 'audit', label: 'Audit log', glyph: '☰', to: ['admin', 'audit'] },
       ] },
