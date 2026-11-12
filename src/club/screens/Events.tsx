@@ -381,7 +381,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
       <>
         <PageHead cap={<span className="acc">Enter</span>} title="Enter an event." />
         <Wait error={state.error} loading={state.loading} />
-        {!state.loading && !state.error && <div className="card empty">This event isn’t taking entries.</div>}
+        {!state.loading && !state.error && <div className="card empty">This event isn’t taking entries yet. Check back soon.</div>}
         <div>{back('Back', onBack)}</div>
       </>,
     );
@@ -390,7 +390,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
     return shell(
       <>
         <PageHead cap={<span className="acc">Enter · {e.name}</span>} title={`Enter ${d.name}`} />
-        <div className="card empty">Entries for this tournament are closed.</div>
+        <div className="card empty">Entries are closed. Questions? Message the organiser.</div>
         <div>{back('Back', onBack)}</div>
       </>,
     );
@@ -455,7 +455,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
         {step === 2 && d && !user && (
           <>
             <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <b>Sign in or create your RallyQ account to enter. It takes a minute, and you come straight back here.</b>
+              <b>Sign in to enter. New here? Create an account with your email; we send a 6-digit code to confirm it. It takes a minute, and you come straight back here.</b>
               <span className="mut" style={{ fontSize: 14 }}>Your account lets you see your entry’s status, your matches in Player Studio, and withdraw if you need to.</span>
             </div>
             <div className="between">
@@ -473,7 +473,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
               <PersonFields v12 label="You" p={me} onChange={setMe} />
               {d.kind === 'doubles' && <PersonFields v12 label="Partner" p={partner} onChange={setPartner} />}
               {d.rules.maxDupr !== undefined && <div className="note">{d.kind === 'doubles' && d.rules.duprCap === 'average' ? `This event is for teams with an average DUPR of ${capText(d.rules.maxDupr)} and under, so both players need a rating.` : `This event is for DUPR ${capText(d.rules.maxDupr)} and under, so every player needs a rating.`}</div>}
-              <span className="mut" style={{ fontSize: 13 }}>Your names, phone numbers, emails, ages and DUPR details go to the organiser for this tournament only. Emails are used only to send you your results. Everyone must be 18 or over.</span>
+              <span className="mut" style={{ fontSize: 13 }}>Only this tournament’s organiser sees your phone numbers, emails and ages. Your names, scores and DUPR ratings show on live scores. Everyone must be 18 or over.</span>
             </div>
             {msg && <div role="alert" className="note"><b>Check this first.</b> {msg}</div>}
             <div className="between">{back('Back', onBack)}<button type="button" className="btn" onClick={toPay}>Continue</button></div>

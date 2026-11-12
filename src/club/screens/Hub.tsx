@@ -504,7 +504,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
               {codeField(confirm)}
               {primary('Confirm and sign in', 'Checking…', confirm)}
               <div className="between" style={{ flexWrap: 'wrap' }}>
-                {textLink('Send a new code', () => void run(async () => { await b?.resendConfirm?.(email); setMsg({ ok: true, text: 'New code sent. Use the latest email.' }); }))}
+                {textLink('Send a new code', () => void run(async () => { await b?.resendConfirm?.(email); setMsg({ ok: true, text: 'New code sent. Only the newest code works.' }); }))}
                 {textLink('Use a different email', () => to('signup'))}
               </div>
               {mailInfo}
@@ -529,7 +529,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
               {newPasswordFields(reset)}
               {primary('Save password and sign in', 'Saving…', reset)}
               <div className="between" style={{ flexWrap: 'wrap' }}>
-                {textLink('Send a new code', () => void run(async () => { await b?.sendPasswordReset?.(email); setMsg({ ok: true, text: 'New code sent. Use the latest email.' }); }))}
+                {textLink('Send a new code', () => void run(async () => { await b?.sendPasswordReset?.(email); setMsg({ ok: true, text: 'New code sent. Only the newest code works.' }); }))}
                 {textLink('← Back to sign in', back)}
               </div>
               {mailInfo}
