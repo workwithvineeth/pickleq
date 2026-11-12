@@ -35,6 +35,8 @@ function Frame({children,watermark=true}:{children:ReactNode;watermark?:boolean}
  return <div className="rallyq-prototype rq-v12">{style}<div className={day?'rq day':'rq'} style={{minHeight:'100vh'}}>{watermark&&<Watermark/>}{children}</div></div>;
 }
 export type PublicTab='live'|'events'|'studio'|'clubs'|null;
+/** Sign out from any v1.2 page, then open the sign-in page. */
+export async function signOutTo(go:Go){await eventsBackend().signOut().catch(()=>undefined);go('club-signin',undefined,{replace:true});}
 /** Public pages: club leads in the header, RallyQ signs off small and last. */
 export function PublicShell({go,active=null,host=ALL_CLUBS,right,children,footNote}:{go:Go;active?:PublicTab;host?:Host;right?:ReactNode;children:ReactNode;footNote?:string}){
  const[signedIn,setSignedIn]=useState(false),[menu,setMenu]=useState(false);
@@ -43,7 +45,7 @@ export function PublicShell({go,active=null,host=ALL_CLUBS,right,children,footNo
  const nav=(cls:string)=>links.map(([k,label,f])=><a key={k} className={cls&&k===active?'on':undefined} href="#/" aria-current={k===active?'page':undefined} onClick={e=>{e.preventDefault();setMenu(false);f()}}>{label}</a>);
  return <Frame><header className="hdr"><div className="wrap"><HostBlock host={host} onClick={()=>go('events')}/><nav className="nav" aria-label="Main">{nav('x')}</nav>
   <div className="right">{right??<a className="tlink" href="#/" onClick={e=>{e.preventDefault();go(signedIn?'club':'club-signin')}}>{signedIn?'My club':'Club sign in'}</a>}<ModeButton/><button type="button" className="menu" aria-label="Menu" aria-expanded={menu} onClick={()=>setMenu(!menu)}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><Signoff/></div></div></header>
-  {menu&&<nav className="mpanel" aria-label="Menu">{nav('')}{!right&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);go(signedIn?'club':'club-signin')}}>{signedIn?'My club':'Club sign in'}</a>}</nav>}
+  {menu&&<nav className="mpanel" aria-label="Menu">{nav('')}{!right&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);go(signedIn?'club':'club-signin')}}>{signedIn?'My club':'Club sign in'}</a>}{signedIn&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);void signOutTo(go)}}>Sign out</a>}</nav>}
   <main className="wrap" style={{paddingBlock:'28px 40px',display:'flex',flexDirection:'column',gap:28}}>{children}</main>
   <div className="wrap pfoot"><span>{footNote??''}</span><Signoff/></div></Frame>;
 }
@@ -56,7 +58,7 @@ export function OrgShell({go,active,clubName='Your club',clubId,tournament,child
  const reg=useCallback((k:'mode'|'head')=>{setN(c=>({...c,[k]:c[k]+1}));return()=>setN(c=>({...c,[k]:c[k]-1}));},[]);
  const slot=useMemo(()=>({reg,hasMode:n.mode>0}),[reg,n.mode]);
  return <Frame><div className="shell"><aside className="side" aria-label="Organiser menu"><HostBlock host={{marks:[clubMark(clubName)],name:clubName}} onClick={()=>go('club')}/>
-  <span className="cap grp">{clubShort(clubName)}</span>{item('home','Home',()=>go('club'))}{item('tournaments','Tournaments',()=>go('club-tournaments'))}{clubId&&item('club','Club & team',()=>go('club-view',clubId))}{t?.slug&&item('social','Social studio',()=>go('club-social',t.slug!))}{item('studio','My Player Studio',()=>go('club-player-studio'))}
+  <span className="cap grp">{clubShort(clubName)}</span>{item('home','Home',()=>go('club'))}{item('tournaments','Tournaments',()=>go('club-tournaments'))}{clubId&&item('club','Club & team',()=>go('club-view',clubId))}{t?.slug&&item('social','Social studio',()=>go('club-social',t.slug!))}{item('studio','My Player Studio',()=>go('club-player-studio'))}<a href="#/" onClick={e=>{e.preventDefault();void signOutTo(go)}}>Sign out</a>
   {t&&<><span className="cap grp">{t.name}</span>{item('entries','Entries & UPI',()=>go('club-inbox',t.id))}{item('draw','Pools & knockouts',()=>go('club-tournament',t.id))}{item('desk','Desk',()=>go('club-desk',t.id))}{item('referees','Referees & results',()=>go('club-scorers',t.id))}{t.slug&&item('tv','TV board',()=>go('club-tv',t.slug!))}</>}
   <Signoff text="Run on" onClick={()=>go('club')}/></aside>
   <main className="main" style={{display:'flex',flexDirection:'column',gap:22}}><OrgSlot.Provider value={slot}>{n.mode===0&&n.head===0&&<div className="row" style={{justifyContent:'flex-end'}}><ModeButton auto/></div>}{children}</OrgSlot.Provider></main></div></Frame>;

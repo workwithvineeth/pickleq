@@ -57,3 +57,14 @@ test('live scores say when they are only a sample; TV board has no desk link', a
   await expect(page.getByText('The board opens when the draw is made')).toBeVisible();
   await expect(page.getByRole('link', { name: '← Desk' })).toHaveCount(0);
 });
+
+test('organiser menu has My Player Studio and Sign out', async ({ page }) => {
+  await page.goto('#/demo'); await page.getByLabel('Your name in the demo').fill('Robot Organiser');
+  await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+  await expect(page.getByRole('heading', { name: 'PQ Demo Club', exact: true })).toBeVisible();
+  const menu = page.getByRole('complementary', { name: 'Organiser menu' });
+  await expect(menu.getByRole('link', { name: 'My Player Studio' })).toBeVisible();
+  await menu.getByRole('link', { name: 'Sign out' }).click();
+  await expect(page).toHaveURL(/#\/club-signin/);
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
+});
