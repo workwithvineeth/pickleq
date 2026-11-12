@@ -259,7 +259,14 @@ export const STAGE_LABEL: Record<Stage, string> = { pool: 'Pool', r32: 'Round of
 export const ROUND_LABEL: Record<KnockoutStage, string> = { r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-finals', sf: 'Semi-finals', final: 'Final' };
 
 /** One game. points is the order points were won: "A" for side A, "B" for side B. Empty if only the final score was entered. */
-export interface ClubGame { points: string; a: number; b: number }
+/**
+ * One game. `points` = the scored points in order (A/B). With side-out or rally scoring the referee's pad also keeps
+ * `rallies` (every rally in order, A/B = who won it; side-out rallies score nothing), `mode` and, for side-out, `serve`
+ * (who served first). Final scores typed in have none of these.
+ */
+export interface ClubGame { points: string; a: number; b: number; rallies?: string; mode?: ScoringMode; serve?: 'A' | 'B' }
+/** How the referee scores: side-out (traditional: only the serving side scores) or rally scoring (every rally scores). */
+export type ScoringMode = 'sideout' | 'rally';
 
 /** void: cancelled by the organiser (e.g. a team withdrew); not played and not counted. */
 export type ClubMatchStatus = 'scheduled' | 'live' | 'done' | 'void';

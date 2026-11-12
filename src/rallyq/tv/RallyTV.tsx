@@ -1,3 +1,4 @@
+import {teamWithDupr} from '../../club/duprText';
 import {liveWinBar,winBarHtml} from '../../club/winBar';
 import {useEffect,useState} from 'react';
 import type {Go} from '../../navigation';
@@ -20,7 +21,7 @@ export function RallyTV({slug,go}:{slug:string;go:Go}){
  const scores=usePublicScores(slug);const logoUrl=useClubLogo(slug);const[now,setNow]=useState(new Date());
  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),15000);return()=>clearInterval(t)},[]);
  const d=scores.data;
- const courts=d?courtMatches(d).map(({court,match})=>{const v=matchView(d,match);return{name:'Court '+court,stage:(v.division?.name??'')+(v.game>1?' · G'+v.game:''),a:v.a,b:v.b,sa:match.status==='scheduled'?'–':v.pointsA,sb:match.status==='scheduled'?'–':v.pointsB,win:liveWinBar(d,match),tap:()=>undefined};}):[];
+ const courts=d?courtMatches(d).map(({court,match})=>{const v=matchView(d,match);return{name:'Court '+court,stage:(v.division?.name??'')+(v.game>1?' · G'+v.game:''),a:teamWithDupr(d,match.entryA)??v.a,b:teamWithDupr(d,match.entryB)??v.b,sa:match.status==='scheduled'?'–':v.pointsA,sb:match.status==='scheduled'?'–':v.pointsB,win:liveWinBar(d,match),tap:()=>undefined};}):[];
  const next=d?d.matches.filter(m=>m.status==='scheduled').sort((a,b)=>(a.slot??0)-(b.slot??0)).slice(0,3).map(m=>{const v=matchView(d,m);return v.a+' vs '+v.b;}).join(' · '):'';
  return <PrototypeScreen name="TV" go={go} source={source} values={{logoUrl:logoUrl??'',noLogo:!logoUrl,courts,clubName:d?.club??'',clubMark:d?mark(d.club):'',eventName:d?.name??(scores.loading?'Loading…':'No event'),clock:now.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),upNext:next||'Next matches appear here when the desk calls them.'}}/>;
 }

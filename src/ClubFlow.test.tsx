@@ -95,6 +95,8 @@ describe('Club mode', () => {
 
     for (let s = 0; s < 2; s++) {
       await user.click(screen.getAllByRole('button', { name: /^Score / })[0]);
+      // These events are side-out by default; this referee picks rally scoring (one tap per point) before the first rally.
+      await user.click(await screen.findByRole('button', { name: 'Rally scoring' }));
       const [a, b] = await screen.findAllByRole('button', { name: /^Point to / });
       // Game 1: B goes 8–3 up, then A wins 8 straight (a comeback); game 2: A wins 11–0.
       for (const side of 'ABBABBBABBB') await user.click(side === 'A' ? a : b);
@@ -200,7 +202,7 @@ describe('Club mode', () => {
     expect(scoreCells.reduce((n, c) => n + within(c).getAllByRole('button', { name: /^Score / }).length, 0)).toBe(6);
   });
 
-  it('public results open without signing in and show names and scores only', async () => {
+  it('public results open without signing in and show names, scores and each player\'s DUPR (no emails)', async () => {
     const user = userEvent.setup();
     await openDemo(user);
     window.location.hash = '#/results/pq-demo-open';
@@ -208,7 +210,9 @@ describe('Club mode', () => {
     expect(screen.getByRole('link', { name: /RallyQ: live scores/ })).toHaveAttribute('href', 'https://paddleq.in/');
     expect(screen.getByText(/run your club’s tournament at paddleq.in/)).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Pool A' })).toBeInTheDocument();
-    expect(screen.queryByText(/DUPR/)).not.toBeInTheDocument();
+    // Since 12 Nov (Vineeth): DUPR shows for every player wherever players are listed, public pages too.
+    expect(screen.getAllByText(/DUPR/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/@/)).not.toBeInTheDocument();
     // Still live: no posters yet.
     expect(screen.queryByRole('region', { name: 'Posters for the winners' })).not.toBeInTheDocument();
   });
@@ -251,6 +255,7 @@ describe('Club mode', () => {
     await screen.findByText('Up next');
     expect(screen.queryByText(/DUPR|@/)).not.toBeInTheDocument();
     await user.click(screen.getAllByRole('button', { name: /^Score: / })[0]);
+    await user.click(await screen.findByRole('button', { name: 'Rally scoring' }));
     for (let g = 0; g < 2; g++) {
       for (let i = 0; i < 11; i++) await user.click(screen.getAllByRole('button', { name: /^Point to / })[0]);
       if (g === 0) await user.click(screen.getByRole('button', { name: 'Start game 2' }));

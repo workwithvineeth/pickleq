@@ -1,3 +1,4 @@
+import {duprLineOf,teamWithDupr} from '../../club/duprText';
 import {liveWinBar,winBarHtml} from '../../club/winBar';
 import {useState} from 'react';
 import type {Go} from '../../navigation';
@@ -36,19 +37,19 @@ export function poolTables(d:PublicTournament){
  const out:{name:string;court:string;rows:{t:string;w:number;l:number;d:string;style:string}[]}[]=[];
  for(const div of d.divisions){const pools=[...new Set(d.entries.filter(e=>e.divisionId===div.id).map(e=>e.pool??1))].sort((a,b)=>a-b);
   for(const pool of pools){const ents=d.entries.filter(e=>e.divisionId===div.id&&(e.pool??1)===pool);
-   const t=new Map(ents.map(e=>[e.id,{t:e.names.join(' / '),w:0,l:0,pd:0}]));
+   const t=new Map(ents.map(e=>[e.id,{t:teamWithDupr(d,e.id)??e.names.join(' / '),w:0,l:0,pd:0}]));
    for(const m of d.matches.filter(m=>m.divisionId===div.id&&m.stage==='pool'&&(m.pool??1)===pool&&m.status==='done')){const pa=m.games.reduce((s,g)=>s+g.a,0),pb=m.games.reduce((s,g)=>s+g.b,0);const A=t.get(m.entryA??''),B=t.get(m.entryB??'');if(A){A.pd+=pa-pb;if(m.winner==='A')A.w++;else if(m.winner==='B')A.l++;}if(B){B.pd+=pb-pa;if(m.winner==='B')B.w++;else if(m.winner==='A')B.l++;}}
    const rows=[...t.values()].sort((a,b)=>b.w-a.w||b.pd-a.pd).map((r,i)=>({t:r.t,w:r.w,l:r.l,d:(r.pd>0?'+':r.pd<0?'−':'')+Math.abs(r.pd),style:i<(div.advance??2)?'font-weight:700;color:#D9F24A':'color:#9FB4A6'}));
    out.push({name:(pools.length>1?'Pool '+String.fromCharCode(64+pool):div.name),court:div.name,rows});}}
  return out;
 }
-function koRows(d:PublicTournament,stage:'qf'|'sf'){return d.matches.filter(m=>m.stage===stage).map(m=>{const v=matchView(d,m);return{a:v.a,b:v.b,sa:v.pointsA,sb:v.pointsB,court:m.court?'Court '+m.court:'',win:liveWinBar(d,m),chip:m.status==='live'?'chip live':'chip',st:m.status==='live'?'Live':m.status==='done'?'Final':'Next',as:m.winner==='A'?'font-weight:700':'color:#9FB4A6',bs:m.winner==='B'?'font-weight:700':'color:#9FB4A6'};});}
+function koRows(d:PublicTournament,stage:'qf'|'sf'){return d.matches.filter(m=>m.stage===stage).map(m=>{const v=matchView(d,m);return{a:teamWithDupr(d,m.entryA)??v.a,b:teamWithDupr(d,m.entryB)??v.b,sa:v.pointsA,sb:v.pointsB,court:m.court?'Court '+m.court:'',win:liveWinBar(d,m),chip:m.status==='live'?'chip live':'chip',st:m.status==='live'?'Live':m.status==='done'?'Final':'Next',as:m.winner==='A'?'font-weight:700':'color:#9FB4A6',bs:m.winner==='B'?'font-weight:700':'color:#9FB4A6'};});}
 
 export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:string|undefined,tab:Tab,setTab:(t:Tab)=>void,enter:()=>void){
  const taken=e.divisions.reduce((s,x)=>s+x.taken,0);
  const caps=e.divisions.map(x=>(x.rules as {maxEntries?:number}).maxEntries).filter((n):n is number=>typeof n==='number');const cap=caps.length===e.divisions.length&&caps.length?caps.reduce((a,b)=>a+b,0):0;
  const live=e.status==='live';
- const entries=d?d.entries.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.names.join(' / '),cat:d.divisions.find(v=>v.id===x.divisionId)?.name??'',dupr:x.seed?'#'+x.seed:'—',st:'Confirmed',cls:'chip ball'})):e.divisions.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.taken+' teams entered',cat:x.name,dupr:'—',st:e.registrationOpen?'Open':'Closed',cls:e.registrationOpen?'chip ball':'chip'}));
+ const entries=d?d.entries.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.names.join(' / '),cat:d.divisions.find(v=>v.id===x.divisionId)?.name??'',dupr:duprLineOf(d,x.id).replace(/^DUPR /,''),st:'Confirmed',cls:'chip ball'})):e.divisions.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.taken+' teams entered',cat:x.name,dupr:'—',st:e.registrationOpen?'Open':'Closed',cls:e.registrationOpen?'chip ball':'chip'}));
  return {
   eventName:e.name,clubName:e.club,clubMark:mark(e.club),logoUrl:logoUrl??'',noLogo:!logoUrl,
   hostLine:e.venue?e.club+' at '+e.venue:e.club,

@@ -53,6 +53,7 @@ export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBa
         format={m.format}
         nameA={names(m.sideA, players)}
         nameB={names(m.sideB, players)}
+        doubles={m.sideA.length > 1}
         thresholds={d.club.settings.thresholds}
         playedOn={m.playedOn}
         send={send}

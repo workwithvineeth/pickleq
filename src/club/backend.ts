@@ -47,7 +47,8 @@ export interface PublicTournament {
   status: ClubTournament['status'];
   club: string;
   divisions: Pick<Division, 'id' | 'name' | 'kind' | 'pools' | 'advance' | 'format' | 'koFormat' | 'shape' | 'extra' | 'stageFormats'>[];
-  entries: { id: string; divisionId: string; seed?: number; pool?: number; names: string[] }[];
+  /** `duprs`: each player's DUPR for the event's kind, in the same order as `names` (undefined = unrated). */
+  entries: { id: string; divisionId: string; seed?: number; pool?: number; names: string[]; duprs?: (number | undefined)[] }[];
   matches: Pick<ClubMatch, 'id' | 'divisionId' | 'stage' | 'pool' | 'round' | 'bracketPos' | 'slot' | 'court' | 'entryA' | 'entryB' | 'games' | 'status' | 'winner'>[];
 }
 

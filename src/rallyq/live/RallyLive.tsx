@@ -1,3 +1,4 @@
+import {teamWithDupr} from '../../club/duprText';
 import {useState} from 'react';
 import type {Go} from '../../navigation';
 import {serverBackend} from '../../club';
@@ -50,7 +51,7 @@ export function RallyLive({go}:{go:Go}){
  if(events.length){
   venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
    const courts:Court[]=d?courtMatches(d).map(({court,match})=>{const view=matchView(d,match);const pts=String((match as {points?:string}).points??'');const ok=pointHistory(pts,view.pointsA,view.pointsB).length?pts:'';
-    return {court:'Court '+court,stage:view.division?.name??d.name,a:view.a,b:view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok,win:liveWinBar(d,match)};}):[];
+    return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok,win:liveWinBar(d,match)};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
  const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today:new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};

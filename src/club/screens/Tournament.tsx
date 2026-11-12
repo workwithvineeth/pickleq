@@ -482,7 +482,7 @@ function Preflight({ b, d, go }: { b: ClubBackend; d: TournamentBundle; go: Go }
 type BodyData = Pick<TournamentBundle, 'divisions' | 'entries' | 'matches'> & { tournament: { startTime: string; slotMinutes: number }; players?: ClubPlayer[] };
 
 /** Shared by the club's tournament view, the desk and the public results page.
- * DUPR per player shows wherever the players are loaded (organiser pages); the public feed carries names and scores only. */
+ * DUPR per player shows everywhere: organiser pages load the players, the public feed carries each player's DUPR (`duprs`). */
 export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyData; divisionId: string; view: View; onScore?: (matchId: string) => void; label: (e?: Entry) => string }) {
   const division = d.divisions.find((x) => x.id === divisionId);
   const entries = d.entries.filter((e) => e.divisionId === divisionId);
@@ -700,6 +700,19 @@ const MY_NAME = 'pq-my-name';
 
 /** A player's own matches across every event of the tournament, matched on the name they type (no account).
  * The next one is shown first with court and time; played ones show the score. */
+/** The public feed's players for DUPR lines: keyed by name (the public entries list names, not ids), with the DUPR the organisers entered. */
+export function publicPlayers(d: PublicTournament): ClubPlayer[] {
+  const kind = new Map(d.divisions.map((x) => [x.id, x.kind]));
+  const byName = new Map<string, ClubPlayer>();
+  for (const e of d.entries) e.names.forEach((name, i) => {
+    const p = byName.get(name) ?? { id: name, clubId: '', name, share: {} as ClubPlayer['share'] } as ClubPlayer;
+    const r = e.duprs?.[i];
+    if (r !== undefined) { if (kind.get(e.divisionId) === 'singles') p.duprSingles = r; else p.duprDoubles = r; }
+    byName.set(name, p);
+  });
+  return [...byName.values()];
+}
+
 export function myMatchesFor(d: PublicTournament, query: string) {
   const q = query.trim().toLowerCase();
   if (q.length < 3) return [];
@@ -819,6 +832,7 @@ export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: (
       return { ...m, clubId: '', sideA: [], sideB: [], format: formatFor(dv, m.stage), updatedAt: '' };
     }),
     tournament: { startTime: d.startTime, slotMinutes: d.slotMinutes },
+    players: publicPlayers(d),
   } : null;
   return (
     <PublicShell go={go} host={d ? { marks: [clubMark(d.club)], name: d.club } : undefined} footNote={d?.status === 'live' ? 'Scores update every 20 seconds.' : undefined}>

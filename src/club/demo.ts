@@ -38,9 +38,11 @@ const empty = (): DemoState => ({ v: 1, user: null, clubs: [], members: [], play
 const randomToken = () => (newId() + newId()).replace(/-/g, '').slice(0, 40);
 const randomPin = () => randomPinOf(4);
 const SCORE_SHAPE = /^[AB]*$/;
-/** Same shape check as the server: at most 5 games, each 0–99, point order as A/B letters. */
+/** Same shape check as the server (score_problem): at most 5 games, each 0–99, point order as A/B letters; optional rallies (A/B, at most 600), mode and first server. */
+const badRallies = (g: ClubMatch['games'][number]) => (g.rallies !== undefined && (typeof g.rallies !== 'string' || g.rallies.length > 600 || !SCORE_SHAPE.test(g.rallies)))
+  || (g.mode !== undefined && g.mode !== 'sideout' && g.mode !== 'rally') || (g.serve !== undefined && g.serve !== 'A' && g.serve !== 'B');
 const badGames = (games: ClubMatch['games']) => !Array.isArray(games) || games.length > 5
-  || games.some((g) => !Number.isInteger(g.a) || !Number.isInteger(g.b) || g.a < 0 || g.b < 0 || g.a > 99 || g.b > 99 || (g.points ?? '').length > 250 || !SCORE_SHAPE.test(g.points ?? ''));
+  || games.some((g) => !Number.isInteger(g.a) || !Number.isInteger(g.b) || g.a < 0 || g.b < 0 || g.a > 99 || g.b > 99 || (g.points ?? '').length > 250 || !SCORE_SHAPE.test(g.points ?? '') || badRallies(g));
 
 /** Demos made before 29 Oct 2026 used a name a real business has. Rename it in place so nothing else changes. */
 function renameLegacyDemo(s: DemoState): DemoState {
@@ -751,7 +753,7 @@ export class DemoBackend implements ClubBackend {
     if (m.status === 'done' && patch.status === 'live') throw new ClubError('This match is already finished.');
     if (patch.status !== 'live' && patch.status !== 'done') throw new ClubError('Unknown match status');
     if (patch.status === 'done' && patch.winner !== 'A' && patch.winner !== 'B') throw new ClubError('A finished match needs a winner');
-    if (patch.games.length > 5 || patch.games.some((g) => !Number.isInteger(g.a) || !Number.isInteger(g.b) || g.a < 0 || g.b < 0 || g.a > 99 || g.b > 99 || !SCORE_SHAPE.test(g.points ?? ''))) {
+    if (badGames(patch.games)) {
       throw new ClubError('Scores aren’t in the right shape');
     }
     Object.assign(m, { games: patch.games, status: patch.status, winner: patch.status === 'done' ? patch.winner : undefined, playedOn: patch.playedOn ?? m.playedOn, updatedAt: new Date().toISOString() });
@@ -780,14 +782,16 @@ export class DemoBackend implements ClubBackend {
     const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.isPublic && isApproved(x));
     if (!t) return null;
     const names = new Map(this.s.players.map((p) => [p.id, p.name]));
+    const byId = new Map(this.s.players.map((p) => [p.id, p]));
     const divs = this.s.divisions.filter((d) => d.tournamentId === t.id).sort((a, b) => a.sort - b.sort);
+    const kindOf = new Map(divs.map((d) => [d.id, d.kind]));
     return {
       name: t.name, startDate: t.startDate, startTime: t.startTime, slotMinutes: t.slotMinutes, status: t.status, club: this.club(t.clubId).name,
       divisions: divs.map(({ id, name, kind, pools, advance, format, koFormat, shape, extra, stageFormats }) => ({ id, name, kind, pools, advance, format, koFormat, shape, extra, stageFormats })),
-      entries: this.s.entries.filter((e) => divs.some((d) => d.id === e.divisionId)).map((e) => ({ id: e.id, divisionId: e.divisionId, seed: e.seed, pool: e.pool, names: e.playerIds.map((p) => names.get(p) ?? '') })),
+      entries: this.s.entries.filter((e) => divs.some((d) => d.id === e.divisionId)).map((e) => ({ id: e.id, divisionId: e.divisionId, seed: e.seed, pool: e.pool, names: e.playerIds.map((p) => names.get(p) ?? ''), duprs: e.playerIds.map((p) => (kindOf.get(e.divisionId) === 'singles' ? byId.get(p)?.duprSingles : byId.get(p)?.duprDoubles)) })),
       matches: this.s.matches.filter((m) => m.tournamentId === t.id).map((m) => ({
         id: m.id, divisionId: m.divisionId, stage: m.stage, pool: m.pool, round: m.round, bracketPos: m.bracketPos, slot: m.slot, court: m.court,
-        entryA: m.entryA, entryB: m.entryB, games: m.games.map((g) => ({ points: '', a: g.a, b: g.b })), status: m.status, winner: m.winner,
+        entryA: m.entryA, entryB: m.entryB, games: m.games.map((g) => ({ points: '', a: g.a, b: g.b, ...(g.rallies ? { rallies: g.rallies } : {}), ...(g.mode ? { mode: g.mode } : {}), ...(g.serve ? { serve: g.serve } : {}) })), status: m.status, winner: m.winner,
       })),
     };
   }

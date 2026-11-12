@@ -3,7 +3,8 @@ import type { Format } from '../../domain/types';
 import type { ScorePatch } from '../backend';
 import { matchResult } from '../domain/engine';
 import { analyseGame, checkFinalScore, gameOver, isGoldenPoint, leadThreshold, tally } from '../domain/momentum';
-import type { ClubGame, Thresholds } from '../types';
+import type { ClubGame, ScoringMode, Thresholds } from '../types';
+import { replaySideOut, type Side } from '../domain/sideout';
 
 const UNSENT = 'pq-club-unsent-scores';
 
@@ -21,6 +22,15 @@ function rememberUnsent(key: string, patch: ScorePatch | null) {
 }
 
 function withTally(points: string): ClubGame { const t = tally(points); return { points, a: t.a, b: t.b }; }
+/** A rally-scored game: every rally is a point, so the rally list is the point list. */
+function rallyGame(points: string): ClubGame { return { ...withTally(points), rallies: points, mode: 'rally' }; }
+/** A side-out game replayed from its rallies and who served first. */
+function sideOutGame(rallies: string, serve: Side | undefined, doubles: boolean): ClubGame {
+  if (!serve) return { points: '', a: 0, b: 0, rallies: '', mode: 'sideout' };
+  const s = replaySideOut(rallies, serve, doubles);
+  return { points: s.points, a: s.a, b: s.b, rallies, mode: 'sideout', serve };
+}
+type PadMode = ScoringMode | 'manual';
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function formatRule(f: Format): string {
@@ -41,6 +51,8 @@ export interface ScorePadProps {
   /** Called after the final result has been sent. */
   onFinished: () => void | Promise<void>;
   canScore: boolean;
+  /** Doubles (two servers a side) or singles, for side-out scoring. Default doubles. */
+  doubles?: boolean;
 }
 
 /**
@@ -55,7 +67,18 @@ export function ScorePad(p: ScorePadProps) {
   });
   const [sync, setSync] = useState<'saved' | 'saving' | 'unsent'>(() => (readUnsent()[matchKey] ? 'unsent' : 'saved'));
   const [msg, setMsg] = useState<string | null>(null);
+  const doubles = p.doubles ?? true;
+  // How this match is scored: from the games already saved, else the event's scoring set by the organiser (side-out unless
+  // they chose rally scoring). The referee can change it before the first rally.
+  const [mode, setModeState] = useState<ScoringMode>(() => {
+    const g = (readUnsent()[matchKey]?.games ?? p.initialGames).find((x) => x.mode);
+    return g?.mode ?? (fmt.scoring === 'rally' ? 'rally' : 'sideout');
+  });
   const [manual, setManual] = useState(false);
+  const setMode = (m: PadMode) => {
+    if (m === 'manual') { setManual(true); return; }
+    setManual(false); setModeState(m);
+  };
   const [busy, setBusy] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   const latest = useRef<ScorePatch | null>(readUnsent()[matchKey] ?? null);
@@ -104,15 +127,31 @@ export function ScorePad(p: ScorePadProps) {
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => { void push(patch); }, 600);
   }
-  const point = (side: 'A' | 'B') => { if (!curOver && !matchOver) update([...games.slice(0, -1), withTally(cur.points + side)]); };
+  const started = games.some((g) => g.points.length || g.a || g.b || g.rallies);
+  const sideOut = mode === 'sideout';
+  const so = sideOut && cur.serve ? replaySideOut(cur.rallies ?? '', cur.serve, doubles) : null;
+  const needServe = sideOut && !cur.serve && !curOver && !matchOver;
+  const rallyCount = (g: ClubGame) => (g.rallies ?? g.points).length;
+  const point = (side: Side) => {
+    if (curOver || matchOver) return;
+    if (sideOut) { if (cur.serve) update([...games.slice(0, -1), sideOutGame((cur.rallies ?? '') + side, cur.serve, doubles)]); return; }
+    update([...games.slice(0, -1), rallyGame(cur.points + side)]);
+  };
+  const firstServe = (side: Side) => update([...games.slice(0, -1), sideOutGame('', side, doubles)]);
+  /** Drops the last rally (side-out) or point; at the start of a game it goes back into the previous one. */
+  const back = (g: ClubGame): ClubGame => (g.mode === 'sideout' ? sideOutGame((g.rallies ?? '').slice(0, -1), g.serve, doubles) : g.mode === 'rally' ? rallyGame(g.points.slice(0, -1)) : withTally(g.points.slice(0, -1)));
   const undo = () => {
-    if (cur.points.length === 0 && cur.a === 0 && cur.b === 0 && games.length > 1) {
-      const previous = games[games.length - 2];
-      if (previous.points.length) update([...games.slice(0, -2), withTally(previous.points.slice(0, -1))]);
+    if (rallyCount(cur) === 0 && cur.a === 0 && cur.b === 0) {
+      if (cur.mode === 'sideout' && cur.serve) { update([...games.slice(0, -1), sideOutGame('', undefined, doubles)]); return; }
+      if (games.length > 1) {
+        const previous = games[games.length - 2];
+        if (rallyCount(previous)) update([...games.slice(0, -2), back(previous)]);
+      }
       return;
     }
-    if (cur.points.length) update([...games.slice(0, -1), withTally(cur.points.slice(0, -1))]);
+    update([...games.slice(0, -1), back(cur)]);
   };
+  const canUndo = rallyCount(cur) > 0 || (cur.mode === 'sideout' && !!cur.serve) || (cur.a === 0 && cur.b === 0 && rallyCount(games[games.length - 2] ?? { points: '', a: 0, b: 0 }) > 0);
 
   async function finish(final: ClubGame[]) {
     const r = matchResult({ games: final, format: fmt });
@@ -141,20 +180,41 @@ export function ScorePad(p: ScorePadProps) {
         Game {games.length} · {formatRule(fmt)} · <span role="status" className={sync === 'unsent' ? 'pill pill-warn' : undefined}>{status}</span>
       </p>
       {fmt.bestOf > 1 && <p className="small" style={{ margin: 0 }}>Games: {nameA} {result.gamesA} – {result.gamesB} {nameB}</p>}
-      {!manual && p.canScore && (
+      {p.canScore && !matchOver && !started && (
+        <div className="seg seg-wrap pq-scoring-mode" role="group" aria-label="How are you scoring?">
+          {([['sideout', 'Side-out scoring'], ['rally', 'Rally scoring'], ['manual', 'Final scores only']] as const).map(([v, label]) => (
+            <button key={v} type="button" aria-pressed={v === 'manual' ? manual : !manual && mode === v} onClick={() => setMode(v)}>{label}</button>
+          ))}
+        </div>
+      )}
+      {p.canScore && !manual && (
+        <p className="small muted" style={{ margin: 0 }}>
+          {sideOut ? `Side-out scoring: only the serving side scores${doubles ? '; each side has two servers, and each game starts at 0-0-2' : ''}. Tap the team that wins each rally.` : 'Rally scoring: every rally is a point. Tap the team that wins it.'}
+        </p>
+      )}
+      {!manual && p.canScore && needServe && (
+        <section className="card section" aria-label="First serve">
+          <b>Who serves first in game {games.length}?</b>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-outline" onClick={() => firstServe('A')}>{nameA}</button>
+            <button type="button" className="btn btn-outline" onClick={() => firstServe('B')}>{nameB}</button>
+          </div>
+        </section>
+      )}
+      {!manual && p.canScore && !needServe && (
         <>
-
+          {so && !curOver && <p role="status" className="pq-serve-call" style={{ margin: 0, fontWeight: 800, fontSize: 22 }} aria-label={`Score call ${so.call}. ${so.serving === 'A' ? nameA : nameB} serving${doubles ? `, server ${so.server}` : ''}`}>{so.call} <span className="small muted" style={{ fontWeight: 600 }}>· {so.serving === 'A' ? nameA : nameB} serving{doubles ? ` · server ${so.server}` : ''}</span></p>}
           <div className="score-grid rq-ref-grid">
-            <button type="button" className="score-tap score-tap-a" aria-label={`Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || busy}>
-              <span className="small pq-referee-name">{nameA}</span>
+            <button type="button" className="score-tap score-tap-a" aria-label={sideOut ? `Rally to ${nameA}` : `Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || busy}>
+              <span className="small pq-referee-name">{nameA}{so?.serving === 'A' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.a}</span>
-              <span className="small muted">Tap when this team wins the point</span>
+              <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
             </button>
             {(golden || gp) && <div role="status" className="pq-gamepoint-strip">{golden ? "GOLDEN POINT" : "GAME POINT"}<small>{golden ? "Golden point · next point wins" : "Game point: " + (gp === "A" ? nameA : nameB)}</small></div>}
-            <button type="button" className="score-tap score-tap-b" aria-label={`Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || busy}>
-              <span className="small pq-referee-name">{nameB}</span>
+            <button type="button" className="score-tap score-tap-b" aria-label={sideOut ? `Rally to ${nameB}` : `Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || busy}>
+              <span className="small pq-referee-name">{nameB}{so?.serving === 'B' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.b}</span>
-              <span className="small muted">Tap when this team wins the point</span>
+              <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
             </button>
           </div>
           <p className={`small pq-referee-lead${gp ? ' pq-gamepoint' : ''}`} style={{ margin: 0, minHeight: 20 }} aria-live="polite">
@@ -163,8 +223,8 @@ export function ScorePad(p: ScorePadProps) {
           {curOver && !matchOver && <div role="status" className="rq-ref-banner rq-ref-game"><b>Game {games.length} won · match goes on</b><span>{cur.a > cur.b ? nameA : nameB} take game {games.length} · games {result.gamesA}–{result.gamesB}</span></div>}
           {matchOver && <div role="status" className="rq-ref-banner rq-ref-match"><b>Match finished</b><span>{result.winner === 'A' ? nameA : nameB} win {result.gamesA}–{result.gamesB} in games. Check the score, then save to lock the result.</span></div>}
           <div className="sticky-actions" style={{ position: 'static' }}>
-            <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || (!cur.points.length && (cur.a !== 0 || cur.b !== 0 || !games[games.length - 2]?.points.length))}>Undo</button>
-            {curOver && !matchOver && <button type="button" className="btn btn-primary" onClick={() => update([...games, { points: '', a: 0, b: 0 }])}>Start game {games.length + 1}</button>}
+            <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || !canUndo}>Undo</button>
+            {curOver && !matchOver && <button type="button" className="btn btn-primary" onClick={() => update([...games, sideOut ? sideOutGame('', undefined, doubles) : { points: '', a: 0, b: 0 }])}>Start game {games.length + 1}</button>}
             {matchOver && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => finish(games)}>Save result</button>}
           </div>
         </>
@@ -178,6 +238,11 @@ export function ScorePad(p: ScorePadProps) {
             </div>
           ))}
         </section>
+      )}
+      {!manual && p.canScore && needServe && (
+        <div className="sticky-actions" style={{ position: 'static' }}>
+          <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || !canUndo}>Undo</button>
+        </div>
       )}
       {manual && p.canScore && <ManualScores format={fmt} nameA={nameA} nameB={nameB} onSave={finish} onCancel={() => setManual(false)} busy={busy} />}
       {!manual && p.canScore && !matchOver && <button type="button" className="link-btn pq-manual-score-link" style={{ alignSelf: 'flex-start' }} onClick={() => setManual(true)}>Enter final scores instead</button>}

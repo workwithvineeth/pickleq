@@ -6,12 +6,14 @@ import { ClubError, type ClaimEmailOutcome, type ClaimEmailStatus, type ClaimSta
 import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { cleanEmail, type DrawPlan } from './registration';
-import type { Approval, Club, ClubMatch, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { Approval, Club, ClubMatch, ScoringMode, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 import { isApproved, NOT_APPROVED, PICK_NEEDS_TRUST } from './types';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
 /** Roster columns the app may read (claim_code is server-only since Module 4). */
+/** The optional side-out keys of a stored game (rallies, scoring mode, first server), when present. */
+const rallyKeys = (g: Row) => ({ ...(typeof g.rallies === 'string' && g.rallies ? { rallies: g.rallies } : {}), ...(g.mode === 'sideout' || g.mode === 'rally' ? { mode: g.mode as ScoringMode } : {}), ...(g.serve === 'A' || g.serve === 'B' ? { serve: g.serve as 'A' | 'B' } : {}) });
 const PLAYER_COLS = 'id,club_id,name,dupr_singles,dupr_doubles,dupr_id,user_id,share,sample,created_at,claimed_at';
 const s = (v: unknown) => (v === null || v === undefined ? undefined : String(v));
 const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
@@ -118,7 +120,7 @@ const toPreview = (r: Row): ClaimPreview => ({
 const toOfficial = (r: Row): OfficialMatch => ({
   id: String(r.id), club: String(r.club), tournament: String(r.tournament), tournamentId: String(r.tournament_id), division: s(r.division),
   kind: (s(r.kind) as OfficialMatch['kind']) ?? undefined, stage: r.stage as OfficialMatch['stage'], playedOn: String(r.played_on), format: (r.format as OfficialMatch['format']) ?? {},
-  games: ((r.games as Row[] | null) ?? []).map((g) => ({ a: Number(g.a), b: Number(g.b), ...(g.points ? { points: String(g.points) } : {}) })),
+  games: ((r.games as Row[] | null) ?? []).map((g) => ({ a: Number(g.a), b: Number(g.b), ...(g.points ? { points: String(g.points) } : {}), ...rallyKeys(g) })),
   winner: r.winner as 'A' | 'B', mySide: r.my_side as 'A' | 'B', me: String(r.me),
   sideA: ((r.side_a as Row[] | null) ?? []).map((p) => ({ id: String(p.id), name: String(p.name) })),
   sideB: ((r.side_b as Row[] | null) ?? []).map((p) => ({ id: String(p.id), name: String(p.name) })),
@@ -763,10 +765,10 @@ export class ServerBackend implements ClubBackend {
     return {
       name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '08:00').slice(0, 5), slotMinutes: Number(r.slot_minutes ?? 20), status: r.status as PublicTournament['status'], club: String(r.club),
       divisions: (r.divisions as Row[]).map((d) => ({ id: String(d.id), name: String(d.name), kind: d.kind as Division['kind'], pools: Number(d.pools), advance: Number(d.advance), ...formats(d.format) })),
-      entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), names: (e.names as string[]) ?? [] })),
+      entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), names: (e.names as string[]) ?? [], duprs: ((e.duprs as (number | string | null)[] | null) ?? []).map((x) => (x === null || x === undefined || x === '' ? undefined : Number(x))) })),
       matches: (r.matches as Row[]).map((m) => ({
         id: String(m.id), divisionId: s(m.division_id), stage: m.stage as ClubMatch['stage'], pool: n(m.pool), round: n(m.round), bracketPos: n(m.bracket_pos),
-        slot: n(m.slot), court: n(m.court), entryA: s(m.entry_a), entryB: s(m.entry_b), games: ((m.games as Row[]) ?? []).map((g) => ({ points: '', a: Number(g.a), b: Number(g.b) })),
+        slot: n(m.slot), court: n(m.court), entryA: s(m.entry_a), entryB: s(m.entry_b), games: ((m.games as Row[]) ?? []).map((g) => ({ points: '', a: Number(g.a), b: Number(g.b), ...rallyKeys(g) })),
         status: m.status as ClubMatch['status'], winner: (m.winner as ClubMatch['winner']) ?? undefined,
       })),
     };

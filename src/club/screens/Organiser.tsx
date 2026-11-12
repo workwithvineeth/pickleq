@@ -234,6 +234,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
           format={current.format}
           nameA={a}
           nameB={bn}
+          doubles={current.namesA.length > 1}
           playedOn={current.playedOn ?? t.startDate}
           send={(patch) => src.scorerSave(token, pin, current.id, patch)}
           onFinished={() => { setOpen(null); setTick((x) => x + 1); }}

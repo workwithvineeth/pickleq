@@ -30,8 +30,8 @@ export function winBarFrom(e: WinEstimate | null, nameA: string, nameB: string):
 }
 
 /**
- * The win chance for a live match in the public scores. DUPR comes from the entry when the public data carries it
- * (`duprs`, one per player); until then every team counts as unrated, so the bar appears after 10 rallies.
+ * The win chance for a live match in the public scores. DUPR comes from the entry (`duprs`, one per player, entered by
+ * the organisers); a team with an unrated player gets the bar only after 10 rallies.
  * It never throws: a problem just hides the bar.
  */
 export function liveWinBar(d: PublicTournament, m: PublicMatch): WinBar {
@@ -39,8 +39,10 @@ export function liveWinBar(d: PublicTournament, m: PublicMatch): WinBar {
     if (m.status !== 'live' || !m.entryA || !m.entryB) return NO_WIN_BAR;
     const v = matchView(d, m);
     const entry = (id: string) => d.entries.find((x) => x.id === id) as (PublicTournament['entries'][number] & { duprs?: (number | null | undefined)[] }) | undefined;
-    const ratings = (id: string) => { const e = entry(id); return (e?.duprs ?? e?.names.map(() => undefined) ?? [undefined]).map((x) => (typeof x === 'number' ? x : undefined)); };
-    const ralliesA = m.games.reduce((s, g) => s + g.a, 0), ralliesB = m.games.reduce((s, g) => s + g.b, 0);
+    const ratings = (id: string) => { const e = entry(id); return (e?.duprs?.length ? e.duprs : e?.names.map(() => undefined) ?? [undefined]).map((x) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)); };
+    // Every rally when the referee scored side-out or rally scoring; otherwise the scored points.
+    const won = (g: PublicMatch['games'][number], side: 'A' | 'B') => (g.rallies ? [...g.rallies].filter((c) => c === side).length : side === 'A' ? g.a : g.b);
+    const ralliesA = m.games.reduce((s, g) => s + won(g, 'A'), 0), ralliesB = m.games.reduce((s, g) => s + won(g, 'B'), 0);
     const e = winEstimate({
       ratingsA: ratings(m.entryA), ratingsB: ratings(m.entryB), ralliesA, ralliesB,
       gamesA: v.gamesA, gamesB: v.gamesB, pointsA: v.pointsA, pointsB: v.pointsB,
