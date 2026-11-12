@@ -15,6 +15,7 @@ test('match day keeps tournament tabs, desk and point scoring usable on a phone'
  await expect(page.getByRole('region',{name:'Courts',exact:true})).toBeVisible();
  const deskUrl=page.url();
  await page.getByRole('button',{name:'Score',exact:true}).first().click();
+ const scoring=page.getByRole('group',{name:'How are you scoring?'});await expect(scoring).toBeVisible();await scoring.getByRole('button',{name:'Rally scoring'}).click();
  const a=page.locator('.score-tap-a'),b=page.locator('.score-tap-b');
  await expect(a).toBeVisible();expect(await a.evaluate(el=>parseFloat(getComputedStyle(el.querySelector('.big')!).fontSize))).toBeGreaterThanOrEqual(88);
  expect((await b.boundingBox())!.y).toBeGreaterThan((await a.boundingBox())!.y);

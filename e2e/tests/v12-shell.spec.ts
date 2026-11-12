@@ -25,3 +25,26 @@ test('v1.2 club pages: Night default, Day switch saved, readable, fit 320 and 14
   await page.getByRole('button', { name: 'Switch to night mode' }).first().click();
   await expect(page.locator('.rallyq-prototype .rq').first()).not.toHaveClass(/\bday\b/);
 });
+
+/** The referee picks how they score; side-out calls the score and only the serving side scores. */
+test('referee can score side-out: who serves, 0-0-2, rallies', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.route('https://*.supabase.co/**', (r) => r.fulfill({ json: [] }));
+  await page.goto('#/demo');
+  await page.getByLabel('Your name in the demo').fill('Alex');
+  await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+  await expect(page.getByRole('heading', { name: 'PQ Demo Club', exact: true })).toBeVisible();
+  const id = await page.evaluate(() => (JSON.parse(localStorage.getItem('pq-club-demo-v1') ?? '{}').tournaments as { id: string; name: string }[]).find((t) => t.name === 'PQ Demo Open')!.id);
+  await page.goto(`#/club-desk/${id}`);
+  // The desk opens on a court with a booked semi-final: score it from the desk.
+  await page.getByRole('button', { name: 'Score', exact: true }).first().click();
+  const choice = page.getByRole('group', { name: 'How are you scoring?' });
+  await expect(choice).toBeVisible();
+  await choice.getByRole('button', { name: 'Side-out scoring' }).click();
+  await page.getByRole('region', { name: 'First serve' }).getByRole('button').first().click();
+  await expect(page.getByLabel(/Score call 0-0-2/)).toBeVisible();
+  await page.getByRole('button', { name: /^Rally to / }).first().click();
+  await expect(page.getByLabel(/Score call 1-0-2/)).toBeVisible();
+  await page.getByRole('button', { name: /^Rally to / }).nth(1).click();
+  await expect(page.getByLabel(/Score call 0-1-1/)).toBeVisible();
+});

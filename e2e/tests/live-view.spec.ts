@@ -43,5 +43,6 @@ test('spectator courts: sample data, score refresh, court selection, themes and 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     expect(await score.evaluate(el => getComputedStyle(el).animationName)).toBe('none');
   }
-  expect(await page.locator('main').innerText()).not.toMatch(/@|DUPR|PIN/);
+  // Public page: no emails or PINs (DUPR is public since 12 Nov).
+  expect(await page.locator('main').innerText()).not.toMatch(/@|PIN/);
 });
