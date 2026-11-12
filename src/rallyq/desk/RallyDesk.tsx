@@ -162,7 +162,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
                 <button type="button" className="grow" aria-pressed={selected?.id === m.id} aria-label={`Choose ${who(m)}`} onClick={() => setSel(m.id)}
                   style={{ minWidth: 0, minHeight: 44, background: 'none', border: 0, padding: 0, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
                   <b className="ell" style={{ display: 'block', fontSize: 14 }}>{who(m)}</b>
-                  <span className="mut" style={{ fontSize: 12 }}>{[matchLabel(m, d), when(m) && `about ${when(m)}`].filter(Boolean).join(' · ')}</span>
+                  <span className="mut" style={{ fontSize: 12 }}>{[matchLabel(m, d), when(m) && `about ${clock12(when(m))}`].filter(Boolean).join(' · ')}</span>
                 </button>
                 <span className={m.court ? 'st off' : 'st wait'}>{m.court ? `Court ${m.court}` : 'Waiting'}</span>
               </div>

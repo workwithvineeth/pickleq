@@ -11,7 +11,10 @@ import {liveWinBar,NO_WIN_BAR,winBarFrom,winBarHtml,type WinBar} from '../../clu
 import {winEstimate} from '../../club/winPredictor';
 import liveRaw from '../prototypes/Live.dc.html?raw';
 /** The Live board with the win chance under the big score. */
-const LIVE_SOURCE=liveRaw.replace('scored by court referee</span></div>','scored by court referee</span></div>'+winBarHtml('sel.win'));
+const LIVE_SOURCE=liveRaw.replace('scored by court referee</span></div>','scored by court referee</span></div>'+winBarHtml('sel.win'))
+ // When nothing is live the page shows the prototype sample: say so plainly, so nobody reads it as real scores.
+ .replace('<span class="chip live">Live · {{today}}</span>','<span class="{{topChip}}">{{topLabel}}</span>')
+ .replace('font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1>','font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1><sc-if value="{{isSample}}" hint-placeholder-val="{{ false }}"><p class="mut" style="margin:8px 0 0;font-size:14px;max-width:560px">Nothing is live right now. These are sample scores to show how it looks; real matches appear here as referees score them.</p></sc-if>');
 /** Sample win chance for the labelled sample (made-up ratings), so the sample shows what the bar looks like. */
 const sampleWin=(a:string,b:string,sa:number,sb:number,gA:number,gB:number,rA:number[],rB:number[])=>winBarFrom(winEstimate({ratingsA:rA,ratingsB:rB,ralliesA:sa+gA*11,ralliesB:sb+gB*11,gamesA:gA,gamesB:gB,pointsA:sa,pointsB:sb,pointsTo:11,bestOf:3}),a,b);
 
@@ -54,6 +57,7 @@ export function RallyLive({go}:{go:Go}){
     return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok,win:liveWinBar(d,match)};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
- const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today:new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
+ const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;
+ const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample?'chip':'chip live',topLabel:isSample?'Sample scores · '+today:'Live · '+today};
  return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }

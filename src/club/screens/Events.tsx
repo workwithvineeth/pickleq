@@ -455,8 +455,8 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
         {step === 2 && d && !user && (
           <>
             <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <b>Sign in with your email to enter. It takes a minute, and you come straight back here.</b>
-              <span className="mut" style={{ fontSize: 14 }}>Signing in lets you see your entry’s status and withdraw if you need to. Your personal RallyQ stays on your phone.</span>
+              <b>Sign in or create your RallyQ account to enter. It takes a minute, and you come straight back here.</b>
+              <span className="mut" style={{ fontSize: 14 }}>Your account lets you see your entry’s status, your matches in Player Studio, and withdraw if you need to.</span>
             </div>
             <div className="between">
               {back('Back', onBack)}

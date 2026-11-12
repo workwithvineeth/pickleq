@@ -79,7 +79,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
   return (
     <OrgShell go={go} active="entries" clubName={d.t.club.name} clubId={d.t.club.id} tournament={{ id: t.id, name: t.name, slug: t.publicSlug }}>
       <PageHead cap={`${t.name} · ${drawn ? 'Draw made' : t.registrationOpen ? 'Entries open' : 'Entries closed'}${t.entriesClose && !drawn ? ` · entries close ${friendlyDate(t.entriesClose)}` : ''}`}
-        title={<span id="inbox-title">{drawn ? 'Registrations and payments' : 'Entries & UPI'}</span>}
+        title={<span id="inbox-title">{'Entries & UPI'}</span>}
         actions={<>
           {!drawn && isApproved(t) && <button type="button" className="btn ghost sm" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>}
           {!drawn && <button type="button" className="btn ghost sm" disabled={busy || !isApproved(t)} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Open registration'}</button>}
@@ -278,6 +278,7 @@ function Draw({ b, t, divisions, regs, onDrawn, go, primary = true }: { b: ClubB
         onUse={(i, c) => { const x = withEntries[i]; set(x.d, x.n, c); }} />}
       {problems.map((p) => <div key={p} className="msg msg-bad small">{p}</div>)}
       {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
+      {withEntries.length > 0 && confirm && regs.some((r) => r.status === 'pending') && (() => { const w = regs.filter((r) => r.status === 'pending').length; return <div role="status" className="msg small">{w} {w === 1 ? 'entry is' : 'entries are'} still waiting for your decision and won’t be in the draw. Accept {w === 1 ? 'it' : 'them'} first, or add {w === 1 ? 'it' : 'them'} later as a late entry.</div>; })()}
       {withEntries.length > 0 && (confirm
         ? <div className="meta"><button type="button" className={primary ? 'btn' : 'btn alt'} disabled={busy || problems.length > 0} onClick={draw}>Yes, make the draw</button><button type="button" className="btn ghost" onClick={() => setConfirm(false)}>Not yet</button></div>
         : <button type="button" className={primary ? 'btn' : 'btn alt'} disabled={problems.length > 0} onClick={() => setConfirm(true)}>Make the draw</button>)}

@@ -366,7 +366,7 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
   return (
     <MatchdayShell go={go ?? (() => undefined)} active="entries" d={d}>
       <PageHead cap={`${t.name} · ${formatRule(div.format)}`} title={<span id="entries-title">Entries</span>}
-        actions={t.entryMode === 'registration' && go ? <button type="button" className="btn ghost sm" onClick={() => go('club-inbox', t.id)}>Registrations and payments</button> : undefined} />
+        actions={t.entryMode === 'registration' && go ? <button type="button" className="btn ghost sm" onClick={() => go('club-inbox', t.id)}>Entries &amp; UPI</button> : undefined} />
       <Legacy><DemoNote b={b} /></Legacy>
       {d.divisions.length > 1 && <div className="tabs" role="group" aria-label="Event">{d.divisions.map((x) => <button key={x.id} type="button" className={x.id === div.id ? 'tab on' : 'tab'} aria-pressed={x.id === div.id} onClick={() => { setDivId(x.id); setOpenEntry(null); }}>{x.name}</button>)}</div>}
       <p className="mut" style={{ margin: 0, fontSize: 14 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} in the draw. Withdraw, swap a player or add a late entry here.</p>

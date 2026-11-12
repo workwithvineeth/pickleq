@@ -48,3 +48,12 @@ test('referee can score side-out: who serves, 0-0-2, rallies', async ({ page }) 
   await page.getByRole('button', { name: /^Rally to / }).nth(1).click();
   await expect(page.getByLabel(/Score call 0-1-1/)).toBeVisible();
 });
+
+test('live scores say when they are only a sample; TV board has no desk link', async ({ page }) => {
+  await page.goto('#/live');
+  await expect(page.getByText(/^Sample scores · /)).toBeVisible();
+  await expect(page.getByText('Nothing is live right now. These are sample scores', { exact: false })).toBeVisible();
+  await page.goto('#/club-tv/no-such-event');
+  await expect(page.getByText('The board opens when the draw is made')).toBeVisible();
+  await expect(page.getByRole('link', { name: '← Desk' })).toHaveCount(0);
+});

@@ -673,7 +673,7 @@ export function ClubJoin({ code, go, onBack }: { code: string; go: Go; onBack: (
       <Header id="join-title" title="Join a club" onBack={onBack} />
       <section className="card section">
         <p style={{ margin: 0 }}>You’ve been invited to join a club in RallyQ.</p>
-        <p className="small muted" style={{ margin: 0 }}>Joining shares your name and the club matches you play with that club. Your personal RallyQ stays private unless you choose to share parts of it.</p>
+        <p className="small muted" style={{ margin: 0 }}>Joining shares your name and the club matches you play with that club. Your practice diary, goals and coach notes stay private unless you choose to share them.</p>
       </section>
       {user.data === null && !user.loading && (server
         ? <button type="button" className="btn btn-primary" onClick={signInFirst}>Sign in to join</button>

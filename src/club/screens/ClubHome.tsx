@@ -61,9 +61,9 @@ export function ClubHome({ d, go }: { d: ClubBundle; go: Go }) {
         {counts.error && <p role="alert">Could not load action counts. <MiniBtn onClick={counts.reload}>Try again</MiniBtn></p>}
         {counts.loading && !counts.data && <p role="status">Loading actions…</p>}
         {counts.data && needs === 0 && <p className="small muted">Nothing needs you right now.</p>}
-        {claims.length > 0 && <Row title="Payments to verify" tag={claims.length} tagKind="action" right={<MiniBtn onClick={() => go('club-inbox',claims[0].tournamentId)}>Verify</MiniBtn>} />}
+        {claims.length > 0 && <Row title="Payments to check" tag={claims.length} tagKind="action" right={<MiniBtn onClick={() => go('club-inbox',claims[0].tournamentId)}>Check</MiniBtn>} />}
         {pending.length > 0 && <Row title="Entries to decide" tag={pending.length} tagKind="action" right={<MiniBtn onClick={() => go('club-inbox',pending[0].tournamentId)}>Review</MiniBtn>} />}
-        {missing.length > 0 && <Row title="Referee links not created" sub={missing.length + (missing.length === 1 ? " tournament" : " tournaments")} tag={missing.reduce((n,x)=>n+x.count,0)} tagKind="action" right={<MiniBtn onClick={() => go('club-scorers',missing[0].t.id)}>Create</MiniBtn>} />}
+        {missing.length > 0 && <Row title="Referee links not created" sub={"Courts without a link, in " + missing.length + (missing.length === 1 ? " tournament" : " tournaments")} tag={missing.reduce((n,x)=>n+x.count,0)} tagKind="action" right={<MiniBtn onClick={() => go('club-scorers',missing[0].t.id)}>Create</MiniBtn>} />}
       </Panel>
       <div className="pq-kpis">
         <Kpi label="Events this season" value={open.length} sub={live.length + ' live · ' + upcoming.length + ' upcoming'} onClick={() => go('club-view',d.club.id+'.tournaments')} />
