@@ -759,6 +759,11 @@ export class ServerBackend implements ClubBackend {
   async setMySharing(playerId: string, share: Share) { check(await this.sb.rpc('set_my_sharing', { pid: playerId, choice: share })); }
   async shareMySummary(playerId: string, data: SummaryData) { check(await this.sb.rpc('share_my_summary', { pid: playerId, summary: data })); }
 
+  async publicTournamentRev(slug: string): Promise<string | null> {
+    const r = check(await this.sb.rpc('public_tournament_rev', { slug }));
+    return typeof r === 'string' ? r : null;
+  }
+
   async publicTournament(slug: string): Promise<PublicTournament | null> {
     const r = check(await this.sb.rpc('public_tournament', { slug })) as Row | null;
     if (!r) return null;

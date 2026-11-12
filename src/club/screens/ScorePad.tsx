@@ -83,24 +83,31 @@ export function ScorePad(p: ScorePadProps) {
   const timer = useRef<number | undefined>(undefined);
   const latest = useRef<ScorePatch | null>(readUnsent()[matchKey] ?? null);
 
-  const push = useCallback(async (patch: ScorePatch): Promise<boolean> => {
-    setSync('saving');
-    try {
-      await send(patch);
-      if (latest.current === patch) latest.current = null;
-      rememberUnsent(matchKey, null);
-      setSync('saved');
-      return true;
-    } catch {
-      rememberUnsent(matchKey, patch);
-      setSync('unsent');
-      return false;
-    }
+  // One save at a time, always the newest score. Two overlapping saves could land out of order, letting an older score
+  // overwrite a newer one on the server, or leave an older score on this phone as "unsent" to come back after a reload.
+  const queue = useRef<Promise<boolean>>(Promise.resolve(true));
+  const push = useCallback((): Promise<boolean> => {
+    const run = async (): Promise<boolean> => {
+      const patch = latest.current;
+      if (!patch) return true;
+      setSync('saving');
+      try {
+        await send(patch);
+        if (latest.current === patch) { latest.current = null; rememberUnsent(matchKey, null); setSync('saved'); }
+        return true;
+      } catch {
+        rememberUnsent(matchKey, latest.current ?? patch);
+        setSync('unsent');
+        return false;
+      }
+    };
+    queue.current = queue.current.then(run, run);
+    return queue.current;
   }, [send, matchKey]);
 
   // Keep retrying anything unsent: when the phone comes back online, and every 10 seconds.
   useEffect(() => {
-    const retry = () => { if (latest.current) void push(latest.current); };
+    const retry = () => { if (latest.current) void push(); };
     window.addEventListener('online', retry);
     const h = window.setInterval(() => { if (latest.current && navigator.onLine !== false) retry(); }, 10000);
     return () => { window.removeEventListener('online', retry); window.clearInterval(h); };
@@ -109,7 +116,7 @@ export function ScorePad(p: ScorePadProps) {
   // Leaving the screen: send what's pending straight away.
   useEffect(() => () => {
     window.clearTimeout(timer.current);
-    if (latest.current && latest.current.status !== 'done') void push(latest.current);
+    if (latest.current && latest.current.status !== 'done') void push();
   }, [push]);
 
   const result = matchResult({ games, format: fmt });
@@ -125,7 +132,7 @@ export function ScorePad(p: ScorePadProps) {
     latest.current = patch;
     rememberUnsent(matchKey, patch);
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => { void push(patch); }, 600);
+    timer.current = window.setTimeout(() => { void push(); }, 600);
   }
   const started = games.some((g) => g.points.length || g.a || g.b || g.rallies);
   const sideOut = mode === 'sideout';
@@ -161,7 +168,7 @@ export function ScorePad(p: ScorePadProps) {
     const patch: ScorePatch = { games: final, status: 'done', winner: r.winner, playedOn: p.playedOn ?? today() };
     latest.current = patch;
     rememberUnsent(matchKey, patch);
-    const ok = await push(patch);
+    const ok = await push();
     setBusy(false);
     if (!ok) return setMsg('No connection. The result is saved on this phone and will be sent automatically. Keep this screen open until it says Saved.');
     await p.onFinished();

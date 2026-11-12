@@ -11,7 +11,7 @@ import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, ty
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { OrganiserCard, PosterImage } from './Poster';
 import { friendlyDate, friendlyTime } from '../dates';
-import { entryStatus } from '../../rallyq/studio/myTournaments';
+import { entryStatus } from '../../rallyq/studio/myTournamentItems';
 
 // ---------- Helpers ----------
 

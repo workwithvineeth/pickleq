@@ -99,3 +99,23 @@ describe('referee scoring choice', () => {
   });
 });
 
+
+describe('saving overlapping taps', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('sends one save at a time, so an older score never lands after a newer one', async () => {
+    const user = userEvent.setup();
+    let release: () => void = () => undefined;
+    const send = vi.fn((_p: ScorePatch) => (send.mock.calls.length === 1 ? new Promise<undefined>((r) => { release = () => r(undefined); }) : Promise.resolve(undefined)));
+    pad(send);
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(1)); // first save is slow and still open
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    await new Promise((r) => setTimeout(r, 800)); // past the save delay
+    expect(send).toHaveBeenCalledTimes(1); // the newer score waits instead of racing the older one
+    release();
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+    expect(send.mock.calls[1][0].games[0].a).toBe(2);
+    await waitFor(() => expect(screen.getByText(/Saved/)).toBeInTheDocument());
+  });
+});

@@ -24,4 +24,16 @@ describe('public score refresh lifecycle', () => {
     await act(async () => {}); rerender({ slug: 'new' }); await act(async () => {});
     await act(async () => { resolve(score); }); expect(result.current.data?.name).toBe('New tournament');
   });
+  it('downloads the full tournament only when its version changes, with a full refresh every 2 minutes', async () => {
+    vi.useFakeTimers(); vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    const rev = vi.fn().mockResolvedValue('v1');
+    sources.mockResolvedValue([{ publicTournament: read, publicTournamentRev: rev }]); read.mockResolvedValue(score);
+    const { unmount } = renderHook(() => usePublicScores('sample'));
+    await act(async () => {}); expect(read).toHaveBeenCalledTimes(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000 * 4); }); expect(read).toHaveBeenCalledTimes(1); // nothing changed: only the tiny version check
+    rev.mockResolvedValue('v2');
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000); }); expect(read).toHaveBeenCalledTimes(2); // a point was scored
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000 * 6); }); expect(read).toHaveBeenCalledTimes(3); // safety-net full refresh
+    unmount();
+  });
 });

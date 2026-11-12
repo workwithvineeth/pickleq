@@ -23,15 +23,15 @@ interface Venue {name:string;club:string;mark:string;courts:Court[];slug?:string
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 /** Prototype sample, shown (and labelled) only when no event is live. */
 export const SAMPLE:Venue[]=[
- {name:'Loki’s',club:'Loki’s Pickleball Club',mark:'LP',courts:[
+ {name:'Banyan',club:'Banyan Courts (sample)',mark:'BC',courts:[
   {court:'Court 1',stage:'Pool A',a:'Teja / Kiran',b:'Rohan / Ajay',sa:8,sb:5,game:1,games:[],status:'Live',run:4,next:'Pool A · Sana / Pooja vs Leela / Tara',pts:'AABAAB',win:sampleWin('Teja / Kiran','Rohan / Ajay',8,5,0,0,[4.1,3.9],[3.9,3.8])},
   {court:'Court 2',stage:'Men’s QF',a:'Rao / Iyer',b:'Khan / Patel',sa:9,sb:7,game:2,games:['11–8'],status:'Live',run:5,next:'QF 2 · Reddy / Naidu vs Das / Jain',pts:'ABAAAB',win:sampleWin('Rao / Iyer','Khan / Patel',9,7,1,0,[4.3,4.22],[4.1,4.0])},
   {court:'Court 3',stage:'Women’s SF',a:'Meera / Divya',b:'Ananya / Ritu',sa:11,sb:6,game:2,games:['11–9','11–6'],status:'Final',run:6,next:'Final at 7:40 pm',pts:'AAAABA'}]},
- {name:'Rally33',club:'Rally33 · Crosscourts',mark:'R33',courts:[
+ {name:'Lakeside',club:'Lakeside Pickle Club (sample)',mark:'LPC',courts:[
   {court:'Court 1',stage:'Open SF',a:'Varun / Neel',b:'Imran / Joseph',sa:10,sb:10,game:3,games:['11–7','8–11'],status:'Live',run:3,next:'Final at 8:15 pm',pts:'ABABAB'}]},
- {name:'TPC',club:'TPC Narapally',mark:'TPC',courts:[
+ {name:'Deccan',club:'Deccan Dink Club (sample)',mark:'DDC',courts:[
   {court:'Court 1',stage:'DUPR round 3',a:'Mohan / Ravi',b:'Suresh / Prem',sa:6,sb:6,game:1,games:[],status:'Live',run:3,next:'Round 4 at 7:20 pm',pts:'ABBAAB'}]},
- {name:'ElitePicklers',club:'ElitePicklers Bowenpally',mark:'EP',courts:[
+ {name:'Granite',club:'Granite Smash Arena (sample)',mark:'GSA',courts:[
   {court:'Court 1',stage:'Mixed QF',a:'Kavya / Arjun',b:'Nisha / Rahul',sa:3,sb:1,game:1,games:[],status:'Live',run:3,next:'QF 3 · Priya / Om vs Zoya / Sam',pts:'AABBAA'}]}
 ];
 function longestRun(pts:string){let best=0,cur=0,prev='';for(const p of pts){cur=p===prev?cur+1:1;prev=p;best=Math.max(best,cur);}return best;}
@@ -46,10 +46,10 @@ export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?
   sel:{...s,pts:[...s.pts.slice(-6)].map(ch=>({who:ch==='A'?first(s.a):first(s.b),cls:ch==='A'?'chip ball':'chip'})),run:s.run||longestRun(s.pts)}};
 }
 /** Live scores in the exact prototype layout, fed by the public scores of live events in the launch city. */
-export function RallyLive({go}:{go:Go}){
- const[pick,setPick]=useState({v:0,c:0});
- const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents().catch(()=>[])).filter(e=>inLaunchCity(e.city)&&e.status==='live'&&e.results):[]},[]);
- const events=directory.data??[];const ev=events[pick.v];const scores=usePublicScores(ev?.slug??'');
+export function RallyLive({go,slug}:{go:Go;slug?:string}){
+ const[chosen,setPick]=useState<{v:number|null;c:number}>({v:null,c:0});
+ const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents()).filter(e=>inLaunchCity(e.city)&&e.status==='live'&&e.results):[]},[]);
+ const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};const ev=events[pick.v];const scores=usePublicScores(ev?.slug??'');
  let venues:Venue[]=SAMPLE;
  if(events.length){
   venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
@@ -58,6 +58,6 @@ export function RallyLive({go}:{go:Go}){
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
  const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;
- const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample?'chip':'chip live',topLabel:isSample?'Sample scores · '+today:'Live · '+today};
+ const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample?'chip':'chip live',topLabel:directory.error?'Can’t reach live scores · showing a sample':isSample?'Sample scores · '+today:'Live · '+today};
  return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }

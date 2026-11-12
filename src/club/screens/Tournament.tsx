@@ -440,9 +440,9 @@ function Preflight({ b, d, go }: { b: ClubBackend; d: TournamentBundle; go: Go }
   const t = d.tournament;
   const extra = useLoad(async () => {
     const [links, access, regs] = await Promise.all([
-      b.scorerLinks(t.id).catch(() => []),
-      b.tournamentAccess(t.id).catch(() => null),
-      t.entryMode === 'registration' && !t.drawnAt ? b.registrations(t.id).catch(() => []) : Promise.resolve([]),
+      b.scorerLinks(t.id),
+      b.tournamentAccess(t.id),
+      t.entryMode === 'registration' && !t.drawnAt ? b.registrations(t.id) : Promise.resolve([]),
     ]);
     const accepted: Record<string, number> = {};
     for (const r of regs) if (r.status === 'accepted') accepted[r.divisionId] = (accepted[r.divisionId] ?? 0) + 1;

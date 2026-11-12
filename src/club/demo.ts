@@ -778,6 +778,11 @@ export class DemoBackend implements ClubBackend {
     this.save();
   }
 
+  async publicTournamentRev(slug: string): Promise<string | null> {
+    const t = await this.publicTournament(slug);
+    return t ? JSON.stringify(t) : null;
+  }
+
   async publicTournament(slug: string): Promise<PublicTournament | null> {
     const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.isPublic && isApproved(x));
     if (!t) return null;

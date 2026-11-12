@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { MyEntry, PublicTournament } from '../../club/backend';
-import { entryStatus, myTournamentItems, nextMatchLine, upcomingEntries } from './myTournaments';
+import { entryStatus, myTournamentItems, nextMatchLine, upcomingEntries } from './myTournamentItems';
 
 const entry = (o: Partial<MyEntry>): MyEntry => ({
   id: 'r1', status: 'accepted', payment: 'paid', players: [{ name: 'Asha Rao' }, { name: 'Lata Iyer' }] as MyEntry['players'],

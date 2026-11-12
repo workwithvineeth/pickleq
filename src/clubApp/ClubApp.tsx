@@ -93,7 +93,7 @@ export default function ClubApp() {
   const current = tab ?? (name === 'club-claim' ? 'club-player-studio' : name.startsWith('admin') ? 'club' : name === 'event' || name === 'my-entries' ? 'events' : 'club');
   // paddleq.in itself: the public home page for visitors (it sends signed-in people on to My clubs).
   if (route.name === 'home') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyHome go={go} /></>;
-  if (route.name === 'live') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyLive go={go} /></>;
+  if (route.name === 'live') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyLive go={go} slug={route.id} /></>;
   if (route.name === 'public-player') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><PublicProfile playerId={route.id} go={go} /></>;
   if (route.name === 'club-social' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallySocial slug={route.id} go={go} /></>;
   if (route.name === 'club-tv' && route.id) return <><UpdatePrompt offlineNotice={false} inline /><RallyTV slug={route.id} go={go} /></>;

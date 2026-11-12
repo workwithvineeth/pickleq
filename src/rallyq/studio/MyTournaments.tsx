@@ -2,7 +2,7 @@ import type { Go } from '../../navigation';
 import type { PublicTournament } from '../../club/backend';
 import { eventsBackend } from '../../club/index';
 import { useLoad } from '../../club/screens/common';
-import { myTournamentItems, upcomingEntries } from './myTournaments';
+import { myTournamentItems, upcomingEntries } from './myTournamentItems';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 

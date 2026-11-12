@@ -16,8 +16,8 @@ export function LifecycleCard({ b, d, go, onChanged }: { b: ClubBackend; d: Tour
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Online entries (registrations) count as people too, as on the server (tournament_has_people).
-  const regs = useLoad(() => b.registrations(t.id).catch(() => []), [b, t.id]);
-  const empty = d.entries.length === 0 && !d.matches.some((m) => m.status !== 'void') && !regs.loading && (regs.data?.length ?? 0) === 0;
+  const regs = useLoad(() => b.registrations(t.id), [b, t.id]);
+  const empty = d.entries.length === 0 && !d.matches.some((m) => m.status !== 'void') && !regs.loading && !regs.error && (regs.data?.length ?? 0) === 0;
   async function run(fn: () => Promise<void>, after?: () => void) {
     setBusy(true); setMsg(null);
     try { await fn(); setMode('none'); setText(''); (after ?? onChanged)(); } catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }

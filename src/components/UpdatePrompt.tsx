@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
+/** Screens where points are entered: court/referee links, the desk and the club scorer. */
+const SCORING = /^#\/(court|club-score|desk|club-desk|helper)(\/|$)/;
+
 /**
  * Shows "Update ready" when a new version has downloaded; nothing changes until the user taps.
  * `offlineNotice` (default on) also says once that the app works offline. `inline` puts the prompt in the page flow at the top
@@ -32,7 +35,8 @@ export function UpdatePrompt({ offlineNotice = true, inline = false }: { offline
     let hadController = !!worker.controller;
     const ready = () => {
       // A newer version took over right after opening: reload now so nobody keeps looking at an old cached build.
-      if (hadController && import.meta.env.MODE !== 'test' && performance.now() < 15000) { window.location.reload(); return; }
+      // Never on scoring screens: a referee may already have tapped a point that isn't saved yet.
+      if (hadController && import.meta.env.MODE !== 'test' && performance.now() < 15000 && !SCORING.test(window.location.hash)) { window.location.reload(); return; }
       if (hadController) setNeedRefresh(true); hadController = true;
     };
     worker.addEventListener('controllerchange', ready);

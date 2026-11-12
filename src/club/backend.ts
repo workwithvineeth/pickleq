@@ -152,6 +152,8 @@ export interface ClubBackend extends EventsBackend {
   setMySharing(playerId: string, share: Share): Promise<void>;
   shareMySummary(playerId: string, data: SummaryData): Promise<void>;
   publicTournament(slug: string): Promise<PublicTournament | null>;
+  /** A short fingerprint that changes whenever the public tournament does, so live pages fetch it only when needed. */
+  publicTournamentRev(slug: string): Promise<string | null>;
   myClubMatches(): Promise<MyClubMatches[]>;
 }
 
