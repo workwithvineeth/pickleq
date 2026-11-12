@@ -47,7 +47,7 @@ export function PublicShell({go,active=null,host=ALL_CLUBS,right,children,footNo
   <main className="wrap" style={{paddingBlock:'28px 40px',display:'flex',flexDirection:'column',gap:28}}>{children}</main>
   <div className="wrap pfoot"><span>{footNote??''}</span><Signoff/></div></Frame>;
 }
-export type OrgTab='home'|'tournaments'|'club'|'social'|'entries'|'draw'|'desk'|'referees'|'tv';
+export type OrgTab='home'|'tournaments'|'club'|'social'|'entries'|'draw'|'desk'|'referees'|'tv'|'studio';
 /** Organiser pages: host club on top of the side menu, event steps below, RallyQ sign-off last. */
 export function OrgShell({go,active,clubName='Your club',clubId,tournament,children}:{go:Go;active:OrgTab;clubName?:string;clubId?:string;tournament?:{id:string;name:string;slug?:string|null};children:ReactNode}){
  const item=(k:OrgTab,label:string,f:()=>void)=><a key={k} className={k===active?'on':undefined} aria-current={k===active?'page':undefined} href="#/" onClick={e=>{e.preventDefault();f()}}>{label}</a>;
@@ -56,7 +56,7 @@ export function OrgShell({go,active,clubName='Your club',clubId,tournament,child
  const reg=useCallback((k:'mode'|'head')=>{setN(c=>({...c,[k]:c[k]+1}));return()=>setN(c=>({...c,[k]:c[k]-1}));},[]);
  const slot=useMemo(()=>({reg,hasMode:n.mode>0}),[reg,n.mode]);
  return <Frame><div className="shell"><aside className="side" aria-label="Organiser menu"><HostBlock host={{marks:[clubMark(clubName)],name:clubName}} onClick={()=>go('club')}/>
-  <span className="cap grp">{clubShort(clubName)}</span>{item('home','Home',()=>go('club'))}{item('tournaments','Tournaments',()=>go('club-tournaments'))}{clubId&&item('club','Club & team',()=>go('club-view',clubId))}{t?.slug&&item('social','Social studio',()=>go('club-social',t.slug!))}
+  <span className="cap grp">{clubShort(clubName)}</span>{item('home','Home',()=>go('club'))}{item('tournaments','Tournaments',()=>go('club-tournaments'))}{clubId&&item('club','Club & team',()=>go('club-view',clubId))}{t?.slug&&item('social','Social studio',()=>go('club-social',t.slug!))}{item('studio','My Player Studio',()=>go('club-player-studio'))}
   {t&&<><span className="cap grp">{t.name}</span>{item('entries','Entries & UPI',()=>go('club-inbox',t.id))}{item('draw','Pools & knockouts',()=>go('club-tournament',t.id))}{item('desk','Desk',()=>go('club-desk',t.id))}{item('referees','Referees & results',()=>go('club-scorers',t.id))}{t.slug&&item('tv','TV board',()=>go('club-tv',t.slug!))}</>}
   <Signoff text="Run on" onClick={()=>go('club')}/></aside>
   <main className="main" style={{display:'flex',flexDirection:'column',gap:22}}><OrgSlot.Provider value={slot}>{n.mode===0&&n.head===0&&<div className="row" style={{justifyContent:'flex-end'}}><ModeButton auto/></div>}{children}</OrgSlot.Provider></main></div></Frame>;

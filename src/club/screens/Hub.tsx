@@ -14,6 +14,7 @@ import { isApproved, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
 import { appLink, DemoNote, errorText, Header, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyTime, relativeDate } from '../dates';
 import { TodayAndUpcoming } from '../../clubApp/Tabs';
+import { landingAfterSignIn } from '../landing';
 
 const PENDING_JOIN = 'pq-club-pending-join';
 // localStorage, not sessionStorage: the email's sign-in link opens in a new tab.
@@ -85,7 +86,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
           <section className="card" aria-label="Your clubs">
             <div className="between" style={{ padding: '16px 18px 4px' }}><h2 className="cap" style={{ margin: 0 }}>Your clubs</h2>{b?.kind === 'server' && <button type="button" className="tlink" style={{ fontSize: 13 }} onClick={() => go('club-new')}>Create a club →</button>}</div>
             <div className="list">
-              {signedIn.clubs.length === 0 && <div className="empty">You’re not in a club yet. Create your club and set up a tournament (RallyQ approves it before it goes live), or open the invite link your club sent you.</div>}
+              {signedIn.clubs.length === 0 && <div className="empty">You’re not in a club yet. Playing? Open the invite link your club sent you. Running a club? Create your club and set up a tournament (RallyQ approves it before it goes live).</div>}
               {signedIn.clubs.map(({ club, role }) => (
                 <button key={club.id} type="button" onClick={() => go('club-view', club.id)}>
                   {club.logoUrl ? <img src={club.logoUrl} alt={`${club.name} logo`} className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span role="img" aria-label={`${club.name} logo`} className="tile lg">{clubMark(club.name)}</span>}
@@ -352,7 +353,10 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
     const back = takeReturn();
     if (back) { window.location.replace(back); return; }
     const pending = readPendingJoin();
-    if (pending) { writePendingJoin(null); go('club-join', pending, { replace: true }); }
+    if (pending) { writePendingJoin(null); go('club-join', pending, { replace: true }); return; }
+    // RallyQ: players open on their Player Studio; people who run a club (and RallyQ admins) on My clubs.
+    const to = isClubApp() && b ? await landingAfterSignIn(b) : 'club';
+    if (to === 'club-player-studio') go('club-player-studio', undefined, { replace: true });
     else if (onSignedIn) onSignedIn();
     else go('club', undefined, { replace: true });
   }

@@ -126,6 +126,9 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   await page.getByRole('button', { name: 'Create account', exact: true }).click();
   await page.getByLabel('6-digit code').fill('654321');
   await page.getByRole('button', { name: 'Confirm and sign in' }).click();
+  // A new account isn't running a club yet, so it opens on Player Studio; My clubs is where you create one.
+  await expect(page).toHaveURL(/#\/club-player-studio/);
+  await page.goto('#/club');
   await page.getByRole('button', { name: 'Create a club', exact: true }).click();
   await page.getByLabel('Club name', { exact: true }).fill('Fixture Club');
   await page.getByLabel('Your name', { exact: true }).fill('Fixture Owner');
@@ -139,6 +142,8 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   await page.goto('#/club-signin');
   await page.getByLabel('Email', { exact: true }).fill('fixture@example.test'); await page.getByLabel('Password', { exact: true }).fill('FixturePassword982');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  // Now they own a club, sign-in opens My clubs.
+  await expect(page).toHaveURL(/#\/club$/);
   await expect(page.getByRole('button', { name: 'Create a club', exact: true })).toBeVisible();
   await page.goto(`#/club-view/${cid}`);
   await expect(page.getByRole('heading', { name: 'Fixture Club', exact: true })).toBeVisible();
