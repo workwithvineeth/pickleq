@@ -61,6 +61,7 @@ export async function openCourt(page: Page, token: string, pin: string) {
 export async function tap(page: Page, nameA: string, nameB: string, points: string) {
   // Events default to side-out scoring; these robots score point by point, so they pick rally scoring before the first rally.
   const rally = page.getByRole('button', { name: 'Rally scoring' });
+  await rally.or(page.getByRole('button', { name: `Point to ${nameA}` })).first().waitFor();
   if (await rally.isVisible()) await rally.click();
   for (const p of points) await page.getByRole('button', { name: `Point to ${p === 'A' ? nameA : nameB}` }).click();
 }
