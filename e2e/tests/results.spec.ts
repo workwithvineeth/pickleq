@@ -8,7 +8,7 @@ test.describe('Public results link (no login)', () => {
   test('shows the live table and scores, and nothing private', async ({ page }) => {
     await page.goto(`#/results/${TEST.slug}`);
     await expect(page.getByRole('heading', { name: TEST.event })).toBeVisible();
-    await expect(page.getByText(`${TEST.club} ·`)).toBeVisible();
+    await expect(page.getByText(`${TEST.club} ·`).first()).toBeVisible();
     await expect(page.getByText(/Live, updates every 20 seconds/)).toBeVisible();
     const table = page.getByRole('table', { name: 'Pool A' });
     await expect(table.getByRole('row')).toHaveCount(5);

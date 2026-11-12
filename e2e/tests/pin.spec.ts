@@ -68,7 +68,7 @@ test.describe('Referee PIN and desk access (real server)', () => {
 
   test('the admin sign-in page refuses a wrong password and offers no sign-up', async ({ page }) => {
     await page.goto('#/admin-login');
-    await expect(page.getByRole('heading', { name: 'PaddleQ admin' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'RallyQ admin' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Create account' })).toHaveCount(0);
     await page.getByLabel('Email').fill('nobody-robot@example.com');
     await page.getByLabel('Password', { exact: true }).fill('wrong-password-1');

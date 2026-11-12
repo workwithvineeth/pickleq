@@ -124,9 +124,10 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       b.currentUser().catch(() => null),
     ]);
     const seen = new Set(real.map((e) => e.slug));
-    const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].filter((e) => inLaunchCity(e.city)).sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
+    // The robot's test board (#/events/robot) lists its sandbox event, which isn't in the launch city.
+    const events = [...real, ...demo.filter((e) => !seen.has(e.slug))].filter((e) => robot || inLaunchCity(e.city)).sort((x, y) => x.startDate.localeCompare(y.startDate) || x.startTime.localeCompare(y.startTime));
     const pastSeen = new Set(pastReal.map((e) => e.slug));
-    const past = [...pastReal, ...pastDemo.filter((e) => !pastSeen.has(e.slug))].filter((e) => inLaunchCity(e.city)).sort((x, y) => y.startDate.localeCompare(x.startDate));
+    const past = [...pastReal, ...pastDemo.filter((e) => !pastSeen.has(e.slug))].filter((e) => robot || inLaunchCity(e.city)).sort((x, y) => y.startDate.localeCompare(x.startDate));
     const queue = admin ? await b.approvalQueue().catch(() => []) : [];
     return { events, past, pending: queue.filter((q) => q.approval === 'submitted').length, admin, serverDown, signedIn: !!user };
   }, [b, robot]);
