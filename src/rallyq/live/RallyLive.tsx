@@ -5,7 +5,7 @@ import {serverBackend} from '../../club';
 import {inLaunchCity} from '../../club/config';
 import {useLoad} from '../../club/screens/common';
 import {usePublicScores} from '../../club/screens/usePublicScores';
-import {courtMatches,matchView,pointHistory} from '../../club/liveView';
+import {courtMatches,matchView,scoredPoints} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
 import {liveWinBar,NO_WIN_BAR,winBarFrom,winBarHtml,type WinBar} from '../../club/winBar';
 import {winEstimate} from '../../club/winPredictor';
@@ -53,7 +53,7 @@ export function RallyLive({go}:{go:Go}){
  let venues:Venue[]=SAMPLE;
  if(events.length){
   venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
-   const courts:Court[]=d?courtMatches(d).map(({court,match})=>{const view=matchView(d,match);const pts=String((match as {points?:string}).points??'');const ok=pointHistory(pts,view.pointsA,view.pointsB).length?pts:'';
+   const courts:Court[]=d?courtMatches(d).map(({court,match})=>{const view=matchView(d,match);const cur=match.games.at(-1);const ok=cur?scoredPoints(cur,view.division?.kind!=='singles'):'';
     return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok,win:liveWinBar(d,match)};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }

@@ -23,3 +23,13 @@ describe('side-out scoring', () => {
     expect(replayRally('ABBA')).toEqual({ a: 2, b: 2, points: 'ABBA' });
   });
 });
+
+describe('live strip points from public games', () => {
+  it('replays side-out rallies, keeps rally scoring, and checks the score', async () => {
+    const { scoredPoints } = await import('../liveView');
+    expect(scoredPoints({ rallies: 'AABBAA', serve: 'A', mode: 'sideout', a: 2, b: 1 }, true)).toBe('AAB');
+    expect(scoredPoints({ rallies: 'ABBA', mode: 'rally', a: 2, b: 2 }, true)).toBe('ABBA');
+    expect(scoredPoints({ points: 'AB', a: 1, b: 1 }, true)).toBe('AB');
+    expect(scoredPoints({ rallies: 'AAAA', mode: 'rally', a: 1, b: 0 }, true)).toBe('');
+  });
+});

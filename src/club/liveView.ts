@@ -1,3 +1,4 @@
+import { replaySideOut } from './domain/sideout';
 import type { PublicTournament } from './backend';
 import { formatFor } from './domain/engine';
 import { gameOver } from './domain/momentum';
@@ -83,3 +84,12 @@ export function headToHead(d: PublicTournament, m: PublicMatch) {
 
 /** A match-point signal is derived only from the existing scoring format and games. */
  export function isMatchPoint(d:PublicTournament,m:PublicMatch){if(m.status!=='live')return false;const v=matchView(d,m),need=Math.ceil(v.format.bestOf/2);if(gameOver(v.pointsA,v.pointsB,v.format.pointsTo,!!v.format.golden))return false;const golden=!!v.format.golden&&v.pointsA===v.format.pointsTo-1&&v.pointsB===v.format.pointsTo-1;return(golden&&(v.gamesA===need-1||v.gamesB===need-1))||(v.pointsA>=v.format.pointsTo-1&&v.pointsA>v.pointsB&&v.gamesA===need-1)||(v.pointsB>=v.format.pointsTo-1&&v.pointsB>v.pointsA&&v.gamesB===need-1);}
+
+/**
+ * The scored points of one game, in order ("AABA"), for the live "last points" strip. Public scores send the referee's
+ * full rally list (side-out or rally scoring) instead of the point list, so side-out rallies are replayed here.
+ */
+export function scoredPoints(g: { points?: string; rallies?: string; mode?: string; serve?: 'A' | 'B'; a: number; b: number }, doubles: boolean): string {
+  const pts = g.points ? g.points : g.rallies ? (g.mode === 'rally' ? g.rallies : replaySideOut(g.rallies, g.serve ?? 'A', doubles).points) : '';
+  return pointHistory(pts, g.a, g.b).length ? pts : '';
+}
