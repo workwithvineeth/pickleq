@@ -11,6 +11,7 @@ import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, ty
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { OrganiserCard, PosterImage } from './Poster';
 import { friendlyDate, friendlyTime } from '../dates';
+import { entryStatus } from '../../rallyq/studio/myTournaments';
 
 // ---------- Helpers ----------
 
@@ -539,14 +540,6 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
 }
 
 // ---------- My entries ----------
-
-/** Waiting is neutral, confirmed is good, the rest is quiet (never coral or gold). */
-function entryStatus(x: MyEntry): { cls: string; text: string } {
-  if (x.status === 'accepted') return { cls: 'st ok', text: 'Confirmed' };
-  if (x.status === 'pending') return { cls: 'st wait', text: x.fee && x.payment === 'unpaid' ? 'Waiting for payment' : REG_STATUS_LABEL.pending };
-  if (x.status === 'waitlist') return { cls: 'st off', text: 'Waitlist' };
-  return { cls: x.status === 'rejected' ? 'st no' : 'st off', text: REG_STATUS_LABEL[x.status] };
-}
 
 export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
   const b = eventsBackend();
