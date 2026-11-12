@@ -30,7 +30,7 @@ export function AdminCommandCentre({ go }: { go: Go }) {
         <div className="pq-kpis">
           <Kpi label="Clubs" value={d.o.clubs} sub={`${d.o.verifiedClubs} trusted${reviewClubs.length ? ` · ${reviewClubs.length} requesting review` : ''}`} onClick={() => go('admin', 'clubs')} />
           <Kpi label="Active events" value={d.o.live + d.o.upcoming} sub={`${d.o.live} live · ${d.o.upcoming} coming up`} onClick={() => go('admin', 'tournaments')} />
-          <Kpi label="To approve" value={waiting.length} sub={`${entries} player entries in open events · ${d.o.entriesWeek} new this week`} onClick={() => go('admin', 'approvals')} />
+          <Kpi label="To approve" value={waiting.length} sub={waiting.length ? `${waiting.length === 1 ? 'tournament' : 'tournaments'} waiting for you · ${entries} player entries in open events` : `nothing waiting · ${entries} player entries in open events`} onClick={() => go('admin', 'approvals')} />
           <Kpi label="Matches this week" value={d.o.matchesWeek} sub={trend(d.o.weeks)} onClick={() => go('admin', 'results')} />
         </div>
         <div className="pq-panels">
@@ -47,7 +47,7 @@ export function AdminCommandCentre({ go }: { go: Go }) {
           </Panel>
         </div>
         <div className="pq-panels pq-even">
-          <Panel title="Matches scored · weekly trend" label="Matches scored this week" action={<MiniBtn onClick={() => go('admin', 'marketing')}>Platform BI</MiniBtn>}>
+          <Panel title="Matches scored · weekly trend" label="Matches scored this week" action={<MiniBtn onClick={() => go('admin', 'marketing')}>Growth numbers</MiniBtn>}>
             <Bars label="Matches scored per week" data={d.o.weeks.map((w) => ({ label: weekLabel(w.week).split(' ')[0], value: w.matches }))} />
             <p className="small muted" style={{ margin: '6px 0 0' }}>Weeks start on Monday. The robot’s test club isn’t counted.</p>
           </Panel>

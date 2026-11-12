@@ -1,3 +1,4 @@
+import { friendlyDate } from '../../club/dates';
 import { useEffect, useId, useMemo, useState } from 'react';
 import type { Go } from '../../navigation';
 import { useTournament } from '../../club/screens/Organiser';
@@ -99,7 +100,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
     <MatchdayShell go={go} active="desk" d={d}>
       <div className="between">
         <div className="pg-h">
-          <span className="cap">{t.status === 'live' && <span className="chip live" style={{ marginRight: 8 }}>Live</span>}{t.name} · {new Date(now).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+          <span className="cap">{t.status === 'live' && <span className="chip live" style={{ marginRight: 8 }}>Live</span>}{t.name} · {t.status === 'live' ? `Now ${new Date(now).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}` : `Starts ${friendlyDate(t.startDate)}, ${clock12(t.startTime)}`}</span>
           <h1 className="disp" aria-label={`${t.name} · Desk`}>Desk</h1>
         </div>
         <div className="row" style={{ flexWrap: 'wrap', gap: '4px 18px' }}>

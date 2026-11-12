@@ -59,7 +59,7 @@ export function AdminDashboard({ section, go, onBack }: { section: AdminSection;
   const growthSection = section === 'branding' || section === 'marketing' || section === 'circuit';
   return (
     <PublicShell go={go} host={{ marks: [], cap: 'Platform admin', name: 'RallyQ' }}>
-      <PageHead cap="RallyQ admin" title={<span id="admin-title">{section === 'overview' ? 'Founder command centre' : current.title}</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <PageHead cap="RallyQ admin" title={<span id="admin-title">{section === 'overview' ? 'Admin dashboard' : current.title}</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
       <Legacy cards style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <DemoNote b={b.kind === 'demo' ? b : null} />
       <Status error={allowed.error} loading={allowed.loading && allowed.data === null} />

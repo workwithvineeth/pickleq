@@ -92,7 +92,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
       )}
       <section className="grid g4" aria-label={`${div.name} entries`}>
         <div className="card stat" style={{ padding: 18 }}><div className="cap">Payments to check</div><div className={`n${nCheck ? ' acc' : ''}`}>{nCheck}</div><div className="mut" style={{ fontSize: 13 }}>players say they paid by UPI</div></div>
-        <div className="card stat" style={{ padding: 18 }}><div className="cap">Accepted</div><div className="n">{counts.accepted}</div><div className="mut" style={{ fontSize: 13 }}>{cap !== undefined ? `of ${cap} ${div.kind === 'doubles' ? 'team' : 'player'} spots` : div.kind === 'doubles' ? 'teams in' : 'players in'}{fee > 0 && counts.unpaidAccepted ? ` · ${counts.unpaidAccepted} not paid yet` : ''}</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Accepted</div><div className="n">{counts.accepted}</div><div className="mut" style={{ fontSize: 13 }}>{cap !== undefined ? `of ${cap} ${div.kind === 'doubles' ? 'team' : 'player'} spots` : div.kind === 'doubles' ? 'teams in' : 'players in'}{fee > 0 && counts.unpaidAccepted ? ` · ${counts.unpaidAccepted} ${counts.unpaidAccepted === 1 ? 'payment' : 'payments'} not confirmed yet` : ''}</div></div>
         <div className="card stat" style={{ padding: 18 }}><div className="cap">To decide</div><div className="n">{counts.pending}</div><div className="mut" style={{ fontSize: 13 }}>new entries waiting for you</div></div>
         <div className="card stat" style={{ padding: 18 }}><div className="cap">Waitlist</div><div className="n">{counts.waitlist}</div><div className="mut" style={{ fontSize: 13 }}>move up when a spot frees</div></div>
       </section>
