@@ -11,10 +11,10 @@ export function mainValues(state:MainState,setState:(patch:Partial<MainState>)=>
   // Fallback until the clubs publish (the real list comes from public_events); calendar from the 13 Nov handoff.
   const ev = [
     {date:'15 Nov',tag:'Tournament',name:'The Pickle Club',club:'The Pickle Club',area:'Hyderabad',mark:'TPC'},
-    {date:'15 Nov',tag:'Tournament',name:'Elite Picklers',club:'Elite Picklers',area:'Hyderabad',mark:'EP'},
+    {date:'15 Nov',tag:'Tournament',name:'Elite Picklers',club:'Elite Picklers',area:'Bowenpally',mark:'EP'},
     {date:'15 Nov',tag:'Tournament',name:'PKL Zone',club:'PKL Zone',area:'Hyderabad',mark:'PZ'},
-    {date:'15 Nov',tag:'Tournament',name:'Rally33',club:'Rally33',area:'Crosscourts',mark:'R33'},
-    {date:'21 Nov',tag:'Tournament',name:'Pickleyard',club:'Pickleyard',area:'Hyderabad',mark:'PY'},
+    {date:'15 Nov',tag:'Tournament',name:'Rally33',club:'Rally33',area:'CrossCourt, Gandipet',mark:'R33'},
+    {date:'21 Nov',tag:'Tournament',name:'Pickleyard',club:'Pickleyard',area:'Meerpet',mark:'PY'},
     {date:'28 Nov',tag:'Tournament',name:'Pickleball Central',club:'Pickleball Central',area:'Hyderabad',mark:'PC'}
   ].map(e => ({...e, chipCls: 'chip'}));
   return {

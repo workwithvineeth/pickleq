@@ -24,23 +24,23 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 .over{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,20,13,.94) 0%,rgba(6,20,13,.88) 26%,rgba(6,20,13,.3) 72%),linear-gradient(0deg,#06140D 0%,transparent 30%),linear-gradient(180deg,rgba(6,20,13,.6),transparent 18%)}
 .rq.day .over{background:linear-gradient(90deg,rgba(43,110,75,.93) 0%,rgba(43,110,75,.85) 26%,rgba(43,110,75,.25) 72%),linear-gradient(0deg,#2B6E4B 0%,transparent 30%)}
 .hlines{position:absolute;right:-6%;bottom:-8%;width:min(980px,90vw);z-index:-1;color:rgba(241,244,234,.2);pointer-events:none}
-.hlines path,.hlines line{stroke-dasharray:2400;stroke-dashoffset:2400;animation:draw 2.4s .3s cubic-bezier(.4,0,.2,1) forwards}
+.hlines path,.hlines line{stroke-dasharray:2400;stroke-dashoffset:2400;animation:draw 1.2s .15s cubic-bezier(.4,0,.2,1) forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
 .hnav a{color:#BFD0C4!important}.hnav a:hover{color:#F1F4EA!important}
 .hbody{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;align-items:center;padding-block:40px 130px;width:100%;box-sizing:border-box}
 .hh{font-size:clamp(56px,8.2vw,124px);margin:22px 0}
-.hh .ln{display:block;animation:rise .9s cubic-bezier(.16,.9,.24,1) both}
-.hh .l2{color:#D9F24A;animation-delay:.12s}
-.lede{max-width:520px;font-size:18px;color:#BFD0C4;margin:0 0 28px;animation:rise .9s .22s cubic-bezier(.16,.9,.24,1) both}
-.hctas{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;animation:rise .9s .3s cubic-bezier(.16,.9,.24,1) both}
+.hh .ln{display:block;animation:rise .5s cubic-bezier(.16,.9,.24,1) both}
+.hh .l2{color:#D9F24A;animation-delay:.06s}
+.lede{max-width:520px;font-size:18px;color:#BFD0C4;margin:0 0 28px;animation:rise .5s .12s cubic-bezier(.16,.9,.24,1) both}
+.hctas{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;animation:rise .5s .18s cubic-bezier(.16,.9,.24,1) both}
 @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-.hchip{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;background:rgba(19,48,34,.62);box-shadow:inset 0 0 0 1px rgba(241,244,234,.14);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:rise .9s cubic-bezier(.16,.9,.24,1) both}
+.hchip{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;background:rgba(19,48,34,.62);box-shadow:inset 0 0 0 1px rgba(241,244,234,.14);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:rise .5s cubic-bezier(.16,.9,.24,1) both}
 .pdot{width:8px;height:8px;border-radius:50%;background:#FF655C;animation:pulse 1.8s ease-out infinite}
 .rq .chip.live::before{animation:pulseD 1.8s ease-out infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,101,92,.6)}70%{box-shadow:0 0 0 9px rgba(255,101,92,0)}100%{box-shadow:0 0 0 0 rgba(255,101,92,0)}}
 @keyframes pulseD{0%{box-shadow:0 0 0 0 rgba(26,6,3,.5)}70%{box-shadow:0 0 0 6px rgba(26,6,3,0)}100%{box-shadow:0 0 0 0 rgba(26,6,3,0)}}
 .glass{background:linear-gradient(160deg,rgba(19,48,34,.62),rgba(6,20,13,.5));-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(241,244,234,.11),0 30px 60px -30px rgba(0,0,0,.55);border-radius:22px}
-.sc{display:block;padding:18px;color:#F1F4EA!important;animation:rise .9s .4s cubic-bezier(.16,.9,.24,1) both}
+.sc{display:block;padding:18px;color:#F1F4EA!important;animation:rise .5s .24s cubic-bezier(.16,.9,.24,1) both}
 .srow{display:grid;grid-template-columns:1fr auto;align-items:center;padding:8px 0}
 .srow+.srow{border-top:1px solid rgba(241,244,234,.11)}
 .srow b{display:flex;align-items:center;gap:8px;font-size:15px}
@@ -119,7 +119,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div style="position:relative;border-radius:32px;background:radial-gradient(80% 90% at 22% 10%,#1E4A33,#0D2218 70%);box-shadow:inset 0 0 0 1px rgba(241,244,234,.1);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:24px;align-items:end;padding:0 max(20px,3vw) 40px;color:#F1F4EA">
 <svg class="courtlines" viewBox="0 0 880 500" preserveAspectRatio="none" aria-hidden="true" style="left:40px;top:40px;width:calc(100% - 80px);height:calc(100% - 80px)"><g><rect x="1" y="1" width="878" height="498"></rect><line x1="440" y1="1" x2="440" y2="499"></line><line x1="300" y1="1" x2="300" y2="499"></line><line x1="580" y1="1" x2="580" y2="499"></line><line x1="1" y1="250" x2="300" y2="250"></line><line x1="580" y1="250" x2="879" y2="250"></line></g></svg>
 <div class="disp" aria-hidden="true" style="position:absolute;left:32px;top:10px;font-size:clamp(90px,15vw,210px);color:rgba(241,244,234,.07);letter-spacing:-.06em;pointer-events:none">KIRAN</div>
-<div style="position:relative;margin-top:-110px;margin-bottom:-40px"><img src="/_blob/f93de6e44b8b459c167d7eae7a8720cf" alt="Kiran Reddy hitting a forehand" style="display:block;width:100%;max-width:620px;height:auto;filter:drop-shadow(0 24px 30px rgba(0,0,0,.45))"></div>
+<div style="position:relative;margin-top:-110px;margin-bottom:-40px"><img src="/_blob/f93de6e44b8b459c167d7eae7a8720cf" alt="Kiran Reddy after a match (demo profile)" style="display:block;width:100%;max-width:420px;aspect-ratio:4/5;object-fit:cover;border-radius:24px;height:auto;filter:drop-shadow(0 24px 30px rgba(0,0,0,.45))"></div>
 <div style="position:relative;display:flex;flex-direction:column;gap:16px;padding-top:48px;min-width:0">
 <div class="cap" style="color:#D9F24A">Player Studio · Player of the week</div>
 <div class="disp" style="font-size:clamp(44px,5.6vw,76px)">KIRAN REDDY</div>
