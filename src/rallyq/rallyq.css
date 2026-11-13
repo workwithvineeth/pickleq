@@ -101,3 +101,7 @@
 .rallyq-prototype .wp-bar{height:6px;border-radius:999px;overflow:hidden}
 .rallyq-prototype .wp-lead{color:#D9F24A}
 .rallyq-prototype .wp-other{color:#9FB4A6;font-weight:600}
+
+/* Page transitions (navigation.ts): quick cross-fade, off with reduced motion. */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.22s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}

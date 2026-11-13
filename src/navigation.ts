@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom';
 import { useCallback, useEffect, useState } from 'react';
 
 export type Tab = 'home' | 'matches' | 'events' | 'train' | 'stats' | 'coach';
@@ -28,11 +29,19 @@ export function routeHash(r: Route): string {
 
 export type Go = (name: RouteName, id?: string, opts?: { replace?: boolean }) => void;
 
+/** A short cross-fade between screens where the browser supports View Transitions; instant for reduced motion. */
+function withTransition(update: () => void) {
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!doc.startViewTransition || reduced) { update(); return; }
+  doc.startViewTransition(() => flushSync(update));
+}
+
 /** Hash-based routes so the phone's back button and GitHub Pages both work. */
 export function useRoute(): [Route, Go, () => void] {
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
   useEffect(() => {
-    const onHash = () => setRoute(parseRoute(window.location.hash));
+    const onHash = () => withTransition(() => setRoute(parseRoute(window.location.hash)));
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -43,7 +52,7 @@ export function useRoute(): [Route, Go, () => void] {
       if (opts?.replace) window.history.replaceState(null, '', hash);
       else window.location.hash = hash;
     }
-    setRoute(next);
+    withTransition(() => setRoute(next));
     window.scrollTo?.(0, 0);
   }, []);
   const back = useCallback(() => {
