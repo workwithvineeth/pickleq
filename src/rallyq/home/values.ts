@@ -4,10 +4,10 @@ export const INITIAL_MAIN:MainState={menu:false,day:false,slide:0,sa:7,sb:5,srvA
 /** The announced calendar (13 Nov handoff); shown until the clubs publish their events on RallyQ. */
 export const UPCOMING_EVENTS = [
     {date:'15 Nov',tag:'Tournament',name:'The Pickle Club',club:'The Pickle Club',area:'Hyderabad',mark:'TPC'},
-    {date:'15 Nov',tag:'Tournament',name:'Elite Picklers',club:'Elite Picklers',area:'Hyderabad',mark:'EP'},
+    {date:'15 Nov',tag:'Tournament',name:'Elite Picklers',club:'Elite Picklers',area:'Bowenpally',mark:'EP'},
     {date:'15 Nov',tag:'Tournament',name:'PKL Zone',club:'PKL Zone',area:'Hyderabad',mark:'PZ'},
-    {date:'15 Nov',tag:'Tournament',name:'Rally33',club:'Rally33',area:'Crosscourts',mark:'R33'},
-    {date:'21 Nov',tag:'Tournament',name:'Pickleyard',club:'Pickleyard',area:'Hyderabad',mark:'PY'},
+    {date:'15 Nov',tag:'Tournament',name:'Rally33',club:'Rally33',area:'CrossCourt, Gandipet',mark:'R33'},
+    {date:'21 Nov',tag:'Tournament',name:'Pickleyard',club:'Pickleyard',area:'Meerpet',mark:'PY'},
     {date:'28 Nov',tag:'Tournament',name:'Pickleball Central',club:'Pickleball Central',area:'Hyderabad',mark:'PC'}
   ];
 
