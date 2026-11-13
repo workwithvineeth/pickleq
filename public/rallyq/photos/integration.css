@@ -1,0 +1,30 @@
+/* Opt-in draft. Place beside desktop/ and mobile/. Remove competing legacy image rules when integrating. */
+[data-rq-photo]{background-color:#06140D;background-size:cover;background-position:center;background-repeat:no-repeat;}
+[data-rq-photo="hero-night-rally"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/hero-night-rally.jpg");}
+[data-rq-photo="live-court-floodlights"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/live-court-floodlights.jpg");}
+[data-rq-photo="tv-board-arena"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/tv-board-arena.jpg");}
+[data-rq-photo="social-friends"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/social-friends.jpg");}
+[data-rq-photo="club-night"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/club-night.jpg");}
+[data-rq-photo="day-court-aerial"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/day-court-aerial.jpg");}
+[data-rq-photo="event-crowd-courtside"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/event-crowd-courtside.jpg");}
+[data-rq-photo="player-competitor"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/player-competitor.jpg");}
+[data-rq-photo="player-tracker"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/player-tracker.jpg");}
+[data-rq-photo="entries-still-life"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/entries-still-life.jpg");}
+[data-rq-photo="social-champions"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/social-champions.jpg");}
+[data-rq-photo="social-result"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/social-result.jpg");}
+[data-rq-photo="organiser-hands"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./desktop/organiser-hands.jpg");}
+@media(max-width:760px){
+[data-rq-photo="hero-night-rally"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/hero-night-rally.jpg");}
+[data-rq-photo="live-court-floodlights"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/live-court-floodlights.jpg");}
+[data-rq-photo="tv-board-arena"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/tv-board-arena.jpg");}
+[data-rq-photo="social-friends"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/social-friends.jpg");}
+[data-rq-photo="club-night"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/club-night.jpg");}
+[data-rq-photo="day-court-aerial"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/day-court-aerial.jpg");}
+[data-rq-photo="event-crowd-courtside"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/event-crowd-courtside.jpg");}
+[data-rq-photo="player-competitor"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/player-competitor.jpg");}
+[data-rq-photo="player-tracker"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/player-tracker.jpg");}
+[data-rq-photo="entries-still-life"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/entries-still-life.jpg");}
+[data-rq-photo="social-champions"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/social-champions.jpg");}
+[data-rq-photo="social-result"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/social-result.jpg");}
+[data-rq-photo="organiser-hands"]{background-image:linear-gradient(0deg,rgba(6,20,13,.8),transparent 55%),url("./mobile/organiser-hands.jpg");}
+}
