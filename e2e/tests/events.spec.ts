@@ -22,7 +22,9 @@ test.describe('Events board and registration (real server, no account)', () => {
     expect(event.divisions.find(d=>d.name==="Men's Doubles 3.5")).toMatchObject({kind:'doubles',fee:800,cap:16,max_dupr:3.5,taken:0});
     expect(event.divisions.find(d=>d.name==='Open Singles 35+')).toMatchObject({kind:'singles',fee:500,min_age:35});
     await page.getByRole('button', { name: 'Enter the event', exact: true }).click();
-    await page.getByRole('button', { name: "Enter Men's Doubles 3.5", exact: true }).click();
+    // RallyQ entry: pick the category card (its name carries the rules line), then Continue.
+    await page.getByRole('group', { name: 'Event categories' }).getByRole('button', { name: /^Men's Doubles 3\.5/ }).click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Sign in to enter' })).toBeVisible();
     await page.getByRole('button', { name: 'Sign in to enter' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
