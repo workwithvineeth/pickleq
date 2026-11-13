@@ -24,10 +24,10 @@ export function templates(d:PublicTournament|null){
  const v=(m:PublicTournament['matches'][number])=>d?matchView(d,m):null;
  const wn=(m:PublicTournament['matches'][number])=>{const x=v(m);return x?(m.winner==='A'?x.a:x.b):'';};
  return {
-  'Entries open':{kicker:date,head:name+'. Entries open.',big:d?d.entries.length+' teams':'',foot:'Enter on RallyQ · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-ball'},
-  'Live now':{kicker:live?'Court '+live.court:'Live',head:live?v(live.match)!.a+' vs '+v(live.match)!.b:'Courts go live soon',big:live?v(live.match)!.pointsA+' – '+v(live.match)!.pointsB:'',foot:'See live scores on RallyQ',chip:'Live',chipCls:'chip live',ph:'ph-night'},
-  'Result':{kicker:last?(v(last)?.division?.name??'Result'):'Result',head:last?wn(last)+' win.':'Results appear after each match.',big:last?score(last):'',foot:date,chip:'Result',chipCls:'chip',ph:'ph-group'},
-  'Champion':{kicker:name+(fin?' · '+(v(fin)?.division?.name??''):''),head:fin?'Champions. '+wn(fin)+'.':'Champions crowned at the final.',big:fin?score(fin):'',foot:date,chip:'Champions',chipCls:'chip gold',ph:'ph-woman'}
+  'Entries open':{kicker:date,head:name+'. Entries open.',big:d?d.entries.length+' teams':'',foot:'Enter on RallyQ · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-entries'},
+  'Live now':{kicker:live?'Court '+live.court:'Live',head:live?v(live.match)!.a+' vs '+v(live.match)!.b:'Courts go live soon',big:live?v(live.match)!.pointsA+' – '+v(live.match)!.pointsB:'',foot:'See live scores on RallyQ',chip:'Live',chipCls:'chip live',ph:'ph-livenow'},
+  'Result':{kicker:last?(v(last)?.division?.name??'Result'):'Result',head:last?wn(last)+' win.':'Results appear after each match.',big:last?score(last):'',foot:date,chip:'Result',chipCls:'chip',ph:'ph-result'},
+  'Champion':{kicker:name+(fin?' · '+(v(fin)?.division?.name??''):''),head:fin?'Champions. '+wn(fin)+'.':'Champions crowned at the final.',big:fin?score(fin):'',foot:date,chip:'Champions',chipCls:'chip gold',ph:'ph-champions'}
  } as Record<T,{kicker:string;head:string;big:string;foot:string;chip:string;chipCls:string;ph:string}>;
 }
 export function RallySocial({slug,go}:{slug:string;go:Go}){
@@ -35,7 +35,7 @@ export function RallySocial({slug,go}:{slug:string;go:Go}){
  const[s,setS]=useState<{t:T;s:S;z:string;saved:boolean}>({t:'Champion',s:'Night',z:'Post 4:5',saved:false});
  const[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const TP=templates(d),st=ST[s.s],tp=TP[s.t];
- const exportPoster=async(share:boolean)=>{if(busy)return;setBusy(true);setMessage('');try{const photos:Record<string,string>={'ph-ball':'ball-court.jpg','ph-night':'court-night.jpg','ph-group':'group-play.jpg','ph-woman':'woman-hit.jpg'};const blob=await posterPng({club:d?.club??'Your club',mark:d?mark(d.club):'',...tp,bg:st.bg,ink:st.ink,accent:st.acc,photo:st.photo?photos[tp.ph]:undefined,size:s.z as PosterContent['size']});const name='rallyq-'+s.t.toLowerCase().replaceAll(' ','-')+'-'+s.z.replaceAll(' ','-').replace(':','x')+'.png';if(share)setMessage(await sharePoster(blob,name,tp.head+' · '+tp.foot));else{savePoster(blob,name);setMessage('PNG saved')}setS(current=>({...current,saved:true}));}catch(e){if(!(e instanceof Error&&e.name==='AbortError'))setMessage(e instanceof Error?e.message:'Export failed. Try again.')}finally{setBusy(false)}};
+ const exportPoster=async(share:boolean)=>{if(busy)return;setBusy(true);setMessage('');try{const photos:Record<string,string>={'ph-entries':'photos/desktop/entries-still-life.jpg','ph-livenow':'photos/desktop/live-court-floodlights.jpg','ph-result':'photos/desktop/social-result.jpg','ph-champions':'photos/desktop/social-champions.jpg'};const blob=await posterPng({club:d?.club??'Your club',mark:d?mark(d.club):'',...tp,bg:st.bg,ink:st.ink,accent:st.acc,photo:st.photo?photos[tp.ph]:undefined,size:s.z as PosterContent['size']});const name='rallyq-'+s.t.toLowerCase().replaceAll(' ','-')+'-'+s.z.replaceAll(' ','-').replace(':','x')+'.png';if(share)setMessage(await sharePoster(blob,name,tp.head+' · '+tp.foot));else{savePoster(blob,name);setMessage('PNG saved')}setS(current=>({...current,saved:true}));}catch(e){if(!(e instanceof Error&&e.name==='AbortError'))setMessage(e instanceof Error?e.message:'Export failed. Try again.')}finally{setBusy(false)}};
  const dims=({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'} as Record<string,string>)[s.z];
  const values={logoUrl:logoUrl??'',noLogo:!logoUrl,clubName:d?.club??'Your club',clubMark:d?mark(d.club):'',
   tpls:(Object.keys(TP) as T[]).map(n=>({name:n,cls:n===s.t?'tab on':'tab',pick:()=>setS({...s,t:n,saved:false})})),

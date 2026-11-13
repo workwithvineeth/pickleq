@@ -165,7 +165,7 @@ textarea.inp{min-height:96px;padding:12px 14px;resize:vertical}
 /* RallyQ Day mode v3 (Vineeth, 11 Nov): every page = the Home hero look.
    Court photo + court-green tint behind everything, glass cards on top, white type, ball highlights. */
 .rq.day{--pg:transparent;--alt:rgba(6,24,15,.32);--c1:rgba(8,30,19,.52);--c2:rgba(255,255,255,.09);--ink:#F4F7EE;--mut:#D5E3D8;--ball:#E4F75A;--on:#0B2418;--gold:#F0CF6A;--coral:#FF6B62;--err:#FFB3A8;--line:rgba(255,255,255,.16);
-  background:linear-gradient(180deg,rgba(43,110,75,.80) 0%,rgba(36,95,64,.84) 45%,rgba(24,68,45,.92) 100%),url(%BASE%rallyq/group-play.jpg) center 35%/cover fixed!important}
+  background:linear-gradient(180deg,rgba(43,110,75,.80) 0%,rgba(36,95,64,.84) 45%,rgba(24,68,45,.92) 100%),url(%BASE%rallyq/photos/desktop/event-crowd-courtside.jpg) center 35%/cover fixed!important}
 .rq.day .card,.rq.day .m,.rq.day .opt,.rq.day .steps button,.rq.day .tab{-webkit-backdrop-filter:blur(16px) saturate(1.1);backdrop-filter:blur(16px) saturate(1.1)}
 .rq.day .card{background:var(--c1);box-shadow:inset 0 0 0 1px var(--line),0 12px 32px rgba(3,15,9,.22)}
 .rq.day .card2{background:rgba(255,255,255,.08)}
@@ -248,7 +248,7 @@ textarea.inp{min-height:96px;padding:12px 14px;resize:vertical}
 
 /* ---- Data glass (Day): more opaque, no lines, readable over the photo ---- */
 .rq.day{--c1:rgba(6,22,14,.74);--c2:rgba(255,255,255,.08);
-  background:linear-gradient(180deg,rgba(43,110,75,.82) 0%,rgba(30,84,56,.88) 45%,rgba(14,46,29,.95) 100%),url(%BASE%rallyq/group-play.jpg) center 35%/cover fixed!important}
+  background:linear-gradient(180deg,rgba(43,110,75,.82) 0%,rgba(30,84,56,.88) 45%,rgba(14,46,29,.95) 100%),url(%BASE%rallyq/photos/desktop/event-crowd-courtside.jpg) center 35%/cover fixed!important}
 .rq.day .card{background:var(--c1);-webkit-backdrop-filter:blur(18px) saturate(1.05);backdrop-filter:blur(18px) saturate(1.05)}
 .rq.day .side{background:rgba(6,22,14,.62)}
 .rq.day .m{background:rgba(6,22,14,.7)}
@@ -260,10 +260,10 @@ textarea.inp{min-height:96px;padding:12px 14px;resize:vertical}
 .poster{position:relative;overflow:hidden;border-radius:16px;display:flex;flex-direction:column;justify-content:space-between;padding:18px;color:#F1F4EA;background:#06140D;box-shadow:0 18px 46px rgba(0,0,0,.4);isolation:isolate}
 .poster.ph::before{content:"";position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 25%}
 .poster.ph::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.25) 15%,rgba(6,20,13,.92) 72%)}
-.poster.p-woman::before{background-image:url(%BASE%rallyq/meera.jpg)}
-.poster.p-man::before{background-image:url(%BASE%rallyq/meera.jpg);background-position:60% 10%}
-.poster.p-hero::before{background-image:url(%BASE%rallyq/meera-hero.jpg);background-position:70% 0%}
-.poster.p-ball::before{background-image:url(%BASE%rallyq/ball-court.jpg)}
+.poster.p-woman::before{background-image:url(%BASE%rallyq/photos/desktop/player-tracker.jpg)}
+.poster.p-man::before{background-image:url(%BASE%rallyq/photos/desktop/player-competitor.jpg);background-position:60% 10%}
+.poster.p-hero::before{background-image:url(%BASE%rallyq/photos/desktop/hero-night-rally.jpg);background-position:70% 0%}
+.poster.p-ball::before{background-image:url(%BASE%rallyq/photos/desktop/entries-still-life.jpg)}
 .poster.champ{box-shadow:inset 0 0 0 2px var(--gold),0 18px 46px rgba(0,0,0,.4)}
 .poster .corner{position:absolute;width:44px;height:44px;border:3px solid #F1F4EA;opacity:.9}
 .poster .c1{top:12px;left:12px;border-right:0;border-bottom:0}.poster .c2{bottom:12px;right:12px;border-left:0;border-top:0}
@@ -322,7 +322,7 @@ figcaption{flex-wrap:wrap;gap:8px}
 @keyframes rqDrift{from{background-position:65% 0%}to{background-position:65% 14%}}
 .rq .ph-man{animation:rqDrift 12s ease-in-out infinite alternate}
 @media (prefers-reduced-motion:reduce){.rq .ph-man{animation:none}}
-@media (min-width:761px){.rq .slides .s1{background-image:url(%BASE%rallyq/meera-hero.jpg)!important;background-size:cover!important;background-position:100% 0%!important}}
+@media (min-width:761px){.rq .slides .s1{background-image:url(%BASE%rallyq/photos/desktop/social-champions.jpg)!important;background-size:cover!important;background-position:100% 0%!important}}
 /* Watermark: as visible as Prototype 2 (Vineeth, 11 Nov 13:15); moved down so its line clears the page header (Vineeth, 12 Nov) */
 .wm{top:-30px!important;right:-140px!important;width:620px!important;opacity:.9;--c:rgba(241,244,234,.07)!important;--a:rgba(217,242,74,.55)!important}
 .rq.day .wm{--c:rgba(255,255,255,.1)!important;--a:rgba(228,247,90,.6)!important}
@@ -338,3 +338,21 @@ figcaption{flex-wrap:wrap;gap:8px}
 /* 44 px tap area on the Night/Day switch without changing how it looks */
 .mode{position:relative;flex:none}
 .mode::after{content:"";position:absolute;inset:-6px -2px}
+
+/* RallyQ photo set v2 (13 Nov): one image per slot; phone versions under 760px. */
+.ph-live{background-image:url(%BASE%rallyq/photos/desktop/live-court-floodlights.jpg)!important;background-position:center}
+.ph-tvboard{background-image:url(%BASE%rallyq/photos/desktop/tv-board-arena.jpg)!important;background-position:center 35%}
+.ph-friends{background-image:url(%BASE%rallyq/photos/desktop/social-friends.jpg)!important;background-position:center 30%}
+.ph-clubnight{background-image:url(%BASE%rallyq/photos/desktop/club-night.jpg)!important;background-position:center}
+.ph-aerial{background-image:url(%BASE%rallyq/photos/desktop/day-court-aerial.jpg)!important;background-position:center}
+.ph-crowd{background-image:url(%BASE%rallyq/photos/desktop/event-crowd-courtside.jpg)!important;background-position:center 40%}
+.ph-competitor{background-image:url(%BASE%rallyq/photos/desktop/player-competitor.jpg)!important;background-position:center 25%}
+.ph-tracker{background-image:url(%BASE%rallyq/photos/desktop/player-tracker.jpg)!important;background-position:center 30%}
+.ph-stills{background-image:url(%BASE%rallyq/photos/desktop/entries-still-life.jpg)!important;background-position:center}
+.ph-champions{background-image:url(%BASE%rallyq/photos/desktop/social-champions.jpg)!important;background-position:center 30%}
+.ph-result{background-image:url(%BASE%rallyq/photos/desktop/social-result.jpg)!important;background-position:center 35%}
+.ph-entries{background-image:url(%BASE%rallyq/photos/desktop/entries-still-life.jpg)!important;background-position:center}
+.ph-livenow{background-image:url(%BASE%rallyq/photos/desktop/live-court-floodlights.jpg)!important;background-position:center}
+.ph-organiser{background-image:url(%BASE%rallyq/photos/desktop/organiser-hands.jpg)!important;background-position:center}
+@media (max-width:760px){.ph-live{background-image:url(%BASE%rallyq/photos/mobile/live-court-floodlights.jpg)!important}.ph-tvboard{background-image:url(%BASE%rallyq/photos/mobile/tv-board-arena.jpg)!important}.ph-friends{background-image:url(%BASE%rallyq/photos/mobile/social-friends.jpg)!important}.ph-clubnight{background-image:url(%BASE%rallyq/photos/mobile/club-night.jpg)!important}.ph-aerial{background-image:url(%BASE%rallyq/photos/mobile/day-court-aerial.jpg)!important}.ph-crowd{background-image:url(%BASE%rallyq/photos/mobile/event-crowd-courtside.jpg)!important}.ph-competitor{background-image:url(%BASE%rallyq/photos/mobile/player-competitor.jpg)!important}.ph-tracker{background-image:url(%BASE%rallyq/photos/mobile/player-tracker.jpg)!important}.ph-stills{background-image:url(%BASE%rallyq/photos/mobile/entries-still-life.jpg)!important}.ph-champions{background-image:url(%BASE%rallyq/photos/mobile/social-champions.jpg)!important}.ph-result{background-image:url(%BASE%rallyq/photos/mobile/social-result.jpg)!important}.ph-entries{background-image:url(%BASE%rallyq/photos/mobile/entries-still-life.jpg)!important}.ph-livenow{background-image:url(%BASE%rallyq/photos/mobile/live-court-floodlights.jpg)!important}.ph-organiser{background-image:url(%BASE%rallyq/photos/mobile/organiser-hands.jpg)!important}}
+.rq .ph-competitor,.rq .ph-tracker{animation:rqDrift 12s ease-in-out infinite alternate}@media (prefers-reduced-motion:reduce){.rq .ph-competitor,.rq .ph-tracker{animation:none}}
