@@ -35,7 +35,7 @@ export function phoneProblem(country: string, digits: string): string | null {
 
 export const joinPhone = (country: string, digits: string) => `${country} ${digits}`;
 
-export function PhoneField({ country, digits, onChange, id = 'phone' }: { country: string; digits: string; onChange: (country: string, digits: string) => void; id?: string }) {
+export function PhoneField({ country, digits, onChange, id = 'phone', invalid = false }: { country: string; digits: string; onChange: (country: string, digits: string) => void; id?: string; invalid?: boolean }) {
   const c = COUNTRIES.find((x) => x.code === country) ?? COUNTRIES[0];
   return (
     <div className="section" style={{ gap: 6 }}>
@@ -44,7 +44,7 @@ export function PhoneField({ country, digits, onChange, id = 'phone' }: { countr
         <select className="input" aria-label="Country code" value={country} onChange={(e) => onChange(e.target.value, digits)} style={{ width: 'auto', flex: '0 0 auto', maxWidth: 140 }}>
           {COUNTRIES.map((x) => <option key={x.code} value={x.code}>{x.code} {x.name}</option>)}
         </select>
-        <input id={id} className="input" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder={c.code === '+91' ? '9876543210' : ''}
+        <input id={id} className="input" type="tel" aria-invalid={invalid || undefined} aria-describedby={invalid ? `${id}-error` : undefined} inputMode="numeric" autoComplete="tel-national" placeholder={c.code === '+91' ? '9876543210' : ''}
           value={digits} onChange={(e) => onChange(country, e.target.value.replace(/\D/g, '').slice(0, c.max))} style={{ flex: 1 }} />
       </div>
     </div>

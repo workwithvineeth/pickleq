@@ -105,6 +105,7 @@ test.describe('Cedar Club Season 8 (demo sample)', () => {
     const wo = page.getByRole('region', { name: 'Walkover or retired' });
     await wo.getByRole('button', { name: /Didn’t turn up or retired/ }).first().click();
     await wo.getByRole('button', { name: /go through$/ }).click();
+    await wo.getByRole('group', { name: 'Confirm walkover' }).getByRole('button', { name: 'Confirm' }).click();
     await expect(page.getByText(/win by walkover|win: the other side retired/)).toBeVisible();
   });
 

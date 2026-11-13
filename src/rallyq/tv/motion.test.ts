@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countStep, flipOnChange, pointLabel, serveOf, settled, stepAll } from './motion';
+import { countStep, finishedHandOffs, flipOnChange, leadAccent, pointLabel, serveOf, settled, stepAll } from './motion';
 
 describe('TV motion (team picks: count, pulse, wash)', () => {
   it('replays an animation each time the value changes, never on first sight', () => {
@@ -40,5 +40,22 @@ describe('TV motion (team picks: count, pulse, wash)', () => {
     expect(pointLabel(9, 5, 11, false, 0, 0, 1)).toBe('');
     expect(pointLabel(10, 10, 11, false, 0, 0, 2)).toBe('');
     expect(pointLabel(11, 3, 11, false, 0, 0, 1)).toBe('');
+    expect(pointLabel(10, 10, 11, true, 0, 0, 1)).toBe('Golden point');
+    expect(pointLabel(10, 9, 11, true, 0, 0, 1)).toBe('Match point');
+  });
+
+  it('holds a finished match only when its court moves on to another match', () => {
+    const done = (id: string) => id === 'old';
+    expect(finishedHandOffs({}, [{ court: 1, id: 'new' }], done)).toEqual({}); // first sight
+    expect(finishedHandOffs({ 1: 'old' }, [{ court: 1, id: 'new' }], done)).toEqual({ 1: 'old' });
+    expect(finishedHandOffs({ 1: 'old' }, [{ court: 1, id: 'old' }], done)).toEqual({}); // same match
+    expect(finishedHandOffs({ 1: 'moved' }, [{ court: 1, id: 'new' }], done)).toEqual({}); // not finished (moved court)
+  });
+
+  it('puts the ball accent on the leading score only', () => {
+    expect(leadAccent(7, 5)).toEqual({ a: 'rqm-acc', b: '' });
+    expect(leadAccent(3, 8)).toEqual({ a: '', b: 'rqm-acc' });
+    expect(leadAccent(4, 4)).toEqual({ a: '', b: '' });
+    expect(leadAccent('', '')).toEqual({ a: '', b: '' });
   });
 });

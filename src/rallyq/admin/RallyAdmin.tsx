@@ -19,15 +19,16 @@ export function RallyAdmin({go}:{go:Go}){
  if(data.data===null&&!data.loading)return <div className="rq" style={{minHeight:'50vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>Only RallyQ admins can see this.</div>;
  if(!data.data)return <div className="rq" style={{minHeight:'50vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>{data.error??'Loading admin…'}</div>;
  const{clubs,events}=data.data;const month=new Date().toISOString().slice(0,7);
+ // Approve calls setClubTrusted (admin_set_club_trusted): it marks the club trusted AND approves every unfinished tournament it has. Product decision pending.
  const approve=async(id:string,name:string)=>{try{await b.setClubTrusted(id,true);setMsg(name+' can now host events.');data.reload();}catch(e){setMsg(errorText(e));}};
- const status=(s:string)=>s==='live'?['Live','chip live']:s==='done'?['Done','chip']:['Draft','chip gold'];
+ const status=(s:string)=>s==='live'?['Live','chip live']:s==='done'?['Done','chip']:['Draft','st wait'];
  const values={
   title:({Clubs:'Clubs on RallyQ',Events:'Events',Brand:'Brand for clubs'} as Record<Tab,string>)[tab],
   pending:clubs.filter(c=>!c.trusted).length,msg,moreHref:'#/admin/overview',
   menu:([['Clubs',clubs.length],['Events',events.length],['Brand','']] as [Tab,number|string][]).map(([n,c])=>({name:n,count:c,cls:n===tab?'tab on':'tab',pick:()=>setTab(n)})),
   isClubs:tab==='Clubs',isEvents:tab==='Events',isBrand:tab==='Brand',
   clubsLive:clubs.filter(c=>c.trusted).length,eventsMonth:events.filter(e=>e.startDate.slice(0,7)===month).length,entries:events.reduce((s,e)=>s+e.registrations,0),scored:events.reduce((s,e)=>s+e.matchesDone,0),
-  clubs:clubs.map(c=>({n:c.name,a:c.city??'',e:c.lastEvent?day(c.lastEvent.slice(0,10)):'—',p:c.members+' members',st:c.trusted?'Live':'Pending',cls:c.trusted?'chip ball':'chip gold',canApprove:!c.trusted,approve:()=>{void approve(c.id,c.name);}})),
+  clubs:clubs.map(c=>({n:c.name,a:c.city??'',e:c.lastEvent?day(c.lastEvent.slice(0,10)):'—',p:c.members+' members',st:c.trusted?'Live':'Pending',cls:c.trusted?'chip ball':'st wait',canApprove:!c.trusted,approve:()=>{void approve(c.id,c.name);}})),
   events:events.slice().sort((a,c)=>c.startDate.localeCompare(a.startDate)).slice(0,12).map(e=>{const[s,cls]=status(e.status);return{d:day(e.startDate),n:e.name,c:e.club,s,cls,href:'#/event/'+encodeURIComponent(e.slug)};})
  };
  return <PrototypeScreen name="Admin" go={go} source={source} values={values}/>;

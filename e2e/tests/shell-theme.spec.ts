@@ -73,7 +73,7 @@ test('saved theme runs before app JavaScript and obeys CSP', async ({ page }) =>
 test('live status labels are readable and demo results announce score updates', async ({ page }) => {
   await demo(page);
   await page.goto('#/live');
-  await expect(page.getByText(/^Sample scores · /)).toBeVisible();
+  await expect(page.getByText(/^Sample scores · /).first()).toBeVisible();
   for (const day of [false, true]) {
     await chooseMode(page, day);
     await assertContrast(page.locator('.rallyq-prototype .chip.live:visible'));

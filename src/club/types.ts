@@ -112,6 +112,8 @@ export interface ClubTournament {
 export type Approval = 'draft' | 'submitted' | 'approved' | 'rejected';
 export const isApproved = (t: Pick<ClubTournament, 'approval'>) => !t.approval || t.approval === 'approved';
 export const APPROVAL_NOTE = 'Submit at least 24 hours before your event.';
+/** The one sentence on how approval works (migration 0018: clubs need no approval; each tournament does, unless the club is trusted). */
+export const GO_LIVE_NOTE = 'Set up tournaments any time. RallyQ approves each one before its draw, scoring and public pages go live.';
 export const PICK_NEEDS_TRUST = 'Picking the players makes the draw straight away, which needs RallyQ’s approval. Choose “They register”, add your players as entries, submit the tournament, then make the draw once it’s approved.';
 export const NOT_APPROVED = 'RallyQ hasn’t approved this tournament yet. Submit it for approval first.';
 

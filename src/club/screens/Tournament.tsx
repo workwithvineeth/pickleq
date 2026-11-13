@@ -12,9 +12,9 @@ import { Legacy } from './InboxLegacy';
 import { ChampionHero, ResultsPosters, type ChampionInfo } from './ResultsPosters';
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, formatFor, matchResult, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
-import { backend, publicSourcesFor } from '../index';
+import { backend, publicSourcesFor, rememberReturn } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, poolsComplete, type NewDivisionInput } from '../plan';
-import { isAdmin, isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type Division, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
+import { APPROVAL_NOTE, GO_LIVE_NOTE, isAdmin, isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type Division, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
 import { LifecycleCard } from './Lifecycle';
 import { PromoStudio } from './PromoStudio';
@@ -32,6 +32,7 @@ interface DivDraft { name: string; kind: DivisionKind; fmt: FormatDraft; picked:
 const newDraft = (kind: DivisionKind): DivDraft => ({ name: kind === 'singles' ? 'Open Singles' : 'Open Doubles', kind, fmt: defaultFormatDraft(), picked: [], teams: [], gender: 'open', maxDupr: '', duprCap: 'each', minAge: '', cap: '', fee: '' });
 /** What the organiser is posting: run on RallyQ with players picked now, run on RallyQ with players registering, or a board listing only. */
 type PostKind = 'roster' | 'registration' | 'listed';
+type NewField = 'name' | 'city' | 'venue' | 'contact' | 'upi' | 'link' | `event${number}`;
 const optNum = (v: string) => (v.trim() === '' ? undefined : Number(v));
 
 export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; onBack: () => void }) {
@@ -65,6 +66,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
   const [onBoard, setOnBoard] = useState(false);
   const [poster, setPoster] = useState<Blob | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [bad, setBad] = useState<{ field: NewField; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   // Picking players makes the draw at once, so only trusted clubs (approved automatically) get that option.
   const pickOk = !!club.data?.club.trusted;
@@ -81,15 +83,21 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
     return { name: d.name, kind: d.kind, ...f, entries: post === 'roster' ? (d.kind === 'singles' ? d.picked.map((p) => [p]) : d.teams) : [], rules: post === 'roster' ? undefined : rules };
   }
   const mode: EntryMode = post === 'registration' ? 'registration' : 'roster';
-  async function create() {
+  function invalid(field: NewField, text: string) {
+    setBad({ field, text }); setMsg(null);
+    const el = document.getElementById(`tnew-${field}`);
+    el?.scrollIntoView?.({ block: 'center' }); el?.focus({ preventScroll: true });
+  }
+  async function create(send = false) {
     if (!b) return;
-    if (name.trim().length < 2) return setMsg('Give the tournament a name');
-    if (post !== 'roster' && (!city.trim() || !venue.trim())) return setMsg('Add the city and venue');
-    if (post === 'listed' && !contact.trim() && !link.trim()) return setMsg('Add a contact number or a link so players can enter');
-    if (upi.trim() && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9.-]{2,64}$/.test(upi.trim())) return setMsg('A UPI ID looks like name@bank');
-    if (link.trim() && !/^https:\/\/[^\s<>"]+$/.test(link.trim())) return setMsg('A link starts with https://');
-    for (const d of divs) { const e = checkDivisionSetup(toInput(d), post === 'roster' ? 'roster' : 'registration'); if (e) return setMsg(`${d.name || 'Event'}: ${e}`); }
-    setBusy(true); setMsg(null);
+    if (name.trim().length < 2) return invalid('name', 'Give the tournament a name');
+    if (post !== 'roster' && !city.trim()) return invalid('city', 'Add the city');
+    if (post !== 'roster' && !venue.trim()) return invalid('venue', 'Add the venue');
+    if (post === 'listed' && !contact.trim() && !link.trim()) return invalid('contact', 'Add a contact number or a link so players can enter');
+    if (upi.trim() && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9.-]{2,64}$/.test(upi.trim())) return invalid('upi', 'A UPI ID looks like name@bank');
+    if (link.trim() && !/^https:\/\/[^\s<>"]+$/.test(link.trim())) return invalid('link', 'A link starts with https://');
+    for (const [i, d] of divs.entries()) { const e = checkDivisionSetup(toInput(d), post === 'roster' ? 'roster' : 'registration'); if (e) return invalid(`event${i}`, `${d.name || 'Event'}: ${e}`); }
+    setBusy(true); setMsg(null); setBad(null);
     const opt = (v: string) => v.trim() || undefined;
     try {
       const id = await b.createTournament({
@@ -104,10 +112,14 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       }
       // Put it on the board now if asked; a listing problem doesn't lose the tournament (it can be posted again from its page).
       if (post === 'listed' || (post === 'registration' && onBoard)) await b.submitListing(id, post === 'listed' ? 'listed' : 'run').catch(() => undefined);
+      // A failed send keeps the draft: the tournament page's approval card shows it unsent, with Submit for approval.
+      if (send) await b.submitTournament(id).catch(() => undefined);
       go('club-tournament', id, { replace: true });
     } catch (e) { setMsg(errorText(e)); setBusy(false); }
   }
 
+  const errProps = (f: NewField) => (bad?.field === f ? { 'aria-invalid': true, 'aria-describedby': `tnew-${f}-error` } : {});
+  const errBelow = (f: NewField) => bad?.field === f && <p id={`tnew-${f}-error`} role="alert" style={{ color: 'var(--coral, #FF655C)', fontSize: 13, margin: '4px 0 0' }}>{bad.text}</p>;
   return (
     <OrgShell go={go} active="tournaments" clubName={club.data?.club.name} clubId={clubId}>
       <PageHead cap={club.data?.club.name ?? 'Your club'} title={<span id="tnew-title">Create tournament</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
@@ -117,9 +129,9 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       <Field label="How do players enter?">
         <Segmented<PostKind> label="How do players enter?" value={post} options={[...(pickOk ? [{ value: 'roster' as PostKind, label: 'I add the players' }] : []), { value: 'registration', label: 'Players request entry' }, ...(club.data?.platformDraft ? [] : [{ value: 'listed' as const, label: 'Listing only' }])]} onChange={setPost} />
       </Field>
-      {club.data && !pickOk && <p className="small muted" style={{ margin: 0 }}>Set it up and add your entries now; RallyQ approves the tournament before the draw, links and entry link open. Submit at least 24 hours before your event.</p>}
+      {club.data && !pickOk && <p className="small muted" style={{ margin: 0 }}>{GO_LIVE_NOTE} {APPROVAL_NOTE}</p>}
       <p className="small muted" style={{ margin: 0 }}>{post === 'roster' ? 'Choose the players from your club now (good for club nights).' : post === 'registration' ? 'Players enter in the app with a link or from the events board. You accept entries, then make the draw.' : 'Free: it shows on the events board and players contact you to enter. Nothing is run on RallyQ.'}</p>
-      <Field label="Tournament name"><input className="input" aria-label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
+      <Field label="Tournament name"><input id="tnew-name" className="input" aria-label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} {...errProps('name')} />{errBelow('name')}</Field>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
         <Field label="Date"><input className="input" type="date" aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <Field label="First match"><input className="input" type="time" aria-label="First match" value={time} onChange={(e) => setTime(e.target.value)} /></Field>
@@ -127,8 +139,8 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       {post !== 'roster' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-            <Field label="City"><input className="input" aria-label="City" value={city} maxLength={60} onChange={(e) => setCity(e.target.value)} /></Field>
-            <Field label="Venue"><input className="input" aria-label="Venue" value={venue} maxLength={120} onChange={(e) => setVenue(e.target.value)} /></Field>
+            <Field label="City"><input id="tnew-city" className="input" aria-label="City" value={city} maxLength={60} onChange={(e) => setCity(e.target.value)} {...errProps('city')} />{errBelow('city')}</Field>
+            <Field label="Venue"><input id="tnew-venue" className="input" aria-label="Venue" value={venue} maxLength={120} onChange={(e) => setVenue(e.target.value)} {...errProps('venue')} />{errBelow('venue')}</Field>
           </div>
           <Field label="About (optional)"><textarea className="input" aria-label="About" value={about} maxLength={1000} onChange={(e) => setAbout(e.target.value)} placeholder="Format, prizes, what to bring" /></Field>
         </>
@@ -138,7 +150,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
             <Field label="Entries close"><input className="input" type="date" aria-label="Entries close" value={closes} onChange={(e) => setCloses(e.target.value)} /></Field>
-            <Field label="Your UPI ID (fees)"><input className="input" aria-label="Your UPI ID" placeholder="name@bank" value={upi} maxLength={130} onChange={(e) => setUpi(e.target.value)} /></Field>
+            <Field label="Your UPI ID (fees)"><input id="tnew-upi" className="input" aria-label="Your UPI ID" placeholder="name@bank" value={upi} maxLength={130} onChange={(e) => setUpi(e.target.value)} {...errProps('upi')} />{errBelow('upi')}</Field>
           </div>
           <p className="small muted" style={{ margin: 0 }}>Players pay you directly by UPI or at the venue. RallyQ never holds the money; you mark entries paid.</p>
           <label className="check-row"><input type="checkbox" checked={onBoard} onChange={(e) => setOnBoard(e.target.checked)} /><span>Show it on the RallyQ events board</span></label>
@@ -146,15 +158,15 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       )}
       {post === 'listed' && (
         <>
-          <Field label="Contact number for entries"><input className="input" aria-label="Contact number for entries" inputMode="tel" value={contact} maxLength={120} onChange={(e) => setContact(e.target.value)} /></Field>
-          <Field label="Your sign-up page (optional)"><input className="input" aria-label="Your sign-up page" placeholder="https://…" value={link} maxLength={300} onChange={(e) => setLink(e.target.value)} /></Field>
+          <Field label="Contact number for entries"><input id="tnew-contact" className="input" aria-label="Contact number for entries" inputMode="tel" value={contact} maxLength={120} onChange={(e) => setContact(e.target.value)} {...errProps('contact')} />{errBelow('contact')}</Field>
+          <Field label="Your sign-up page (optional)"><input id="tnew-link" className="input" aria-label="Your sign-up page" placeholder="https://…" value={link} maxLength={300} onChange={(e) => setLink(e.target.value)} {...errProps('link')} />{errBelow('link')}</Field>
         </>
       )}
       {post !== 'listed' && <><Field label="Courts"><Chips label="Courts" value={courts} options={[1, 2, 3, 4, 5, 6, 8, 10].map((n) => ({ value: n, label: String(n) }))} onChange={setCourts} /></Field>
       <Field label="Minutes per match slot"><Chips label="Minutes per match slot" value={slot} options={SLOT_OPTIONS.map((n) => ({ value: n, label: String(n) }))} onChange={setSlot} /></Field></>}
       {divs.map((d, i) => (
         <section key={i} className="card section" aria-label={`Event ${i + 1}`}>
-          <input className="input" aria-label={`Event ${i + 1} name`} value={d.name} onChange={(e) => update(i, { name: e.target.value })} />
+          <input id={`tnew-event${i}`} className="input" aria-label={`Event ${i + 1} name`} value={d.name} onChange={(e) => update(i, { name: e.target.value })} {...errProps(`event${i}`)} />{errBelow(`event${i}`)}
           <Segmented label={`Event ${i + 1} type`} value={d.kind} options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} onChange={(k) => update(i, { kind: k, picked: [], teams: [] })} />
           {post !== 'roster' && <DivisionRulesFields d={d} label={`Event ${i + 1}`} onChange={(patch) => update(i, patch)} />}
           {post === 'registration' && <p className="small muted" style={{ margin: 0 }}>You choose the format (round robin, pools and knockouts, or knockout only, and the points for each round) when you make the draw, once you know how many entered.</p>}
@@ -169,7 +181,10 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       {post !== 'listed' && <p className="small muted" style={{ margin: 0 }}>Players with a DUPR rating are seeded across pools, so the top seeds start in different pools; players without one show as Unrated. Each match gets a court and a time, and nobody is booked on two courts at once.</p>}
       {post !== 'roster' && <p className="small muted" style={{ margin: 0 }}>Your club’s first listing is checked by RallyQ before it shows on the board. Adults only (18+).</p>}
       {msg && <div role="status" className="warn">{msg}</div>}
-      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy || !club.data} onClick={create}>{post === 'listed' ? 'Submit listing for approval' : post === 'registration' ? 'Save draft' : 'Create tournament'}</button>
+      <div className="row" style={{ gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" className="btn" disabled={busy || !club.data} onClick={() => create(post === 'registration' && !club.data?.platformDraft)}>{post === 'listed' ? 'Submit listing for approval' : post === 'registration' ? (club.data?.platformDraft ? 'Save draft' : 'Save and send to RallyQ') : 'Create tournament'}</button>
+        {post === 'registration' && !club.data?.platformDraft && <button type="button" className="tlink" disabled={busy || !club.data} onClick={() => create(false)}>Save draft</button>}
+      </div>
       </Legacy></section>
       {post !== 'roster' && <aside className="card" aria-label="Preview on Events" style={{ flex: '1 1 300px', minWidth: 0, padding: 20, display: 'flex', flexDirection: 'column', gap: 10, position: 'sticky', top: 20 }}>
         <div className="cap">Preview on Events</div>
@@ -736,7 +751,15 @@ export function myMatchesFor(d: PublicTournament, query: string) {
     .sort((x, y) => (order[x.status] ?? 9) - (order[y.status] ?? 9) || x.slot - y.slot);
 }
 
-function MyMatches({ d }: { d: PublicTournament }) {
+/** Player Studio is where official matches get claimed; signed-out players sign in first and come back to it. */
+async function openClaim(go: Go) {
+  const user = await backend()?.currentUser().catch(() => null);
+  if (user) { go('club-player-studio'); return; }
+  rememberReturn('#/club-player-studio');
+  go('club-signin');
+}
+
+function MyMatches({ d, go }: { d: PublicTournament; go: Go }) {
   const [q, setQ] = useState(() => { try { return localStorage.getItem(MY_NAME) ?? ''; } catch { return ''; } });
   const list = myMatchesFor(d, q);
   const next = list.find((m) => m.status === 'live' || m.status === 'scheduled');
@@ -749,6 +772,7 @@ function MyMatches({ d }: { d: PublicTournament }) {
         <div className="search"><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg><input className="inp" aria-label="Your name" placeholder="Type your name to see your matches" value={q} onChange={(e) => change(e.target.value)} autoComplete="name" /></div>
       </div>
       {q.trim().length >= 3 && list.length === 0 && <p className="mut" style={{ margin: 0 }}>No matches for “{q.trim()}” yet. Check the spelling, or ask the desk.</p>}
+      {list.length > 0 && <p className="row" style={{ margin: 0, flexWrap: 'wrap', gap: 6 }}><span className="mut">These are my matches →</span><button type="button" className="tlink" onClick={() => void openClaim(go)}>Claim them in Player Studio</button></p>}
       {next && (
         <div className="note" style={{ display: 'flex', flexDirection: 'column', gap: 6 }} aria-label="Your next match" role="group">
           <span className="row" style={{ gap: 8 }}>{next.status === 'live' && <span className="st live">Live</span>}<span className="cap">{next.status === 'live' ? 'On court now' : 'Your next match'}</span></span>
@@ -803,7 +827,7 @@ export function publicChampion(d: PublicTournament, divisionId: string): Champio
 const hashGo: Go = (name, id) => { window.location.hash = routeHash({ name, id }); };
 
 /** Public results: no login, names and scores only. Refreshes every 20 seconds while the tournament is live. */
-export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: () => void; go?: Go }) {
+export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
   const [publicSlug, query] = slug.split('?');
   const requestedCourt = Number(new URLSearchParams(query).get('court')) || undefined;
   const state = usePublicScores(publicSlug);
@@ -841,11 +865,11 @@ export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: (
         cap={d ? <span className={d.status === 'done' ? 'acc' : undefined}>{d.status === 'done' ? `Final results · ${d.club}` : d.status === 'live' ? `Results so far · ${d.club}` : `Draw and schedule · ${d.club}`}</span> : undefined}
         title={d?.name ?? 'Results'}
         sub={d ? <span className="row" style={{ flexWrap: 'wrap', gap: 8 }}>{logo.data?.logoUrl && <ClubLogo src={logo.data.logoUrl} club={d.club} size={32} />}{d.status === 'live' && <span className="chip live">Live</span>}<span>{[friendlyDate(d.startDate), d.club, `${teams} ${teams === 1 ? 'entry' : 'entries'}`, `${d.divisions.length} ${d.divisions.length === 1 ? 'category' : 'categories'}`, d.status === 'live' ? 'updates every 20 seconds' : d.status === 'done' ? 'Finished' : ''].filter(Boolean).join(' · ')}</span></span> : undefined}
-        actions={<><button type="button" className="tlink" onClick={onBack}>Back</button>{d && <button type="button" className="btn" onClick={async () => setMsg(await shareLink(`${d.name} results`, link))}>Share results</button>}</>}
+        actions={<><a className="tlink" href="#/events" onClick={(e) => { e.preventDefault(); go('events'); }}>All events</a>{d && <button type="button" className="btn" onClick={async () => setMsg(await shareLink(`${d.name} results`, link))}>Share results</button>}</>}
       />
       {msg && <div role="status" className="note">{msg}</div>}
       <Status error={state.error} loading={state.loading && !d} />
-      {!state.loading && !d && !state.error && <p className="mut" style={{ margin: 0 }}>These results aren’t available. The link may be turned off.</p>}
+      {!state.loading && !d && !state.error && <p className="mut" style={{ margin: 0 }}>These results aren’t available. Ask the club for a new link, or <a className="acc" href="#/events" onClick={(e) => { e.preventDefault(); go('events'); }}>see all events</a>.</p>}
       {d && division && body && (
         <>
           {d.status === 'live' && <div className="pq-matchday pq-proto pq-live-results"><LiveCourts key={publicSlug + ':' + (requestedCourt ?? 'default')} d={d} initialCourt={requestedCourt} /></div>}
@@ -861,7 +885,7 @@ export function Results({ slug, onBack, go = hashGo }: { slug: string; onBack: (
             </div>
           )}
           {champion && d.status === 'done' && <ResultsPosters c={champion} event={d.name} club={d.club} date={friendlyDate(d.startDate)} link={link} />}
-          <MyMatches d={d} />
+          <MyMatches d={d} go={go} />
           <Tabs<View> label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
           {view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody d={body} divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')} />}
           <p className="mut" style={{ margin: 0, fontSize: 13 }}>Live scores by <a aria-label={d.status === 'live' ? 'RallyQ: live scores. Run your club’s tournament at rallyq.in' : undefined} href="https://rallyq.in/" className="acc" style={{ fontWeight: 700 }}>RallyQ</a> · run your club’s tournament at rallyq.in</p>

@@ -9,10 +9,11 @@ import raw from '../prototypes/Social.dc.html?raw';
 import {holes} from '../holes';
 import {useClubLogo,logoTile} from '../useClubLogo';
 import {posterPng,savePoster,sharePoster,type PosterContent} from './posterExport';
-const source=holes(raw.replace('onClick="{{save}}">Send to WhatsApp','onClick="{{share}}">Send to WhatsApp'),[['>CC</div>','><span style="display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border-radius:inherit">'+logoTile('{{clubMark}}')+'</span></div>'],['font-size:17px;font-weight:800">Cedar</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Cedar · Maple Courts','padding:6px 12px">{{clubName}}']]);
+// The prototype's organiser menu has no tournament ids (its Desk link was dead), so it goes, as on RallyOverview and RallyAdmin.
+const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace('onClick="{{save}}">Send to WhatsApp','onClick="{{share}}">Send to WhatsApp'),[['>CC</div>','><span style="display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border-radius:inherit">'+logoTile('{{clubMark}}')+'</span></div>'],['font-size:17px;font-weight:800">Cedar</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Cedar · Maple Courts','padding:6px 12px">{{clubName}}']]);
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 type T='Entries open'|'Live now'|'Result'|'Champion';
-const ST={Night:{bg:'#06140D',ink:'#F1F4EA',acc:'#D9F24A',photo:true},Day:{bg:'#2B6E4B',ink:'#FFFFFF',acc:'#E4F75A',photo:false},Ball:{bg:'#D9F24A',ink:'#0B2418',acc:'#0B2418',photo:false},Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}} as const;
+const ST={Night:{bg:'#06140D',ink:'#F1F4EA',acc:'#D9F24A',photo:true},Day:{bg:'#2B6E4B',ink:'#FFFFFF',acc:'#D9F24A',photo:false},Ball:{bg:'#D9F24A',ink:'#0B2418',acc:'#0B2418',photo:false},Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}} as const;
 type S=keyof typeof ST;
 /** What each template says, from the event's real results. */
 export function templates(d:PublicTournament|null){
@@ -32,13 +33,17 @@ export function templates(d:PublicTournament|null){
 }
 export function RallySocial({slug,go}:{slug:string;go:Go}){
  const scores=usePublicScores(slug);const d=scores.data;const logoUrl=useClubLogo(slug);
- const[s,setS]=useState<{t:T;s:S;z:string;saved:boolean}>({t:'Champion',s:'Night',z:'Post 4:5',saved:false});
+ const[pick,setS]=useState<{t?:T;s:S;z:string;saved:boolean}>({s:'Night',z:'Post 4:5',saved:false});
  const[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const hasFinal=!!d?.matches.some(m=>m.stage==='final'&&m.status==='done'&&m.winner);
+ // Until the organiser picks one: the template that fits the event now. Champion only once a final is won.
+ const s={...pick,t:pick.t??(hasFinal?'Champion':d?.status==='live'?'Live now':'Entries open') as T};
  const TP=templates(d),st=ST[s.s],tp=TP[s.t];
  const exportPoster=async(share:boolean)=>{if(busy)return;setBusy(true);setMessage('');try{const photos:Record<string,string>={'ph-entries':'photos/desktop/entries-still-life.jpg','ph-livenow':'photos/desktop/live-court-floodlights.jpg','ph-result':'photos/desktop/social-result.jpg','ph-champions':'photos/desktop/social-champions.jpg'};const blob=await posterPng({club:d?.club??'Your club',mark:d?mark(d.club):'',...tp,bg:st.bg,ink:st.ink,accent:st.acc,photo:st.photo?photos[tp.ph]:undefined,size:s.z as PosterContent['size']});const name='rallyq-'+s.t.toLowerCase().replaceAll(' ','-')+'-'+s.z.replaceAll(' ','-').replace(':','x')+'.png';if(share)setMessage(await sharePoster(blob,name,tp.head+' · '+tp.foot));else{savePoster(blob,name);setMessage('PNG saved')}setS(current=>({...current,saved:true}));}catch(e){if(!(e instanceof Error&&e.name==='AbortError'))setMessage(e instanceof Error?e.message:'Export failed. Try again.')}finally{setBusy(false)}};
- const dims=({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'} as Record<string,string>)[s.z];
+ // Fits a 375px phone: never wider than its column, shape kept by aspect-ratio.
+ const dims='width:min(100%,400px);aspect-ratio:'+({'Post 4:5':'4/5','Story 9:16':'9/16','Square':'1/1'} as Record<string,string>)[s.z];
  const values={logoUrl:logoUrl??'',noLogo:!logoUrl,clubName:d?.club??'Your club',clubMark:d?mark(d.club):'',
-  tpls:(Object.keys(TP) as T[]).map(n=>({name:n,cls:n===s.t?'tab on':'tab',pick:()=>setS({...s,t:n,saved:false})})),
+  tpls:(Object.keys(TP) as T[]).filter(n=>n!=='Champion'||hasFinal).map(n=>({name:n,cls:n===s.t?'tab on':'tab',pick:()=>setS({...s,t:n,saved:false})})),
   styles:(Object.keys(ST) as S[]).map(n=>({name:n,pick:()=>setS({...s,s:n,saved:false}),sw:`height:72px;border-radius:14px;border:0;cursor:pointer;font:inherit;display:flex;align-items:flex-end;padding:8px;background:${ST[n].bg};box-shadow:${n===s.s?'inset 0 0 0 3px #D9F24A,0 0 0 2px #06140D':'inset 0 0 0 1px rgba(241,244,234,.2)'}`,lbl:`font-size:12px;font-weight:700;color:${ST[n].ink}`})),
   sizes:['Post 4:5','Story 9:16','Square'].map(n=>({name:n,cls:n===s.z?'tab on':'tab',pick:()=>setS({...s,z:n})})),
   photoCls:st.photo?'photo '+tp.ph:'',poster:`${dims};border-radius:18px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;background-color:${st.bg};color:${st.ink};box-shadow:0 20px 60px rgba(0,0,0,.4)`,

@@ -78,6 +78,7 @@ test.describe('Organiser screens (demo club)', () => {
     const wo = page.getByRole('region', { name: 'Walkover or retired' });
     await wo.getByRole('button', { name: /Didn’t turn up or retired/ }).first().click();
     await wo.getByRole('button', { name: /go through$/ }).click();
+    await wo.getByRole('group', { name: 'Confirm walkover' }).getByRole('button', { name: 'Confirm' }).click();
     await expect(page.getByText(/win by walkover|the other side retired/)).toBeVisible();
     await page.getByRole('button', { name: 'Leave the desk on this phone' }).click();
     await expect(page.getByLabel('Desk PIN')).toBeVisible();

@@ -17,6 +17,18 @@ describe('public score refresh lifecycle', () => {
     hidden = false; await act(async () => { document.dispatchEvent(new Event('visibilitychange')); }); expect(read).toHaveBeenCalledTimes(3);
     unmount(); expect(vi.getTimerCount()).toBe(0);
   });
+  it('reports when scores last arrived and how many polls failed in a row', async () => {
+    vi.useFakeTimers(); vi.setSystemTime(1_000_000); vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    sources.mockResolvedValue([{ publicTournament: read }]);
+    read.mockResolvedValueOnce(score).mockRejectedValueOnce(new Error('Offline')).mockRejectedValueOnce(new Error('Offline')).mockResolvedValue(score);
+    const { result, unmount } = renderHook(() => usePublicScores('sample'));
+    expect(result.current).toMatchObject({ updatedAt: null, failures: 0 });
+    await act(async () => {}); expect(result.current).toMatchObject({ updatedAt: 1_000_000, failures: 0 });
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000); }); expect(result.current).toMatchObject({ updatedAt: 1_000_000, failures: 1, data: score });
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000); }); expect(result.current.failures).toBe(2);
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000); }); expect(result.current).toMatchObject({ updatedAt: 1_060_000, failures: 0, error: null });
+    unmount();
+  });
   it('ignores a response from a previous tournament after navigation', async () => {
     let resolve!: (d: PublicTournament) => void;
     sources.mockResolvedValue([{ publicTournament: read }]); read.mockImplementationOnce(() => new Promise(r => { resolve = r; })).mockResolvedValueOnce({ ...score, name: 'New tournament' });

@@ -190,7 +190,8 @@ describe('Club mode', () => {
     for (const box of boxes.slice(0, 6)) await user.click(box);
     await user.click(within(screen.getByRole('group', { name: 'Event 1 going through' })).getByRole('button', { name: '4' }));
     await user.click(screen.getByRole('button', { name: 'Create tournament' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('More players go through than some pools have');
+    expect(await screen.findByRole('alert')).toHaveTextContent('More players go through than some pools have');
+    expect(screen.getByLabelText('Event 1 name')).toHaveAttribute('aria-invalid', 'true');
     await user.click(within(screen.getByRole('group', { name: 'Event 1 going through' })).getByRole('button', { name: '2' }));
     await user.click(screen.getByRole('button', { name: 'Create tournament' }));
     await screen.findByRole('heading', { name: 'Friday Ladder' });
@@ -370,6 +371,7 @@ describe('Club mode', () => {
     const walk = screen.getByRole('region', { name: 'Walkover or retired' });
     await user.click(within(walk).getAllByRole('button', { name: /Didn’t turn up or retired/ })[0]);
     await user.click(within(walk).getByRole('button', { name: /go through$/ }));
+    await user.click(within(walk).getByRole('button', { name: 'Confirm' }));
     await screen.findByText(/win by walkover|the other side retired/);
     expect(demoState().matches.filter((m: { status: string }) => m.status === 'done').length).toBe(before + 1);
     // "Call to court": a ready message for the players' group (copied when the phone can't share).

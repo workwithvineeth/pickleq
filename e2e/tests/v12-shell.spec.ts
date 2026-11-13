@@ -51,7 +51,7 @@ test('referee can score side-out: who serves, 0-0-2, rallies', async ({ page }) 
 
 test('live scores say when they are only a sample; TV board has no desk link', async ({ page }) => {
   await page.goto('#/live');
-  await expect(page.getByText(/^Sample scores · /)).toBeVisible();
+  await expect(page.getByText(/^Sample scores · /).first()).toBeVisible();
   await expect(page.getByText('Nothing is live right now. These are sample scores', { exact: false })).toBeVisible();
   await page.goto('#/club-tv/no-such-event');
   await expect(page.getByText('The board opens when the draw is made')).toBeVisible();

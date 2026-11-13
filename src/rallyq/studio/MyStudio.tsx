@@ -9,9 +9,12 @@ import {RallyStudioStore,PRIVATE_SHARING,type SharingOptions} from '../private/b
 import {INITIAL_UI,studioValues,type StudioUI} from './studioValues';
 import {MyTournaments} from './MyTournaments';
 import {signOutTo} from '../shell/Shell';
+import {appLink,shareLink} from '../../club/screens/common';
 const source=holes(raw,[
  // No public profile until the player is linked to one: never open the sample profile as if it were theirs.
  ['<a class="btn" href="Studio.dc.html" style="background:#0B2418;color:#D9F24A!important">See my public profile</a>','<sc-if value="{{hasProfile}}" hint-placeholder-val="{{ true }}"><a class="btn" href="Studio.dc.html" style="background:#0B2418;color:#D9F24A!important">See my public profile</a></sc-if>'],
+ // Overview: share the public profile link (native share sheet, else copied).
+ ['<div class="disp" style="font-size:32px">Your numbers</div>','<div class="between" style="flex-wrap:wrap;gap:10px"><div class="disp" style="font-size:32px">Your numbers</div><sc-if value="{{hasProfile}}" hint-placeholder-val="{{ true }}"><button class="btn sm" style="background:#0B2418;color:#D9F24A!important" onClick="{{shareProfile}}" aria-live="polite">{{shareProfileLabel}}</button></sc-if></div>'],
  // The practice-vs-tournament chip shows only when both exist (it was a fixed '+6%').
  ['<span style="font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:#0B2418;color:#D9F24A">+6%</span>','<sc-if value="{{hasDelta}}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:#0B2418;color:#D9F24A">{{serveDelta}}</span></sc-if>'],
  // My tournaments (entries, status, next match) sits above the Studio panels.
@@ -47,6 +50,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  const state=useLoad(async()=>{const store=new RallyStudioStore();return{store,data:await store.load()};},[]);
  const[sharing,setSharing]=useState<SharingOptions|null>(null);
  const[goal,setGoal]=useState({title:'',target:'',msg:''});
+ const[shared,setShared]=useState('');
  if(!state.data&&!state.loading)return <PlayerStudioOrWelcome section={section??''} go={go}/>;
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6',padding:24,textAlign:'center'}}>{state.loading?'Loading your Player Studio…':<span>{state.error??'Sign in to open My Player Studio.'} <button type="button" className="tlink" onClick={()=>go('club-signin')}>Sign in →</button></span>}</div>;
  const{store,data}=state.data;const me=data.official.players[0];
@@ -60,6 +64,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  const addGoal=async()=>{try{await store.saveGoal({title:goal.title,target:Number(goal.target),progress:0});setGoal({title:'',target:'',msg:'Goal added.'});state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not save the goal.'});}};
  const goalStep=async()=>{if(!g0)return;try{await store.saveGoal({title:g0.title,target:g0.target,progress:Math.min(g0.target,g0.progress+1),due:g0.due},g0.id);state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not update the goal.'});}};
  Object.assign(values,{goalNew:goal.title,goalNewTarget:goal.target,goalMsg:goal.msg,hasGoal:!!g0,setGoalNew:(e:{target:{value:string}})=>setGoal({...goal,title:e.target.value,msg:''}),setGoalNewTarget:(e:{target:{value:string}})=>setGoal({...goal,target:e.target.value.replace(/[^0-9.]/g,''),msg:''}),addGoal:()=>{void addGoal();},goalStep:()=>{void goalStep();}});
- Object.assign(values,{hasProfile:!!me,myTournaments:<MyTournaments go={go}/>,signOut:()=>{void signOutTo(go);}});
+ const shareProfile=async()=>{if(!me)return;const r=await shareLink(me.name+' on RallyQ',appLink('#/public-player/'+encodeURIComponent(me.playerId)));setShared(r==='Shared'?'Shared ✓':r==='Link copied'?'Link copied ✓':'');};
+ Object.assign(values,{shareProfile:()=>{void shareProfile();},shareProfileLabel:shared||'Share my profile',hasProfile:!!me,myTournaments:<MyTournaments go={go}/>,signOut:()=>{void signOutTo(go);}});
  return <PrototypeScreen name="MyStudio" go={go} source={source} values={values} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
 }

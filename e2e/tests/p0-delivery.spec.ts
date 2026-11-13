@@ -129,7 +129,7 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   // A new account isn't running a club yet, so it opens on Player Studio; My clubs is where you create one.
   await expect(page).toHaveURL(/#\/club-player-studio/);
   await page.goto('#/club');
-  await page.getByRole('button', { name: 'Create a club', exact: true }).click();
+  await page.getByRole('button', { name: 'Create your club', exact: true }).click();
   await page.getByLabel('Club name', { exact: true }).fill('Fixture Club');
   await page.getByLabel('Your name', { exact: true }).fill('Fixture Owner');
   await page.getByLabel('Phone number', { exact: true }).fill('9876543210');
@@ -144,7 +144,7 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   // Now they own a club, sign-in opens My clubs.
   await expect(page).toHaveURL(/#\/club$/);
-  await expect(page.getByRole('button', { name: 'Create a club', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create a club →', exact: true })).toBeVisible();
   await page.goto(`#/club-view/${cid}`);
   await expect(page.getByRole('heading', { name: 'Fixture Club', exact: true })).toBeVisible();
   await expect(page).toHaveURL(new RegExp('#/club-view/'+cid));

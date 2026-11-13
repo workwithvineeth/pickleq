@@ -6,6 +6,7 @@ import { friendlyDate } from '../dates';
 import { poolLetter, standings, TIE_BREAK_TEXT } from '../domain/engine';
 import { isStaff, KNOCKOUT_STAGES, STAGE_LABEL, type ClubMatch, type Division } from '../types';
 import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resultsReport';
+import { duprCheck, duprCsv } from '../dupr';
 import { ManualScores } from './ScorePad';
 import { displayPlayerName, appLink, errorText, Header, Status, useLoad } from './common';
 import { ClaimLinks } from './studio/Claim';
@@ -98,10 +99,16 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       {staff && m.status === 'done' && m.sideA.length > 0 && m.sideB.length > 0 && <button type="button" className="link-btn no-print" style={{ gridColumn: '1 / -1' }} disabled={busy || dirty} onClick={() => { setCorrecting(m); setReason(''); }}>Correct score</button>}
     </article>;
   }
-  function csv() {
-    const url = URL.createObjectURL(new Blob([resultsCsv(data)], { type: 'text/csv;charset=utf-8' }));
-    const a = document.createElement('a'); a.href = url; a.download = `${data.tournament.name.replace(/[^\w-]+/g, '-')}-results.csv`;
+  function downloadCsv(text: string, suffix: string) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = `${data.tournament.name.replace(/[^\w-]+/g, '-')}-${suffix}.csv`;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  const csv = () => downloadCsv(resultsCsv(data), 'results');
+  const dupr = duprCheck(data.matches, pmap);
+  function duprFile() {
+    downloadCsv(duprCsv(data.tournament, data.divisions, dupr.ready, pmap), 'DUPR');
+    setMsg({ ok: true, text: `Downloaded ${dupr.ready.length} match${dupr.ready.length === 1 ? '' : 'es'}. Upload it in DUPR: your club › Matches › Add matches › Import via CSV.` });
   }
   function savePage() {
     const source = document.querySelector('.pq-results-page'); if (!source) return;
@@ -123,7 +130,8 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       <p className="small muted">{[data.club.name, data.tournament.venue, data.tournament.city, friendlyDate(data.tournament.startDate), data.tournament.status === 'done' ? 'Finished' : data.tournament.status === 'live' ? 'Live' : 'Not started', `${data.matches.filter((m) => m.status !== 'void').length} matches on ${data.tournament.courts} courts`].filter(Boolean).join(' · ')}</p>
     </div>
     <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}><span className={missing.size ? 'st wait' : 'st ok'}>{missing.size ? `${missing.size} DUPR ratings missing` : 'All player ratings entered'}</span>
-      {staff && <button className="btn sm" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
+      {staff && <button className="btn sm" disabled={dirty || busy || !dupr.ready.length} onClick={duprFile}>Download DUPR file ({dupr.ready.length})</button>}
+      {staff && <button className="btn ghost sm" disabled={busy || !dirty} onClick={save}>Save DUPR details</button>}
       {staff && <button className="btn ghost sm" disabled={dirty || busy} onClick={() => go('club-dupr', data.tournament.id)}>File for DUPR</button>}
       <button className="btn ghost sm" disabled={dirty || busy} onClick={csv}>Download results (CSV)</button>
       <button className="btn ghost sm" disabled={dirty || busy} onClick={() => window.print()}>Save as PDF</button>
@@ -131,7 +139,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
       {data.tournament.publicSlug && <button className="tlink" onClick={() => go('results', data.tournament.publicSlug!)}>Public results page and posters →</button>}
     </div>
     <p className="small muted no-print">{staff ? `${admin ? 'Admin' : 'Organiser'}: add or edit the ratings and IDs in the boxes below each group, then choose Save DUPR details. Saved details are available to authorised club organisers and RallyQ admins.` : 'Results and saved DUPR details. Editing is available only to authorised club organisers and RallyQ admins.'} These ratings were entered by the club. They are not synced with DUPR.</p>
-    {staff && <p className="small muted no-print">Changes update this club’s player ratings wherever they appear. Ratings are stored to two decimal places.</p>}
+    {staff && <p className="small muted no-print">Changes update this club’s player ratings wherever they appear. Ratings are stored to three decimal places.</p>}
     {dirty && <p role="status" className="small no-print">Save your edits before exporting. Exports use saved details.</p>}
     {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
     {correcting && <section className="card section no-print" aria-label="Correct completed score">

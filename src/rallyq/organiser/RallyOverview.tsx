@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import type {Go} from '../../navigation';
 import type {ClubBundle} from '../../club/backend';
 import {backend} from '../../club/index';
@@ -17,6 +17,8 @@ const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace(coming,'<di
  ['Matches planned</div><div class="n">46</div><div class="mut" style="font-size:13px">5:00 to 9:30 pm','Matches planned</div><div class="n">{{matches}}</div><div class="mut" style="font-size:13px">{{matchNote}}'],
  ['Page views</div><div class="n">1,240</div><div class="mut" style="font-size:13px">this week','Need you</div><div class="n">{{needs}}</div><div class="mut" style="font-size:13px">{{needsNote}}'],
  ['href="Social.dc.html" style="align-self:flex-start">Make poster →','href="{{socialHref}}" style="align-self:flex-start">Make poster →']]);
+const ticksKey=(id:string)=>'rq-overview-ticks:'+id;
+const readTicks=(id?:string):Record<number,boolean>=>{if(!id)return {};try{return JSON.parse(localStorage.getItem(ticksKey(id))??'{}') as Record<number,boolean>;}catch{return {};}};
 const day=(iso:string)=>new Date(iso+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
 /** Organiser home in the prototype look, on the club's real events. The classic overview stays one tap away. */
 export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
@@ -26,6 +28,8 @@ export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
  const live=open.filter(t=>t.status==='live');
  const upcoming=open.filter(t=>t.status==='draft'&&t.startDate>=today).sort((a,c)=>a.startDate.localeCompare(c.startDate));
  const focus=live[0]??upcoming[0];
+ useEffect(()=>{setManual(readTicks(focus?.id));},[focus?.id]);
+ const tick=(i:number)=>{const next={...manual,[i]:!manual[i]};setManual(next);if(focus)try{localStorage.setItem(ticksKey(focus.id),JSON.stringify(next));}catch{/* private mode: ticks last this visit */}};
  const regs=useLoad(async()=>b&&staff&&focus?b.registrations(focus.id):[],[b,staff,focus?.id]);
  const links=useLoad(async()=>b&&staff&&focus?b.scorerLinks(focus.id):[],[b,staff,focus?.id]);
  const r=(regs.data??[]).filter(x=>!['withdrawn','rejected'].includes(x.status));
@@ -34,16 +38,16 @@ export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
  const courtsCovered=focus?Array.from({length:focus.courts},(_,i)=>i+1).filter(c=>(links.data??[]).some(l=>!l.revoked&&(!l.court||l.court===c))).length:0;
  const days=focus?Math.round((Date.parse(focus.startDate)-Date.parse(today))/864e5):0;
  const auto=[
-  ['Event created',!!focus,'Done'],['Entries reviewed',!!focus&&pending===0,pending+' pending'],['Payments checked',!!focus&&claims===0,claims+' to confirm'],
-  ['Draw made',fm.length>0,'Desk'],['Scorer link on every court',!!focus&&courtsCovered===focus.courts,courtsCovered+' of '+(focus?.courts??0)]] as [string,boolean,string][];
+  ['Event created',!!focus,'Done','club-desk'],['Entries reviewed',!!focus&&pending===0,pending+' pending','club-inbox'],['Payments checked',!!focus&&claims===0,claims+' to confirm','club-inbox'],
+  ['Draw made',fm.length>0,'Desk','club-desk'],['Scorer link on every court',!!focus&&courtsCovered===focus.courts,courtsCovered+' of '+(focus?.courts??0),'club-scorers']] as [string,boolean,string,'club-desk'|'club-inbox'|'club-scorers'][];
  const man=['TV board tested on the venue screen','Dress rehearsal run'];
- const tasks=[...auto.map(([name,done,when])=>({name,done,when,toggle:()=>focus&&go('club-desk',focus.id)})),...man.map((name,i)=>({name,done:!!manual[i],when:manual[i]?'✓':'Tap when done',toggle:()=>setManual({...manual,[i]:!manual[i]})}))];
+ const tasks=[...auto.map(([name,done,when,tool])=>({name,done,when,toggle:()=>focus?go(tool,focus.id):go('club-tournament-new',d.club.id)})),...man.map((name,i)=>({name,done:!!manual[i],when:manual[i]?'✓':'Tap when done',toggle:()=>tick(i)}))];
  const nx=tasks.findIndex(t=>!t.done);const done=tasks.filter(t=>t.done).length;
  const slug=(focus as {slug?:string}|undefined)?.slug??focus?.id??'';
  const values={
   today:new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'}),
   headline:!focus?'No event booked yet.':focus.status==='live'?focus.name+' is live.':days<=0?focus.name+' is today.':days===1?'Tomorrow: '+focus.name+'.':days+' days to '+focus.name+'.',
-  publicHref:'#/event/'+encodeURIComponent(slug),deskHref:focus?'#/club-desk/'+encodeURIComponent(focus.id):'#/club',deskLabel:focus?'Open tournament desk':'Create an event',socialHref:'#/club-social/'+encodeURIComponent(slug),
+  publicHref:'#/event/'+encodeURIComponent(slug),deskHref:focus?'#/club-desk/'+encodeURIComponent(focus.id):'#/club-tournament-new/'+encodeURIComponent(d.club.id),deskLabel:focus?'Open tournament desk':'Create tournament',socialHref:'#/club-social/'+encodeURIComponent(slug),
   entered:r.length,enteredNote:pending?pending+' waiting for you':'all confirmed',courts:focus?.courts??0,courtNote:focus?courtsCovered+' with a scorer link':'',
   matches:fm.length,matchNote:fm.length?fm.filter(m=>m.status==='done').length+' played':'draw not made yet',needs:pending+claims,needsNote:claims?claims+' payments to confirm':'nothing waiting',
   tasks:tasks.map((t,i)=>({...t,isNext:i===nx,cls:i===nx?'next':'',box:t.done?'width:22px;height:22px;border-radius:7px;background:#D9F24A;flex:none':'width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 2px #9FB4A6;flex:none',txt:t.done?'color:#9FB4A6;text-decoration:line-through':'font-weight:600'})),

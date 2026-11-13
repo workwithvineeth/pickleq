@@ -41,7 +41,7 @@ export default function ClubRoutes({ route, go, back }: { route: Route; go: Go; 
     case 'court': return <CourtScorer key={id} token={id} onBack={() => go('home')} />;
     case 'helper': return <OldDeskLink go={go} />;
     case 'desk': return <DeskApp key={id.split('~')[0]} id={id} go={go} />;
-    case 'results': return <Results key={id} slug={id} onBack={back} />;
+    case 'results': return <Results key={id} slug={id} go={go} />;
     case 'events': return <EventsBoard key={id} go={go} robot={id === 'robot'} />;
     case 'event': return <EventPage key={id} slug={id} go={go} onBack={() => (window.history.length > 1 ? back() : go('events'))} />;
     case 'event-enter': return <EnterEvent key={id} id={id} go={go} onBack={back} />;

@@ -24,6 +24,20 @@ const isOut = (r: Registration) => r.status === 'rejected' || r.status === 'with
 const toCheck = (r: Registration) => r.payment === 'claimed' && !isOut(r);
 const inFilter = (r: Registration, f: Filter) => f === 'all' || (f === 'check' ? toCheck(r) : f === 'waiting' ? r.status === 'pending' : f === 'out' ? isOut(r) : r.status === f);
 const dupr = (p: EntryPerson) => `${p.name.split(/\s+/)[0]} ${p.dupr !== undefined ? p.dupr.toFixed(2) : 'Unrated'}`;
+const PAY_CLS: Record<Payment, string> = { unpaid: 'st off', venue: 'st off', claimed: 'st wait', paid: 'st ok' };
+// Under 640px each entry is a card instead of a row of the 680px-wide table.
+const CARDS_CSS = `@media (max-width:639px){
+.rq-entry-cards .scroll{overflow:visible}
+.rq-entry-cards .scroll>.tbl{min-width:0;width:100%}
+.rq-entry-cards .tbl thead{display:none}
+.rq-entry-cards .tbl,.rq-entry-cards .tbl tbody,.rq-entry-cards .tbl tr,.rq-entry-cards .tbl td{display:block;width:auto}
+.rq-entry-cards .tbl tr{padding:14px 16px;border-bottom:1px solid var(--line)}
+.rq-entry-cards .tbl td{padding:4px 0;border:0;text-align:left!important}
+.rq-entry-cards .tbl td.rq-cat{display:none}
+.rq-entry-cards .tbl td.rq-ref{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px!important}
+.rq-entry-cards .tbl td.rq-ref::before{content:'UPI ref ';font-family:inherit;color:var(--mut)}
+.rq-entry-cards .tbl td.rq-act .btn{min-height:44px}
+}`;
 const STATUS_CLS: Record<RegistrationStatus, string> = { pending: 'st wait', accepted: 'st ok', waitlist: 'st wait', rejected: 'st no', withdrawn: 'st off' };
 
 /** The organiser's entries inbox: accept or turn down entries, match UPI payments, add offline entries, close entries and make the draw. */
@@ -116,7 +130,8 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         })}</div>
         <label className="search"><span style={SR}>Search by team or UPI reference</span><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg><input className="inp" placeholder="Search team or UPI reference" value={q} onChange={(e) => setQ(e.target.value)} /></label>
       </div>
-      <div className="card">
+      <div className="card rq-entry-cards">
+        <style>{CARDS_CSS}</style>
         {shown.length > 0 && <div className="scroll"><table className="tbl" aria-label={`${div.name} entries list`}><thead><tr><th>Team and DUPR</th><th>Category</th><th>Payment</th><th>UPI reference</th><th>Status</th><th><span style={SR}>Actions</span></th></tr></thead><tbody>
           {shown.map((r) => {
             const a = nextAction(r);
@@ -124,11 +139,11 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
             return <Fragment key={r.id}>
               <tr aria-label={who(r)} style={isOut(r) ? { opacity: 0.65 } : undefined}>
                 <td><b>{who(r)}</b><div className="mut" style={{ fontSize: 12 }}>{r.players.map(dupr).join(' · ')}</div><div className="mut" style={{ fontSize: 12 }}>{r.source === 'offline' ? 'Added by organiser' : 'Entered online'} · {friendlyDateTime(r.createdAt)}</div></td>
-                <td>{div.name}</td>
-                <td>{PAYMENT_LABEL[r.payment]}</td>
-                <td className="n" style={{ fontSize: 20, letterSpacing: '.05em' }}>{r.paymentRef ?? <span className="mut" style={{ fontSize: 13, letterSpacing: 0 }}>—</span>}</td>
+                <td className="rq-cat">{div.name}</td>
+                <td><span className={PAY_CLS[r.payment]} style={{ whiteSpace: 'normal' }}>{PAYMENT_LABEL[r.payment]}</span></td>
+                <td className="n rq-ref" style={{ fontSize: 20, letterSpacing: '.05em' }}>{r.paymentRef ?? <span className="mut" style={{ fontSize: 13, letterSpacing: 0 }}>—</span>}</td>
                 <td><span className={STATUS_CLS[r.status]}>{r.entryId ? 'In the draw' : r.status === 'pending' ? 'To decide' : REG_STATUS_LABEL[r.status]}</span>{r.note && <div className="mut" style={{ fontSize: 12, marginTop: 4 }}>Note to player: {r.note}</div>}</td>
-                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                <td className="rq-act" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   {a && <button type="button" className={firstAct?.id === r.id && !panel ? 'btn sm' : 'btn ghost sm'} disabled={busy} onClick={a.act}>{a.label}</button>}
                   {!r.entryId && r.status !== 'withdrawn' && <button type="button" className="tlink mut" style={{ marginLeft: 10 }} aria-expanded={panel === 'more'} onClick={() => toggle(r, 'more')}>More</button>}
                 </td>
@@ -167,7 +182,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         </tbody></table></div>}
         {shown.length === 0 && <div className="empty">{needle ? 'No team or UPI reference matches that.' : f === 'check' ? 'No payments to check. You’re all caught up.' : 'No entries here.'}</div>}
       </div>
-      {fee > 0 && <div className="note">Players pay your club directly; RallyQ never holds money. Two separate steps: check the UPI reference in your bank app, then Confirm paid. Accept decides who gets a place. Payments to check can include teams you already accepted.</div>}
+      {fee > 0 && <div className="note">Check the UPI reference in your bank app, then tap Confirm paid.</div>}
       <Draw b={b} t={t} divisions={d.t.divisions} regs={d.regs} primary={!firstAct} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
     </OrgShell>
   );

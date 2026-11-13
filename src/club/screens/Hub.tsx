@@ -10,7 +10,7 @@ import { clubMark, PageHead, PublicShell } from '../../rallyq/shell/Shell';
 import { Legacy } from './InboxLegacy';
 import type { AdminClub, ClubBackend, MyClub, TournamentAccess } from '../backend';
 import { PinPair } from './Access';
-import { isApproved, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
+import { GO_LIVE_NOTE, isApproved, isStaff, ROLE_LABEL, type ClubTournament } from '../types';
 import { appLink, DemoNote, errorText, Header, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyTime, relativeDate } from '../dates';
 import { TodayAndUpcoming } from '../../clubApp/Tabs';
@@ -84,9 +84,12 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
         <div style={{ flex: '999 1 460px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <TodayAndUpcoming go={go} />
           <section className="card" aria-label="Your clubs">
-            <div className="between" style={{ padding: '16px 18px 4px' }}><h2 className="cap" style={{ margin: 0 }}>Your clubs</h2>{b?.kind === 'server' && <button type="button" className="tlink" style={{ fontSize: 13 }} onClick={() => go('club-new')}>Create a club →</button>}</div>
+            <div className="between" style={{ padding: '16px 18px 4px' }}><h2 className="cap" style={{ margin: 0 }}>Your clubs</h2>{b?.kind === 'server' && signedIn.clubs.length > 0 && <button type="button" className="tlink" style={{ fontSize: 13 }} onClick={() => go('club-new')}>Create a club →</button>}</div>
             <div className="list">
-              {signedIn.clubs.length === 0 && <div className="empty">You’re not in a club yet. Playing? Open the invite link your club sent you. Running a club? Create your club and set up a tournament (RallyQ approves it before it goes live).</div>}
+              {signedIn.clubs.length === 0 && <div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+                {b?.kind === 'server' && <button type="button" className="btn" onClick={() => go('club-new')}>Create your club</button>}
+                <span>Playing? Open the invite link your club sent.</span>
+              </div>}
               {signedIn.clubs.map(({ club, role }) => (
                 <button key={club.id} type="button" onClick={() => go('club-view', club.id)}>
                   {club.logoUrl ? <img src={club.logoUrl} alt={`${club.name} logo`} className="tile lg" style={{ objectFit: 'cover', padding: 0 }} /> : <span role="img" aria-label={`${club.name} logo`} className="tile lg">{clubMark(club.name)}</span>}
@@ -101,7 +104,6 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
         </div>
         <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {b?.kind === 'demo' && <DemoTour go={go} clubId={signedIn.clubs[0]?.club.id} />}
-          {b?.kind === 'server' && <button type="button" className="btn ghost" onClick={() => go('club-new')}>Create a club</button>}
           {b?.kind === 'server' && <section className="card" style={{ padding: 18 }}><Legacy><MyPasswordCard /></Legacy></section>}
           <button type="button" className="tlink mut" style={{ alignSelf: 'flex-start' }} onClick={signOut}>
             {b?.kind === 'demo' ? 'Close the demo and delete it from this phone' : 'Sign out'}
@@ -249,7 +251,8 @@ function NextTournament({ n, go, b }: { n: NextT; go: Go; b: ClubBackend }) {
       <div className="between"><span className={t.status === 'live' ? 'chip live' : 'cap'}>{t.status === 'live' ? 'Live now' : 'Next tournament'}</span><span className="mut" style={{ fontSize: 13 }}>{n.club}</span></div>
       <div><h2 className="disp" style={{ fontSize: 34, margin: 0 }}>{t.name}</h2><div className="mut" style={{ fontSize: 14, marginTop: 4 }}>{when}{t.startTime ? ` · ${friendlyTime(t.startTime)}` : ''} · {t.courts} court{t.courts === 1 ? '' : 's'}</div></div>
       <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
-        {!isApproved(t) && <button type="button" className="btn" onClick={() => go('club-tournament', t.id)}>{t.approval === 'submitted' ? 'Waiting for RallyQ' : 'Submit for approval'}</button>}
+        {!isApproved(t) && t.approval === 'submitted' && <span className="st wait" style={{ alignSelf: 'center' }}>Waiting for RallyQ</span>}
+        {!isApproved(t) && t.approval !== 'submitted' && <button type="button" className="btn" onClick={() => go('club-tournament', t.id)}>Finish setup</button>}
         {isApproved(t) && <button type="button" className="btn" onClick={() => go('club-desk', t.id)}>{icon('M3 4h18v12H3zM8 20h8M12 16v4')}Desk</button>}
         <button type="button" className="btn ghost" onClick={() => go('club-inbox', t.id)}>{icon('M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M17 11h5M19.5 8.5v5')}Entries</button>
         {isApproved(t) && <button type="button" className="btn ghost" onClick={() => go('club-scorers', t.id)}>{icon('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7')}Referee links</button>}
@@ -607,6 +610,9 @@ function MyPasswordCard() {
   );
 }
 
+type ClubField = 'name' | 'me' | 'phone';
+const FIELD_ERROR = { color: 'var(--coral, #FF655C)', fontSize: 13, margin: '4px 0 0' } as const;
+
 export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
@@ -614,35 +620,51 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
   const [country, setCountry] = useState('+91');
   const [digits, setDigits] = useState('');
   const [note, setNote] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<{ field?: ClubField; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Set once the club exists but its contact number didn't save: retry the number, never create a second club.
+  const [madeId, setMadeId] = useState<string | null>(null);
+  function fail(field: ClubField | undefined, text: string) {
+    setErr({ field, text });
+    if (field) document.getElementById(`newclub-${field}`)?.focus();
+  }
+  async function saveContact(b: ClubBackend, id: string) {
+    try {
+      await b.requestHosting(id, joinPhone(country, digits), note);
+      go('club-view', id, { replace: true });
+    } catch (e) { setMadeId(id); fail('phone', `Your club is created, but the phone number didn’t save: ${errorText(e)}`); setBusy(false); }
+  }
   async function create() {
     const b = backend();
     if (!b) return go('club');
-    if (name.trim().length < 2) return setMsg('Give the club a name');
-    if (!me.trim()) return setMsg('Add your name, as players will see it');
+    if (!madeId && name.trim().length < 2) return fail('name', 'Give the club a name');
+    if (!madeId && !me.trim()) return fail('me', 'Add your name, as players will see it');
     const bad = phoneProblem(country, digits);
-    if (bad) return setMsg(bad);
+    if (bad) return fail('phone', bad);
+    setErr(null);
     setBusy(true);
-    try {
-      const id = await b.createClub(name, city, me);
-      // The club exists now; if the request fails, the club page lets them send it again.
-      await b.requestHosting(id, joinPhone(country, digits), note).catch(() => undefined);
-      go('club-view', id, { replace: true });
-    } catch (e) { setMsg(errorText(e)); setBusy(false); }
+    if (madeId) return saveContact(b, madeId);
+    let id: string;
+    try { id = await b.createClub(name, city, me); } catch (e) { fail(undefined, errorText(e)); setBusy(false); return; }
+    await saveContact(b, id);
   }
+  const invalid = (f: ClubField) => (err?.field === f ? { 'aria-invalid': true, 'aria-describedby': `newclub-${f}-error` } : {});
+  const below = (f: ClubField) => err?.field === f && <p id={`newclub-${f}-error`} role="alert" style={FIELD_ERROR}>{err.text}</p>;
   return (
     <PublicShell go={go} active="clubs">
       <PageHead cap="For clubs" title={<span id="newclub-title">Create a club</span>} sub="Your club’s name and logo come first on event pages, scores and results. RallyQ stays in the background." actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
       <section className="card" style={{ padding: 22, maxWidth: 640 }}><Legacy style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <Field label="Club name"><input className="input" aria-label="Club name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></Field>
-      <Field label="City (optional)"><input className="input" aria-label="City" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} /></Field>
-      <Field label="Your name"><input className="input" aria-label="Your name" value={me} onChange={(e) => setMe(e.target.value)} maxLength={60} /></Field>
-      <PhoneField country={country} digits={digits} onChange={(c, d) => { setCountry(c); setDigits(d); }} />
+      <Field label="Club name"><input id="newclub-name" className="input" aria-label="Club name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={!!madeId} {...invalid('name')} />{below('name')}</Field>
+      <Field label="City (optional)"><input className="input" aria-label="City" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} disabled={!!madeId} /></Field>
+      <Field label="Your name"><input id="newclub-me" className="input" aria-label="Your name" value={me} onChange={(e) => setMe(e.target.value)} maxLength={60} disabled={!!madeId} {...invalid('me')} />{below('me')}</Field>
+      <div><PhoneField id="newclub-phone" invalid={err?.field === 'phone'} country={country} digits={digits} onChange={(c, d) => { setCountry(c); setDigits(d); }} />{below('phone')}</div>
       <Field label="About your club (optional)"><textarea className="input" aria-label="About your club" rows={3} placeholder="Where you play, how many courts, tournaments you plan" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} /></Field>
-      <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. Set up tournaments straight away; RallyQ approves each one before it goes live, and may call or WhatsApp you on this number.</p>
-      {msg && <div role="status" className="warn">{msg}</div>}
-      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy} onClick={create}>Create club</button>
+      <p className="small muted" style={{ margin: 0 }}>You’ll be the owner. {GO_LIVE_NOTE} RallyQ may call or WhatsApp you on this number.</p>
+      {err && !err.field && <div role="alert" style={FIELD_ERROR}>{err.text}</div>}
+      <div className="row" style={{ gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" className="btn" disabled={busy} onClick={create}>{madeId ? 'Save number again' : 'Create club'}</button>
+        {madeId && <button type="button" className="tlink" onClick={() => go('club-view', madeId, { replace: true })}>Open my club</button>}
+      </div>
       </Legacy></section>
     </PublicShell>
   );

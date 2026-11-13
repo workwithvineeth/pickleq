@@ -1,5 +1,5 @@
 import { friendlyDate } from '../../club/dates';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Go } from '../../navigation';
 import { useTournament } from '../../club/screens/Organiser';
 import { errorText, names, shareText, useLoad } from '../../club/screens/common';
@@ -13,6 +13,7 @@ import { DivisionBody } from '../../club/screens/Tournament';
 import { useDesk } from '../../club/screens/deskContext';
 import { DemoBar, MatchdayShell, Say } from '../../club/screens/DeskFrame';
 import { ModeButton, PageHead } from '../shell/Shell';
+import DESK_CSS from './desk.css?raw';
 
 type Msg = { ok: boolean; text: string } | null;
 type Tool = 'result' | 'walk' | 'move';
@@ -98,6 +99,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
 
   return (
     <MatchdayShell go={go} active="desk" d={d}>
+      <style>{DESK_CSS}</style>
       <div className="between">
         <div className="pg-h">
           <span className="cap">{t.status === 'live' && <span className="chip live" style={{ marginRight: 8 }}>Live</span>}{t.name} · {t.status === 'live' ? `Now ${new Date(now).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}` : `Starts ${friendlyDate(t.startDate)}, ${clock12(t.startTime)}`}</span>
@@ -124,7 +126,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
       {real.length > 0
         ? <div className="grid g4">
           <div className="card stat" style={{ padding: 16 }}><div className="cap">Played</div><div className="n">{played}</div><div className="mut" style={{ fontSize: 13 }}>of {real.length} matches</div>
-            <progress aria-label="Matches completed" max={real.length} value={played} style={{ width: '100%', height: 6, accentColor: '#D9F24A', marginTop: 8 }} /></div>
+            <progress aria-label="Matches completed" max={real.length} value={played} style={{ width: '100%', height: 6, accentColor: 'var(--ball)', marginTop: 8 }} /></div>
           <div className="card stat" style={{ padding: 16 }}><div className="cap">On court</div><div className="n acc">{board.filter((s) => s.now).length}</div><div className="mut" style={{ fontSize: 13 }}>live now</div></div>
           <div className="card stat" style={{ padding: 16 }}><div className="cap">In the queue</div><div className="n">{active.filter((m) => m.status === 'scheduled').length}</div><div className="mut" style={{ fontSize: 13 }}>waiting to play</div></div>
           {finish && played < real.length && <div className="card stat" style={{ padding: 16 }}><div className="cap">{finish.past ? 'Past scheduled finish' : 'Scheduled finish'}</div><div className="n" style={{ fontSize: 34 }}>{clock12(finish.hm)}</div><div className="mut" style={{ fontSize: 13 }}>from the schedule</div></div>}
@@ -132,13 +134,13 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
         : <p className="mut" role="status">No matches scheduled yet. Open entries to make the draw.</p>}
 
       <div className="between"><h2 className="cap">Courts · tap a court to manage its match</h2><span className="mut" style={{ fontSize: 12 }}>Referees enter scores on their phones. You can also enter results here.</span></div>
-      <section className="grid g4" aria-label="Courts">
+      <section className="grid g4 rqd-courts" aria-label="Courts">
         {board.map((s) => <CourtCard key={s.court} court={s.court} now={s.now} next={s.next} d={d} pmap={pmap} at={now}
           selected={!!selected && selected.id === (s.now ?? s.next)?.id} nextUp={s.now || s.next ? undefined : (nextMatchToCall(active, s.court) ?? null)}
           link={links.data ? (linkFor(s.court) ? (linkFor(s.court)!.lastUsedAt ? 'opened' : 'unopened') : 'none') : undefined}
           onPick={() => { const m = s.now ?? s.next; if (m) setSel(m.id); }} />)}
       </section>
-      {freeCourt && <div className="card" style={{ padding: '16px 18px', display: 'flex', flexWrap: 'wrap', gap: '12px 20px', alignItems: 'center' }}>
+      {freeCourt && <div className="card rqd-call" style={{ padding: '16px 18px', display: 'flex', flexWrap: 'wrap', gap: '12px 20px', alignItems: 'center' }}>
         <span className="grow"><b>Court {freeCourt.court} is free.</b> <span className="mut">{toCall ? `Next: ${who(toCall)}${toCall.court ? ` (booked for court ${toCall.court})` : ''}. Call them when the court is clear.` : 'No match is ready for it yet. Matches already booked on another court stay there.'}</span></span>
         <button type="button" className={draft ? 'btn alt' : 'btn'} disabled={busy || !toCall} onClick={() => toCall && void moveTo(toCall, freeCourt.court)}>{toCall ? `Call to Court ${freeCourt.court}` : 'No match ready to call'}</button>
       </div>}
@@ -165,7 +167,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
                   <b className="ell" style={{ display: 'block', fontSize: 14 }}>{who(m)}</b>
                   <span className="mut" style={{ fontSize: 12 }}>{[matchLabel(m, d), when(m) && `about ${clock12(when(m))}`].filter(Boolean).join(' · ')}</span>
                 </button>
-                <span className={m.court ? 'st off' : 'st wait'}>{m.court ? `Court ${m.court}` : 'Waiting'}</span>
+                <span key={m.court ? 'court' : 'wait'} className={m.court ? 'st off rqd-pill' : 'st wait rqd-pill'}>{m.court ? `Court ${m.court}` : 'Waiting'}</span>
               </div>
             ))}
           </div>
@@ -194,24 +196,28 @@ function CourtCard({ court, now, next, nextUp, d, pmap, at, selected, link, onPi
   const m = now ?? next;
   const last = now?.games.at(-1);
   const quiet = now ? ago(now.updatedAt, at) : 0;
+  // The one line a phone shows instead of the whole court card.
+  const summary = now ? `${last?.a ?? 0}–${last?.b ?? 0} · ${names(now.sideA, pmap)} v ${names(now.sideB, pmap)}`
+    : next ? `Booked next: ${names(next.sideA, pmap)} v ${names(next.sideB, pmap)}` : nextUp ? `Next up: ${names(nextUp.sideA, pmap)} v ${names(nextUp.sideB, pmap)}` : 'Ready for the next match';
   return (
-    <button type="button" className={selected ? 'cglass sel' : 'cglass'} aria-label={`Court ${court}`} aria-describedby={id} aria-pressed={selected} onClick={onPick} disabled={!m}
-      style={{ border: 0, font: 'inherit', textAlign: 'left', cursor: m ? 'pointer' : 'default', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 300, color: '#F4F7EE' }}>
+    <button type="button" className={selected ? 'cglass sel rqd-court' : 'cglass rqd-court'} aria-label={`Court ${court}`} aria-describedby={id} aria-pressed={selected} onClick={onPick} disabled={!m}
+      style={{ border: 0, font: 'inherit', textAlign: 'left', cursor: m ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', color: 'var(--ink)' }}>
       {LINES}
-      <span id={id} style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, width: '100%' }}>
-        <span className="between" style={{ width: '100%' }}><b className="disp" style={{ fontSize: 26 }}>Court {court}</b>{now ? <span className="st live">Live</span> : <span className="st ok">Free</span>}</span>
-        <span className="mut" style={{ fontSize: 12 }}>{m ? [matchLabel(m, d), now ? `Game ${Math.max(1, now.games.length)}` : 'Booked next', formatRule(m.format)].join(' · ') : 'Ready for the next match'}</span>
+      <span id={id} className="rqd-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}>
+        <span className="between" style={{ width: '100%' }}><b className="disp" style={{ fontSize: 26 }}>Court {court}</b>{now ? <span key="live" className="st live rqd-pill">Live</span> : <span key="free" className="st ok rqd-pill">Free</span>}</span>
+        <span className="mut rqd-sum">{summary}</span>
+        <span className="mut rqd-more" style={{ fontSize: 12 }}>{m ? [matchLabel(m, d), now ? `Game ${Math.max(1, now.games.length)}` : 'Booked next', formatRule(m.format)].join(' · ') : 'Ready for the next match'}</span>
         {now && <>
-          <span style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: '4px 12px', alignItems: 'center', width: '100%', marginTop: 'auto' }}>
-            <b className="ell" style={{ fontSize: 15 }}>{names(now.sideA, pmap)}</b><span className="n" style={{ fontSize: 46, color: '#E4F75A' }}>{last?.a ?? 0}</span>
-            <span className="ell" style={{ fontSize: 15, color: '#C9D9CD' }}>{names(now.sideB, pmap)}</span><span className="n" style={{ fontSize: 46 }}>{last?.b ?? 0}</span>
+          <span className="rqd-more" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: '4px 12px', alignItems: 'center', width: '100%', marginTop: 'auto' }}>
+            <b className="ell" style={{ fontSize: 15 }}>{names(now.sideA, pmap)}</b><span className="n" style={{ fontSize: 46, color: 'var(--ball)' }}>{last?.a ?? 0}</span>
+            <span className="ell" style={{ fontSize: 15, color: 'var(--mut)' }}>{names(now.sideB, pmap)}</span><span className="n" style={{ fontSize: 46 }}>{last?.b ?? 0}</span>
           </span>
-          {quiet >= 5 ? <span className="st no wrapok" style={{ fontSize: 12 }}>No new score for {quiet} min</span> : <span className="mut" style={{ fontSize: 12 }}>Last score {quiet ? `${quiet} min ago` : 'just now'}{next ? ` · Next: ${names(next.sideA, pmap)} v ${names(next.sideB, pmap)}` : ''}</span>}
+          {quiet >= 5 ? <span className="st no wrapok rqd-pill" style={{ fontSize: 12 }}>No new score for {quiet} min</span> : <span className="mut rqd-more" style={{ fontSize: 12 }}>Last score {quiet ? `${quiet} min ago` : 'just now'}{next ? ` · Next: ${names(next.sideA, pmap)} v ${names(next.sideB, pmap)}` : ''}</span>}
         </>}
-        {!now && next && <span style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}><span className="mut" style={{ fontSize: 13 }}>Booked next:</span><b style={{ fontSize: 15 }}>{names(next.sideA, pmap)}</b><span style={{ fontSize: 15, color: '#C9D9CD' }}>{names(next.sideB, pmap)}</span></span>}
-        {!m && <span style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}><span className="mut" style={{ fontSize: 13 }}>{nextUp ? 'Free. Next up:' : 'Free'}</span><b style={{ fontSize: 16 }}>{nextUp ? `${names(nextUp.sideA, pmap)} vs ${names(nextUp.sideB, pmap)}` : 'No match ready for this court'}</b></span>}
-        {link === 'none' && <span className="st no wrapok" style={{ fontSize: 12 }}>No referee link yet</span>}
-        {link === 'unopened' && <span className="mut" style={{ fontSize: 12 }}>Referee link not opened yet</span>}
+        {!now && next && <span className="rqd-more" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}><span className="mut" style={{ fontSize: 13 }}>Booked next:</span><b style={{ fontSize: 15 }}>{names(next.sideA, pmap)}</b><span style={{ fontSize: 15, color: 'var(--mut)' }}>{names(next.sideB, pmap)}</span></span>}
+        {!m && <span className="rqd-more" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}><span className="mut" style={{ fontSize: 13 }}>{nextUp ? 'Free. Next up:' : 'Free'}</span><b style={{ fontSize: 16 }}>{nextUp ? `${names(nextUp.sideA, pmap)} vs ${names(nextUp.sideB, pmap)}` : 'No match ready for this court'}</b></span>}
+        {link === 'none' && <span className="st no wrapok rqd-pill" style={{ fontSize: 12 }}>No referee link yet</span>}
+        {link === 'unopened' && <span className="mut rqd-more" style={{ fontSize: 12 }}>Referee link not opened yet</span>}
       </span>
     </button>
   );
@@ -225,9 +231,14 @@ function MatchTools({ m, d, pmap, board, busy, onResult, onWalkover, onMove, onS
   const [rows, setRows] = useState(() => Array.from({ length: m.format.bestOf }, () => ({ a: '', b: '' })));
   const [problem, setProblem] = useState<string | null>(null);
   const [out, setOut] = useState<'A' | 'B' | null>(null);
+  // A walkover ends the match at once, so the desk confirms it in place before saving.
+  const [confirming, setConfirming] = useState(false);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (confirming) confirmRef.current?.focus(); }, [confirming]);
   const [court, setCourt] = useState<number | null>(null);
   const nameA = names(m.sideA, pmap), nameB = names(m.sideB, pmap);
   const twoSides = m.sideA.length > 0 && m.sideB.length > 0;
+  const goesThrough = out === 'A' ? nameB : nameA;
   const set = (i: number, k: 'a' | 'b', v: string) => setRows((x) => x.map((y, j) => (j === i ? { ...y, [k]: v.replace(/\D/g, '').slice(0, 2) } : y)));
   function save() {
     const games: ClubGame[] = [];
@@ -274,14 +285,20 @@ function MatchTools({ m, d, pmap, board, busy, onResult, onWalkover, onMove, onS
           <div className="mut" style={{ fontSize: 13 }}>Who didn’t turn up or retired? The other side goes through. Games already played are kept (a retirement); with none, it’s a walkover.</div>
           <div className="grid g2" style={{ gap: 10, gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))' }}>
             {([['A', nameA], ['B', nameB]] as const).map(([k, n]) => (
-              <button key={k} type="button" className={out === k ? 'opt on' : 'opt'} aria-pressed={out === k} onClick={() => setOut(k)}>
+              <button key={k} type="button" className={out === k ? 'opt on' : 'opt'} aria-pressed={out === k} onClick={() => { setOut(k); setConfirming(false); }}>
                 <span className="dot" /><span><b style={{ display: 'block' }}>{n}</b><span className="mut" style={{ fontSize: 13 }}>Didn’t turn up or retired</span></span>
               </button>
             ))}
           </div>
-          <button type="button" className="btn alt" style={{ alignSelf: 'flex-start' }} disabled={busy || !out} onClick={() => out && void onWalkover(out === 'A' ? 'B' : 'A')}>
-            {out ? `Save: ${out === 'A' ? nameB : nameA} go through` : 'Save walkover'}
-          </button>
+          {confirming && out
+            ? <div className="row" role="group" aria-label="Confirm walkover" style={{ flexWrap: 'wrap', gap: '10px 12px' }}>
+              <span className="grow" style={{ fontWeight: 700 }}>Save: {goesThrough} go through? This ends the match.</span>
+              <button ref={confirmRef} type="button" className="btn alt sm" disabled={busy} onClick={() => { setConfirming(false); void onWalkover(out === 'A' ? 'B' : 'A'); }}>Confirm</button>
+              <button type="button" className="btn ghost sm" onClick={() => setConfirming(false)}>Cancel</button>
+            </div>
+            : <button type="button" className="btn alt" style={{ alignSelf: 'flex-start' }} disabled={busy || !out} onClick={() => setConfirming(true)}>
+              {out ? `Save: ${goesThrough} go through` : 'Save walkover'}
+            </button>}
         </section>
         : <p className="mut" style={{ margin: 0 }}>Both sides aren’t known yet.</p>)}
       {tool === 'move' && (

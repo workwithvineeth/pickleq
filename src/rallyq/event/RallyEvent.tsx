@@ -11,6 +11,7 @@ import {matchView} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Event.dc.html?raw';
 import {holes} from '../holes';
+import {ShellState,shellSource} from '../ShellState';
 const R:[string,string][]=[
  ['<span class="chip ball">Entries open</span><span class="cap" style="color:#DDE7DC">Sun 15 Nov · 5:00 pm · Maple Courts</span>','<span class="{{statusChip}}">{{statusLabel}}</span><span class="cap" style="color:#DDE7DC">{{whenWhere}}</span>'],
  ['>Cedar Open</h1>','>{{eventName}}</h1>'],
@@ -23,13 +24,36 @@ const R:[string,string][]=[
  ['Final · 8:15 pm','{{finalLabel}}'],
  ['Pools of 4, top 2 to knockouts. Games to 11, win by 2. Finals best of 3.','{{infoFormat}}'],
  ['Maple Courts, Hyderabad. 4 outdoor courts under lights. Parking on site.','{{infoVenue}}'],
- ['Cedar desk on WhatsApp: [CLUB NUMBER]','{{infoContact}}']];
+ ['Cedar desk on WhatsApp: [CLUB NUMBER]','{{infoContact}}'],
+ // One primary button that follows the event: results, live, enter, or message the organiser.
+ ['<button class="btn" onClick="{{join}}">{{joinLabel}}</button>','<button class="btn" onClick="{{join}}" disabled="{{joinOff}}">{{joinLabel}}</button>'],
+ // Public entries carry no status: show the column only for the per-category rows (Open / Closed).
+ ['<th>Status</th>','<sc-if value="{{hasStatus}}" hint-placeholder-val="{{ true }}"><th>Status</th></sc-if>'],
+ ['<td><span class="{{e.cls}}">{{e.st}}</span></td>','<sc-if value="{{hasStatus}}" hint-placeholder-val="{{ true }}"><td><span class="{{e.cls}}">{{e.st}}</span></td></sc-if>']];
+const SHELL=shellSource(raw);
 // Semi-final cards: the status chip comes from the match (coral only while live) and live ones carry the win chance.
 const SF_CARD='<span class="chip live">Live</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for>';
 const source=holes(raw,R).replace(SF_CARD,'<span class="{{m.chip}}">{{m.st}}</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div>'+winBarHtml('m.win')+'</div></sc-for>');
 
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 type Tab='Entries'|'Pools'|'Knockout'|'Info';
+export type EventAction='results'|'live'|'enter'|'contact';
+/** A link that reaches the organiser: a web link, an email, or a phone number as WhatsApp. */
+export function contactHref(contact?:string){
+ const t=contact?.trim();if(!t)return null;
+ if(/^https:\/\//i.test(t))return t.split(/\s/)[0];
+ const mail=/[^\s@]+@[^\s@]+\.[^\s@]+/.exec(t);if(mail)return 'mailto:'+mail[0];
+ const n=t.replace(/[^\d]/g,'');
+ // shortcut: a bare 10-digit number is read as Indian (+91); upgrade when clubs outside India list numbers.
+ return n.length===10?'https://wa.me/91'+n:n.length>10&&n.length<=15?'https://wa.me/'+n:null;
+}
+/** The event page's one primary button, by the event's state. */
+export function primaryAction(e:Pick<PublicEvent,'status'|'registrationOpen'|'contact'>):{label:string;to:EventAction|null}{
+ if(e.status==='done')return{label:'See the results',to:'results'};
+ if(e.status==='live')return{label:'Watch live',to:'live'};
+ if(e.registrationOpen)return{label:'Enter the event',to:'enter'};
+ return contactHref(e.contact)?{label:'Entries closed · Message the organiser',to:'contact'}:{label:'Entries closed',to:null};
+}
 async function findEvent(slug:string){let last:unknown=null;for(const src of await publicSourcesFor(slug)){try{const event=await src.publicEvent(slug);if(event)return{src,event};}catch(e){last=e;}}if(last)throw last;return null;}
 
 /** Standings per pool from finished pool matches: wins, losses, point difference. */
@@ -45,12 +69,14 @@ export function poolTables(d:PublicTournament){
 }
 function koRows(d:PublicTournament,stage:'qf'|'sf'){return d.matches.filter(m=>m.stage===stage).map(m=>{const v=matchView(d,m);return{a:teamWithDupr(d,m.entryA)??v.a,b:teamWithDupr(d,m.entryB)??v.b,sa:v.pointsA,sb:v.pointsB,court:m.court?'Court '+m.court:'',win:liveWinBar(d,m),chip:m.status==='live'?'chip live':'chip',st:m.status==='live'?'Live':m.status==='done'?'Final':'Next',as:m.winner==='A'?'font-weight:700':'color:#9FB4A6',bs:m.winner==='B'?'font-weight:700':'color:#9FB4A6'};});}
 
-export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:string|undefined,tab:Tab,setTab:(t:Tab)=>void,enter:()=>void){
+export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:string|undefined,tab:Tab,setTab:(t:Tab)=>void,act:(to:EventAction)=>void){
  const taken=e.divisions.reduce((s,x)=>s+x.taken,0);
  const caps=e.divisions.map(x=>(x.rules as {maxEntries?:number}).maxEntries).filter((n):n is number=>typeof n==='number');const cap=caps.length===e.divisions.length&&caps.length?caps.reduce((a,b)=>a+b,0):0;
  const live=e.status==='live';
- const entries=d?d.entries.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.names.join(' / '),cat:d.divisions.find(v=>v.id===x.divisionId)?.name??'',dupr:duprLineOf(d,x.id).replace(/^DUPR /,''),st:'Confirmed',cls:'chip ball'})):e.divisions.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.taken+' teams entered',cat:x.name,dupr:'—',st:e.registrationOpen?'Open':'Closed',cls:e.registrationOpen?'chip ball':'chip'}));
+ const entries=d?d.entries.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.names.join(' / '),cat:d.divisions.find(v=>v.id===x.divisionId)?.name??'',dupr:duprLineOf(d,x.id).replace(/^DUPR /,''),st:'',cls:''})):e.divisions.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.taken+' teams entered',cat:x.name,dupr:'—',st:e.registrationOpen?'Open':'Closed',cls:e.registrationOpen?'chip ball':'chip'}));
+ const primary=primaryAction(e);
  return {
+  hasStatus:!d,
   eventName:e.name,clubName:e.club,clubMark:mark(e.club),logoUrl:logoUrl??'',noLogo:!logoUrl,
   hostLine:e.venue?e.club+' at '+e.venue:e.club,
   statusLabel:live?'Live now':e.registrationOpen?'Entries open':e.status==='done'?'Results':'Entries closed',statusChip:live?'chip live':e.registrationOpen?'chip ball':'chip',
@@ -60,7 +86,7 @@ export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:s
   isEntries:tab==='Entries',isPools:tab==='Pools',isKo:tab==='Knockout',isInfo:tab==='Info',
   entries,filled:taken,capLabel:cap?'of '+cap+' teams':'teams entered',pct:(cap?Math.min(100,Math.round(taken/cap*100)):100)+'%',
   entryLine:e.registrationOpen?'Entries open':'Entries closed',entryNote:e.entriesClose?'Entries close '+friendlyDate(e.entriesClose.slice(0,10))+'.':e.upiId?'Pay the club by UPI after you enter.':'Pay the club at the desk.',
-  join:enter,joinLabel:e.registrationOpen?'Enter the event':'See live scores',
+  join:()=>{if(primary.to)act(primary.to);},joinLabel:primary.label,joinOff:!primary.to,
   pools:d?poolTables(d):[],qf:d?koRows(d,'qf'):[],sf:d?koRows(d,'sf'):[],finalLabel:'Final',
   infoFormat:e.about||e.divisions.map(x=>x.name).join(' · '),infoVenue:[e.venue,e.city].filter(Boolean).join(', ')||'Venue to be announced',infoContact:e.contact||'Ask the host club at the desk.'
  };
@@ -71,7 +97,11 @@ export function RallyEvent({slug,go}:{slug:string;go:Go}){
  const state=useLoad(()=>findEvent(slug),[slug]);
  const logo=useLoad(async()=>state.data?state.data.src.publicClubLogo(slug).catch(()=>null):null,[state.data,slug]);
  const scores=usePublicScores(state.data?.event.drawn||state.data?.event.results?slug:'');
- if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>{state.loading?'Loading event…':state.error??'This event could not be found.'}</div>;
+ if(!state.data)return <ShellState name="Event" source={SHELL} go={go} loading={state.loading} message="This event link isn’t working."/>;
  const e=state.data.event;
- return <PrototypeScreen name="Event" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,()=>e.registrationOpen?go('event-enter',e.divisions.length===1?slug+'~'+e.divisions[0].id:slug):go('live',slug))}/>;
+ const act=(to:EventAction)=>{
+  if(to==='results')go('results',slug);else if(to==='live')go('live',slug);
+  else if(to==='enter')go('event-enter',e.divisions.length===1?slug+'~'+e.divisions[0].id:slug);
+  else{const href=contactHref(e.contact);if(href)window.open(href,'_blank','noopener,noreferrer');}};
+ return <PrototypeScreen name="Event" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,act)}/>;
 }

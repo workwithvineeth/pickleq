@@ -1,5 +1,5 @@
 import {teamWithDupr} from '../../club/duprText';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import type {Go} from '../../navigation';
 import {serverBackend} from '../../club';
 import {inLaunchCity} from '../../club/config';
@@ -10,11 +10,23 @@ import {PrototypeScreen} from '../PrototypeScreen';
 import {liveWinBar,NO_WIN_BAR,winBarFrom,winBarHtml,type WinBar} from '../../club/winBar';
 import {winEstimate} from '../../club/winPredictor';
 import liveRaw from '../prototypes/Live.dc.html?raw';
+import {ShellState,shellSource} from '../ShellState';
 /** The Live board with the win chance under the big score. */
 const LIVE_SOURCE=liveRaw.replace('scored by court referee</span></div>','scored by court referee</span></div>'+winBarHtml('sel.win'))
  // When nothing is live the page shows the prototype sample: say so plainly, so nobody reads it as real scores.
  .replace('<span class="chip live">Live · {{today}}</span>','<span class="{{topChip}}">{{topLabel}}</span>')
- .replace('font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1>','font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1><sc-if value="{{isSample}}" hint-placeholder-val="{{ false }}"><p class="mut" style="margin:8px 0 0;font-size:14px;max-width:560px">Nothing is live right now. These are sample scores to show how it looks; real matches appear here as referees score them.</p></sc-if>');
+ .replace('font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1>','font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1><sc-if value="{{isSample}}" hint-placeholder-val="{{ false }}"><p class="mut" style="margin:8px 0 0;font-size:14px;max-width:560px">Nothing is live right now. These are sample scores to show how it looks; real matches appear here as referees score them.</p></sc-if>')
+ // How fresh the scores are (was a fixed 'Updated 4 s ago'); coral when the last refresh failed.
+ .replace('<span class="mut" style="font-size:13px">Updated 4 s ago · ','<span class="mut" style="font-size:13px;{{updStyle}}">{{updated}} · ');
+const LOADING=shellSource(liveRaw);
+/** "Updated 12s ago" for the first minute, then the clock time of the last good load. */
+export function updatedLabel(at:number|null,now:number,error:boolean,sample:boolean){
+ if(error)return 'Can’t reach live scores · retrying';
+ if(sample)return 'Sample scores';
+ if(at===null)return 'Loading scores';
+ const s=Math.max(0,Math.round((now-at)/1000));
+ return s<60?'Updated '+s+'s ago':'Updated '+new Date(at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+}
 /** Sample win chance for the labelled sample (made-up ratings), so the sample shows what the bar looks like. */
 const sampleWin=(a:string,b:string,sa:number,sb:number,gA:number,gB:number,rA:number[],rB:number[])=>winBarFrom(winEstimate({ratingsA:rA,ratingsB:rB,ralliesA:sa+gA*11,ralliesB:sb+gB*11,gamesA:gA,gamesB:gB,pointsA:sa,pointsB:sb,pointsTo:11,bestOf:3}),a,b);
 
@@ -50,6 +62,10 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
  const[chosen,setPick]=useState<{v:number|null;c:number}>({v:null,c:0});
  const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents()).filter(e=>inLaunchCity(e.city)&&e.status==='live'&&e.results):[]},[]);
  const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};const ev=events[pick.v];const scores=usePublicScores(ev?.slug??'');
+ const[loadedAt,setLoadedAt]=useState<number|null>(null),[now,setNow]=useState(()=>Date.now());
+ useEffect(()=>{if(scores.data&&!scores.error)setLoadedAt(Date.now());},[scores.data,scores.error]);
+ useEffect(()=>{const t=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(t);},[]);
+ if(directory.loading&&!directory.data)return <ShellState name="Live" source={LOADING} go={go} loading/>;
  let venues:Venue[]=SAMPLE;
  if(events.length){
   venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
@@ -58,6 +74,6 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
  const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;
- const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample?'chip':'chip live',topLabel:directory.error?'Can’t reach live scores · showing a sample':isSample?'Sample scores · '+today:'Live · '+today};
+ const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample?'chip':'chip live',updated:updatedLabel(loadedAt,now,!!scores.error,isSample),updStyle:scores.error?'color:var(--coral)':'',topLabel:directory.error?'Can’t reach live scores · showing a sample':isSample?'Sample scores · '+today:'Live · '+today};
  return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }

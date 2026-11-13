@@ -5,11 +5,17 @@ import { publicSourcesFor } from '../index';
 /** Full download at least every 6th poll (2 minutes), even if the version says nothing changed. */
 const FULL_EVERY = 6;
 
+/**
+ * What the hook returns. `updatedAt` is when a poll last succeeded (ms since epoch, null before the first one) and
+ * `failures` counts failed polls in a row, so a screen can tell a quiet board from one that stopped updating.
+ */
+export interface PublicScores { data: PublicTournament | null; error: string | null; loading: boolean; updatedAt: number | null; failures: number }
+
 /** One polling timer; retain the last good score/video tree on refresh errors. */
-export function usePublicScores(slug: string) {
-  const [state, setState] = useState<{ slug: string; data: PublicTournament | null; error: string | null; loading: boolean }>({ slug, data: null, error: null, loading: true });
+export function usePublicScores(slug: string): PublicScores {
+  const [state, setState] = useState<PublicScores & { slug: string }>({ slug, data: null, error: null, loading: true, updatedAt: null, failures: 0 });
   useEffect(() => {
-    if(!slug){setState({slug,data:null,error:null,loading:false});return;}
+    if(!slug){setState({slug,data:null,error:null,loading:false,updatedAt:null,failures:0});return;}
     let alive = true, busy = false;
     let status: PublicTournament['status'] | undefined;
     // Ask the source that answered last time for its short version first; download the whole tournament only when it
@@ -25,7 +31,7 @@ export function usePublicScores(slug: string) {
       if (busy || document.hidden || status === 'done') return;
       busy = true;
       try {
-        if (await unchanged()) { if (alive) setState(s => (s.error ? { ...s, error: null } : s)); return; }
+        if (await unchanged()) { if (alive) setState(s => ({ ...s, error: null, updatedAt: Date.now(), failures: 0 })); return; }
         let data: PublicTournament | null = null, lastError: unknown;
         for (const source of await publicSourcesFor(slug)) {
           try {
@@ -36,9 +42,12 @@ export function usePublicScores(slug: string) {
           } catch (e) { lastError = e; }
         }
         if (!data && lastError) throw lastError;
-        if (alive) { status = data?.status; setState({ slug, data, error: null, loading: false }); }
+        if (alive) { status = data?.status; setState({ slug, data, error: null, loading: false, updatedAt: Date.now(), failures: 0 }); }
       } catch (e) {
-        if (alive) setState(s => ({ slug, data: s.slug === slug ? s.data : null, error: e instanceof Error ? e.message : 'Scores could not refresh. Trying again shortly.', loading: false }));
+        if (alive) setState(s => {
+          const same = s.slug === slug;
+          return { slug, data: same ? s.data : null, error: e instanceof Error ? e.message : 'Scores could not refresh. Trying again shortly.', loading: false, updatedAt: same ? s.updatedAt : null, failures: same ? s.failures + 1 : 1 };
+        });
       } finally { busy = false; }
     }
     void load();
@@ -46,5 +55,5 @@ export function usePublicScores(slug: string) {
     document.addEventListener('visibilitychange', load);
     return () => { alive = false; window.clearInterval(timer); document.removeEventListener('visibilitychange', load); };
   }, [slug]);
-  return state.slug === slug ? state : { data: null, error: null, loading: true };
+  return state.slug === slug ? state : { data: null, error: null, loading: true, updatedAt: null, failures: 0 };
 }
