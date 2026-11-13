@@ -63,12 +63,12 @@ constructor(p){ super(p); this.state = { tab: 'Clubs', ok: {} }; }
 renderVals() {
   const s = this.state;
   const C = [
-    ['Loki’s Pickleball Club','Hyderabad','15 Nov','Club',true],
-    ['Rally33','Crosscourts','15 Nov','Club',true],
-    ['TPC','Narapally','15 Nov','Club',true],
-    ['ElitePicklers','Bowenpally','15 Nov','Club',true],
-    ['Pickleyard','Malkajgiri','21 Nov','Club',false],
-    ['Pickleball Central','Hyderabad','28 Nov','Club + stream',false]
+    ['Banyan Pickleball Club','Hyderabad','15 Nov','Club',true],
+    ['Cedar','Maple Courts','15 Nov','Club',true],
+    ['MPC','Sample North','15 Nov','Club',true],
+    ['Willow Players','Bowenpally','15 Nov','Club',true],
+    ['Birch Courts','Malkajgiri','21 Nov','Club',false],
+    ['Cedar Club','Hyderabad','28 Nov','Club + stream',false]
   ];
   const clubs = C.map(([n,a,e,p,live],i) => { const on = live || s.ok[i]; return {n,a,e,p, st: on ? 'Live' : 'Pending', cls: on ? 'chip ball' : 'chip gold', canApprove: !on, approve: () => this.setState({ok: {...s.ok, [i]: true}})}; });
   const pending = clubs.filter(c => c.canApprove).length;
@@ -78,7 +78,7 @@ renderVals() {
     title: ({Clubs:'Clubs on RallyQ', Events:'Events this month', Brand:'Brand for clubs'})[s.tab],
     menu: M.map(([n,c]) => ({name:n, count:c, cls: n===s.tab ? 'on' : '', pick: () => this.setState({tab:n})})),
     isClubs: s.tab==='Clubs', isEvents: s.tab==='Events', isBrand: s.tab==='Brand',
-    events: [['15 Nov','Loki’s DUPR Night','Loki’s Pickleball Club','Ready'],['15 Nov','Rally33 Open','Rally33 · Crosscourts','Ready'],['15 Nov','TPC DUPR Night','TPC Narapally','Ready'],['15 Nov','ElitePicklers Cup','ElitePicklers Bowenpally','Setting up'],['21 Nov','Pickleyard Classic','Pickleyard Malkajgiri','Draft'],['28 Nov','Central Showdown','Pickleball Central · live stream','Draft']].map(([d,n,c,st]) => ({d,n,c,s:st, cls: st==='Ready' ? 'chip ball' : (st==='Draft' ? 'chip' : 'chip gold')}))
+    events: [['15 Nov','Banyan DUPR Night','Banyan Pickleball Club','Ready'],['15 Nov','Cedar Open','Cedar · Maple Courts','Ready'],['15 Nov','MPC DUPR Night','MPC Sample North','Ready'],['15 Nov','Willow Players Cup','Willow Players Bowenpally','Setting up'],['21 Nov','Birch Courts Classic','Birch Courts Malkajgiri','Draft'],['28 Nov','Central Showdown','Cedar Club · live stream','Draft']].map(([d,n,c,st]) => ({d,n,c,s:st, cls: st==='Ready' ? 'chip ball' : (st==='Draft' ? 'chip' : 'chip gold')}))
   };
 }
 }

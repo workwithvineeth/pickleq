@@ -456,7 +456,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
   return (
     <PublicShell go={go} active={admin ? null : 'clubs'} right={<></>}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'stretch' }}>
-        <section className="cglass" aria-label={admin ? 'RallyQ admin' : 'For clubs and players'} style={{ flex: '1 1 360px', minHeight: 'min(520px, 70vh)', padding: 'clamp(22px, 4vw, 32px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, borderRadius: 24, minWidth: 0 }}>
+        <section className="cglass signin-intro" aria-label={admin ? 'RallyQ admin' : 'For clubs and players'} style={{ flex: '1 1 360px', minHeight: 'min(520px, 70vh)', padding: 'clamp(22px, 4vw, 32px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, borderRadius: 24, minWidth: 0 }}>
           <svg className="lines" viewBox="0 0 440 600" preserveAspectRatio="none" aria-hidden="true" style={{ inset: 24, width: 'calc(100% - 48px)', height: 'calc(100% - 48px)' }}><g><rect x="1" y="1" width="438" height="598" /><line x1="1" y1="300" x2="439" y2="300" strokeWidth="4" /><line x1="1" y1="210" x2="439" y2="210" /><line x1="1" y1="390" x2="439" y2="390" /><line x1="220" y1="1" x2="220" y2="210" /><line x1="220" y1="390" x2="220" y2="599" /></g></svg>
           <span className="cap" style={{ color: '#F1F4EA' }}>{admin ? 'For RallyQ admins only' : 'For clubs and players'}</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -465,7 +465,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
           </div>
         </section>
 
-        <section className="card" aria-label="Account" style={{ flex: '1 1 420px', padding: 'clamp(20px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+        <section className="card signin-form" aria-label="Account" style={{ flex: '1 1 420px', padding: 'clamp(20px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
           {tabs}
           {!b && <div role="alert" className="note"><b>Not available: </b>The club server isn’t set up in this version.</div>}
 

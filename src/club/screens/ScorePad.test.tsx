@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScorePatch } from '../backend';
 import { ScorePad } from './ScorePad';
 
@@ -117,5 +117,46 @@ describe('saving overlapping taps', () => {
     await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
     expect(send.mock.calls[1][0].games[0].a).toBe(2);
     await waitFor(() => expect(screen.getByText(/Saved/)).toBeInTheDocument());
+  });
+});
+
+
+describe('point tap feedback', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+  it('vibrates once for each accepted point, not Undo', async () => {
+    const vibrate = vi.fn(() => true);
+    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), { vibrate }));
+    const user = userEvent.setup();
+    pad();
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    await user.click(screen.getByRole('button', { name: 'Point to Gita / Rekha' }));
+    expect(vibrate.mock.calls).toEqual([[10], [10]]);
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(vibrate).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps scoring when vibration is unavailable or throws', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('navigator', Object.create(navigator));
+    pad();
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    Object.defineProperty(navigator, 'vibrate', { value: () => { throw new Error('Blocked'); } });
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    expect(screen.getByRole('button', { name: 'Point to Asha / Lata' })).toHaveTextContent('2');
+  });
+
+  it('honours reduced motion for haptic feedback too', async () => {
+    const vibrate = vi.fn(() => true);
+    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), { vibrate }));
+    const original = window.matchMedia;
+    vi.spyOn(window, 'matchMedia').mockImplementation(query => ({
+      ...original(query), matches: query === '(prefers-reduced-motion: reduce)',
+    }));
+    pad();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    expect(vibrate).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Point to Asha / Lata' })).toHaveTextContent('1');
   });
 });

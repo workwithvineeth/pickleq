@@ -156,7 +156,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
       </div>
       <Wait error={state.error} loading={state.loading && !state.data} />
       {state.data?.serverDown && <div role="status" className="note">Can’t reach the club server right now, so only the demo’s events are showing.</div>}
-      {state.data && shown.length === 0 && <div className="card empty">{events.length === 0 ? <><b>Coming up on RallyQ</b><ul style={{listStyle:'none',padding:0,margin:'10px 0 0',display:'grid',gap:8,textAlign:'left'}}>{UPCOMING_EVENTS.map((u) => <li key={u.date + u.name} className="between" style={{gap:12}}><span><b>{u.name}</b> <span className="mut">· {u.area}</span></span><span className="mut">{u.date}</span></li>)}</ul><span className="mut" style={{display:'block',marginTop:10}}>Entries open when each club publishes its event.</span></> : 'No events match this filter right now.'}</div>}
+      {state.data && shown.length === 0 && <div className="card empty">{events.length === 0 ? <><b>Coming up on RallyQ</b><ul style={{listStyle:'none',padding:0,margin:'10px 0 0',display:'grid',gap:8,textAlign:'left'}}>{UPCOMING_EVENTS.map((u) => <li key={u.date + u.name} className="between" style={{gap:12}}><span><b>{u.name}</b> <span className="mut">· {u.club}, {u.area}</span><br/><span className="mut" style={{fontSize:13}}>{u.detail}</span></span><span className="mut">{u.date}</span></li>)}</ul><span className="mut" style={{display:'block',marginTop:10}}>Entries open when each club publishes its event.</span></> : 'No events match this filter right now.'}</div>}
       {shown.length > 0 && (
         <div className="grid g3">
           {shown.map((e) => {

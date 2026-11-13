@@ -31,8 +31,8 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="between"><span class="cap" style="color:#DDE7DC">Player Studio</span><span class="chip ball">DUPR 4.21 ▲ 0.06</span></div>
 <div style="display:flex;flex-direction:column;gap:10px">
 <h1 class="disp" style="font-size:clamp(56px,6vw,88px)">Arjun Rao</h1>
-<div style="color:#DDE7DC">Right side · Loki’s Pickleball Club · Hyderabad</div>
-<div class="row" style="gap:8px;flex-wrap:wrap"><span class="chip">Men’s doubles</span><span class="chip">Mixed</span><span class="chip">Best: QF · Loki’s DUPR Night</span></div>
+<div style="color:#DDE7DC">Right side · Banyan Pickleball Club · Hyderabad</div>
+<div class="row" style="gap:8px;flex-wrap:wrap"><span class="chip">Men’s doubles</span><span class="chip">Mixed</span><span class="chip">Best: QF · Banyan DUPR Night</span></div>
 </div>
 </div>
 <div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
@@ -63,7 +63,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;align-items:center">
 <div class="photo ph-competitor" style="width:260px;height:325px;border-radius:18px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;flex:none">
 <div class="between"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A;width:28px;height:28px"><use href="#fq"></use></svg><span class="chip ball">Win</span></div>
-<div><div class="cap" style="color:#DDE7DC">Loki’s DUPR Night</div><div class="disp" style="font-size:34px;margin-top:4px">Arjun Rao</div><div class="n acc" style="font-size:40px;margin-top:6px">11–8 · 11–7</div><div style="font-size:11px;color:#DDE7DC;margin-top:6px">Hosted by Loki’s Pickleball Club · RallyQ</div></div>
+<div><div class="cap" style="color:#DDE7DC">Banyan DUPR Night</div><div class="disp" style="font-size:34px;margin-top:4px">Arjun Rao</div><div class="n acc" style="font-size:40px;margin-top:6px">11–8 · 11–7</div><div style="font-size:11px;color:#DDE7DC;margin-top:6px">Hosted by Banyan Pickleball Club · RallyQ</div></div>
 </div>
 <div style="display:flex;flex-direction:column;gap:10px;min-width:0;flex:1 1 220px">
 <div style="font-weight:700;font-size:18px">Your win, ready to post</div>
@@ -85,12 +85,12 @@ renderVals() {
   const T = ['Matches','Venues','Share card'];
   const fr = 'WWLWWWLWWW'.split('').map(r => ({r, cls: r==='W' ? 'chip ball' : 'chip'}));
   const M = [
-    ['15 Nov','Loki’s DUPR Night','Iyer','Khan / Patel','11–8 · 11–7','W'],
-    ['15 Nov','Loki’s DUPR Night','Iyer','Reddy / Naidu','11–9','W'],
-    ['8 Nov','TPC DUPR Night','Iyer','Mohan / Ravi','7–11 · 11–9 · 9–11','L'],
-    ['1 Nov','Rally33 Social','Sai','Varun / Neel','11–6','W'],
-    ['25 Oct','ElitePicklers League','Iyer','Kavya / Rahul','11–4','W'],
-    ['18 Oct','Pickleyard Mixer','Divya','Imran / Joseph','9–11','L']
+    ['15 Nov','Banyan DUPR Night','Iyer','Khan / Patel','11–8 · 11–7','W'],
+    ['15 Nov','Banyan DUPR Night','Iyer','Reddy / Naidu','11–9','W'],
+    ['8 Nov','MPC DUPR Night','Iyer','Mohan / Ravi','7–11 · 11–9 · 9–11','L'],
+    ['1 Nov','Cedar Social','Sai','Varun / Neel','11–6','W'],
+    ['25 Oct','Willow Players League','Iyer','Kavya / Rahul','11–4','W'],
+    ['18 Oct','Birch Courts Mixer','Divya','Imran / Joseph','9–11','L']
   ].map(([d,e,w,v,s,r]) => ({d,e,w,v,s,r, cls: r==='W' ? 'chip ball' : 'chip'}));
   return {
     rqCls: this.state.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !this.state.day}), modeLabel: this.state.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: this.state.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
@@ -98,7 +98,7 @@ renderVals() {
     form: fr, matches: M,
     tabs: T.map(n => ({name:n, cls: n===this.state.tab ? 'tab on' : 'tab', pick: () => this.setState({tab:n})})),
     isMatches: this.state.tab==='Matches', isVenues: this.state.tab==='Venues', isShare: this.state.tab==='Share card',
-    venues: [['Loki’s Pickleball Club',12,'80%'],['TPC Narapally',6,'60%'],['Rally33 · Crosscourts',4,'67%'],['ElitePicklers Bowenpally',3,'75%'],['Pickleyard Malkajgiri',1,'33%']].map(([n,w,p]) => ({n,w,p})),
+    venues: [['Banyan Pickleball Club',12,'80%'],['MPC Sample North',6,'60%'],['Cedar · Maple Courts',4,'67%'],['Willow Players Bowenpally',3,'75%'],['Birch Courts Malkajgiri',1,'33%']].map(([n,w,p]) => ({n,w,p})),
     share: () => this.setState({shared:true}),
     shareLabel: this.state.shared ? 'Image saved ✓' : 'Save for Instagram'
   };

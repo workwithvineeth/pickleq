@@ -86,7 +86,8 @@
   .app.pq-brand.pq-ws > .screen, .app.pq-brand.pq-ws > main { padding:18px 16px 120px; margin:0; width:100%; }
   .app.pq-brand.pq-ws .screen > .header:first-child { background:var(--pq-maroon); margin:calc(-18px - var(--safe-top)) -16px 4px; padding:calc(16px + var(--safe-top)) 16px 16px; border-radius:0 0 24px 24px; }
   .app.pq-brand.pq-ws .screen > .header:first-child .screen-title { color:var(--pq-on-brand); font-size:28px; }
-  .app.pq-brand .nav, .app.pq-brand .nav.nav-sub, .app.pq-brand.pq-ws .nav.nav-ws {
+  /* :not(.hdr .nav): the RallyQ public header keeps its own phone layout (links live in the ☰ menu). */
+  .app.pq-brand .nav:not(.hdr .nav), .app.pq-brand .nav.nav-sub, .app.pq-brand.pq-ws .nav.nav-ws {
     display:grid !important; position:fixed; top:auto; bottom:calc(8px + var(--safe-bottom)); left:50%; transform:translateX(-50%); width:calc(100% - 24px); max-width:620px; height:auto;
     grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); grid-template-columns:none; grid-auto-rows:auto; padding:6px 4px; gap:0; border:1px solid var(--pq-muted); border-radius:22px; z-index:25;
   }

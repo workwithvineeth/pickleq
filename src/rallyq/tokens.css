@@ -1,0 +1,48 @@
+/* RallyQ motion tokens and mobile baseline (design pass step 1, 14 Nov 2026).
+   Loaded last in the club app so every screen, old and new, gets the same feel.
+   Rules: one easing; only transform and opacity animate; reduced motion = short fades.
+   The referee score buttons (.score-tap) keep their own press style (MR !30). */
+:root {
+  --rq-ease: cubic-bezier(.23, 1, .32, 1);
+  --rq-press: 120ms;  /* button press */
+  --rq-ui: 240ms;     /* panels, steps, tabs */
+  --rq-live: 280ms;   /* phone score change */
+  --rq-tv: 320ms;     /* TV score roll */
+  --rq-route: 350ms;  /* view transitions */
+}
+
+/* Press feedback: every tappable thing answers the finger within 120 ms. */
+:where(.btn, .tab, .tlink, .mode, .menu, .chip-btn, .list > a, a.card, button.card, .opt):not(.score-tap):not(:disabled) {
+  transition: transform var(--rq-press) var(--rq-ease), opacity var(--rq-press) var(--rq-ease);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.btn, .tab, .mode, .menu, .chip-btn, .opt):not(.score-tap):not(:disabled) { user-select: none; -webkit-user-select: none; }
+:where(.btn, .tab, .mode, .menu, .chip-btn, .opt):not(.score-tap):not(:disabled):active { transform: scale(.97); }
+:where(.list > a, a.card, button.card):not(:disabled):active { transform: scale(.985); }
+:where(.tlink):active { opacity: .7; }
+
+/* Phones: no grey flash on tap anywhere; the layout fills the real visible height. */
+@media (hover: none) {
+  a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+}
+
+/* Sign-in on phones: the form comes first; the slogan panel shrinks to its content. */
+@media (max-width: 760px) {
+  .signin-form { order: -1; }
+  .signin-intro { min-height: 0 !important; }
+}
+
+/* Reduced motion: keep fades short, drop movement. */
+@media (prefers-reduced-motion: reduce) {
+  /* The referee pad (.score-tap) has its own rule: no motion at all (MR !30). */
+  *:not(.score-tap), *::before, *::after {
+    animation-duration: 150ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 150ms !important;
+    transition-property: opacity, background-color, color, border-color !important;
+    scroll-behavior: auto !important;
+  }
+  /* Same selector and exclusions as the press rules above, so this wins the cascade. */
+  :where(.btn, .tab, .mode, .menu, .chip-btn, .opt, .list > a, a.card, button.card):not(.score-tap):not(:disabled):active { transform: none; }
+}

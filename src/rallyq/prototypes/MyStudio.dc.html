@@ -53,7 +53,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="between"><span class="chip ball">DUPR 4.62 ▲ 0.18</span><span class="chip" style="background:rgba(6,20,13,.7)">Hyderabad #14</span></div>
 <div style="display:flex;flex-direction:column;gap:12px">
 <div class="disp" style="font-size:clamp(44px,4.2vw,58px)">Kiran Reddy</div>
-<div style="color:#DDE7DC;font-size:14px">Right side · Two-handed backhand · Loki’s Pickleball Club</div>
+<div style="color:#DDE7DC;font-size:14px">Right side · Two-handed backhand · Banyan Pickleball Club</div>
 <div style="background:rgba(6,20,13,.75);border-radius:16px;padding:12px 14px">
 <div class="between"><span class="cap">DUPR rating history</span><span style="font-size:12px;color:#9FB4A6">as saved by your club</span></div>
 <svg viewBox="0 0 300 64" aria-hidden="true" style="width:100%;height:64px;margin-top:6px"><path d="M0 54 L30 50 L60 52 L90 44 L120 40 L150 42 L180 32 L210 27 L240 29 L270 18 L300 12 L300 64 L0 64Z" fill="rgba(217,242,74,.12)"></path><path d="M0 54 L30 50 L60 52 L90 44 L120 40 L150 42 L180 32 L210 27 L240 29 L270 18 L300 12" fill="none" stroke="#D9F24A" stroke-width="3"></path></svg>
@@ -156,9 +156,9 @@ renderVals(){
   const practice = s.scope==='Practice';
   const bar = (v,c) => `display:block;height:100%;width:${v}%;background:${c};border-radius:99px`;
   const C = [['Points won on serve',68,74,'practice +6'],['Games closed from 10',82,90,'practice +8'],['Kitchen rallies won',61,58,'tournament +3'],['Comebacks from 5+ down',40,55,'practice +15']];
-  const D0 = [['15 Nov','Tournament','Loki’s DUPR Night · QF','11–8 · 11–7',true],['13 Nov','Drill','Drop-shot drill with Sai','45 min',false],['12 Nov','Practice','Match vs Rohan / Ajay','11–6 · 9–11',false],['8 Nov','Tournament','TPC DUPR Night','7–11 · 11–9 · 9–11',true],['6 Nov','Training','Fitness and footwork','60 min',false]];
+  const D0 = [['15 Nov','Tournament','Banyan DUPR Night · QF','11–8 · 11–7',true],['13 Nov','Drill','Drop-shot drill with Sai','45 min',false],['12 Nov','Practice','Match vs Rohan / Ajay','11–6 · 9–11',false],['8 Nov','Tournament','MPC DUPR Night','7–11 · 11–9 · 9–11',true],['6 Nov','Training','Fitness and footwork','60 min',false]];
   let D = D0.slice();
-  for (let i=0;i<s.added;i++) D.unshift(['Today', s.type==='Practice match' ? 'Practice' : s.type, s.type==='Practice match' ? 'Practice match at Loki’s' : (s.type==='Drill' ? 'Third-shot drop drill' : 'Footwork session'), s.type==='Practice match' ? '11–7' : '40 min', false]);
+  for (let i=0;i<s.added;i++) D.unshift(['Today', s.type==='Practice match' ? 'Practice' : s.type, s.type==='Practice match' ? 'Practice match at Banyan' : (s.type==='Drill' ? 'Third-shot drop drill' : 'Footwork session'), s.type==='Practice match' ? '11–7' : '40 min', false]);
   if (s.scope==='Tournament') D = D.filter(x => x[4]); if (practice) D = D.filter(x => !x[4]);
   const P = ['Practice match results','Practice vs tournament chart','Training hours','Coach notes','Goals and badges'];
   const bv = [38,44,41,52,48,55,50,58,61,57,64,68].map(v => practice ? Math.min(100, v+6) : v);
@@ -168,7 +168,7 @@ renderVals(){
     feats: F.map(([k,n]) => ({name:n, cls: pill(s.f===k), pick: () => this.setState({f:k, saved:false})})),
     scopes: ['All','Tournament','Practice'].map(n => ({name:n, cls: pill(s.scope===n), pick: () => this.setState({scope:n})})),
     scopeLabel: s.scope==='All' ? 'all matches' : s.scope.toLowerCase(),
-    matchLabel: practice ? 'Practice · vs Rohan / Ajay · self-logged' : 'Men’s SF · Loki’s DUPR Night',
+    matchLabel: practice ? 'Practice · vs Rohan / Ajay · self-logged' : 'Men’s SF · Banyan DUPR Night',
     games: [1,2,3].map(n => ({label: n===s.g ? 'Game '+n : String(n), cls: pill(n===s.g), w: n===s.g ? 'min-width:96px' : 'min-width:40px', pick: () => this.setState({g:n})})),
     g: {...g, runs},
     scoreLine: practice ? '11–6 · 9–11' : '11–9 · 8–11 · 11–6',

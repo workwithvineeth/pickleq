@@ -12,7 +12,7 @@ const FORMAT: Format = { pointsTo: 11, bestOf: 1, scoring: 'sideout', golden: tr
 const KO: Format = { pointsTo: 11, bestOf: 3, scoring: 'sideout' };
 
 /** Bump when the sample events change, so demos already on a phone get the new set. */
-export const SAMPLE_EVENTS_VERSION = 6;
+export const SAMPLE_EVENTS_VERSION = 7;
 
 export interface SampleEvents {
   clubs: Club[];
@@ -36,7 +36,7 @@ const fmtDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('
  *   PQ Demo Women's Open (entries open);
  * - waiting for approval, from a new club: PQ Demo Ladder Cup and PQ Demo Corporate Cup;
  * - from a second city (PQ Demo Riverside Club, Bengaluru): PQ Demo Smash Fest, PQ Demo Seniors Classic (50+), PQ Demo Winter Mixer (listed);
- * - live today: Pickleball Central Season 8 (the demo club's own). Singles started about 80 minutes ago and is mid-pools;
+ * - live today: Cedar Club Season 8 (the demo club's own). Singles started about 80 minutes ago and is mid-pools;
  *   doubles starts in about 2 hours, so the owner can still add or withdraw doubles teams.
  */
 export function buildSampleEvents(demoClubId: string, id: () => string, players: ClubPlayer[], today = new Date()): SampleEvents {
@@ -166,7 +166,7 @@ export function buildSampleEvents(demoClubId: string, id: () => string, players:
   const doneSlots = Math.max(0, Math.floor((nowMin - startMin) / SLOT));
   const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   const doublesSlot = doneSlots + 6;
-  const s8 = t({ clubId: demoClubId, name: 'Pickleball Central Season 8', startDate: day(0), startTime: hhmm(startMin), publicSlug: 'pq-demo-central-s8', venue: 'PQ Demo Courts',
+  const s8 = t({ clubId: demoClubId, name: 'Cedar Club Season 8', startDate: day(0), startTime: hhmm(startMin), publicSlug: 'pq-demo-central-s8', venue: 'PQ Demo Courts',
     about: `Season 8 is live. Singles is under way; doubles starts at ${hhmm(startMin + doublesSlot * SLOT)}. Pools of four (singles) and three (doubles), top two into the knockouts.`,
     entryMode: 'roster', listing: 'run', listingStatus: 'approved', reviewedAt, status: 'live', isPublic: true, slotMinutes: SLOT },
   { tag: 'Season 8 · live today', bg: '#0B3B2E', ink: '#F4FFF8', accent: '#9BE15D', motif: 'trophy' });

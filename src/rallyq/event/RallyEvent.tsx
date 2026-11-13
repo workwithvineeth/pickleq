@@ -12,18 +12,18 @@ import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Event.dc.html?raw';
 import {holes} from '../holes';
 const R:[string,string][]=[
- ['<span class="chip ball">Entries open</span><span class="cap" style="color:#DDE7DC">Sun 15 Nov · 5:00 pm · Crosscourts</span>','<span class="{{statusChip}}">{{statusLabel}}</span><span class="cap" style="color:#DDE7DC">{{whenWhere}}</span>'],
- ['>Rally33 Open</h1>','>{{eventName}}</h1>'],
+ ['<span class="chip ball">Entries open</span><span class="cap" style="color:#DDE7DC">Sun 15 Nov · 5:00 pm · Maple Courts</span>','<span class="{{statusChip}}">{{statusLabel}}</span><span class="cap" style="color:#DDE7DC">{{whenWhere}}</span>'],
+ ['>Cedar Open</h1>','>{{eventName}}</h1>'],
  ['<span class="chip">Men’s doubles</span><span class="chip">Women’s doubles</span><span class="chip">Mixed</span><span class="chip">4 courts</span>','<sc-for list="{{cats}}" as="c" hint-placeholder-count="3"><span class="chip">{{c}}</span></sc-for>'],
- ['font-weight:800;font-size:18px">R33</div>','font-weight:800;font-size:18px;overflow:hidden"><sc-if value="{{logoUrl}}" hint-placeholder-val="{{ false }}"><img src="{{logoUrl}}" alt="{{clubName}} logo" style="width:100%;height:100%;object-fit:contain"></sc-if><sc-if value="{{noLogo}}" hint-placeholder-val="{{ true }}">{{clubMark}}</sc-if></div>'],
- ['font-size:20px">Rally33 at Crosscourts</div>','font-size:20px">{{hostLine}}</div>'],
+ ['font-weight:800;font-size:18px">CC</div>','font-weight:800;font-size:18px;overflow:hidden"><sc-if value="{{logoUrl}}" hint-placeholder-val="{{ false }}"><img src="{{logoUrl}}" alt="{{clubName}} logo" style="width:100%;height:100%;object-fit:contain"></sc-if><sc-if value="{{noLogo}}" hint-placeholder-val="{{ true }}">{{clubMark}}</sc-if></div>'],
+ ['font-size:20px">Cedar at Maple Courts</div>','font-size:20px">{{hostLine}}</div>'],
  ['<span class="mut">of 32 teams</span>','<span class="mut">{{capLabel}}</span>'],
  ['[YOUR PRICE] per team','{{entryLine}}'],
  ['Pay the club directly at the venue desk. Entries close Friday, 13 November at 9 pm.','{{entryNote}}'],
  ['Final · 8:15 pm','{{finalLabel}}'],
  ['Pools of 4, top 2 to knockouts. Games to 11, win by 2. Finals best of 3.','{{infoFormat}}'],
- ['Crosscourts, Hyderabad. 4 outdoor courts under lights. Parking on site.','{{infoVenue}}'],
- ['Rally33 desk on WhatsApp: [CLUB NUMBER]','{{infoContact}}']];
+ ['Maple Courts, Hyderabad. 4 outdoor courts under lights. Parking on site.','{{infoVenue}}'],
+ ['Cedar desk on WhatsApp: [CLUB NUMBER]','{{infoContact}}']];
 // Semi-final cards: the status chip comes from the match (coral only while live) and live ones carry the win chance.
 const SF_CARD='<span class="chip live">Live</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for>';
 const source=holes(raw,R).replace(SF_CARD,'<span class="{{m.chip}}">{{m.st}}</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div>'+winBarHtml('m.win')+'</div></sc-for>');

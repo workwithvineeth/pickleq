@@ -13,9 +13,9 @@ import {friendlyDate} from '../../club/dates';
 import {useClubLogo,logoTile} from '../useClubLogo';
 const source=holes(raw,[
  ['width:1280px;height:720px','width:100vw;height:100vh;min-height:560px'],
- ['font-size:18px">R33</div>','font-size:18px;overflow:hidden">'+logoTile('{{clubMark}}')+'</div>'],
- ['Hosted by Rally33 at Crosscourts','Hosted by {{clubName}}'],
- ['font-size:44px">Rally33 Open</div>','font-size:44px">{{eventName}}</div>'],
+ ['font-size:18px">CC</div>','font-size:18px;overflow:hidden">'+logoTile('{{clubMark}}')+'</div>'],
+ ['Hosted by Cedar at Maple Courts','Hosted by {{clubName}}'],
+ ['font-size:44px">Cedar Open</div>','font-size:44px">{{eventName}}</div>'],
  ['font-size:40px">6:42</span>','font-size:40px">{{clock}}</span>'],
  // The chip follows the event (Live / Final results / Starts …); the Desk link is for organisers, not the venue screen.
  ['<span class="chip live" style="font-size:13px;min-height:32px">Live</span>','<span class="{{statusChip}}" style="font-size:13px;min-height:32px">{{statusLabel}}</span>'],

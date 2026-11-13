@@ -140,7 +140,10 @@ export function ScorePad(p: ScorePadProps) {
   const needServe = sideOut && !cur.serve && !curOver && !matchOver;
   const rallyCount = (g: ClubGame) => (g.rallies ?? g.points).length;
   const point = (side: Side) => {
-    if (curOver || matchOver) return;
+    if (curOver || matchOver || busy || (sideOut && !cur.serve)) return;
+    try {
+      if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(10);
+    } catch { /* Haptics are optional; a blocked device API must never prevent scoring. */ }
     if (sideOut) { if (cur.serve) update([...games.slice(0, -1), sideOutGame((cur.rallies ?? '') + side, cur.serve, doubles)]); return; }
     update([...games.slice(0, -1), rallyGame(cur.points + side)]);
   };

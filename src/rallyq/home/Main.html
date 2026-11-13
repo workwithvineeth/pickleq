@@ -184,7 +184,8 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <a class="card" href="{{e.href}}" style="padding:20px;display:flex;flex-direction:column;gap:12px">
 <div class="between"><span class="n" style="font-size:30px">{{e.date}}</span><span class="{{e.chipCls}}">{{e.tag}}</span></div>
 <div style="font-weight:700;font-size:18px">{{e.name}}</div>
-<div class="row" style="gap:10px"><span style="width:40px;height:40px;border-radius:10px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-size:11px;font-weight:800;flex:none">{{e.mark}}</span><span class="mut" style="font-size:14px">Hosted by {{e.club}} · {{e.area}}</span></div>
+<div class="row" style="gap:10px"><span style="width:40px;height:40px;border-radius:10px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-size:11px;font-weight:800;flex:none;overflow:hidden"><sc-if value="{{e.logoUrl}}" hint-placeholder-val="{{ false }}"><img src="{{e.logoUrl}}" alt="{{e.club}} logo" width="40" height="40" loading="lazy" style="width:100%;height:100%;object-fit:cover"></sc-if><sc-if value="{{e.noLogo}}" hint-placeholder-val="{{ true }}">{{e.mark}}</sc-if></span><span class="mut" style="font-size:14px">Hosted by {{e.club}} · {{e.area}}</span></div>
+<div class="mut" style="font-size:13px">{{e.detail}}</div>
 </a>
 </sc-for>
 </div>
@@ -257,16 +258,16 @@ rally(){
 renderVals() {
   const day = this.state.day;
   const st = this.state;
-  const CAP = ['01 / 03 · Hosted by Loki’s Pickleball Club', '02 / 03 · Hosted by Rally33 at Crosscourts', '03 / 03 · Hosted by TPC Narapally'];
-  const TK = [['Teja / Kiran','8–5','Rohan / Ajay','Loki’s'],['Varun / Neel','10–10','Imran / Joseph','Rally33'],['Mohan / Ravi','6–6','Suresh / Prem','TPC'],['Kavya / Arjun','3–1','Nisha / Rahul','ElitePicklers'],['Asha / Lata','4–7','Gita / Rekha','Rally33'],['Meera / Divya','11–6','Ananya / Ritu','Loki’s']];
+  const CAP = ['01 / 03 · Hosted by Banyan Pickleball Club', '02 / 03 · Hosted by Cedar at Maple Courts', '03 / 03 · Hosted by MPC Sample North'];
+  const TK = [['Teja / Kiran','8–5','Rohan / Ajay','Banyan'],['Varun / Neel','10–10','Imran / Joseph','Cedar'],['Mohan / Ravi','6–6','Suresh / Prem','MPC'],['Kavya / Arjun','3–1','Nisha / Rahul','Willow Players'],['Asha / Lata','4–7','Gita / Rekha','Cedar'],['Meera / Divya','11–6','Ananya / Ritu','Banyan']];
   const tick = TK.concat(TK).map(([a,s,b,club]) => ({a, s, b, club}));
   const ev = [
-    {date:'15 Nov',tag:'DUPR night',name:'Loki’s DUPR Night',club:'Loki’s Pickleball Club',area:'Hyderabad',mark:'LP'},
-    {date:'15 Nov',tag:'Tournament',name:'Rally33 Open',club:'Rally33',area:'Crosscourts',mark:'R33'},
-    {date:'15 Nov',tag:'DUPR night',name:'TPC DUPR Night',club:'TPC',area:'Narapally',mark:'TPC'},
-    {date:'15 Nov',tag:'Tournament',name:'ElitePicklers Cup',club:'ElitePicklers',area:'Bowenpally',mark:'EP'},
-    {date:'21 Nov',tag:'Tournament',name:'Pickleyard Classic',club:'Pickleyard',area:'Malkajgiri',mark:'PY'},
-    {date:'28 Nov',tag:'Live stream',name:'Central Showdown',club:'Pickleball Central',area:'Hyderabad',mark:'PC'}
+    {date:'15 Nov',tag:'DUPR night',name:'Banyan DUPR Night',club:'Banyan Pickleball Club',area:'Hyderabad',mark:'LP'},
+    {date:'15 Nov',tag:'Tournament',name:'Cedar Open',club:'Cedar',area:'Maple Courts',mark:'CC'},
+    {date:'15 Nov',tag:'DUPR night',name:'MPC DUPR Night',club:'MPC',area:'Sample North',mark:'MPC'},
+    {date:'15 Nov',tag:'Tournament',name:'Willow Players Cup',club:'Willow Players',area:'Bowenpally',mark:'EP'},
+    {date:'21 Nov',tag:'Tournament',name:'Birch Courts Classic',club:'Birch Courts',area:'Malkajgiri',mark:'PY'},
+    {date:'28 Nov',tag:'Live stream',name:'Central Showdown',club:'Cedar Club',area:'Hyderabad',mark:'PC'}
   ].map(e => ({...e, chipCls: e.tag==='Live stream' ? 'chip gold' : (e.tag==='DUPR night' ? 'chip ball' : 'chip')}));
   return {
     rqCls: day ? 'rq day' : 'rq',
@@ -283,9 +284,9 @@ renderVals() {
     modeIcon: day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
     menuOpen: this.state.menu, toggleMenu: () => this.setState({menu: !this.state.menu}),
     live: [
-      {court:'Court 2',club:'Loki’s',mark:'LP',a:'{{heroA}}',b:'{{heroB}}',sa:9,sb:7,stage:'Men’s doubles · QF',game:2},
-      {court:'Court 1',club:'Rally33',mark:'R33',a:'Meera S / Divya K',b:'Ananya / Ritu',sa:6,sb:4,stage:'Women’s doubles · Pool B',game:1},
-      {court:'Court 3',club:'TPC',mark:'TPC',a:'Vikram / Sai',b:'Harsha / Nikhil',sa:10,sb:10,stage:'Open doubles · SF',game:3}
+      {court:'Court 2',club:'Banyan',mark:'LP',a:'{{heroA}}',b:'{{heroB}}',sa:9,sb:7,stage:'Men’s doubles · QF',game:2},
+      {court:'Court 1',club:'Cedar',mark:'CC',a:'Meera S / Divya K',b:'Ananya / Ritu',sa:6,sb:4,stage:'Women’s doubles · Pool B',game:1},
+      {court:'Court 3',club:'MPC',mark:'MPC',a:'Vikram / Sai',b:'Harsha / Nikhil',sa:10,sb:10,stage:'Open doubles · SF',game:3}
     ],
     steps: [
       {no:'01',t:'Entries open',d:'Share one link. Players sign up and pay the club directly.'},

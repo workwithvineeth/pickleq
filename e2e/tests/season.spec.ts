@@ -62,11 +62,11 @@ async function openSeason8(page: Page) {
   await page.getByLabel('Your name in the demo').fill('Robot');
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
   await expect(page.getByRole('heading', { name: 'PQ Demo Club' })).toBeVisible();
-  await page.getByRole('button', { name: /Pickleball Central Season 8/ }).first().click();
-  await expect(page.getByRole('heading', { name: 'Pickleball Central Season 8' })).toBeVisible();
+  await page.getByRole('button', { name: /Cedar Club Season 8/ }).first().click();
+  await expect(page.getByRole('heading', { name: 'Cedar Club Season 8' })).toBeVisible();
 }
 
-test.describe('Pickleball Central Season 8 (demo sample)', () => {
+test.describe('Cedar Club Season 8 (demo sample)', () => {
   test('singles is live; the organiser adds and removes doubles teams before doubles starts', async ({ page }) => {
     await openSeason8(page);
     await page.getByRole('button', { name: 'Entries', exact: true }).click();
@@ -99,7 +99,7 @@ test.describe('Pickleball Central Season 8 (demo sample)', () => {
   test('desk: a no-show gives the other side a walkover', async ({ page }) => {
     await openSeason8(page);
     await page.getByRole('button', { name: 'Desk view' }).click();
-    await expect(page.getByRole('heading', { name: 'Pickleball Central Season 8 · Desk' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cedar Club Season 8 · Desk' })).toBeVisible();
     await page.getByRole('button', { name: /Results, walkovers and court changes/ }).first().click();
     await page.getByRole('tab', { name: 'Walkover or retired' }).click();
     const wo = page.getByRole('region', { name: 'Walkover or retired' });
@@ -110,7 +110,7 @@ test.describe('Pickleball Central Season 8 (demo sample)', () => {
 
   test('a shared Season 8 link opens on a phone that never opened the demo', async ({ page }) => {
     await page.goto('#/event/pq-demo-central-s8');
-    await expect(page.getByRole('heading', { name: 'Pickleball Central Season 8' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cedar Club Season 8' })).toBeVisible();
     await expect(page.getByText('Live now')).toBeVisible();
   });
 });

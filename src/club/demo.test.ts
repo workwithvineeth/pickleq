@@ -34,6 +34,21 @@ describe('Demo club name', () => {
     expect((await b.publicEvents()).map((e) => e.name)).toContain('PQ Demo Night');
   });
 
+  it('refreshes saved v6 sample events without removing a user-made event', async () => {
+    const storage = memoryStorage();
+    await new DemoBackend(storage).start('Robot');
+    const old = JSON.parse(storage.getItem('pq-club-demo-v1')!);
+    old.eventsSeeded = 6;
+    const event = old.tournaments.find((t: { publicSlug: string }) => t.publicSlug === 'pq-demo-central-s8');
+    event.name = 'Pickleball Central Season 8';
+    old.tournaments.push({ ...event, id: 'made-by-user', publicSlug: 'my-event', name: 'My practice night' });
+    const restored = new DemoBackend(memoryStorage({ 'pq-club-demo-v1': JSON.stringify(old) }));
+    const names = (await restored.publicEvents()).map(e => e.name);
+    expect(names).toContain('Cedar Club Season 8');
+    expect(names).not.toContain('Pickleball Central Season 8');
+    expect(names).toContain('My practice night');
+  });
+
   it('renames a demo saved under the old name, without making a second club', async () => {
     const first = memoryStorage();
     const old = new DemoBackend(first);

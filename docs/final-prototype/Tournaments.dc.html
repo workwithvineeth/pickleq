@@ -19,10 +19,10 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="{{rqCls}}" style="min-height:100vh">
 <svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
 <div class="shell">
-<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><span class="cap grp">Rally33</span><a href="Overview.dc.html">Home</a><a class="on" href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Rally33 Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><span class="cap grp">Cedar</span><a href="Overview.dc.html">Home</a><a class="on" href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Cedar Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
 <main class="main" style="display:flex;flex-direction:column;gap:22px">
 <div class="between">
-<div class="pg-h"><span class="cap">Rally33 at Crosscourts</span><h1 class="disp">{{title}}</h1></div>
+<div class="pg-h"><span class="cap">Cedar at Maple Courts</span><h1 class="disp">{{title}}</h1></div>
 <div class="row"><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><sc-if value="{{isList}}" hint-placeholder-val="{{ true }}"><button class="btn" onClick="{{toNew}}">Create tournament</button></sc-if></div>
 </div>
 
@@ -43,9 +43,9 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="steps" aria-label="Steps"><sc-for list="{{steps}}" as="s" hint-placeholder-count="5"><button class="{{s.cls}}" onClick="{{s.pick}}"><i>{{s.n}}</i>{{s.name}}</button></sc-for></div>
 <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px">
 <sc-if value="{{s1}}" hint-placeholder-val="{{ true }}"><div class="form">
-<div class="fld"><label for="tn">Tournament name</label><input id="tn" class="inp" value="Rally33 December League"></div>
+<div class="fld"><label for="tn">Tournament name</label><input id="tn" class="inp" value="Cedar December League"></div>
 <div class="form two"><div class="fld"><label for="td">Date</label><input id="td" class="inp" value="Sat 28 Nov 2026"></div><div class="fld"><label for="tt">Start time</label><input id="tt" class="inp" value="5:00 pm"></div></div>
-<div class="form two"><div class="fld"><label for="tv">Venue</label><input id="tv" class="inp" value="Crosscourts, Hyderabad"></div><div class="fld"><label for="tc">Courts</label><input id="tc" class="inp" value="4"></div></div>
+<div class="form two"><div class="fld"><label for="tv">Venue</label><input id="tv" class="inp" value="Maple Courts, Hyderabad"></div><div class="fld"><label for="tc">Courts</label><input id="tc" class="inp" value="4"></div></div>
 </div></sc-if>
 <sc-if value="{{s2}}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:10px">
 <div class="mut" style="font-size:13px">Pick the categories. Each one gets its own draw.</div>
@@ -69,9 +69,9 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </section>
 <aside class="card" style="flex:1 1 300px;padding:20px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden">
 <div class="cap">Preview on Events</div>
-<div class="row"><span class="tile">R33</span><span><span class="cap" style="display:block">Hosted by</span><b style="font-size:14px">Rally33 at Crosscourts</b></span></div>
-<div class="disp" style="font-size:28px">Rally33 December League</div>
-<div class="mut" style="font-size:13px">Sat 28 Nov · 5:00 pm · Crosscourts · 4 courts</div>
+<div class="row"><span class="tile">CC</span><span><span class="cap" style="display:block">Hosted by</span><b style="font-size:14px">Cedar at Maple Courts</b></span></div>
+<div class="disp" style="font-size:28px">Cedar December League</div>
+<div class="mut" style="font-size:13px">Sat 28 Nov · 5:00 pm · Maple Courts · 4 courts</div>
 <div class="row" style="gap:6px;flex-wrap:wrap"><sc-for list="{{onCats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for></div>
 <span class="{{pubChip}}" style="align-self:flex-start">{{pubLabel}}</span>
 </aside>
@@ -87,7 +87,7 @@ class Component extends DCLogic {
 constructor(p){ super(p); this.state = { v: 'list', f: 'All', step: 1, fmt: 'pools', cats: { md: true, wd: true, mx: true, ws: false }, pub: { board: true, entries: true, dupr: false }, done: false }; }
 renderVals() {
   const s = this.state;
-  const T = [['13','Rally33 Open','Today · 4 courts · 46 matches','Live','st live','Desk.dc.html','live'],['15','Loki’s DUPR Night','Sun 15 Nov · 24 teams','Entries open','st ok','Entries.dc.html','up'],['28','Rally33 December League','Sat 28 Nov · draft','Draft','st off','Tournaments.dc.html','up'],['29','Rally33 Diwali Doubles','Thu 29 Oct · 20 teams','Finished','st off','Results.dc.html','done']];
+  const T = [['13','Cedar Open','Today · 4 courts · 46 matches','Live','st live','Desk.dc.html','live'],['15','Banyan DUPR Night','Sun 15 Nov · 24 teams','Entries open','st ok','Entries.dc.html','up'],['28','Cedar December League','Sat 28 Nov · draft','Draft','st off','Tournaments.dc.html','up'],['29','Cedar Diwali Doubles','Thu 29 Oct · 20 teams','Finished','st off','Results.dc.html','done']];
   const keep = t => s.f==='All' || (s.f==='Live' && t[6]==='live') || (s.f==='Upcoming' && t[6]==='up') || (s.f==='Finished' && t[6]==='done');
   const ST = ['Basics','Categories','Format','Entries & pay','Publish'];
   const C = [['md','Men’s doubles','Pools of 4, top 2 through'],['wd','Women’s doubles','Pools of 4, top 2 through'],['mx','Mixed doubles','DUPR under 4.5'],['ws','Women’s singles','Open']];

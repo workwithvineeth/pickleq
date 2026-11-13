@@ -8,9 +8,9 @@ import {ClubHome} from '../../club/screens/ClubHome';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Overview.dc.html?raw';
 import {holes} from '../holes';
-const coming=/<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">\s*<div class="between"><span style="font-weight:600">Rally33 Open[\s\S]*?12 Dec<\/span><\/div>\s*<\/div>/;
+const coming=/<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">\s*<div class="between"><span style="font-weight:600">Cedar Open[\s\S]*?12 Dec<\/span><\/div>\s*<\/div>/;
 const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace(coming,'<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px"><sc-for list="{{coming}}" as="c" hint-placeholder-count="3"><div class="between"><span style="{{c.style}}">{{c.name}}</span><span class="n" style="font-size:18px">{{c.date}}</span></div></sc-for><sc-if value="{{noComing}}" hint-placeholder-val="{{ false }}"><span class="mut">No events booked yet.</span></sc-if></div>'),[
- ['Tuesday 10 Nov','{{today}}'],['Five days to Rally33 Open.','{{headline}}'],
+ ['Tuesday 10 Nov','{{today}}'],['Five days to Cedar Open.','{{headline}}'],
  ['href="Event.dc.html">View public page ↗','href="{{publicHref}}">View public page ↗'],['href="Desk.dc.html">Open tournament desk','href="{{deskHref}}">{{deskLabel}}'],
  ['Teams entered</div><div class="n acc">24</div><div class="mut" style="font-size:13px">of 32 · 2 waitlist','Teams entered</div><div class="n acc">{{entered}}</div><div class="mut" style="font-size:13px">{{enteredNote}}'],
  ['Courts</div><div class="n">4</div><div class="mut" style="font-size:13px">all with a referee','Courts</div><div class="n">{{courts}}</div><div class="mut" style="font-size:13px">{{courtNote}}'],

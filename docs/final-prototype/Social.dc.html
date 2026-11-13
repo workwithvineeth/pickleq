@@ -19,9 +19,9 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="{{rqCls}}" style="min-height:100vh">
 <svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
 <div class="shell">
-<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><span class="cap grp">Rally33</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a class="on" href="Social.dc.html">Social studio</a><span class="cap grp">Rally33 Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><span class="cap grp">Cedar</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a class="on" href="Social.dc.html">Social studio</a><span class="cap grp">Cedar Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
 <main class="main" style="display:flex;flex-direction:column;gap:20px">
-<div class="between"><div><div class="cap">Social studio · Rally33</div><h1 class="disp" style="font-size:clamp(34px,4vw,50px);margin-top:6px">Post it before the trophies come out.</h1></div><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button></div>
+<div class="between"><div><div class="cap">Social studio · Cedar</div><h1 class="disp" style="font-size:clamp(34px,4vw,50px);margin-top:6px">Post it before the trophies come out.</h1></div><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button></div>
 <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
 <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:18px">
 <div><div class="cap" style="margin-bottom:8px">1 · Template</div><div class="tabs" role="group" aria-label="Template"><sc-for list="{{tpls}}" as="t" hint-placeholder-count="4"><button class="{{t.cls}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div></div>
@@ -31,7 +31,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </div>
 <div style="flex:999 1 420px;min-width:0;display:flex;justify-content:center;padding:20px;background:#091A11;border-radius:24px">
 <div class="{{photoCls}}" style="{{poster}}">
-<div class="between" style="position:relative"><div class="row" style="gap:10px"><div style="width:54px;height:54px;border-radius:14px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 0 0 1px rgba(11,36,24,.25)">R33</div><div><div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.75">Hosted by</div><div style="font-size:17px;font-weight:800">Rally33</div></div></div><span class="{{chipCls}}">{{chip}}</span></div>
+<div class="between" style="position:relative"><div class="row" style="gap:10px"><div style="width:54px;height:54px;border-radius:14px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 0 0 1px rgba(11,36,24,.25)">CC</div><div><div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.75">Hosted by</div><div style="font-size:17px;font-weight:800">Cedar</div></div></div><span class="{{chipCls}}">{{chip}}</span></div>
 <div style="position:relative;display:flex;flex-direction:column;gap:10px">
 <div style="font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.8">{{kicker}}</div>
 <div class="disp" style="font-size:{{headSize}}">{{head}}</div>
@@ -59,10 +59,10 @@ renderVals() {
     Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}
   };
   const TP = {
-    'Entries open':{kicker:'Sun 15 Nov · Crosscourts',head:'Rally33 Open. Entries open.',big:'24 / 32',foot:'Enter at rallyq · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-ball'},
+    'Entries open':{kicker:'Sun 15 Nov · Maple Courts',head:'Cedar Open. Entries open.',big:'24 / 32',foot:'Enter at rallyq · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-ball'},
     'Live now':{kicker:'Court 1 · Open SF',head:'Varun / Neel vs Imran / Joseph',big:'10 – 10',foot:'See live scores on RallyQ',chip:'Live',chipCls:'chip live',ph:'ph-night'},
     'Result':{kicker:'Mixed SF · Final score',head:'Ishaan / Arav are into the final.',big:'11–7 · 11–5',foot:'Final at 8:15 pm',chip:'Final',chipCls:'chip',ph:'ph-group'},
-    'Champion':{kicker:'Rally33 Open · Open doubles',head:'Champions. Varun & Neel.',big:'11–9 · 8–11 · 11–6',foot:'Sun 15 Nov · Crosscourts',chip:'Champions',chipCls:'chip gold',ph:'ph-woman'}
+    'Champion':{kicker:'Cedar Open · Open doubles',head:'Champions. Varun & Neel.',big:'11–9 · 8–11 · 11–6',foot:'Sun 15 Nov · Maple Courts',chip:'Champions',chipCls:'chip gold',ph:'ph-woman'}
   };
   const st = ST[s.s], tp = TP[s.t];
   const dims = ({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'})[s.z];

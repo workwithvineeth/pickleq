@@ -21,7 +21,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="shell">
 <aside class="side" aria-label="Organiser menu">
 <a class="brand" href="Main.dc.html" style="min-height:52px;margin-bottom:10px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="font-size:22px">RallyQ</span></a>
-<span class="cap" style="padding:6px 12px">Rally33 · Crosscourts</span>
+<span class="cap" style="padding:6px 12px">Cedar · Maple Courts</span>
 <a href="Overview.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"></path></svg>Home</a>
 <a href="Desk.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Tournament desk</a>
 <a class="on" href="Social.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="12" cy="12" r="4"></circle></svg>Social studio</a>
@@ -38,7 +38,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </div>
 <div style="flex:999 1 420px;min-width:0;display:flex;justify-content:center;padding:20px;background:#091A11;border-radius:24px">
 <div class="{{photoCls}}" style="{{poster}}">
-<div class="between" style="position:relative"><div class="row" style="gap:10px"><div style="width:54px;height:54px;border-radius:14px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 0 0 1px rgba(11,36,24,.25)">R33</div><div><div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.75">Hosted by</div><div style="font-size:17px;font-weight:800">Rally33</div></div></div><span class="{{chipCls}}">{{chip}}</span></div>
+<div class="between" style="position:relative"><div class="row" style="gap:10px"><div style="width:54px;height:54px;border-radius:14px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 0 0 1px rgba(11,36,24,.25)">CC</div><div><div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.75">Hosted by</div><div style="font-size:17px;font-weight:800">Cedar</div></div></div><span class="{{chipCls}}">{{chip}}</span></div>
 <div style="position:relative;display:flex;flex-direction:column;gap:10px">
 <div style="font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.8">{{kicker}}</div>
 <div class="disp" style="font-size:{{headSize}}">{{head}}</div>
@@ -64,10 +64,10 @@ renderVals() {
     Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}
   };
   const TP = {
-    'Entries open':{kicker:'Sun 15 Nov · Crosscourts',head:'Rally33 Open. Entries open.',big:'24 / 32',foot:'Enter at rallyq · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-entries'},
+    'Entries open':{kicker:'Sun 15 Nov · Maple Courts',head:'Cedar Open. Entries open.',big:'24 / 32',foot:'Enter at rallyq · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-entries'},
     'Live now':{kicker:'Court 1 · Open SF',head:'Varun / Neel vs Imran / Joseph',big:'10 – 10',foot:'See live scores on RallyQ',chip:'Live',chipCls:'chip live',ph:'ph-livenow'},
     'Result':{kicker:'Mixed SF · Final score',head:'Ishaan / Arav are into the final.',big:'11–7 · 11–5',foot:'Final at 8:15 pm',chip:'Result',chipCls:'chip',ph:'ph-result'},
-    'Champion':{kicker:'Rally33 Open · Open doubles',head:'Champions. Varun & Neel.',big:'11–9 · 8–11 · 11–6',foot:'Sun 15 Nov · Crosscourts',chip:'Champions',chipCls:'chip gold',ph:'ph-champions'}
+    'Champion':{kicker:'Cedar Open · Open doubles',head:'Champions. Varun & Neel.',big:'11–9 · 8–11 · 11–6',foot:'Sun 15 Nov · Maple Courts',chip:'Champions',chipCls:'chip gold',ph:'ph-champions'}
   };
   const st = ST[s.s], tp = TP[s.t];
   const dims = ({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'})[s.z];

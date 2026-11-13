@@ -19,7 +19,7 @@
 .app.pq-brand .pq-shell-live{background:var(--pq-hero);color:var(--pq-hero-text);border-color:var(--pq-maroon-ui)}
 .pq-shell-live .pq-live-dot{box-shadow:0 0 0 2px var(--pq-hero)}
 .pq-skin-control{display:flex;flex-direction:column;gap:8px;margin-top:14px;font:700 13px var(--pq-font-body);color:var(--pq-ink)}
-.pq-skin-control select{min-height:44px;width:100%;background:var(--pq-surface);color:var(--pq-ink);border:1px solid var(--pq-muted);border-radius:12px;padding:0 12px;font:500 14px var(--pq-font-body)}
+.pq-skin-control select{min-height:44px;width:100%;background:var(--pq-surface);color:var(--pq-ink);border:1px solid var(--pq-muted);border-radius:12px;padding:0 12px;font:500 16px var(--pq-font-body)}
 .pq-skin-control select:focus-visible,.pq-skin-settings>summary:focus-visible{outline:3px solid var(--pq-maroon-text);outline-offset:3px}
 .pq-skin-settings{position:relative}.pq-skin-settings>summary{min-height:44px;display:flex;align-items:center;padding:0 12px;list-style:none;cursor:pointer;border:1px solid var(--pq-muted);border-radius:999px;font:700 12px var(--pq-font-body)}
 .pq-skin-settings>summary::-webkit-details-marker{display:none}.pq-skin-settings .pq-theme-panel{min-width:240px}

@@ -19,10 +19,10 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="{{rqCls}}" style="min-height:100vh">
 <svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
 <div class="shell">
-<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><span class="cap grp">Rally33</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a class="on" href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Rally33 Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><span class="cap grp">Cedar</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a class="on" href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Cedar Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
 <main class="main" style="display:flex;flex-direction:column;gap:22px">
 <div class="between">
-<div class="pg-h"><span class="cap">Rally33 at Crosscourts</span><h1 class="disp">{{title}}</h1></div>
+<div class="pg-h"><span class="cap">Cedar at Maple Courts</span><h1 class="disp">{{title}}</h1></div>
 <button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button>
 </div>
 <div class="tabs" role="tablist" aria-label="Section"><sc-for list="{{views}}" as="v" hint-placeholder-count="3"><button role="tab" class="{{v.cls}}" onClick="{{v.pick}}">{{v.name}}</button></sc-for></div>
@@ -49,15 +49,15 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <sc-if value="{{isProf}}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
 <section class="card" style="flex:999 1 520px;min-width:0;padding:22px;display:flex;flex-direction:column;gap:16px">
-<div class="row" style="gap:16px;flex-wrap:wrap"><span class="tile lg" style="width:96px;height:96px;border-radius:22px;font-size:26px">R33</span><span style="display:flex;flex-direction:column;gap:8px"><b>Club logo</b><span class="mut" style="font-size:13px">Square image. We show it on the TV board, posters, the event page and live cards.</span><button class="btn ghost sm" style="align-self:flex-start" onClick="{{up}}">{{upLabel}}</button></span></div>
-<div class="form two"><div class="fld"><label for="cn">Club name</label><input id="cn" class="inp" value="Rally33"></div><div class="fld"><label for="cv">Venue</label><input id="cv" class="inp" value="Crosscourts, Hyderabad"></div></div>
+<div class="row" style="gap:16px;flex-wrap:wrap"><span class="tile lg" style="width:96px;height:96px;border-radius:22px;font-size:26px">CC</span><span style="display:flex;flex-direction:column;gap:8px"><b>Club logo</b><span class="mut" style="font-size:13px">Square image. We show it on the TV board, posters, the event page and live cards.</span><button class="btn ghost sm" style="align-self:flex-start" onClick="{{up}}">{{upLabel}}</button></span></div>
+<div class="form two"><div class="fld"><label for="cn">Club name</label><input id="cn" class="inp" value="Cedar"></div><div class="fld"><label for="cv">Venue</label><input id="cv" class="inp" value="Maple Courts, Hyderabad"></div></div>
 <div class="form two"><div class="fld"><label for="cu">UPI ID for entries</label><input id="cu" class="inp" value="[CLUB UPI ID]"></div><div class="fld"><label for="cw">Desk WhatsApp</label><input id="cw" class="inp" value="[CLUB NUMBER]"></div></div>
-<div class="fld"><label for="cd">About the club</label><textarea id="cd" class="inp">4 outdoor courts under lights at Crosscourts. Socials every Monday, tournaments every month.</textarea></div>
+<div class="fld"><label for="cd">About the club</label><textarea id="cd" class="inp">4 outdoor courts under lights at Maple Courts. Socials every Monday, tournaments every month.</textarea></div>
 <button class="btn" style="align-self:flex-start" onClick="{{saveP}}">{{savePLabel}}</button>
 </section>
 <aside class="card" style="flex:1 1 300px;padding:20px;display:flex;flex-direction:column;gap:12px">
 <div class="cap">How it shows</div>
-<div class="card2" style="padding:16px;display:flex;align-items:center;gap:12px"><span class="tile lg">R33</span><span><span class="cap" style="display:block">Hosted by</span><b>Rally33 at Crosscourts</b></span><span class="row" style="margin-left:auto;gap:6px;opacity:.7"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:18px;height:18px"><use href="#fq"></use></svg></span></div>
+<div class="card2" style="padding:16px;display:flex;align-items:center;gap:12px"><span class="tile lg">CC</span><span><span class="cap" style="display:block">Hosted by</span><b>Cedar at Maple Courts</b></span><span class="row" style="margin-left:auto;gap:6px;opacity:.7"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:18px;height:18px"><use href="#fq"></use></svg></span></div>
 <div class="mut" style="font-size:12px">Your club always leads. RallyQ sits smaller, last.</div>
 </aside>
 </div>

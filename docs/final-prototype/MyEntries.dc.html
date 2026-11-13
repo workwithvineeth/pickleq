@@ -18,7 +18,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
 <div class="{{rqCls}}" style="min-height:100vh">
 <svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
-<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tile">R33</span><span><span class="cap">Hosted by</span><b>Rally33 at Crosscourts</b></span></a><nav class="nav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a class="on" href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><span class="chip">Signed in · Meera</span><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
+<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><nav class="nav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a class="on" href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><span class="chip">Signed in · Meera</span><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
 <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a><a href="SignIn.dc.html">Club sign in</a></nav></sc-if>
 
 <main class="wrap" style="padding-block:28px 72px;display:flex;flex-direction:column;gap:24px">
@@ -27,7 +27,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <sc-if value="{{isEnter}}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
 <section style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:20px">
-<div class="pg-h"><span class="cap acc">Enter · Rally33 Open</span><h1 class="disp">{{stepTitle}}</h1></div>
+<div class="pg-h"><span class="cap acc">Enter · Cedar Open</span><h1 class="disp">{{stepTitle}}</h1></div>
 <div class="steps" aria-label="Steps"><sc-for list="{{steps}}" as="s" hint-placeholder-count="4"><button class="{{s.cls}}" onClick="{{s.pick}}"><i>{{s.n}}</i>{{s.name}}</button></sc-for></div>
 
 <sc-if value="{{s1}}" hint-placeholder-val="{{ true }}">
@@ -41,7 +41,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </sc-if>
 <sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
 <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
-<div class="between"><span><b>Entry fee</b><span class="mut" style="display:block;font-size:13px">Paid to Rally33 directly. RallyQ never holds money.</span></span><span class="n acc" style="font-size:34px">[YOUR PRICE]</span></div>
+<div class="between"><span><b>Entry fee</b><span class="mut" style="display:block;font-size:13px">Paid to Cedar directly. RallyQ never holds money.</span></span><span class="n acc" style="font-size:34px">[YOUR PRICE]</span></div>
 <div class="grid g2" style="gap:12px"><sc-for list="{{pays}}" as="p" hint-placeholder-count="2"><button class="{{p.cls}}" onClick="{{p.pick}}"><span class="dot"></span><span><b style="display:block">{{p.name}}</b><span class="mut" style="font-size:13px">{{p.sub}}</span></span></button></sc-for></div>
 <sc-if value="{{upi}}" hint-placeholder-val="{{ true }}"><div class="fld"><label for="utr">UPI reference (12 digits)</label><input id="utr" class="inp" placeholder="e.g. 431298765012"><span class="hint">Pay [CLUB UPI ID], then paste the reference so the club can match it.</span></div></sc-if>
 </div>
@@ -50,15 +50,15 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:10px">
 <span class="st ok" style="align-self:flex-start">Entry sent</span>
 <h2 class="disp" style="font-size:34px">You’re in the queue.</h2>
-<div class="mut">Rally33 confirms your entry once they’ve checked the payment. You’ll get a WhatsApp message, and it shows under My entries.</div>
+<div class="mut">Cedar confirms your entry once they’ve checked the payment. You’ll get a WhatsApp message, and it shows under My entries.</div>
 </div>
 </sc-if>
 <div class="between"><button class="tlink mut" onClick="{{prev}}">{{prevLabel}}</button><button class="btn" onClick="{{next}}">{{nextLabel}}</button></div>
 </section>
 
 <aside class="card" style="flex:1 1 300px;padding:20px;display:flex;flex-direction:column;gap:14px">
-<div class="row"><span class="tile lg">R33</span><span><span class="cap" style="display:block">Hosted by</span><b>Rally33 at Crosscourts</b></span></div>
-<div><div class="cap">Sun 15 Nov · 5:00 pm</div><div class="disp" style="font-size:28px;margin-top:4px">Rally33 Open</div></div>
+<div class="row"><span class="tile lg">CC</span><span><span class="cap" style="display:block">Hosted by</span><b>Cedar at Maple Courts</b></span></div>
+<div><div class="cap">Sun 15 Nov · 5:00 pm</div><div class="disp" style="font-size:28px;margin-top:4px">Cedar Open</div></div>
 <div class="list" style="margin-inline:-20px">
 <div><span class="grow mut">Category</span><b>{{catName}}</b></div>
 <div><span class="grow mut">Partner</span><b>Divya Iyer</b></div>
@@ -96,15 +96,15 @@ renderVals() {
   const T = ['Pick your category.','Who’s your partner?','Pay the club.','Entry sent.'];
   const cat = C.find(c => c[0]===s.cat);
   const E = [
-    ['R33','Rally33 Open · Mixed doubles','Sun 15 Nov · with Divya Iyer','Waiting for payment','st wait','MyEntries.dc.html'],
-    ['LP','Loki’s DUPR Night · Women’s doubles','Sun 15 Nov · with Asha Rao','Confirmed','st ok','Results.dc.html'],
+    ['CC','Cedar Open · Mixed doubles','Sun 15 Nov · with Divya Iyer','Waiting for payment','st wait','MyEntries.dc.html'],
+    ['LP','Banyan DUPR Night · Women’s doubles','Sun 15 Nov · with Asha Rao','Confirmed','st ok','Results.dc.html'],
     ['EP','Elite Women’s Open · Singles','Sat 21 Nov','Waitlist #2','st off','MyEntries.dc.html'],
-    ['TPC','TPC Monday Social · Mixed','Mon 2 Nov · Quarter-finals','Played','st off','Results.dc.html']
+    ['MPC','MPC Monday Social · Mixed','Mon 2 Nov · Quarter-finals','Played','st off','Results.dc.html']
   ].map(([mark,name,sub,status,st,href]) => ({mark,name,sub,status,st,href}));
   return {
     rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
     menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
-    views: [['enter','Enter Rally33 Open'],['list','My entries']].map(([k,n]) => ({name:n, cls: s.v===k ? 'tab on' : 'tab', pick: () => this.setState({v:k})})),
+    views: [['enter','Enter Cedar Open'],['list','My entries']].map(([k,n]) => ({name:n, cls: s.v===k ? 'tab on' : 'tab', pick: () => this.setState({v:k})})),
     isEnter: s.v==='enter', isList: s.v==='list',
     stepTitle: T[s.step-1],
     steps: ST.map((n,i) => ({n: i+1 < s.step ? '✓' : i+1, name:n, cls: i+1===s.step ? 'on' : (i+1 < s.step ? 'done' : ''), pick: () => this.setState({step:i+1})})),

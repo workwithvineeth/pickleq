@@ -68,17 +68,17 @@ class Component extends DCLogic {
 constructor(p){ super(p); this.state = { v: 0, c: 0 }; }
 renderVals() {
   const V = [
-    {name:'Loki’s', club:'Loki’s Pickleball Club', mark:'LP', courts:[
+    {name:'Banyan', club:'Banyan Pickleball Club', mark:'LP', courts:[
       {court:'Court 1',stage:'Pool A',a:'Teja / Kiran',b:'Rohan / Ajay',sa:8,sb:5,game:1,games:[],status:'Live',run:4,next:'Pool A · Sana / Pooja vs Leela / Tara',pts:'AABAAB'},
       {court:'Court 2',stage:'Men’s QF',a:'Rao / Iyer',b:'Khan / Patel',sa:9,sb:7,game:2,games:['11–8'],status:'Live',run:5,next:'QF 2 · Reddy / Naidu vs Das / Jain',pts:'ABAAAB'},
       {court:'Court 3',stage:'Women’s SF',a:'Meera / Divya',b:'Ananya / Ritu',sa:11,sb:6,game:2,games:['11–9','11–6'],status:'Final',run:6,next:'Final at 7:40 pm',pts:'AAAABA'},
       {court:'Court 4',stage:'Pool C',a:'Sai / Vikram',b:'Harsha / Nikhil',sa:2,sb:3,game:1,games:[],status:'Live',run:2,next:'Pool C · Arun / Bala vs Chetan / Dev',pts:'BBAABA'}]},
-    {name:'Rally33', club:'Rally33 · Crosscourts', mark:'R33', courts:[
+    {name:'Cedar', club:'Cedar · Maple Courts', mark:'CC', courts:[
       {court:'Court 1',stage:'Open SF',a:'Varun / Neel',b:'Imran / Joseph',sa:10,sb:10,game:3,games:['11–7','8–11'],status:'Live',run:3,next:'Final at 8:15 pm',pts:'ABABAB'},
       {court:'Court 2',stage:'Pool B',a:'Asha / Lata',b:'Gita / Rekha',sa:4,sb:7,game:1,games:[],status:'Live',run:4,next:'Pool B · round 4',pts:'BBBABB'}]},
-    {name:'TPC', club:'TPC Narapally', mark:'TPC', courts:[
+    {name:'MPC', club:'MPC Sample North', mark:'MPC', courts:[
       {court:'Court 1',stage:'DUPR round 3',a:'Mohan / Ravi',b:'Suresh / Prem',sa:6,sb:6,game:1,games:[],status:'Live',run:3,next:'Round 4 at 7:20 pm',pts:'ABBAAB'}]},
-    {name:'ElitePicklers', club:'ElitePicklers Bowenpally', mark:'EP', courts:[
+    {name:'Willow Players', club:'Willow Players Bowenpally', mark:'EP', courts:[
       {court:'Court 1',stage:'Mixed QF',a:'Kavya / Arjun',b:'Nisha / Rahul',sa:3,sb:1,game:1,games:[],status:'Live',run:3,next:'QF 3 · Priya / Om vs Zoya / Sam',pts:'AABBAA'}]}
   ];
   const v = V[this.state.v] || V[0];

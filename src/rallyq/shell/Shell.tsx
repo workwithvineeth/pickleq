@@ -19,7 +19,7 @@ const OrgSlot=createContext<{reg:(k:'mode'|'head')=>()=>void;hasMode:boolean}|nu
 export function ModeButton({auto=false}:{auto?:boolean}={}){const day=useDay(),slot=useContext(OrgSlot),reg=slot?.reg;useLayoutEffect(()=>auto||!reg?undefined:reg('mode'),[auto,reg]);return <button type="button" className="mode" aria-label={day?'Switch to night mode':'Switch to day mode'} onClick={()=>chooseTheme(day?'dark':'light')}><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d={day?'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4':'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z'}/></svg></span></button>;}
 export function Signoff({text='Scores by',onClick}:{text?:string;onClick?:()=>void}){const inner=<><span>{text}</span><QMark/><span className="word">RallyQ</span></>;return onClick?<a className="signoff" href="#/" onClick={e=>{e.preventDefault();onClick()}}>{inner}</a>:<span className="signoff">{inner}</span>;}
 export interface Host{marks:string[];cap?:string;name:string}
-export const ALL_CLUBS:Host={marks:['TPC','EP','PKL','R33'],cap:'Hosted by',name:'Hyderabad’s clubs'};
+export const ALL_CLUBS:Host={marks:['TPC','EP','PY','PC'],cap:'Hosted by',name:'Hyderabad’s clubs'};
 /** Short club name: "Rally33 at Crosscourts" → "Rally33". */
 export function clubShort(name:string){return name.trim().split(/\s+(?:at|@)\s+/i)[0]||name.trim();}
 /** Club tile letters: "Rally33 at Crosscourts" → "R33", "The Pickleball Company" → "TPC", "Loki" → "LOK". */

@@ -9,15 +9,15 @@ import {loadPublicPlayer,samplePublicPlayer,type PublicRallyPlayer} from '../pri
 const source=holes(raw,[
  ['<span class="chip">Signed in · Arjun</span>',''],
  ['DUPR 4.21 ▲ 0.06','{{duprLabel}}'],['font-size:clamp(56px,6vw,88px)">Arjun Rao</h1>','font-size:clamp(56px,6vw,88px)">{{name}}</h1>'],
- ['Right side · Loki’s Pickleball Club · Hyderabad','{{clubLine}}'],
- ['<span class="chip">Men’s doubles</span><span class="chip">Mixed</span><span class="chip gold">QF · Loki’s DUPR Night</span>','<sc-for list="{{cats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for><sc-if value="{{bestLine}}" hint-placeholder-val="{{ false }}"><span class="chip gold">{{bestLine}}</span></sc-if>'],
+ ['Right side · Banyan Pickleball Club · Hyderabad','{{clubLine}}'],
+ ['<span class="chip">Men’s doubles</span><span class="chip">Mixed</span><span class="chip gold">QF · Banyan DUPR Night</span>','<sc-for list="{{cats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for><sc-if value="{{bestLine}}" hint-placeholder-val="{{ false }}"><span class="chip gold">{{bestLine}}</span></sc-if>'],
  ['<div class="cap">Matches</div><div class="n">38</div>','<div class="cap">Matches</div><div class="n">{{played}}</div>'],
  ['<div class="n acc">68%</div>','<div class="n acc">{{winRate}}</div>'],
  ['<div class="cap">Best run</div><div class="n">9</div>','<div class="cap">Best run</div><div class="n">{{bestRun}}</div>'],
  ['<div class="cap">Venues</div><div class="n">5</div>','<div class="cap">Venues</div><div class="n">{{venueCount}}</div>'],
  ['<span class="chip live">Win</span>','<span class="{{lastChip}}">{{lastResult}}</span>'],
- ['<div class="cap" style="color:#DDE7DC">Loki’s DUPR Night</div><div class="disp" style="font-size:34px;margin-top:4px">Arjun Rao</div><div class="n acc" style="font-size:40px;margin-top:6px">11–8 · 11–7</div>','<div class="cap" style="color:#DDE7DC">{{lastEvent}}</div><div class="disp" style="font-size:34px;margin-top:4px">{{name}}</div><div class="n acc" style="font-size:40px;margin-top:6px">{{lastScore}}</div>'],
- ['Hosted by Loki’s Pickleball Club · RallyQ','Hosted by {{lastClub}} · RallyQ']]);
+ ['<div class="cap" style="color:#DDE7DC">Banyan DUPR Night</div><div class="disp" style="font-size:34px;margin-top:4px">Arjun Rao</div><div class="n acc" style="font-size:40px;margin-top:6px">11–8 · 11–7</div>','<div class="cap" style="color:#DDE7DC">{{lastEvent}}</div><div class="disp" style="font-size:34px;margin-top:4px">{{name}}</div><div class="n acc" style="font-size:40px;margin-top:6px">{{lastScore}}</div>'],
+ ['Hosted by Banyan Pickleball Club · RallyQ','Hosted by {{lastClub}} · RallyQ']]);
 const STAGE:Record<string,string>={final:'Final',sf:'SF',qf:'QF',r16:'R16',r32:'R32',pool:'Pools',friendly:''};
 const mine=(o:OfficialMatch,g:{a:number;b:number})=>o.mySide==='A'?[g.a,g.b]:[g.b,g.a];
 const won=(o:OfficialMatch)=>o.winner===o.mySide;

@@ -11,6 +11,6 @@ async function boot(){
  const body=<div style={{display:'contents'}} dangerouslySetInnerHTML={{__html:inner(page)}}/>;
  createRoot(document.getElementById('root')!).render(kind==='public'
   ?<PublicShell go={go} active="events" footNote="Hyderabad · pickleball"><PageHead cap="Hyderabad · pickleball" title="Find your next main event." sub="Hosted by clubs across the city"/>{body}</PublicShell>
-  :<OrgShell go={go} active="entries" clubName="Rally33 at Crosscourts" clubId="c" tournament={{id:'t',name:'Rally33 Open · Sun 15 Nov',slug:'r33'}}><PageHead cap="Rally33 Open · Sun 15 Nov · entries close Fri 13 Nov, 9 pm" title="Entries & UPI" actions={<button className="btn ghost sm">Add a walk-in</button>}/>{body}</OrgShell>);
+  :<OrgShell go={go} active="entries" clubName="Cedar at Maple Courts" clubId="c" tournament={{id:'t',name:'Cedar Open · Sun 15 Nov',slug:'CC'}}><PageHead cap="Cedar Open · Sun 15 Nov · entries close Fri 13 Nov, 9 pm" title="Entries & UPI" actions={<button className="btn ghost sm">Add a walk-in</button>}/>{body}</OrgShell>);
 }
 void boot();

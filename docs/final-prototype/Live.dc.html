@@ -18,7 +18,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
 <div class="{{rqCls}}">
 <svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
-<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tiles"><span class="tile">LP</span><span class="tile">R33</span><span class="tile">TPC</span><span class="tile">EP</span></span><span><span class="cap">Hosted by</span><b>Hyderabad’s clubs</b></span></a><nav class="nav" aria-label="Main"><a class="on" href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><a class="tlink" href="SignIn.dc.html">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
+<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tiles"><span class="tile">LP</span><span class="tile">CC</span><span class="tile">MPC</span><span class="tile">EP</span></span><span><span class="cap">Hosted by</span><b>Hyderabad’s clubs</b></span></a><nav class="nav" aria-label="Main"><a class="on" href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><a class="tlink" href="SignIn.dc.html">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
 <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a><a href="SignIn.dc.html">Club sign in</a></nav></sc-if>
 
 <div class="wrap" style="padding-block:24px 64px;display:flex;flex-direction:column;gap:22px">
@@ -66,17 +66,17 @@ constructor(p){ super(p); this.state = { v: 0, c: 0 }; }
 renderVals() {
   const s = this.state;
   const V = [
-    {name:'Loki’s', club:'Loki’s Pickleball Club', mark:'LP', courts:[
+    {name:'Banyan', club:'Banyan Pickleball Club', mark:'LP', courts:[
       {court:'Court 1',stage:'Pool A',a:'Teja / Kiran',b:'Rohan / Ajay',sa:8,sb:5,game:1,games:[],status:'Live',run:4,next:'Pool A · Sana / Pooja vs Leela / Tara',pts:'AABAAB'},
       {court:'Court 2',stage:'Men’s QF',a:'Rao / Iyer',b:'Khan / Patel',sa:9,sb:7,game:2,games:['11–8'],status:'Live',run:5,next:'QF 2 · Reddy / Naidu vs Das / Jain',pts:'ABAAAB'},
       {court:'Court 3',stage:'Women’s SF',a:'Meera / Divya',b:'Ananya / Ritu',sa:11,sb:6,game:2,games:['11–9','11–6'],status:'Final',run:6,next:'Final at 7:40 pm',pts:'AAAABA'},
       {court:'Court 4',stage:'Pool C',a:'Sai / Vikram',b:'Harsha / Nikhil',sa:2,sb:3,game:1,games:[],status:'Live',run:2,next:'Pool C · Arun / Bala vs Chetan / Dev',pts:'BBAABA'}]},
-    {name:'Rally33', club:'Rally33 · Crosscourts', mark:'R33', courts:[
+    {name:'Cedar', club:'Cedar · Maple Courts', mark:'CC', courts:[
       {court:'Court 1',stage:'Open SF',a:'Varun / Neel',b:'Imran / Joseph',sa:10,sb:10,game:3,games:['11–7','8–11'],status:'Live',run:3,next:'Final at 8:15 pm',pts:'ABABAB'},
       {court:'Court 2',stage:'Pool B',a:'Asha / Lata',b:'Gita / Rekha',sa:4,sb:7,game:1,games:[],status:'Live',run:4,next:'Pool B · round 4',pts:'BBBABB'}]},
-    {name:'TPC', club:'TPC Narapally', mark:'TPC', courts:[
+    {name:'MPC', club:'MPC Sample North', mark:'MPC', courts:[
       {court:'Court 1',stage:'DUPR round 3',a:'Mohan / Ravi',b:'Suresh / Prem',sa:6,sb:6,game:1,games:[],status:'Live',run:3,next:'Round 4 at 7:20 pm',pts:'ABBAAB'}]},
-    {name:'ElitePicklers', club:'ElitePicklers Bowenpally', mark:'EP', courts:[
+    {name:'Willow Players', club:'Willow Players Bowenpally', mark:'EP', courts:[
       {court:'Court 1',stage:'Mixed QF',a:'Kavya / Arjun',b:'Nisha / Rahul',sa:3,sb:1,game:1,games:[],status:'Live',run:3,next:'QF 3 · Priya / Om vs Zoya / Sam',pts:'AABBAA'}]}
   ];
   const v = V[this.state.v] || V[0];

@@ -37,7 +37,7 @@ describe('Posters', () => {
     expect(finished.length).toBe(30); // 6 teams and 6 players, round robin: 15 matches each
     expect(finished.every((m) => m.status === 'done' && m.winner && m.games.length && m.court)).toBe(true);
     // Season 8 is live: singles part-way through the pools, doubles not started and about two hours away.
-    const s8 = ev.tournaments.find((t) => t.name === 'Pickleball Central Season 8')!;
+    const s8 = ev.tournaments.find((t) => t.name === 'Cedar Club Season 8')!;
     expect(s8.status).toBe('live');
     const [sing, dbl] = ev.divisions.filter((d) => d.tournamentId === s8.id);
     const sm = ev.matches.filter((m) => m.divisionId === sing.id), dm = ev.matches.filter((m) => m.divisionId === dbl.id);
@@ -89,6 +89,6 @@ describe('Posters', () => {
     expect(names).toContain('My Own Cup');
     expect(names).toContain('PQ Demo Diwali Doubles');
     expect(JSON.parse(memory().getItem('x') ?? 'null')).toBeNull();
-    expect(SAMPLE_EVENTS_VERSION).toBe(6);
+    expect(SAMPLE_EVENTS_VERSION).toBe(7);
   });
 });

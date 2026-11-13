@@ -22,7 +22,10 @@ export async function assertContrast(locator: Locator, kind: 'text' | 'border' |
     const backgrounds = (node: Element | null): Color[] => {
       if (!node) return [[255, 255, 255, 1]];
       const style = getComputedStyle(node);
-      let colors = backgrounds(node.parentElement).map(bg => blend(parse(style.backgroundColor), bg));
+      const fill = parse(style.backgroundColor);
+      // An opaque chip hides photographs behind it; those pixels cannot affect its contrast.
+      if (fill[3] === 1 && style.backgroundImage === 'none') return [fill];
+      let colors = backgrounds(node.parentElement).map(bg => blend(fill, bg));
       if (style.backgroundImage !== 'none') {
         const stops = style.backgroundImage.match(/rgba?\([^)]+\)|color\(srgb[^)]+\)/g);
         if (!stops) throw Error('Unsupported frame background: ' + style.backgroundImage);
