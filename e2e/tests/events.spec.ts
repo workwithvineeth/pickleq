@@ -87,7 +87,9 @@ test.describe('Board with posters (demo club on the phone)', () => {
     for (const name of ['PQ Demo Night', 'PQ Demo Sunday Social', 'PQ Demo Women’s Open']) {
       await expect(page.getByRole('button', { name, exact: true }).getByRole('img', { name: `Poster for ${name}` })).toBeVisible();
     }
-    // Posters really render (not a broken picture).
+    // Posters really render (not a broken picture). They load lazily, so bring the first one on screen
+    // (on a 390 px iPhone it now sits below the fold, and WebKit doesn't load off-screen lazy images).
+    await page.getByRole('img', { name: 'Poster for PQ Demo Night' }).first().scrollIntoViewIfNeeded();
     await expect.poll(()=>page.getByRole('img', { name: 'Poster for PQ Demo Night' }).first().evaluate((img: HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
     await expect(page.getByRole('button', { name: 'PQ Demo Ladder Cup', exact: true })).toHaveCount(0);
     await page.getByRole('link', { name: 'PQ Demo Diwali Doubles results' }).click();
