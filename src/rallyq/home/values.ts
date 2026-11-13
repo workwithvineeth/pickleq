@@ -1,6 +1,16 @@
 import type {PrototypeValues} from '../PrototypeScreen';
 export interface MainState{menu:boolean;day:boolean;slide:number;sa:number;sb:number;srvA:boolean;srvNo:number;game:number;ba:number;bb:number;w:number;live:number}
 export const INITIAL_MAIN:MainState={menu:false,day:false,slide:0,sa:7,sb:5,srvA:true,srvNo:2,game:2,ba:0,bb:0,w:2318,live:3};
+/** The announced calendar (13 Nov handoff); shown until the clubs publish their events on RallyQ. */
+export const UPCOMING_EVENTS = [
+    {date:'15 Nov',tag:'Tournament',name:'The Pickle Club',club:'The Pickle Club',area:'Hyderabad',mark:'TPC'},
+    {date:'15 Nov',tag:'Tournament',name:'Elite Picklers',club:'Elite Picklers',area:'Hyderabad',mark:'EP'},
+    {date:'15 Nov',tag:'Tournament',name:'PKL Zone',club:'PKL Zone',area:'Hyderabad',mark:'PZ'},
+    {date:'15 Nov',tag:'Tournament',name:'Rally33',club:'Rally33',area:'Crosscourts',mark:'R33'},
+    {date:'21 Nov',tag:'Tournament',name:'Pickleyard',club:'Pickleyard',area:'Hyderabad',mark:'PY'},
+    {date:'28 Nov',tag:'Tournament',name:'Pickleball Central',club:'Pickleball Central',area:'Hyderabad',mark:'PC'}
+  ];
+
 export function mainValues(state:MainState,setState:(patch:Partial<MainState>)=>void):PrototypeValues {
   const day = state.day;
   const st = state;
@@ -9,14 +19,7 @@ export function mainValues(state:MainState,setState:(patch:Partial<MainState>)=>
   const TK = [['Teja / Kiran','8–5','Rohan / Ajay','Banyan (sample)'],['Varun / Neel','10–10','Imran / Joseph','Lakeside (sample)'],['Mohan / Ravi','6–6','Suresh / Prem','Cedar (sample)'],['Kavya / Arjun','3–1','Nisha / Rahul','Banyan (sample)'],['Asha / Lata','4–7','Gita / Rekha','Lakeside (sample)'],['Meera / Divya','11–6','Ananya / Ritu','Cedar (sample)']];
   const tick = TK.concat(TK).map(([a,s,b,club]) => ({a, s, b, club}));
   // Fallback until the clubs publish (the real list comes from public_events); calendar from the 13 Nov handoff.
-  const ev = [
-    {date:'15 Nov',tag:'Tournament',name:'The Pickle Club',club:'The Pickle Club',area:'Hyderabad',mark:'TPC'},
-    {date:'15 Nov',tag:'Tournament',name:'Elite Picklers',club:'Elite Picklers',area:'Hyderabad',mark:'EP'},
-    {date:'15 Nov',tag:'Tournament',name:'PKL Zone',club:'PKL Zone',area:'Hyderabad',mark:'PZ'},
-    {date:'15 Nov',tag:'Tournament',name:'Rally33',club:'Rally33',area:'Crosscourts',mark:'R33'},
-    {date:'21 Nov',tag:'Tournament',name:'Pickleyard',club:'Pickleyard',area:'Hyderabad',mark:'PY'},
-    {date:'28 Nov',tag:'Tournament',name:'Pickleball Central',club:'Pickleball Central',area:'Hyderabad',mark:'PC'}
-  ].map(e => ({...e, chipCls: 'chip'}));
+  const ev = UPCOMING_EVENTS.map(e => ({...e, chipCls: 'chip'}));
   return {
     rqCls: day ? 'rq day' : 'rq',
     c0: 's0' + (st.slide === 0 ? ' on' : ''), c1: 's1' + (st.slide === 1 ? ' on' : ''), c2: 's2' + (st.slide === 2 ? ' on' : ''),
