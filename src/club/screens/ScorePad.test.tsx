@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ScorePatch } from '../backend';
+import { ClubError, type ScorePatch } from '../backend';
+import { blockUnsent, countUnsent, flushLinkUnsent, readBlocked, readUnsent, writeUnsent } from '../matchdaySafety';
 import { ScorePad } from './ScorePad';
 
 const fmt = { bestOf: 1, pointsTo: 11, golden: false, scoring: 'rally' } as const;
@@ -121,6 +122,29 @@ describe('saving overlapping taps', () => {
 });
 
 
+describe('moving from the court list into the pad', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('waits for an in-flight list retry before saving the newer pad score', async () => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const persisted: number[] = [];
+    writeUnsent({ 'link:t:m1': { games: [{ points: 'AA', a: 2, b: 0, mode: 'rally' }], status: 'live' } });
+    const listSave = vi.fn(async (_id: string, patch: ScorePatch) => { await held; persisted.push(patch.games[0].a); });
+    const flushing = flushLinkUnsent('t', listSave);
+    await waitFor(() => expect(listSave).toHaveBeenCalledTimes(1));
+    const send = vi.fn(async (patch: ScorePatch) => { persisted.push(patch.games[0].a); });
+    render(<ScorePad matchKey="link:t:m1" initialGames={[]} format={fmt} nameA="Asha" nameB="Gita" send={send} onFinished={() => undefined} canScore />);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Point to Asha' }));
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    expect(send).not.toHaveBeenCalled();
+    await act(async () => { release(); await flushing; });
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    expect(persisted).toEqual([2, 3]);
+    expect(readUnsent()).toEqual({});
+  });
+});
+
 describe('point tap feedback', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -158,5 +182,84 @@ describe('point tap feedback', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
     expect(vibrate).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Point to Asha / Lata' })).toHaveTextContent('1');
+  });
+});
+
+describe('a score the server refuses for good', () => {
+  beforeEach(() => { localStorage.clear(); vi.useFakeTimers({ shouldAdvanceTime: true }); });
+  afterEach(() => vi.useRealTimers());
+
+  it('stops retrying and tells the referee to show the desk', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const send = vi.fn(async (_p: ScorePatch) => { throw new ClubError('Wrong PIN. 2 tries left.'); });
+    pad(send);
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Show this screen to the desk'));
+    expect(screen.getByRole('alert')).toHaveTextContent('Wrong PIN');
+    const calls = send.mock.calls.length;
+    await act(async () => { vi.advanceTimersByTime(60_000); window.dispatchEvent(new Event('online')); });
+    expect(send.mock.calls.length).toBe(calls);
+    // Nothing is lost: the score is kept on the phone, outside the "to send" list.
+    expect(readBlocked()['m1']?.patch.games[0]).toMatchObject({ a: 1, b: 0 });
+    expect(countUnsent()).toBe(0);
+    // And no more points can pile up on a score that cannot be sent.
+    expect(screen.getByRole('button', { name: 'Point to Asha / Lata' })).toBeDisabled();
+  });
+
+  it('a connection problem is not permanent: it keeps the score and retries', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let fail = true;
+    const send = vi.fn(async (_p: ScorePatch) => { if (fail) throw new ClubError('No connection to the club server. Check your internet and try again.'); return undefined; });
+    pad(send);
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    await waitFor(() => expect(screen.getByText('Not sent yet · retrying')).toBeInTheDocument());
+    expect(screen.queryByText(/Show this screen to the desk/)).toBeNull();
+    fail = false;
+    await act(async () => { vi.advanceTimersByTime(10_000); });
+    await waitFor(() => expect(screen.getByText('Saved')).toBeInTheDocument());
+  });
+
+  it('shows the blocked bar again when the screen is reopened, and “Try sending again” puts it back in the queue', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    blockUnsent('m1', { games: [{ points: 'A', a: 1, b: 0 }], status: 'live' }, 'The organiser cancelled this match.');
+    const send = pad();
+    expect(screen.getByRole('alert')).toHaveTextContent('Show this screen to the desk');
+    expect(screen.getByRole('alert')).toHaveTextContent('The organiser cancelled this match.');
+    expect(send).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Try sending again' }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+});
+
+describe('offline banner', () => {
+  beforeEach(() => { localStorage.clear(); vi.useFakeTimers({ shouldAdvanceTime: true }); });
+  afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+
+  it('appears after 5 seconds without signal and counts the scores waiting on this phone', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const send = vi.fn(async (_p: ScorePatch) => { throw new ClubError('No connection to the club server. Check your internet and try again.'); });
+    pad(send);
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    await act(async () => { window.dispatchEvent(new Event('offline')); });
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    expect(screen.queryByRole('status', { name: 'Connection' })).toBeNull();
+    await act(async () => { vi.advanceTimersByTime(5_100); });
+    const banner = await screen.findByRole('status', { name: 'Connection' });
+    expect(banner).toHaveTextContent('No connection');
+    expect(banner).toHaveTextContent('1 score saved on this phone');
+  });
+
+  it('goes away when the signal is back and the score is sent', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let fail = true;
+    const send = vi.fn(async (_p: ScorePatch) => { if (fail) throw new ClubError('No connection to the club server. Check your internet and try again.'); return undefined; });
+    pad(send);
+    await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
+    await act(async () => { vi.advanceTimersByTime(5_100); });
+    expect(await screen.findByRole('status', { name: 'Connection' })).toBeInTheDocument();
+    fail = false;
+    await act(async () => { window.dispatchEvent(new Event('online')); vi.advanceTimersByTime(3_000); });
+    await waitFor(() => expect(screen.queryByRole('status', { name: 'Connection' })).toBeNull());
   });
 });

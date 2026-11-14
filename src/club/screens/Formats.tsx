@@ -51,6 +51,33 @@ export function divisionToDraft(div: Division): FormatDraft {
 const SCORING = [{ value: 'golden', label: 'Golden point' }, { value: 'win2', label: 'Win by 2' }];
 const POINTS: PointsTo[] = [11, 15, 21];
 
+export interface ScoringDefaults { scoring: Scoring; golden: boolean; pointsTo: PointsTo }
+/** The scoring choices made at creation, read back from a draft. */
+export const scoringOf = (d: FormatDraft): ScoringDefaults => ({ scoring: d.scoring, golden: d.golden, pointsTo: d.pool.pointsTo });
+/** Apply creation-time scoring defaults to a draft: side-out or rally, golden point or win by 2 (pools and knockouts), games to 11/15/21 (pools and every knockout round). The draw step starts from these. */
+export function withScoring(d: FormatDraft, p: Partial<ScoringDefaults>): FormatDraft {
+  const pointsTo = p.pointsTo ?? d.pool.pointsTo;
+  const golden = p.golden ?? d.golden;
+  return {
+    ...d, scoring: p.scoring ?? d.scoring, golden, koGolden: p.golden === undefined ? d.koGolden : golden,
+    pool: { ...d.pool, pointsTo },
+    stages: p.pointsTo === undefined ? d.stages : Object.fromEntries(KNOCKOUT_STAGES.map((s) => [s, { ...d.stages[s], pointsTo }])) as FormatDraft['stages'],
+  };
+}
+
+/** Scoring defaults for one event, set when the tournament is created (the draw step shows and can change them). */
+export function ScoringDefaultsFields({ label, value, onChange }: { label: string; value: FormatDraft; onChange: (next: FormatDraft) => void }) {
+  const set = (p: Partial<ScoringDefaults>) => onChange(withScoring(value, p));
+  return (
+    <div className="section" role="group" aria-label={`${label} scoring defaults`}>
+      <Field label="Scoring"><Segmented<Scoring> label={`${label} rally or side-out`} value={value.scoring} options={[{ value: 'sideout', label: 'Side-out' }, { value: 'rally', label: 'Rally' }]} onChange={(v) => set({ scoring: v })} /></Field>
+      <Field label="At level scores (pools and knockouts)"><Segmented label={`${label} scoring`} value={value.golden ? 'golden' : 'win2'} options={SCORING} onChange={(v) => set({ golden: v === 'golden' })} /></Field>
+      <Field label="Games to"><Chips label={`${label} games to`} value={value.pool.pointsTo} options={POINTS.map((n) => ({ value: n, label: String(n) }))} onChange={(v) => set({ pointsTo: v })} /></Field>
+      <p className="small muted" style={{ margin: 0 }}>These are the starting rules. You still choose the shape (groups, round robin, knockout) when you make the draw, and can change the rules there.</p>
+    </div>
+  );
+}
+
 /** Format fields for one event. entries: how many entries it has now (for the knockout rounds shown and checks). */
 export function FormatFields({ label, entries, value, onChange, showShape = true }: { label: string; entries: number; value: FormatDraft; onChange: (patch: Partial<FormatDraft>) => void; showShape?: boolean }) {
   const d = value;

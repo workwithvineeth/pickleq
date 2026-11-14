@@ -12,7 +12,7 @@ vi.mock('../components/UpdatePrompt', () => ({ UpdatePrompt: () => null }));
 async function open(hash: string) { window.location.hash = hash; const view = render(<ClubApp />); await act(async () => {}); return view; }
 afterEach(() => { vi.clearAllMocks(); window.location.hash = ''; });
 describe('RallyQ v1.2 app frame', () => {
-  const bare = ['#/club-signin', '#/events', '#/event-enter/e1', '#/my-entries', '#/results/cup', '#/club-inbox/t1', '#/club-entries/t1', '#/club-tournament/t1', '#/club-desk/t1', '#/club-scorers/t1', '#/club-results-dupr/t1', '#/club-dupr/t1'];
+  const bare = ['#/club-signin', '#/events', '#/event-enter/e1', '#/my-entries', '#/results/cup', '#/club-inbox/t1', '#/club-entries/t1', '#/club-tournament/t1', '#/club-desk/t1', '#/club-scorers/t1', '#/club-results-dupr/t1', '#/club-dupr/t1', '#/club-tournaments', '#/club-results', '#/club-claim/abc', '#/club-join/abc'];
   it.each(bare)('renders %s bare: the screen brings its own shell', async (hash) => {
     sessions.mockResolvedValue([]);
     const { container, unmount } = await open(hash);
@@ -34,7 +34,7 @@ describe('RallyQ v1.2 app frame', () => {
   });
   it('keeps the old frame on screens that are not rebuilt yet', async () => {
     sessions.mockResolvedValue([]);
-    const { container } = await open('#/club-join/abc');
+    const { container } = await open('#/club-player/p1');
     expect(container.querySelector('.app.pq-brand')).not.toBeNull();
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Account' })).toHaveTextContent('alex@example.test');

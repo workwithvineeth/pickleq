@@ -9,7 +9,6 @@ import { eventsBackend } from '../club/index';
 import type { SupportSession } from '../club/backend';
 import { useRoute, type Go, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
-import { ClubResultsTab, ClubTournamentsTab } from './Tabs';
 import {RallyHome} from '../rallyq/home/RallyHome';
 import {MyStudio} from '../rallyq/studio/MyStudio';
 import {RallyLive} from '../rallyq/live/RallyLive';
@@ -29,7 +28,7 @@ const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
 
 /** Screens without an account (referee court, desk PIN, public results and event pages): no account strip there. */
 /** v1.2 screens bring their own shell (PublicShell / OrgShell): the frame adds nothing around them. */
-const BARE: RouteName[] = ['club', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-scorers', 'club-results-dupr', 'club-dupr'];
+const BARE: RouteName[] = ['club', 'club-tournaments', 'club-results', 'club-claim', 'club-join', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-scorers', 'club-results-dupr', 'club-dupr'];
 const NO_ACCOUNT: RouteName[] = ['court', 'desk', 'helper', 'results', 'event', 'club-signin', 'admin-login', 'demo'];
 
 /** "Signed in as … · Sign out" on every signed-in screen, so sign-out is never more than one tap away. */
@@ -115,9 +114,7 @@ export default function ClubApp() {
       <SupportBanner route={name} />
       {!ws && showNav && <div className="pq-app-preferences" aria-label="App settings"><ThemeControls /></div>}
       {ws && <WorkspaceNav kind={ws} route={{ ...route, name }} go={clubGo} admin={admin} />}
-      {name === 'club-tournaments' && <ClubTournamentsTab go={clubGo} />}
-      {name === 'club-results' && <ClubResultsTab go={clubGo} />}
-      {name !== 'club-tournaments' && name !== 'club-results' && <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />}
+      <ClubRoutes route={{ ...route, name }} go={clubGo} back={back} />
       {name === 'club' && <p className="small muted" style={{ margin: '0 16px 96px' }}>RallyQ {appVersion} · build {buildId}</p>}
       {showNav && (
         <nav className={`nav pq-glass${tab ? '' : ' nav-sub'}${ws ? ' nav-ws' : ''}`} aria-label="Main">

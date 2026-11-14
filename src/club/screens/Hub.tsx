@@ -14,7 +14,7 @@ import { GO_LIVE_NOTE, isApproved, isStaff, ROLE_LABEL, type ClubTournament } fr
 import { appLink, DemoNote, errorText, Header, RoleBadge, shareLink, Status, useLoad } from './common';
 import { friendlyTime, relativeDate } from '../dates';
 import { TodayAndUpcoming } from '../../clubApp/Tabs';
-import { landingAfterSignIn } from '../landing';
+import { landingAfterSignIn, readChoice, writeChoice, type Landing } from '../landing';
 
 const PENDING_JOIN = 'pq-club-pending-join';
 // localStorage, not sessionStorage: the email's sign-in link opens in a new tab.
@@ -65,7 +65,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
   // RallyQ (the club app): signed out, My club is the sign-in page, so rallyq.in opens on it.
   if (isClubApp() && server && !state.loading && !state.error && !signedIn) return <ClubSignIn go={go} onBack={onBack} landing onSignedIn={state.reload} />;
   if (signedIn && isClubApp()) return (
-    <PublicShell go={go} active="clubs" host={signedIn.clubs.length === 1 ? { marks: [clubMark(signedIn.clubs[0].club.name)], name: signedIn.clubs[0].club.name, cap: 'Hosted by' } : undefined}>
+    <PublicShell go={go} active="clubs">
       <PageHead cap={b?.kind === 'demo' ? 'Demo mode' : `Signed in as ${signedIn.user.email}`} title={<span id="club-title">{signedIn.admin ? 'Clubs' : 'My clubs'}</span>}
         actions={<>
           {signedIn.admin && <button type="button" className="btn ghost sm" onClick={() => go('admin', 'overview')}>Admin dashboard</button>}
@@ -329,7 +329,7 @@ function JoinByLink({ go }: { go: Go }) {
   );
 }
 
-type SignInStep = 'signin' | 'signup' | 'confirm' | 'forgot' | 'reset';
+type SignInStep = 'signin' | 'signup' | 'confirm' | 'forgot' | 'reset' | 'where';
 
 /** Organisers and admins: email + password (at least 8 characters). New accounts confirm their email with a 6-digit
  * code; "Forgot password" sends a code too. `admin` is the RallyQ admin sign-in page: no new accounts, and it only
@@ -357,7 +357,8 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
     if (back) { window.location.replace(back); return; }
     const pending = readPendingJoin();
     if (pending) { writePendingJoin(null); go('club-join', pending, { replace: true }); return; }
-    // RallyQ: players open on their Player Studio; people who run a club (and RallyQ admins) on My clubs.
+    // RallyQ: one account for everyone. The first time on this phone we ask where to go; after that we remember it.
+    if (isClubApp() && b && !readChoice()) { setStep('where'); setMsg(null); return; }
     const to = isClubApp() && b ? await landingAfterSignIn(b) : 'club';
     if (to === 'club-player-studio') go('club-player-studio', undefined, { replace: true });
     else if (onSignedIn) onSignedIn();
@@ -377,6 +378,12 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [b]);
 
+  function choose(l: Landing) {
+    writeChoice(l);
+    if (l === 'club-player-studio') go('club-player-studio', undefined, { replace: true });
+    else if (onSignedIn) onSignedIn();
+    else go('club', undefined, { replace: true });
+  }
   function to(next: SignInStep, text?: string) { setStep(next); setMsg(text ? { ok: true, text } : null); setPassword(''); setAgain(''); setCode(''); }
   async function run(fn: () => Promise<void>) {
     setBusy(true); setMsg(null);
@@ -489,6 +496,16 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
               {landing && !admin && <MoreWays go={go} />}
             </div>
           )}
+          {step === 'where' && (
+            <div className="form" role="group" aria-label="Where to?">
+              {title('Where to?')}
+              <div className="mut">One account for everything. You can switch any time from the menu.</div>
+              <button type="button" className="btn" style={{ width: '100%', minHeight: 56 }} onClick={() => choose('club-player-studio')}>I’m a player</button>
+              <div className="mut" style={{ fontSize: 13, marginTop: -8 }}>Your matches, results and Player Studio.</div>
+              <button type="button" className="btn ghost" style={{ width: '100%', minHeight: 56 }} onClick={() => choose('club')}>I run a club</button>
+              <div className="mut" style={{ fontSize: 13, marginTop: -8 }}>Tournaments, entries, referees and results.</div>
+            </div>
+          )}
           {step === 'signup' && (
             <div className="form">
               {title('Start on RallyQ.')}
@@ -496,7 +513,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
               {newPasswordFields(signUp)}
               {message}
               {primary('Create account', 'Creating…', signUp)}
-              <div className="mut" style={{ fontSize: 13 }}>We email you a 6-digit code to confirm it’s really you. Then create your club and prepare a tournament. RallyQ approves each tournament before it goes live; trusted clubs skip that step.</div>
+              <div className="mut" style={{ fontSize: 13 }}>We email you a 6-digit code to confirm it’s really you. One account: players keep their results, clubs run their tournaments.</div>
             </div>
           )}
           {step === 'confirm' && (
@@ -646,6 +663,7 @@ export function ClubNew({ go, onBack }: { go: Go; onBack: () => void }) {
     if (madeId) return saveContact(b, madeId);
     let id: string;
     try { id = await b.createClub(name, city, me); } catch (e) { fail(undefined, errorText(e)); setBusy(false); return; }
+    writeChoice('club');
     await saveContact(b, id);
   }
   const invalid = (f: ClubField) => (err?.field === f ? { 'aria-invalid': true, 'aria-describedby': `newclub-${f}-error` } : {});
@@ -691,8 +709,9 @@ export function ClubJoin({ code, go, onBack }: { code: string; go: Go; onBack: (
     go('club-signin');
   }
   return (
-    <main className="screen" aria-labelledby="join-title">
-      <Header id="join-title" title="Join a club" onBack={onBack} />
+    <PublicShell go={go} active="clubs">
+      <PageHead cap="For clubs" title={<span id="join-title">Join a club</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <Legacy style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <section className="card section">
         <p style={{ margin: 0 }}>You’ve been invited to join a club in RallyQ.</p>
         <p className="small muted" style={{ margin: 0 }}>Joining shares your name and the club matches you play with that club. Your practice diary, goals and coach notes stay private unless you choose to share them.</p>
@@ -707,6 +726,7 @@ export function ClubJoin({ code, go, onBack }: { code: string; go: Go; onBack: (
           <button type="button" className="btn btn-primary" disabled={busy} onClick={join}>Join club</button>
         </>
       )}
-    </main>
+      </Legacy>
+    </PublicShell>
   );
 }

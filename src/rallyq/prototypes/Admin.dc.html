@@ -37,7 +37,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 <sc-if value="{{isClubs}}" hint-placeholder-val="{{ true }}">
 <div class="card scroll" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Club</th><th>Area</th><th>Next event</th><th>Plan</th><th>Status</th><th></th></tr></thead><tbody>
-<sc-for list="{{clubs}}" as="c" hint-placeholder-count="6"><tr><td style="font-weight:700">{{c.n}}</td><td class="mut">{{c.a}}</td><td class="n" style="font-size:18px">{{c.e}}</td><td class="mut">{{c.p}}</td><td><span class="{{c.cls}}">{{c.st}}</span></td><td><sc-if value="{{c.canApprove}}" hint-placeholder-val="{{ false }}"><button class="btn sm" onClick="{{c.approve}}">Approve</button></sc-if></td></tr></sc-for>
+<sc-for list="{{clubs}}" as="c" hint-placeholder-count="6"><tr><td style="font-weight:700">{{c.n}}</td><td class="mut">{{c.a}}</td><td class="n" style="font-size:18px">{{c.e}}</td><td class="mut">{{c.p}}</td><td><span class="{{c.cls}}">{{c.st}}</span></td><td><sc-if value="{{c.canApprove}}" hint-placeholder-val="{{ false }}"><button class="btn sm" onClick="{{c.approve}}" title="Also approves this club's waiting tournaments">Make trusted</button></sc-if></td></tr></sc-for>
 </tbody></table></div>
 </sc-if>
 

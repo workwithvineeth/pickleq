@@ -1,186 +1,90 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>RallyQ Home</title>
-<script src="./support.js"></script>
-<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
-</head>
+<head><meta charset="utf-8"><title>RallyQ Home</title></head>
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
 <style>
 body{margin:0;background:#06140D}
 a{color:#D9F24A}a:hover{color:#F1F4EA}
-.rq .hero{position:relative;min-height:min(900px,100vh);display:flex;flex-direction:column;isolation:isolate;overflow:hidden;color:#F1F4EA;background:#06140D}
+.rq .hero{position:relative;z-index:30;min-height:min(820px,100vh);min-height:min(820px,100svh);display:flex;flex-direction:column;isolation:isolate;overflow:hidden;color:#F1F4EA;background:#06140D}
 .slides{position:absolute;inset:0;z-index:-3}
-.slides div{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transform:scale(1.06);transition:opacity 1.6s ease,transform 8s ease-out}
-.slides div.on{opacity:1;transform:scale(1)}
-.slides .s0{background-image:url(/_blob/667708e902955635c36442a4f43f8971)}
-.slides .s1{background-image:url(/_blob/2380ef36eac416d5153a483115c63a4b);background-position:70% 2%}
-.slides .s2{background-image:url(/_blob/0b9a15da42bd9e454eb1adb978b47511);background-position:center 50%}
-.tint{position:absolute;inset:0;z-index:-2;background:rgba(5,50,28,.55);mix-blend-mode:multiply}
-.over{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,20,13,.94) 0%,rgba(6,20,13,.88) 26%,rgba(6,20,13,.3) 72%),linear-gradient(0deg,#06140D 0%,transparent 30%),linear-gradient(180deg,rgba(6,20,13,.6),transparent 18%)}
-.rq.day .over{background:linear-gradient(90deg,rgba(43,110,75,.93) 0%,rgba(43,110,75,.85) 26%,rgba(43,110,75,.25) 72%),linear-gradient(0deg,#2B6E4B 0%,transparent 30%)}
-.hlines{position:absolute;right:-6%;bottom:-8%;width:min(980px,90vw);z-index:-1;color:rgba(241,244,234,.2);pointer-events:none}
-.hlines path,.hlines line{stroke-dasharray:2400;stroke-dashoffset:2400;animation:draw 1.2s .15s cubic-bezier(.4,0,.2,1) forwards}
-@keyframes draw{to{stroke-dashoffset:0}}
-.hnav a{color:#BFD0C4!important}.hnav a:hover{color:#F1F4EA!important}
-.hbody{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;align-items:center;padding-block:40px 130px;width:100%;box-sizing:border-box}
-.hh{font-size:clamp(56px,8.2vw,124px);margin:22px 0}
-.hh .ln{display:block;animation:rise .5s cubic-bezier(.16,.9,.24,1) both}
-.hh .l2{color:#D9F24A;animation-delay:.06s}
-.lede{max-width:520px;font-size:18px;color:#BFD0C4;margin:0 0 28px;animation:rise .5s .12s cubic-bezier(.16,.9,.24,1) both}
-.hctas{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;animation:rise .5s .18s cubic-bezier(.16,.9,.24,1) both}
-@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-.hchip{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;background:rgba(19,48,34,.62);box-shadow:inset 0 0 0 1px rgba(241,244,234,.14);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:rise .5s cubic-bezier(.16,.9,.24,1) both}
-.pdot{width:8px;height:8px;border-radius:50%;background:#FF655C;animation:pulse 1.8s ease-out infinite}
-.rq .chip.live::before{animation:pulseD 1.8s ease-out infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,101,92,.6)}70%{box-shadow:0 0 0 9px rgba(255,101,92,0)}100%{box-shadow:0 0 0 0 rgba(255,101,92,0)}}
-@keyframes pulseD{0%{box-shadow:0 0 0 0 rgba(26,6,3,.5)}70%{box-shadow:0 0 0 6px rgba(26,6,3,0)}100%{box-shadow:0 0 0 0 rgba(26,6,3,0)}}
-.glass{background:linear-gradient(160deg,rgba(19,48,34,.62),rgba(6,20,13,.5));-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(241,244,234,.11),0 30px 60px -30px rgba(0,0,0,.55);border-radius:22px}
-.sc{display:block;padding:18px;color:#F1F4EA!important;animation:rise .5s .24s cubic-bezier(.16,.9,.24,1) both}
-.srow{display:grid;grid-template-columns:1fr auto;align-items:center;padding:8px 0}
-.srow+.srow{border-top:1px solid rgba(241,244,234,.11)}
-.srow b{display:flex;align-items:center;gap:8px;font-size:15px}
-.sv{width:7px;height:7px;border-radius:50%;background:#D9F24A}.sv.off{opacity:0}
-.pt{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:46px;line-height:1;display:inline-block}
-.b1{animation:bumpA .7s cubic-bezier(.2,.8,.2,1)}.b2{animation:bumpB .7s cubic-bezier(.2,.8,.2,1)}
-@keyframes bumpA{0%{transform:translateY(-35%);opacity:0;color:#D9F24A}60%{opacity:1;color:#D9F24A}100%{transform:none}}
-@keyframes bumpB{0%{transform:translateY(-35%);opacity:0;color:#D9F24A}60%{opacity:1;color:#D9F24A}100%{transform:none}}
-.slidecap{position:absolute;right:max(32px,3vw);bottom:76px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-size:12px;color:#BFD0C4;z-index:2}
-.segs{display:flex;gap:6px}
-.segs button{width:34px;height:20px;display:grid;place-items:center;border:0;background:none;cursor:pointer;padding:0}
-.segs button i{display:block;width:100%;height:3px;border-radius:2px;background:rgba(241,244,234,.25);overflow:hidden}
-.segs button.on i::after{content:"";display:block;height:100%;background:#D9F24A;animation:seg 6.5s linear forwards}
-@keyframes seg{from{width:0}to{width:100%}}
-.ticker{position:absolute;left:0;right:0;bottom:0;border-top:1px solid rgba(241,244,234,.11);background:rgba(6,20,13,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden;padding-block:14px}
-.ticker .tr{display:flex;gap:44px;white-space:nowrap;width:max-content;animation:tick 60s linear infinite;padding-left:32px;color:#9FB4A6;font-size:14px}
-.ticker:hover .tr{animation-play-state:paused}
-@keyframes tick{to{transform:translateX(-50%)}}
-@media (max-width:960px){.hbody{grid-template-columns:1fr;padding-block:24px 120px}.slidecap{display:none}.sc{max-width:420px}}
-@media (prefers-reduced-motion:reduce){.rq *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+.slides div{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;opacity:0;transition:opacity .45s ease}
+.slides div.on{opacity:1}
+.slides .s0{background-image:url(/_blob/p-hero-m);background-position:50% 18%}
+.slides .s1{background-image:url(/_blob/p-champ-m);background-position:50% 30%}
+.slides .s2{background-image:url(/_blob/p-comp-m);background-position:50% 15%}
+@media(min-width:761px){.slides .s0{background-image:url(/_blob/p-hero-d);background-position:70% 30%}.slides .s1{background-image:url(/_blob/p-champ-d);background-position:70% 30%}.slides .s2{background-image:url(/_blob/p-comp-d);background-position:75% 20%}}
+.over{position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(6,20,13,.96) 0%,rgba(6,20,13,.8) 34%,rgba(6,20,13,.12) 62%,rgba(6,20,13,.35) 100%)}
+@media(min-width:761px){.over{background:linear-gradient(90deg,rgba(6,20,13,.9) 0%,rgba(6,20,13,.62) 34%,rgba(6,20,13,0) 68%),linear-gradient(0deg,rgba(6,20,13,.75) 0%,transparent 30%)}}
+.hnav a{color:#DDE7DC!important}.hnav a:hover,.hnav a.on{color:#D9F24A!important}
+.hnav a.on{box-shadow:0 2px 0 #D9F24A}
+.mpanel a.on{color:#D9F24A}
+.hbody{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding-block:40px 64px;width:100%;box-sizing:border-box}
+.hh{font-size:clamp(52px,9vw,116px);margin:14px 0 16px}
+.hh .l2{color:#D9F24A;display:block}
+.hh .l1{display:block}
+.lede{max-width:520px;font-size:18px;color:#E3ECE2;margin:0 0 26px}
+.hbtn{min-height:52px;font-size:16px;padding:0 26px;max-width:100%;text-align:center}
+.hill{position:absolute;right:max(16px,3vw);bottom:16px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:2}
+.hill .tag{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(6,20,13,.72);color:#F1F4EA}
+.segs{display:flex;gap:2px}
+.segs button{width:44px;height:44px;display:grid;place-items:center;border:0;background:none;cursor:pointer;padding:0}
+.segs button i{display:block;width:26px;height:4px;border-radius:2px;background:rgba(241,244,234,.4)}
+.segs button.on i{background:#D9F24A}
+.hm-sec{scroll-margin-top:76px}
+.hm-intro{max-width:620px;color:var(--mut);margin:12px 0 0;font-size:17px}
+.hm-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:16px}
+.hm-card{padding:22px;display:flex;flex-direction:column;gap:10px}
+.hm-card b{font-size:20px}
+.hm-card p{margin:0;color:var(--mut);font-size:15px}
+.hm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}
+.hm-stat{padding:20px}
+.hm-stat .n{font-size:clamp(44px,7vw,64px);color:#D9F24A;display:block}
+.hm-stat span{color:var(--mut);font-size:14px}
+.hm-ph{position:relative;overflow:hidden;border-radius:18px;min-height:240px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;color:#F1F4EA;background-size:cover;background-position:center;isolation:isolate}
+.hm-ph::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.05) 30%,rgba(6,20,13,.88))}
+.hm-ph .tag{position:absolute;top:12px;right:12px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:rgba(6,20,13,.72)}
+.hm-ph.a{background-image:url(/_blob/p-tv)}.hm-ph.b{background-image:url(/_blob/p-result)}.hm-ph.c{background-image:url(/_blob/p-club)}
+.hm-note{font-size:13px;color:var(--mut)}
+@media(max-width:760px){.hbody{padding-bottom:84px}}
+@media (prefers-reduced-motion:reduce){.rq *{animation-duration:.001ms!important;transition-duration:.001ms!important}}
 </style>
 </helmet>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
 <div class="{{rqCls}}">
-<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a class="on" href="Main.dc.html">Home</a><a href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a href="MyStudio.dc.html">My Player Studio</a><a href="Overview.dc.html">Organiser</a><a href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a href="Social.dc.html">Social</a><a href="Admin.dc.html">Admin</a></div></nav>
 
-<section class="hero" aria-label="RallyQ live">
+<section class="hero" aria-label="RallyQ">
 <div class="slides" aria-hidden="true"><div class="{{c0}}"></div><div class="{{c1}}"></div><div class="{{c2}}"></div></div>
-<div class="tint" aria-hidden="true"></div><div class="over" aria-hidden="true"></div>
-<svg class="hlines" viewBox="0 0 1000 560" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.5"><path d="M120 540 L300 60 L700 60 L880 540 Z"></path><line x1="500" y1="60" x2="500" y2="540"></line><line x1="232" y1="240" x2="768" y2="240"></line><line x1="196" y1="335" x2="804" y2="335"></line><line x1="160" y1="430" x2="840" y2="430"></line></g></svg>
+<div class="over" aria-hidden="true"></div>
 
-<header class="hdr" style="position:relative;z-index:5"><div class="wrap">
+<header class="hdr" style="position:relative;z-index:20"><div class="wrap">
 <a class="brand" href="Main.dc.html"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="color:#F1F4EA">RallyQ</span></a>
-<nav class="nav hnav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="#clubs">For clubs</a></nav>
-<div class="right"><a class="tlink" href="Overview.dc.html" style="color:#F1F4EA!important">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></div>
+<nav class="nav hnav" aria-label="Main"><a class="{{navWhat}}" data-nav="what" href="#what">What RallyQ does</a><a class="{{navComing}}" data-nav="coming" href="#coming">Coming up</a><a class="{{navFirst}}" data-nav="first" href="#first">Our first tournament</a><a class="{{navClubs}}" data-nav="clubs" href="#clubs">For clubs</a></nav>
+<div class="right"><a class="tlink" href="Overview.dc.html" style="color:#F1F4EA!important">Sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></div>
 </div></header>
-<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu" style="position:relative;z-index:5"><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="#clubs">For clubs</a><a href="Overview.dc.html">Club sign in</a></nav></sc-if>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu" style="position:relative;z-index:20"><a class="{{navWhat}}" href="#what">What RallyQ does</a><a class="{{navComing}}" href="#coming">Coming up</a><a class="{{navFirst}}" href="#first">Our first tournament</a><a class="{{navClubs}}" href="#clubs">For clubs</a><a href="Live.dc.html">Live scores</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">Sign in</a></nav></sc-if>
 
 <div class="wrap hbody">
-<div style="min-width:0">
-<div class="cap" style="color:#BFD0C4;margin-bottom:8px">{{demoLabel}}</div><span class="hchip"><span class="pdot"></span><span class="n" style="font-size:15px">{{liveCount}}</span> courts live in Hyderabad right now</span>
-<h1 class="disp hh"><span class="ln">Your court.</span><span class="ln l2">The main event.</span></h1>
-<p class="lede">Live scores, player profiles and match-day tools that make every local game look like the pros. Run by your club, followed by your city.</p>
-<div class="cta hctas"><a class="btn" href="Live.dc.html">See live scores <span aria-hidden="true">→</span></a><a class="tlink" href="#clubs" style="color:#F1F4EA!important">Run an event →</a></div>
+<div class="cap" style="color:#DDE7DC">Hyderabad pickleball</div>
+<h1 class="disp hh"><span class="l1">Your court.</span> <span class="l2">The main event.</span></h1>
+<p class="lede">Live scores, player profiles and match-day tools for your local tournaments.</p>
+<div class="cta"><a class="btn hbtn" href="HeroCta.dc.html">{{heroCta}} <span aria-hidden="true">→</span></a></div>
 </div>
-<a class="glass sc" href="Live.dc.html" aria-live="polite">
-<div class="between"><span class="chip live">Live · {{heroCourt}}</span><span class="cap" style="color:#BFD0C4">{{heroStage}}</span></div>
-<div class="srow"><b><span class="{{srvA}}"></span>{{heroA}}</b><span class="{{bumpA}}">{{sa}}</span></div>
-<div class="srow"><b><span class="{{srvB}}"></span>{{heroB}}</b><span class="{{bumpB}}">{{sb}}</span></div>
-<div class="between" style="font-size:12px;color:#BFD0C4;margin-top:10px"><span class="row" style="gap:8px"><span style="width:24px;height:24px;border-radius:6px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-size:8px;font-weight:800">{{heroMark}}</span>{{heroClub}}</span><sc-if value="{{showFollowers}}"><span><b class="n" style="font-size:15px;color:#F1F4EA">{{watching}}</b> following</span></sc-if></div>
-<div class="between" style="margin-top:12px;padding-top:10px;border-top:1px dashed rgba(241,244,234,.2);font-size:12px"><span style="color:#BFD0C4">{{callLabel}} {{call}} · Game {{game}} to {{pointsTo}}</span><span style="color:#D9F24A;font-weight:700">See score →</span></div>
-</a>
-</div>
-
-<div class="slidecap"><span>{{cap}}</span><div class="segs"><sc-for list="{{segs}}" as="g" hint-placeholder-count="3"><button class="{{g.cls}}" aria-label="{{g.label}}" onClick="{{g.pick}}"><i></i></button></sc-for></div></div>
-<div class="ticker" aria-label="Live scores from other courts"><div class="tr"><sc-for list="{{tick}}" as="t" hint-placeholder-count="12"><span><b style="color:#F1F4EA">{{t.a}}</b> <span class="n" style="color:#D9F24A;font-size:17px">{{t.s}}</span> {{t.b}} · {{t.club}}</span></sc-for></div></div>
+<div class="hill"><div class="segs" role="group" aria-label="Hero photos"><sc-for list="{{segs}}" as="g" hint-placeholder-count="3"><button class="{{g.cls}}" aria-label="{{g.label}}" onClick="{{g.pick}}"><i></i></button></sc-for></div><span class="tag">Illustration</span></div>
 </section>
 
+<section class="sec hm-sec" id="what" data-section="what"><div class="wrap" style="display:flex;flex-direction:column;gap:24px">
+<div><div class="cap acc">What RallyQ does</div><h2 class="disp h2" style="margin-top:8px">Three things, done well.</h2></div>
+<div class="hm-cards">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="3"><a class="card hm-card" href="{{c.to}}"><b>{{c.t}}</b><p>{{c.d}}</p><span class="tlink acc">{{c.cta}} →</span></a></sc-for>
+</div>
+</div></section>
 
-<section class="sec" id="live"><div class="wrap" style="display:flex;flex-direction:column;gap:24px">
-<div class="between"><div><div class="cap acc">01 · Live scores</div><h2 class="disp h2" style="margin-top:8px">Every point, as it happens.</h2></div><a class="tlink" href="Live.dc.html">All live scores →</a></div>
+<section class="sec alt hm-sec" id="coming" data-section="coming"><div class="wrap" style="display:flex;flex-direction:column;gap:24px">
+<div class="between"><div><div class="cap acc">Coming up</div><h2 class="disp h2" style="margin-top:8px">This month on court.</h2></div><a class="tlink" href="Event.dc.html">All events →</a></div>
 <div class="grid g3">
-<sc-for list="{{live}}" as="m" hint-placeholder-count="3">
-<a class="card glass" href="Live.dc.html" style="padding:18px;display:flex;flex-direction:column;gap:14px">
-<div class="between"><span class="{{liveChipCls}}">{{liveChip}}</span><span class="row" style="gap:8px;font-size:12px;color:var(--mut)"><span style="width:24px;height:24px;border-radius:6px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-size:8px;font-weight:800">{{m.mark}}</span>{{m.court}} · {{m.club}}</span></div>
-<div class="score"><span class="t"><span class="serve"></span>{{m.a}}</span><span class="n p lead">{{m.sa}}</span><span class="t mut">{{m.b}}</span><span class="n p">{{m.sb}}</span></div>
-<div class="mut" style="font-size:13px">{{m.stage}} · Game {{m.game}}</div>
-</a>
-</sc-for>
-</div>
-</div></section>
-
-<section class="sec alt"><div class="wrap" style="display:flex;flex-direction:column;gap:20px">
-<div class="between"><div><div class="cap acc">02 · Player Studio</div><h2 class="disp h2" style="margin-top:8px">Your game, with a pro's profile.</h2></div><a class="tlink" href="Studio.dc.html">See a player profile →</a></div>
-<div style="padding-top:110px">
-<div style="position:relative;border-radius:32px;background:radial-gradient(80% 90% at 22% 10%,#1E4A33,#0D2218 70%);box-shadow:inset 0 0 0 1px rgba(241,244,234,.1);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:24px;align-items:end;padding:0 max(20px,3vw) 40px;color:#F1F4EA">
-<svg class="courtlines" viewBox="0 0 880 500" preserveAspectRatio="none" aria-hidden="true" style="left:40px;top:40px;width:calc(100% - 80px);height:calc(100% - 80px)"><g><rect x="1" y="1" width="878" height="498"></rect><line x1="440" y1="1" x2="440" y2="499"></line><line x1="300" y1="1" x2="300" y2="499"></line><line x1="580" y1="1" x2="580" y2="499"></line><line x1="1" y1="250" x2="300" y2="250"></line><line x1="580" y1="250" x2="879" y2="250"></line></g></svg>
-<div class="disp" aria-hidden="true" style="position:absolute;left:32px;top:10px;font-size:clamp(90px,15vw,210px);color:rgba(241,244,234,.07);letter-spacing:-.06em;pointer-events:none">KIRAN</div>
-<div style="position:relative;margin-top:-110px;margin-bottom:-40px"><img src="/_blob/f93de6e44b8b459c167d7eae7a8720cf" alt="Kiran Reddy after a match (demo profile)" style="display:block;width:100%;max-width:420px;aspect-ratio:4/5;object-fit:cover;border-radius:24px;height:auto;filter:drop-shadow(0 24px 30px rgba(0,0,0,.45))"></div>
-<div style="position:relative;display:flex;flex-direction:column;gap:16px;padding-top:48px;min-width:0">
-<div class="cap" style="color:#D9F24A">Player Studio · Player of the week</div>
-<div class="disp" style="font-size:clamp(44px,5.6vw,76px)">KIRAN REDDY</div>
-<div style="color:#C9D6CC;font-size:17px;line-height:1.5">Sample profile · Men’s and mixed doubles. Nine straight wins in tournament play.</div>
-<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
-<div style="background:rgba(241,244,234,.07);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);border-radius:18px;padding:14px"><div class="n" style="font-size:42px;color:#D9F24A">4.62</div><div style="font-size:12px;color:#9FB4A6;margin-top:6px">DUPR doubles</div></div>
-<div style="background:rgba(241,244,234,.07);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);border-radius:18px;padding:14px"><div class="n" style="font-size:42px">71%</div><div style="font-size:12px;color:#9FB4A6;margin-top:6px">Win rate, last 20</div></div>
-<div style="background:rgba(241,244,234,.07);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);border-radius:18px;padding:14px"><div class="n" style="font-size:42px">9</div><div style="font-size:12px;color:#9FB4A6;margin-top:6px">Win streak</div></div>
-</div>
-<div class="row" style="flex-wrap:wrap"><a class="btn ghost" href="Studio.dc.html">Open Player Studio →</a><span style="font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px;background:rgba(217,242,74,.14);color:#D9F24A">▲ 0.18 in 30 days</span></div>
-</div>
-</div>
-</div>
-</div></section>
-
-<section class="sec" id="clubs"><div class="wrap" style="display:flex;flex-direction:column;gap:28px">
-<div class="cap acc">03 · For clubs · Your club on the big stage</div>
-<div class="grid g2" style="gap:40px;align-items:end">
-<h2 class="disp h2">Your venue, presented like a stadium.</h2>
-<p class="mut" style="margin:0;font-size:17px">Your club’s name and logo across scores, streams and results posts. Clubs host, RallyQ makes it look big.</p>
-</div>
-<div class="grid g3">
-<a href="TV.dc.html" class="photo ph-tvboard card" style="min-height:300px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;color:#F1F4EA"><span class="cap" style="color:#DDE7DC">TV board</span><div class="disp" style="font-size:28px">Courts on the big screen</div></a>
-<a href="Social.dc.html" class="photo ph-friends card" style="min-height:300px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;color:#F1F4EA"><span class="cap" style="color:#DDE7DC">Social posts</span><div class="disp" style="font-size:28px">Results posted before players leave</div></a>
-<a href="Event.dc.html" class="photo ph-clubnight card" style="min-height:300px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;color:#F1F4EA"><span style="width:64px;height:64px;border-radius:16px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800">LOGO</span><span class="cap" style="color:#DDE7DC">Hosted by</span><div class="disp" style="font-size:28px">Your logo, everywhere</div></a>
-</div>
-</div></section>
-
-<section class="sec alt"><div class="wrap" style="display:flex;flex-direction:column;gap:28px">
-<div class="cap acc">04 · Match day, handled</div>
-<h2 class="disp h2" style="max-width:16ch">From entries to the final, all in one desk.</h2>
-<div class="grid g4">
-<sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
-<div class="card" style="padding:22px;display:flex;flex-direction:column;gap:10px">
-<span class="n acc" style="font-size:40px">{{s.no}}</span>
-<div style="font-weight:700;font-size:17px">{{s.t}}</div>
-<div class="mut" style="font-size:14px">{{s.d}}</div>
-</div>
-</sc-for>
-</div>
-<div><a class="tlink" href="Desk.dc.html">See the tournament desk →</a></div>
-</div></section>
-
-<section class="photo ph-aerial" style="min-height:520px;display:flex;align-items:flex-end;color:#F1F4EA">
-<div class="wrap" style="width:100%;padding-block:64px;display:grid;gap:28px">
-<div class="cap" style="color:#DDE7DC">05 · Hyderabad</div>
-<h2 class="disp" style="font-size:clamp(44px,7vw,96px);max-width:13ch">The city's home of pickleball.</h2>
-<div class="grid g4" style="max-width:900px">
-<div><div class="n" style="font-size:56px;color:#D9F24A">6</div><div style="color:#DDE7DC">clubs this month</div></div>
-<div><div class="n" style="font-size:56px;color:#D9F24A">420</div><div style="color:#DDE7DC">players on court</div></div>
-<div><div class="n" style="font-size:56px;color:#D9F24A">1,180</div><div style="color:#DDE7DC">matches scored live</div></div>
-<div><div class="n" style="font-size:56px;color:#D9F24A">28 Nov</div><div style="color:#DDE7DC">first live stream</div></div>
-</div>
-<div class="cap" style="color:#C9D6CC">Sample numbers for the prototype</div>
-</div>
-</section>
-
-<section class="sec" id="events"><div class="wrap" style="display:flex;flex-direction:column;gap:24px">
-<div><div class="cap acc">06 · Events</div><h2 class="disp h2" style="margin-top:8px">This month on court.</h2></div>
-<div class="grid g3">
-<sc-for list="{{events}}" as="e" hint-placeholder-count="6">
+<sc-for list="{{events}}" as="e" hint-placeholder-count="3">
 <a class="card" href="{{e.href}}" style="padding:20px;display:flex;flex-direction:column;gap:12px">
 <div class="between"><span class="n" style="font-size:30px">{{e.date}}</span><span class="{{e.chipCls}}">{{e.tag}}</span></div>
 <div style="font-weight:700;font-size:18px">{{e.name}}</div>
@@ -189,115 +93,35 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </a>
 </sc-for>
 </div>
+<div class="hm-note">Planned: the first RallyQ live stream, on 28 Nov.</div>
 </div></section>
 
-<section class="alt" style="position:relative;overflow:hidden;background:radial-gradient(60% 70% at 72% 45%,#1E4A33,#06140D 70%);color:#F1F4EA">
-<div aria-hidden="true" style="position:absolute;left:-20px;right:-20px;top:90px;display:flex;flex-direction:column;align-items:center;pointer-events:none">
-<div class="disp" style="font-size:clamp(110px,21vw,300px);color:transparent;-webkit-text-stroke:2px rgba(217,242,74,.22);letter-spacing:-.05em">CLUB IN</div>
-<div class="disp" style="font-size:clamp(110px,21vw,300px);color:rgba(241,244,234,.06);letter-spacing:-.05em">YOUR POCKET</div>
+<section class="sec hm-sec" id="first" data-section="first"><div class="wrap" style="display:flex;flex-direction:column;gap:24px">
+<div><div class="cap acc">Our first tournament</div><h2 class="disp h2" style="margin-top:8px">{{pilotName}}, scored live.</h2><p class="hm-intro">Every point was scored on a referee’s phone. These are the real totals.</p></div>
+<div class="hm-stats">
+<sc-for list="{{pilot}}" as="s" hint-placeholder-count="4"><div class="card hm-stat"><span class="n">{{s.n}}</span><span>{{s.l}}</span></div></sc-for>
 </div>
-<div class="wrap" style="position:relative;padding-block:80px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:center">
-<div style="display:flex;flex-direction:column;gap:20px;max-width:460px">
-<div class="cap" style="color:#D9F24A">07 · Club in your pocket</div>
-<h2 class="disp" style="font-size:clamp(44px,5vw,72px)">Match day lives on your phone.</h2>
-<p style="margin:0;color:#C9D6CC;font-size:17px;line-height:1.55">Draws, courts, live scores and your results post. Referees score with one thumb. Everyone else watches it happen.</p>
-<div class="row" style="flex-wrap:wrap;gap:10px 22px"><a class="tlink" href="Referee.dc.html" style="color:#F1F4EA!important">Try the scorer →</a><a class="tlink mut" href="Overview.dc.html">Organiser home →</a></div>
-<div style="font-size:12px;color:#9FB4A6">Works in the browser. No app store needed.</div>
-</div>
-<div style="position:relative;height:780px;max-width:520px;width:100%;justify-self:center">
-<div style="position:absolute;left:110px;top:20px;width:340px;height:700px;transform:rotate(-5deg)">
-<div style="position:absolute;inset:0;border-radius:50px;background:#020A06;box-shadow:0 0 0 2px rgba(241,244,234,.16),0 40px 80px rgba(0,0,0,.55)"></div>
-<div style="position:absolute;inset:12px;border-radius:40px;overflow:hidden;background:#0D2218"><div class="photo ph-tracker rq-pocket-photo" aria-hidden="true" style="position:absolute;left:0;right:0;top:290px;bottom:0"></div>
-<div style="position:absolute;left:16px;right:16px;bottom:20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
-<a href="Event.dc.html" style="background:#F1F4EA;color:#0B2418;border-radius:18px;padding:14px;height:92px;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:14px">Draw</b><span style="align-self:flex-end;font-size:20px">↗</span></a>
-<a href="Referee.dc.html" style="background:#D9F24A;color:#0B2418;border-radius:18px;padding:14px;height:92px;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:14px">Score court 2</b><span style="align-self:flex-end;font-size:20px">↗</span></a>
-</div>
-</div>
-</div>
+<div><a class="tlink" href="{{pilotHref}}">See the event →</a></div>
+</div></section>
 
-<div style="position:absolute;left:110px;top:20px;width:340px;height:700px;transform:rotate(-5deg);pointer-events:none">
-<div style="position:absolute;left:12px;right:12px;top:12px;height:290px;border-radius:40px 40px 0 0;background:#0D2218;padding:24px 16px 0;box-sizing:border-box;display:flex;flex-direction:column;gap:12px">
-<div class="between"><div class="row" style="gap:8px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A;width:22px;height:22px"><use href="#fq"></use></svg><b style="font-size:15px">Match day</b></div><span class="chip live">Live</span></div>
-<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
-<div style="background:#133022;border-radius:12px;padding:8px 0;text-align:center"><div class="n" style="font-size:24px">13</div><div style="font-size:10px;color:#9FB4A6">NOV</div></div>
-<div style="background:#133022;border-radius:12px;padding:8px 0;text-align:center"><div class="n" style="font-size:24px">14</div><div style="font-size:10px;color:#9FB4A6">NOV</div></div>
-<div style="background:#D9F24A;color:#0B2418;border-radius:12px;padding:8px 0;text-align:center"><div class="n" style="font-size:24px">15</div><div style="font-size:10px">NOV</div></div>
-<div style="background:#133022;border-radius:12px;padding:8px 0;text-align:center"><div class="n" style="font-size:24px">21</div><div style="font-size:10px;color:#9FB4A6">NOV</div></div>
+<section class="sec alt hm-sec" id="clubs" data-section="clubs"><div class="wrap" style="display:flex;flex-direction:column;gap:28px">
+<div><div class="cap acc">For clubs</div><h2 class="disp h2" style="margin-top:8px">Run your event on RallyQ.</h2><p class="hm-intro">Your club’s name and logo on scores, the TV board and results posts. Clubs host, RallyQ does the rest.</p></div>
+<div class="hm-cards">
+<div class="hm-ph a" role="img" aria-label="Illustration: a tournament shown on a big screen"><span class="tag">Illustration</span><span class="cap" style="color:#DDE7DC">TV board</span><div class="disp" style="font-size:26px">Courts on the big screen</div></div>
+<div class="hm-ph b" role="img" aria-label="Illustration: players shaking hands after a match"><span class="tag">Illustration</span><span class="cap" style="color:#DDE7DC">Results</span><div class="disp" style="font-size:26px">Results posted before players leave</div></div>
+<div class="hm-ph c" role="img" aria-label="Illustration: a club court at night"><span class="tag">Illustration</span><span class="cap" style="color:#DDE7DC">Hosted by</span><div class="disp" style="font-size:26px">Your club’s logo, everywhere</div></div>
 </div>
-<div style="background:#133022;border-radius:16px;padding:12px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:12px"><div style="color:#9FB4A6">Court 2 · SF</div><b>{{heroA}}</b></div><span class="n" style="font-size:34px;color:#D9F24A">9–7</span></div>
+<div class="grid g4">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="4"><div class="card" style="padding:20px;display:flex;flex-direction:column;gap:8px"><span class="n acc" style="font-size:34px">{{s.no}}</span><div style="font-weight:700;font-size:17px">{{s.t}}</div><div class="mut" style="font-size:14px">{{s.d}}</div></div></sc-for>
 </div>
-</div>
-</div>
-</div>
-</section>
+<div class="cta"><a class="btn" href="Overview.dc.html">Run an event →</a></div>
+</div></section>
 
-<footer class="foot"><div class="wrap between">
+<footer class="foot"><div class="wrap between" style="flex-wrap:wrap;gap:12px">
 <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:22px;height:22px"><use href="#fq"></use></svg><span class="word" style="font-size:18px">RallyQ</span><span style="margin-left:8px">Your court. The main event.</span></div>
-<div>Hyderabad · rallyq.in</div>
+<div class="row" style="gap:18px;flex-wrap:wrap"><a href="Event.dc.html">Events</a><a href="Live.dc.html">Live scores</a><a href="Studio.dc.html">Player Studio</a><span>Hyderabad · rallyq.in</span></div>
 </div></footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5200}}'>
-class Component extends DCLogic {
-constructor(p){ super(p); this.state = { menu: false, day: false, slide: 0, sa: 7, sb: 5, srvA: true, srvNo: 2, game: 2, ba: 0, bb: 0, w: 2318, live: 3 }; }
-componentDidMount(){
-  this.t1 = setInterval(() => this.setState(s => ({slide: (s.slide + 1) % 3})), 6500);
-  this.t2 = setInterval(() => this.rally(), 2600);
-}
-componentWillUnmount(){ clearInterval(this.t1); clearInterval(this.t2); }
-rally(){
-  this.setState(s => {
-    const w = s.w + Math.round(Math.random() * 9);
-    if ((s.sa >= 11 || s.sb >= 11) && Math.abs(s.sa - s.sb) >= 2) return {sa: 0, sb: 0, srvA: !s.srvA, srvNo: 2, game: s.game === 3 ? 1 : s.game + 1, w};
-    const servingWins = Math.random() < 0.58;
-    if (servingWins) return s.srvA ? {sa: s.sa + 1, ba: s.ba + 1, w} : {sb: s.sb + 1, bb: s.bb + 1, w};
-    if (s.srvNo === 1) return {srvNo: 2, w};
-    return {srvA: !s.srvA, srvNo: 1, w};
-  });
-}
-renderVals() {
-  const day = this.state.day;
-  const st = this.state;
-  const CAP = ['01 / 03 · Hosted by Banyan Pickleball Club', '02 / 03 · Hosted by Cedar at Maple Courts', '03 / 03 · Hosted by MPC Sample North'];
-  const TK = [['Teja / Kiran','8–5','Rohan / Ajay','Banyan'],['Varun / Neel','10–10','Imran / Joseph','Cedar'],['Mohan / Ravi','6–6','Suresh / Prem','MPC'],['Kavya / Arjun','3–1','Nisha / Rahul','Willow Players'],['Asha / Lata','4–7','Gita / Rekha','Cedar'],['Meera / Divya','11–6','Ananya / Ritu','Banyan']];
-  const tick = TK.concat(TK).map(([a,s,b,club]) => ({a, s, b, club}));
-  const ev = [
-    {date:'15 Nov',tag:'DUPR night',name:'Banyan DUPR Night',club:'Banyan Pickleball Club',area:'Hyderabad',mark:'LP'},
-    {date:'15 Nov',tag:'Tournament',name:'Cedar Open',club:'Cedar',area:'Maple Courts',mark:'CC'},
-    {date:'15 Nov',tag:'DUPR night',name:'MPC DUPR Night',club:'MPC',area:'Sample North',mark:'MPC'},
-    {date:'15 Nov',tag:'Tournament',name:'Willow Players Cup',club:'Willow Players',area:'Bowenpally',mark:'EP'},
-    {date:'21 Nov',tag:'Tournament',name:'Birch Courts Classic',club:'Birch Courts',area:'Malkajgiri',mark:'PY'},
-    {date:'28 Nov',tag:'Live stream',name:'Central Showdown',club:'Cedar Club',area:'Hyderabad',mark:'PC'}
-  ].map(e => ({...e, chipCls: e.tag==='Live stream' ? 'chip gold' : (e.tag==='DUPR night' ? 'chip ball' : 'chip')}));
-  return {
-    rqCls: day ? 'rq day' : 'rq',
-    c0: 's0' + (st.slide === 0 ? ' on' : ''), c1: 's1' + (st.slide === 1 ? ' on' : ''), c2: 's2' + (st.slide === 2 ? ' on' : ''),
-    cap: CAP[st.slide],
-    segs: [0,1,2].map(i => ({cls: i === st.slide ? 'on' : '', label: 'Show photo ' + (i + 1), pick: () => this.setState({slide: i})})),
-    sa: st.sa, sb: st.sb, game: st.game, watching: st.w.toLocaleString('en-IN'), liveCount: st.live,
-    bumpA: 'pt ' + (st.ba % 2 ? 'b1' : 'b2'), bumpB: 'pt ' + (st.bb % 2 ? 'b1' : 'b2'),
-    srvA: st.srvA ? 'sv' : 'sv off', srvB: st.srvA ? 'sv off' : 'sv',
-    call: st.srvA ? `${st.sa} · ${st.sb} · ${st.srvNo}` : `${st.sb} · ${st.sa} · ${st.srvNo}`,
-    tick,
-    flipMode: () => this.setState({day: !day}),
-    modeLabel: day ? 'Switch to night mode' : 'Switch to day mode',
-    modeIcon: day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
-    menuOpen: this.state.menu, toggleMenu: () => this.setState({menu: !this.state.menu}),
-    live: [
-      {court:'Court 2',club:'Banyan',mark:'LP',a:'{{heroA}}',b:'{{heroB}}',sa:9,sb:7,stage:'Men’s doubles · QF',game:2},
-      {court:'Court 1',club:'Cedar',mark:'CC',a:'Meera S / Divya K',b:'Ananya / Ritu',sa:6,sb:4,stage:'Women’s doubles · Pool B',game:1},
-      {court:'Court 3',club:'MPC',mark:'MPC',a:'Vikram / Sai',b:'Harsha / Nikhil',sa:10,sb:10,stage:'Open doubles · SF',game:3}
-    ],
-    steps: [
-      {no:'01',t:'Entries open',d:'Share one link. Players sign up and pay the club directly.'},
-      {no:'02',t:'Pools and draw',d:'Pools, seeding and knockout built in a minute.'},
-      {no:'03',t:'Live on every court',d:'Referees score on phones. Scores land everywhere at once.'},
-      {no:'04',t:'Results posted',d:'Champion card and results post ready before the trophies.'}
-    ],
-    events: ev
-  };
-}
-}
-</script>
 </body>
 </html>

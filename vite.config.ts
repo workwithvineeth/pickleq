@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
+import { connectSrc, monitoringHosts } from './src/monitoring/hosts.ts';
 import { VitePWA } from 'vite-plugin-pwa';
 
 /**
@@ -11,7 +12,7 @@ import { VitePWA } from 'vite-plugin-pwa';
  * is limited to Claude (when you ask) and YouTube (when you play a clip). Added only to builds, since
  * the dev server needs inline scripts.
  */
-export function cspFor(clubServer?: string): string {
+export function cspFor(clubServer?: string, monitoring: string[] = []): string {
   const script = readFileSync(new URL('./index.html', import.meta.url), 'utf8').match(/<script id="pq-theme-init">([\s\S]*?)<\/script>/)?.[1];
   if (!script) throw new Error('Theme bootstrap missing');
   const hash = createHash('sha256').update(script).digest('base64');
@@ -24,7 +25,7 @@ export function cspFor(clubServer?: string): string {
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: https://i.ytimg.com${clubServer ? ` ${clubServer}` : ''}`,
     "font-src 'self' data:",
-    `connect-src 'self' https://api.anthropic.com${club}`,
+    connectSrc(club, monitoring),
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com",
     "media-src 'self' blob:",
     "worker-src 'self'",
@@ -77,7 +78,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      cspPlugin(cspFor(env.VITE_SUPABASE_URL)),
+      cspPlugin(cspFor(env.VITE_SUPABASE_URL, monitoringHosts(env))),
       ...(isClubApp ? [clubAppEntry()] : []),
       VitePWA({
         registerType: 'prompt',

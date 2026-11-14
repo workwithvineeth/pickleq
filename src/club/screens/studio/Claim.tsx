@@ -4,7 +4,9 @@ import { rememberReturn, serverBackend } from '../../index';
 import { friendlyDate } from '../../dates';
 import type { ClaimPreview } from '../../playerStudio';
 import type { ClubPlayer } from '../../types';
-import { appLink, errorText, Header, shareText, Status, useLoad } from '../common';
+import { appLink, errorText, shareText, Status, useLoad } from '../common';
+import { PageHead, PublicShell } from '../../../rallyq/shell/Shell';
+import { Legacy } from '../InboxLegacy';
 import { plural } from './shared';
 
 /**
@@ -33,8 +35,9 @@ export function Claim({ id, go }: { id: string; go: Go }) {
     catch (e) { setErr(errorText(e)); setBusy(false); }
   }
   return (
-    <main className="screen" aria-labelledby="claim-title">
-      <Header id="claim-title" title="Claim your results" onBack={() => go('club-player-studio')} />
+    <PublicShell go={go} active="studio">
+      <PageHead cap="Player Studio" title={<span id="claim-title">Claim your results</span>} actions={<button type="button" className="btn ghost sm" onClick={() => go('club-player-studio')}>Back</button>} />
+      <Legacy style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Status loading={state.loading && !d} error={state.error} />
       {d && !d.signedIn && <section className="card section" aria-label="Sign in to claim">
         <h2>Your official results are waiting</h2>
@@ -75,7 +78,8 @@ export function Claim({ id, go }: { id: string; go: Go }) {
           </div>
         </section>;
       })()}
-    </main>
+      </Legacy>
+    </PublicShell>
   );
 }
 

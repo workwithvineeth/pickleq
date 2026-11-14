@@ -1,6 +1,10 @@
 import {duprLineOf,teamWithDupr} from '../../club/duprText';
 import {liveWinBar,winBarHtml} from '../../club/winBar';
 import {useState} from 'react';
+import {entryFeeLine} from './fee';
+import {MessageSheet,StickyEnter} from './EventExtras';
+// Owner approval is required before contact details can leave through a public link.
+const MESSAGE_CLUB_ENABLED = false;
 import type {Go} from '../../navigation';
 import type {PublicEvent,PublicTournament} from '../../club/backend';
 import {publicSourcesFor} from '../../club';
@@ -25,8 +29,9 @@ const R:[string,string][]=[
  ['Pools of 4, top 2 to knockouts. Games to 11, win by 2. Finals best of 3.','{{infoFormat}}'],
  ['Maple Courts, Hyderabad. 4 outdoor courts under lights. Parking on site.','{{infoVenue}}'],
  ['Cedar desk on WhatsApp: [CLUB NUMBER]','{{infoContact}}'],
+ ['<div class="cap">Entry</div><div style="font-weight:700">','<div class="cap">Entry fee</div><div style="font-weight:700">'],
  // One primary button that follows the event: results, live, enter, or message the organiser.
- ['<button class="btn" onClick="{{join}}">{{joinLabel}}</button>','<button class="btn" onClick="{{join}}" disabled="{{joinOff}}">{{joinLabel}}</button>'],
+ ['<button class="btn" onClick="{{join}}">{{joinLabel}}</button>','<button class="btn" data-hero-cta onClick="{{join}}" disabled="{{joinOff}}">{{joinLabel}}</button><sc-if value="{{canMessage}}" hint-placeholder-val="{{ false }}"><button class="btn ghost" onClick="{{message}}">Message the club</button></sc-if>'],
  // Public entries carry no status: show the column only for the per-category rows (Open / Closed).
  ['<th>Status</th>','<sc-if value="{{hasStatus}}" hint-placeholder-val="{{ true }}"><th>Status</th></sc-if>'],
  ['<td><span class="{{e.cls}}">{{e.st}}</span></td>','<sc-if value="{{hasStatus}}" hint-placeholder-val="{{ true }}"><td><span class="{{e.cls}}">{{e.st}}</span></td></sc-if>']];
@@ -37,6 +42,9 @@ const source=holes(raw,R).replace(SF_CARD,'<span class="{{m.chip}}">{{m.st}}</sp
 
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 type Tab='Entries'|'Pools'|'Knockout'|'Info';
+/** "Club at Venue", unless the venue already names the club ("Cedar Club, Maple Road"): then just the venue. */
+export const hostLine=(club:string,venue?:string)=>!venue?club:venue.toLowerCase().includes(club.toLowerCase())?venue:club+' at '+venue;
+
 export type EventAction='results'|'live'|'enter'|'contact';
 /** A link that reaches the organiser: a web link, an email, or a phone number as WhatsApp. */
 export function contactHref(contact?:string){
@@ -50,9 +58,9 @@ export function contactHref(contact?:string){
 /** The event page's one primary button, by the event's state. */
 export function primaryAction(e:Pick<PublicEvent,'status'|'registrationOpen'|'contact'>):{label:string;to:EventAction|null}{
  if(e.status==='done')return{label:'See the results',to:'results'};
- if(e.status==='live')return{label:'Watch live',to:'live'};
+ if(e.status==='live')return{label:'Live scores',to:'live'};
  if(e.registrationOpen)return{label:'Enter the event',to:'enter'};
- return contactHref(e.contact)?{label:'Entries closed · Message the organiser',to:'contact'}:{label:'Entries closed',to:null};
+ return MESSAGE_CLUB_ENABLED&&contactHref(e.contact)?{label:'Entries closed · Message the club',to:'contact'}:{label:'Entries closed',to:null};
 }
 async function findEvent(slug:string){let last:unknown=null;for(const src of await publicSourcesFor(slug)){try{const event=await src.publicEvent(slug);if(event)return{src,event};}catch(e){last=e;}}if(last)throw last;return null;}
 
@@ -70,6 +78,7 @@ export function poolTables(d:PublicTournament){
 function koRows(d:PublicTournament,stage:'qf'|'sf'){return d.matches.filter(m=>m.stage===stage).map(m=>{const v=matchView(d,m);return{a:teamWithDupr(d,m.entryA)??v.a,b:teamWithDupr(d,m.entryB)??v.b,sa:v.pointsA,sb:v.pointsB,court:m.court?'Court '+m.court:'',win:liveWinBar(d,m),chip:m.status==='live'?'chip live':'chip',st:m.status==='live'?'Live':m.status==='done'?'Final':'Next',as:m.winner==='A'?'font-weight:700':'color:#9FB4A6',bs:m.winner==='B'?'font-weight:700':'color:#9FB4A6'};});}
 
 export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:string|undefined,tab:Tab,setTab:(t:Tab)=>void,act:(to:EventAction)=>void){
+ const fee=entryFeeLine(e.divisions),canMessage=MESSAGE_CLUB_ENABLED&&!!contactHref(e.contact);
  const taken=e.divisions.reduce((s,x)=>s+x.taken,0);
  const caps=e.divisions.map(x=>(x.rules as {maxEntries?:number}).maxEntries).filter((n):n is number=>typeof n==='number');const cap=caps.length===e.divisions.length&&caps.length?caps.reduce((a,b)=>a+b,0):0;
  const live=e.status==='live';
@@ -78,22 +87,22 @@ export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:s
  return {
   hasStatus:!d,
   eventName:e.name,clubName:e.club,clubMark:mark(e.club),logoUrl:logoUrl??'',noLogo:!logoUrl,
-  hostLine:e.venue?e.club+' at '+e.venue:e.club,
+  hostLine:hostLine(e.club,e.venue),
   statusLabel:live?'Live now':e.registrationOpen?'Entries open':e.status==='done'?'Results':'Entries closed',statusChip:live?'chip live':e.registrationOpen?'chip ball':'chip',
   whenWhere:[friendlyDate(e.startDate),friendlyTime(e.startTime),e.venue].filter(Boolean).join(' · '),
   cats:e.divisions.map(x=>x.name),
   tabs:(['Entries','Pools','Knockout','Info'] as Tab[]).map(n=>({name:n,cls:n===tab?'tab on':'tab',pick:()=>setTab(n)})),
   isEntries:tab==='Entries',isPools:tab==='Pools',isKo:tab==='Knockout',isInfo:tab==='Info',
   entries,filled:taken,capLabel:cap?'of '+cap+' teams':'teams entered',pct:(cap?Math.min(100,Math.round(taken/cap*100)):100)+'%',
-  entryLine:e.registrationOpen?'Entries open':'Entries closed',entryNote:e.entriesClose?'Entries close '+friendlyDate(e.entriesClose.slice(0,10))+'.':e.upiId?'Pay the club by UPI after you enter.':'Pay the club at the desk.',
+  entryLine:fee||(e.registrationOpen?'Entries open':'Entries closed'),canMessage,message:()=>act('contact'),entryNote:e.entriesClose?'Entries close '+friendlyDate(e.entriesClose.slice(0,10))+'.':e.upiId?'Pay the club by UPI after you enter.':'Pay the club at the desk.',
   join:()=>{if(primary.to)act(primary.to);},joinLabel:primary.label,joinOff:!primary.to,
   pools:d?poolTables(d):[],qf:d?koRows(d,'qf'):[],sf:d?koRows(d,'sf'):[],finalLabel:'Final',
-  infoFormat:e.about||e.divisions.map(x=>x.name).join(' · '),infoVenue:[e.venue,e.city].filter(Boolean).join(', ')||'Venue to be announced',infoContact:e.contact||'Ask the host club at the desk.'
+  infoFormat:e.about||e.divisions.map(x=>x.name).join(' · '),infoVenue:[e.venue,e.city].filter(Boolean).join(', ')||'Venue to be announced',infoContact:canMessage?'Use “Message the club” at the top of this page. The club’s number stays private.':'Ask the host club at the desk.'
  };
 }
 /** Public event page in the exact prototype layout. Entering still uses the existing entry form. */
 export function RallyEvent({slug,go}:{slug:string;go:Go}){
- const[tab,setTab]=useState<Tab>('Entries');
+ const[tab,setTab]=useState<Tab>('Entries'),[msg,setMsg]=useState(false);
  const state=useLoad(()=>findEvent(slug),[slug]);
  const logo=useLoad(async()=>state.data?state.data.src.publicClubLogo(slug).catch(()=>null):null,[state.data,slug]);
  const scores=usePublicScores(state.data?.event.drawn||state.data?.event.results?slug:'');
@@ -102,6 +111,10 @@ export function RallyEvent({slug,go}:{slug:string;go:Go}){
  const act=(to:EventAction)=>{
   if(to==='results')go('results',slug);else if(to==='live')go('live',slug);
   else if(to==='enter')go('event-enter',e.divisions.length===1?slug+'~'+e.divisions[0].id:slug);
-  else{const href=contactHref(e.contact);if(href)window.open(href,'_blank','noopener,noreferrer');}};
- return <PrototypeScreen name="Event" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,act)}/>;
+  else if(MESSAGE_CLUB_ENABLED&&contactHref(e.contact))setMsg(true);};
+ const primary=primaryAction(e);
+ return <PrototypeScreen name="Event" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,act)}>
+  <StickyEnter label={primary.label} disabled={!primary.to} onClick={()=>{if(primary.to)act(primary.to);}}/>
+  {MESSAGE_CLUB_ENABLED&&msg&&<MessageSheet eventName={e.name} club={e.club} href={contactHref(e.contact)!} onClose={()=>setMsg(false)}/>}
+ </PrototypeScreen>;
 }

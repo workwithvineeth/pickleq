@@ -7,6 +7,7 @@ import raw from '../prototypes/MyStudio.dc.html?raw';
 import {holes} from '../holes';
 import {RallyStudioStore,PRIVATE_SHARING,type SharingOptions} from '../private/backend';
 import {INITIAL_UI,studioValues,type StudioUI} from './studioValues';
+import {EMPTY_LOG,buildPractice} from './logSession';
 import {MyTournaments} from './MyTournaments';
 import {signOutTo} from '../shell/Shell';
 import {appLink,shareLink} from '../../club/screens/common';
@@ -39,8 +40,7 @@ const source=holes(raw,[
  ['color:#2B6E4B">9</div><div style="font-size:11px;color:#4A5D50">wins in a row','color:#2B6E4B">{{badgeStreak}}</div><div style="font-size:11px;color:#4A5D50">wins in a row'],
  ['color:#2B6E4B">5</div><div style="font-size:11px;color:#4A5D50">venues played','color:#2B6E4B">{{badgeVenues}}</div><div style="font-size:11px;color:#4A5D50">venues played'],
  ['color:#2A1D00">QF</div>','color:#2A1D00">{{badgeBest}}</div>'],
- ['font-size:26px">38</div><div style="font-size:11px;color:#9FB4A6">tournament','font-size:26px">{{total}}</div><div style="font-size:11px;color:#9FB4A6">tournament'],
- ['<div style="min-height:48px;border-radius:14px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);display:flex;align-items:center;padding:0 14px;font-weight:700;font-size:18px">{{logValue}}</div>','<input value="{{logValue}}" onChange="{{setLogValue}}" placeholder="{{logPlaceholder}}" aria-label="{{logQ}}" style="min-height:48px;border-radius:14px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);padding:0 14px;font:inherit;font-weight:700;font-size:18px;color:#0B2418;width:100%;box-sizing:border-box">']]);
+ ['font-size:26px">38</div><div style="font-size:11px;color:#9FB4A6">tournament','font-size:26px">{{total}}</div><div style="font-size:11px;color:#9FB4A6">tournament']]);
 
 /** Private My Player Studio, exactly as the prototype, on the owner's real matches, practice, goals and sharing. */
 /** Signed out the Player Studio welcome brings its own v1.2 shell; signed in (no studio data yet) it keeps the app frame. */
@@ -55,9 +55,10 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6',padding:24,textAlign:'center'}}>{state.loading?'Loading your Player Studio…':<span>{state.error??'Sign in to open My Player Studio.'} <button type="button" className="tlink" onClick={()=>go('club-signin')}>Sign in →</button></span>}</div>;
  const{store,data}=state.data;const me=data.official.players[0];
  const share=sharing??data.sharing??PRIVATE_SHARING;
- const save=async()=>{const kinds={'Practice match':'practice_match','Drill':'drill','Training':'training'} as const;const kind=kinds[ui.type];
-  try{await store.savePractice({kind,scoreText:kind==='practice_match'?ui.value:'',minutes:kind==='practice_match'?undefined:Number(ui.value),focusTags:Object.entries(ui.focus).filter(([,v])=>v).map(([i])=>['Third-shot drop','Serve','Dinks','Returns'][Number(i)]),feel:ui.feel,playedAt:new Date().toISOString().slice(0,10)});set({saved:true,value:''});state.reload();}
-  catch(e){set({error:e instanceof Error?e.message:'Could not save.'});}};
+ const save=async()=>{const built=buildPractice(ui,new Date().toISOString().slice(0,10));
+  if(!built.input){set({error:built.problem,saved:false});return;}
+  try{await store.savePractice(built.input);set({...EMPTY_LOG,saved:true,error:''});state.reload();}
+  catch(e){set({error:e instanceof Error?e.message:'Could not save.',saved:false});}};
  const toggle=async(k:keyof SharingOptions)=>{const next={...share,[k]:!share[k]};setSharing(next);try{await store.saveSharing(next);}catch{setSharing(share);}};
  const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Ask your club for your player invite link to see your matches here',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
  const g0=data.goals[0];

@@ -141,6 +141,10 @@ describe('Entering a tournament', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('18 or over');
     await fillPerson(user, 'Partner', { name: 'Robot Partner', phone: '98111 11112', dupr: '3.1', age: '27', gender: 'Man' });
+    // The partner's details need the partner's OK: no tick, no payment step.
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tick the box to confirm your partner agrees');
+    await user.click(screen.getByRole('checkbox', { name: /My partner agrees/ }));
     await user.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByRole('heading', { name: 'Pay the club.' });
     expect(screen.getByText(/RallyQ never holds money/)).toBeInTheDocument();

@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useWakeLock } from '../useWakeLock';
+import { blockUnsentIf, clearUnsentIf, queueScoreSend, isPermanentScoreError, readBlocked, readUnsent, unblock, writeUnsent } from '../matchdaySafety';
+import { report, track } from '../../monitoring/monitoring';
+import { isOnline } from '../useConnection';
+import { OfflineBanner } from './OfflineBanner';
 import type { Format } from '../../domain/types';
 import type { ScorePatch } from '../backend';
 import { matchResult } from '../domain/engine';
@@ -6,15 +11,8 @@ import { analyseGame, checkFinalScore, gameOver, isGoldenPoint, leadThreshold, t
 import type { ClubGame, ScoringMode, Thresholds } from '../types';
 import { replaySideOut, type Side } from '../domain/sideout';
 
-const UNSENT = 'pq-club-unsent-scores';
+export { readUnsent, writeUnsent };
 
-/** Scores saved on this phone that haven't reached the club server yet, keyed by match. */
-export function readUnsent(): Record<string, ScorePatch> {
-  try { return JSON.parse(localStorage.getItem(UNSENT) ?? '{}') as Record<string, ScorePatch>; } catch { return {}; }
-}
-export function writeUnsent(v: Record<string, ScorePatch>) {
-  try { if (Object.keys(v).length) localStorage.setItem(UNSENT, JSON.stringify(v)); else localStorage.removeItem(UNSENT); } catch { /* storage blocked */ }
-}
 function rememberUnsent(key: string, patch: ScorePatch | null) {
   const u = readUnsent();
   if (patch) u[key] = patch; else delete u[key];
@@ -61,17 +59,22 @@ export interface ScorePadProps {
  */
 export function ScorePad(p: ScorePadProps) {
   const { format: fmt, nameA, nameB, matchKey, send } = p;
+  useWakeLock();
   const [games, setGames] = useState<ClubGame[]>(() => {
-    const start = readUnsent()[matchKey]?.games ?? p.initialGames;
+    const start = readUnsent()[matchKey]?.games ?? readBlocked()[matchKey]?.patch.games ?? p.initialGames;
     return start.length ? start : [{ points: '', a: 0, b: 0 }];
   });
   const [sync, setSync] = useState<'saved' | 'saving' | 'unsent'>(() => (readUnsent()[matchKey] ? 'unsent' : 'saved'));
   const [msg, setMsg] = useState<string | null>(null);
+  // A score the server refused for good (wrong PIN, match moved or cancelled): kept on the phone, never retried by itself.
+  const [blocked, setBlockedState] = useState<string | null>(() => readBlocked()[matchKey]?.reason ?? null);
+  const blockedRef = useRef<string | null>(blocked);
+  const setBlocked = (r: string | null) => { blockedRef.current = r; setBlockedState(r); };
   const doubles = p.doubles ?? true;
   // How this match is scored: from the games already saved, else the event's scoring set by the organiser (side-out unless
   // they chose rally scoring). The referee can change it before the first rally.
   const [mode, setModeState] = useState<ScoringMode>(() => {
-    const g = (readUnsent()[matchKey]?.games ?? p.initialGames).find((x) => x.mode);
+    const g = (readUnsent()[matchKey]?.games ?? readBlocked()[matchKey]?.patch.games ?? p.initialGames).find((x) => x.mode);
     return g?.mode ?? (fmt.scoring === 'rally' ? 'rally' : 'sideout');
   });
   const [manual, setManual] = useState(false);
@@ -80,43 +83,54 @@ export function ScorePad(p: ScorePadProps) {
     setManual(false); setModeState(m);
   };
   const [busy, setBusy] = useState(false);
+  const frozen = busy || !!blocked;
   const timer = useRef<number | undefined>(undefined);
   const latest = useRef<ScorePatch | null>(readUnsent()[matchKey] ?? null);
 
-  // One save at a time, always the newest score. Two overlapping saves could land out of order, letting an older score
-  // overwrite a newer one on the server, or leave an older score on this phone as "unsent" to come back after a reload.
-  const queue = useRef<Promise<boolean>>(Promise.resolve(true));
-  const push = useCallback((): Promise<boolean> => {
-    const run = async (): Promise<boolean> => {
-      const patch = latest.current;
-      if (!patch) return true;
-      setSync('saving');
-      try {
-        await send(patch);
-        if (latest.current === patch) { latest.current = null; rememberUnsent(matchKey, null); setSync('saved'); }
-        return true;
-      } catch {
-        rememberUnsent(matchKey, latest.current ?? patch);
-        setSync('unsent');
-        return false;
+  // Queue with court-list retries too, reading the newest score only when our turn starts.
+  const push = useCallback((): Promise<boolean> => queueScoreSend(matchKey, async () => {
+    const patch = readUnsent()[matchKey];
+    latest.current = patch ?? null;
+    if (!patch) {
+      const refused = readBlocked()[matchKey];
+      if (refused) { setBlocked(refused.reason); return false; }
+      setSync('saved');
+      return true;
+    }
+    if (blockedRef.current) return false;
+    setSync('saving');
+    try {
+      await send(patch);
+      clearUnsentIf(matchKey, patch);
+      latest.current = readUnsent()[matchKey] ?? null;
+      setSync(latest.current ? 'unsent' : 'saved');
+      return true;
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : 'The score was refused';
+      if (isPermanentScoreError(e) && blockUnsentIf(matchKey, patch, reason)) {
+        window.clearTimeout(timer.current);
+        latest.current = null;
+        setBlocked(reason);
+        track('score_refused'); report('Score refused for good: ' + reason);
       }
-    };
-    queue.current = queue.current.then(run, run);
-    return queue.current;
-  }, [send, matchKey]);
+      // A late failure belongs to its attempted patch, never to the referee's newer taps.
+      setSync('unsent');
+      return false;
+    }
+  }), [send, matchKey]);
 
   // Keep retrying anything unsent: when the phone comes back online, and every 10 seconds.
   useEffect(() => {
-    const retry = () => { if (latest.current) void push(); };
+    const retry = () => { if (latest.current && !blockedRef.current) void push(); };
     window.addEventListener('online', retry);
-    const h = window.setInterval(() => { if (latest.current && navigator.onLine !== false) retry(); }, 10000);
+    const h = window.setInterval(() => { if (isOnline()) retry(); }, 10000);
     return () => { window.removeEventListener('online', retry); window.clearInterval(h); };
   }, [push]);
 
   // Leaving the screen: send what's pending straight away.
   useEffect(() => () => {
     window.clearTimeout(timer.current);
-    if (latest.current && latest.current.status !== 'done') void push();
+    if (latest.current && latest.current.status !== 'done' && !blockedRef.current) void push();
   }, [push]);
 
   const result = matchResult({ games, format: fmt });
@@ -140,7 +154,7 @@ export function ScorePad(p: ScorePadProps) {
   const needServe = sideOut && !cur.serve && !curOver && !matchOver;
   const rallyCount = (g: ClubGame) => (g.rallies ?? g.points).length;
   const point = (side: Side) => {
-    if (curOver || matchOver || busy || (sideOut && !cur.serve)) return;
+    if (curOver || matchOver || frozen || (sideOut && !cur.serve)) return;
     try {
       if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(10);
     } catch { /* Haptics are optional; a blocked device API must never prevent scoring. */ }
@@ -173,7 +187,7 @@ export function ScorePad(p: ScorePadProps) {
     rememberUnsent(matchKey, patch);
     const ok = await push();
     setBusy(false);
-    if (!ok) return setMsg('No connection. The result is saved on this phone and will be sent automatically. Keep this screen open until it says Saved.');
+    if (!ok) return setMsg(blockedRef.current ? 'This result can’t be sent. Show this screen to the desk.' : 'No connection. The result is saved on this phone and will be sent automatically. Keep this screen open until it says Saved.');
     await p.onFinished();
   }
 
@@ -189,6 +203,15 @@ export function ScorePad(p: ScorePadProps) {
       <p className="small muted" style={{ margin: 0 }}>
         Game {games.length} · {formatRule(fmt)} · <span role="status" className={sync === 'unsent' ? 'pill pill-warn' : undefined}>{status}</span>
       </p>
+      {p.canScore && <OfflineBanner hideBlocked />}
+      {blocked && (
+        <div role="alert" className="msg msg-bad pq-blocked-bar">
+          <b>This score can’t be sent. Show this screen to the desk.</b>
+          <span className="small" style={{ display: 'block' }}>{blocked}</span>
+          <span className="small" style={{ display: 'block' }}>The score is kept on this phone. Once the desk has sorted it out, try again.</span>
+          <button type="button" className="btn btn-outline" onClick={() => { unblock(matchKey); const kept = readUnsent()[matchKey]; latest.current = kept ?? latest.current; setBlocked(null); void push(); }}>Try sending again</button>
+        </div>
+      )}
       {fmt.bestOf > 1 && <p className="small" style={{ margin: 0 }}>Games: {nameA} {result.gamesA} – {result.gamesB} {nameB}</p>}
       {p.canScore && !matchOver && !started && (
         <div className="seg seg-wrap pq-scoring-mode" role="group" aria-label="How are you scoring?">
@@ -215,13 +238,13 @@ export function ScorePad(p: ScorePadProps) {
         <>
           {so && !curOver && <p role="status" className="pq-serve-call" style={{ margin: 0, fontWeight: 800, fontSize: 22 }} aria-label={`Score call ${so.call}. ${so.serving === 'A' ? nameA : nameB} serving${doubles ? `, server ${so.server}` : ''}`}>{so.call} <span className="small muted" style={{ fontWeight: 600 }}>· {so.serving === 'A' ? nameA : nameB} serving{doubles ? ` · server ${so.server}` : ''}</span></p>}
           <div className="score-grid rq-ref-grid">
-            <button type="button" className="score-tap score-tap-a" aria-label={sideOut ? `Rally to ${nameA}` : `Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || busy}>
+            <button type="button" className="score-tap score-tap-a" aria-label={sideOut ? `Rally to ${nameA}` : `Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || frozen}>
               <span className="small pq-referee-name">{nameA}{so?.serving === 'A' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.a}</span>
               <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
             </button>
             {(golden || gp) && <div role="status" className="pq-gamepoint-strip">{golden ? "GOLDEN POINT" : "GAME POINT"}<small>{golden ? "Golden point · next point wins" : "Game point: " + (gp === "A" ? nameA : nameB)}</small></div>}
-            <button type="button" className="score-tap score-tap-b" aria-label={sideOut ? `Rally to ${nameB}` : `Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || busy}>
+            <button type="button" className="score-tap score-tap-b" aria-label={sideOut ? `Rally to ${nameB}` : `Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || frozen}>
               <span className="small pq-referee-name">{nameB}{so?.serving === 'B' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.b}</span>
               <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
@@ -233,9 +256,9 @@ export function ScorePad(p: ScorePadProps) {
           {curOver && !matchOver && <div role="status" className="rq-ref-banner rq-ref-game"><b>Game {games.length} won · match goes on</b><span>{cur.a > cur.b ? nameA : nameB} take game {games.length} · games {result.gamesA}–{result.gamesB}</span></div>}
           {matchOver && <div role="status" className="rq-ref-banner rq-ref-match"><b>Match finished</b><span>{result.winner === 'A' ? nameA : nameB} win {result.gamesA}–{result.gamesB} in games. Check the score, then save to lock the result.</span></div>}
           <div className="sticky-actions" style={{ position: 'static' }}>
-            <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || !canUndo}>Undo</button>
+            <button type="button" className="btn btn-outline" onClick={undo} disabled={frozen || !canUndo}>Undo</button>
             {curOver && !matchOver && <button type="button" className="btn btn-primary" onClick={() => update([...games, sideOut ? sideOutGame('', undefined, doubles) : { points: '', a: 0, b: 0 }])}>Start game {games.length + 1}</button>}
-            {matchOver && <button type="button" className="btn btn-primary" disabled={busy} onClick={() => finish(games)}>Save result</button>}
+            {matchOver && <button type="button" className="btn btn-primary" disabled={frozen} onClick={() => finish(games)}>Save result</button>}
           </div>
         </>
       )}
@@ -251,10 +274,10 @@ export function ScorePad(p: ScorePadProps) {
       )}
       {!manual && p.canScore && needServe && (
         <div className="sticky-actions" style={{ position: 'static' }}>
-          <button type="button" className="btn btn-outline" onClick={undo} disabled={busy || !canUndo}>Undo</button>
+          <button type="button" className="btn btn-outline" onClick={undo} disabled={frozen || !canUndo}>Undo</button>
         </div>
       )}
-      {manual && p.canScore && <ManualScores format={fmt} nameA={nameA} nameB={nameB} onSave={finish} onCancel={() => setManual(false)} busy={busy} />}
+      {manual && p.canScore && <ManualScores format={fmt} nameA={nameA} nameB={nameB} onSave={finish} onCancel={() => setManual(false)} busy={frozen} />}
       {!manual && p.canScore && !matchOver && <button type="button" className="link-btn pq-manual-score-link" style={{ alignSelf: 'flex-start' }} onClick={() => setManual(true)}>Enter final scores instead</button>}
       {msg && <div role="status" className="msg msg-bad">{msg}</div>}
       <p className="small muted" style={{ margin: 0 }}>

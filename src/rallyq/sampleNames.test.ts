@@ -15,6 +15,8 @@ it('keeps real clubs out of sample screens and prototype data', () => {
       const calendar = /export const UPCOMING_EVENTS = \[[\s\S]*?\n\s*\];/;
       expect(source).toMatch(calendar);
       source = source.replace(calendar, '');
+      // The pilot's real totals (no player names) are real data too.
+      source = source.replace(/export const PILOT=\{[^}]*\};/, '');
     }
     return source.split('\n').flatMap((line, i) => REAL_NAMES.test(line) ? [`${file}:${i + 1}`] : []);
   });

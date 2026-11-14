@@ -8,16 +8,22 @@ describe('v1.2 shells',()=>{
  it('public shell: club leads, nav calls go, phone menu and RallyQ last',async()=>{
   const go=vi.fn();render(<PublicShell go={go} active="events"><PageHead title="Find your next main event."/></PublicShell>);await act(async()=>{});
   expect(screen.getByRole('heading',{name:'Find your next main event.'})).toBeInTheDocument();
-  expect(screen.getByText('Hosted by')).toBeInTheDocument();
+  // No fake "Hosted by Hyderabad's clubs" tiles: a public page leads with the RallyQ logo alone.
+  expect(screen.queryByText('Hosted by')).toBeNull();
+  expect(document.querySelector('.hdr .host')).toBeNull();
   const nav=screen.getByRole('navigation',{name:'Main'});
   expect(within(nav).getByRole('link',{name:'Events'})).toHaveAttribute('aria-current','page');
   fireEvent.click(within(nav).getByRole('link',{name:'Live scores'}));expect(go).toHaveBeenCalledWith('live');
-  fireEvent.click(screen.getByRole('link',{name:'Club sign in'}));expect(go).toHaveBeenCalledWith('club-signin');
+  fireEvent.click(screen.getByRole('link',{name:'Sign in'}));expect(go).toHaveBeenCalledWith('club-signin');
   fireEvent.click(screen.getByRole('button',{name:'Menu'}));
-  const menu=screen.getByRole('navigation',{name:'Menu'});expect(within(menu).getByRole('link',{name:'Club sign in'})).toBeInTheDocument();
+  const menu=screen.getByRole('navigation',{name:'Menu'});expect(within(menu).getByRole('link',{name:'Sign in'})).toBeInTheDocument();
   fireEvent.click(within(menu).getByRole('link',{name:'Player Studio'}));expect(go).toHaveBeenCalledWith('club-player-studio');
   expect(screen.queryByRole('navigation',{name:'Menu'})).toBeNull();
   const signoffs=document.querySelectorAll('.signoff');expect(signoffs[signoffs.length-1]).toHaveTextContent('Scores byRallyQ');
+ });
+ it('public shell: a club tile shows only when the page passes that club as its host',async()=>{
+  render(<PublicShell go={vi.fn()} host={{marks:[clubMark('Cedar Paddle Club')],name:'Cedar Paddle Club'}}><p>x</p></PublicShell>);await act(async()=>{});
+  expect(screen.getByText('Hosted by')).toBeInTheDocument();expect(screen.getByText('Cedar Paddle Club')).toBeInTheDocument();expect(screen.getByRole('link',{name:'RallyQ home'})).toBeInTheDocument();
  });
  it('public shell: the RallyQ logo leads every page and goes home when signed out',async()=>{
   const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
@@ -33,6 +39,26 @@ describe('v1.2 shells',()=>{
   user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
   fireEvent.click(screen.getByRole('link',{name:'My clubs'}));expect(go).toHaveBeenLastCalledWith('club');
   fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenLastCalledWith('club');
+ });
+ it('public shell: signed in, the menu offers My entries, never "For clubs", and nothing twice',async()=>{
+  user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
+  fireEvent.click(screen.getByRole('button',{name:'Menu'}));
+  const menu=screen.getByRole('navigation',{name:'Menu'});
+  expect(within(menu).queryByRole('link',{name:'For clubs'})).toBeNull();
+  fireEvent.click(within(menu).getByRole('link',{name:'My entries'}));expect(go).toHaveBeenLastCalledWith('my-entries');
+  fireEvent.click(screen.getByRole('button',{name:'Menu'}));
+  expect(within(screen.getByRole('navigation',{name:'Menu'})).getAllByRole('link',{name:'My clubs'})).toHaveLength(1);
+ });
+ it('public shell: a signed-in player does not see Player Studio and My Studio side by side in the menu',async()=>{
+  user.mockResolvedValue({email:'a@example.test'});const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
+  fireEvent.click(screen.getByRole('button',{name:'Menu'}));
+  expect(within(screen.getByRole('navigation',{name:'Menu'})).queryByRole('link',{name:'My Studio'})).toBeNull();
+ });
+ it('public shell: picking "I\u2019m a player" does not hide the My clubs link of someone who runs a club',async()=>{
+  localStorage.setItem('rq-landing-choice','club-player-studio');
+  user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
+  fireEvent.click(screen.getByRole('link',{name:'My clubs'}));expect(go).toHaveBeenLastCalledWith('club');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenLastCalledWith('club-player-studio');
  });
  it('mode button toggles Night/Day and remembers it',async()=>{
   render(<PublicShell go={vi.fn()}><p>x</p></PublicShell>);await act(async()=>{});

@@ -19,7 +19,7 @@ import { ListingCard } from './Inbox';
 import { LifecycleCard } from './Lifecycle';
 import { PromoStudio } from './PromoStudio';
 import { ApprovalCard } from './Approvals';
-import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
+import { DayEstimateBox, defaultFormatDraft, draftToDivision, FormatFields, ScoringDefaultsFields, SLOT_OPTIONS, type FormatDraft } from './Formats';
 import { ClubLogo, PosterImage, PosterPicker } from './Poster';
 import { WalkIn } from './Organiser';
 import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, names, shareLink, Status, useLoad } from './common';
@@ -169,7 +169,8 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
           <input id={`tnew-event${i}`} className="input" aria-label={`Event ${i + 1} name`} value={d.name} onChange={(e) => update(i, { name: e.target.value })} {...errProps(`event${i}`)} />{errBelow(`event${i}`)}
           <Segmented label={`Event ${i + 1} type`} value={d.kind} options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} onChange={(k) => update(i, { kind: k, picked: [], teams: [] })} />
           {post !== 'roster' && <DivisionRulesFields d={d} label={`Event ${i + 1}`} onChange={(patch) => update(i, patch)} />}
-          {post === 'registration' && <p className="small muted" style={{ margin: 0 }}>You choose the format (round robin, pools and knockouts, or knockout only, and the points for each round) when you make the draw, once you know how many entered.</p>}
+          {post === 'registration' && <ScoringDefaultsFields label={`Event ${i + 1}`} value={d.fmt} onChange={(fmt) => update(i, { fmt })} />}
+          {post === 'registration' && <p className="small muted" style={{ margin: 0 }}>You choose the shape (round robin, pools and knockouts, or knockout only) when you make the draw, once you know how many entered.</p>}
           {post === 'roster' && <FormatFields label={`Event ${i + 1}`} entries={entryCount(d)} value={d.fmt} onChange={(patch) => update(i, { fmt: { ...d.fmt, ...patch } })} />}
           {post === 'roster' && <EntryPicker d={d} players={players} pmap={pmap} onChange={(patch) => update(i, patch)} label={`Event ${i + 1}`} />}
           {divs.length > 1 && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setDivs((ds) => ds.filter((_, j) => j !== i))}>Remove this event</button>}

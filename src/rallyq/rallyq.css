@@ -24,7 +24,6 @@
 @keyframes rqDrift{from{background-position:65% 0%}to{background-position:65% 14%}}
 .rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:rqDrift 12s ease-in-out infinite alternate}
 @media (prefers-reduced-motion:reduce){.rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:none}}
-@media (min-width:761px){.rallyq-screen-main .rq .slides .s1{background-image:url(/rallyq/photos/desktop/social-champions.jpg)!important;background-size:cover!important;background-position:100% 0%!important}}
 .rallyq-prototype.rq-header-only .rq{min-height:0!important;background:transparent}
 .rallyq-prototype.rq-header-only{position:sticky;top:0;z-index:30;min-height:0!important;height:auto!important}
 .rq-public-page{min-height:calc(100vh - 120px);padding-bottom:40px}
@@ -105,3 +104,18 @@
 /* Page transitions (navigation.ts): quick cross-fade, off with reduced motion. */
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.22s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}
+
+/* Event page: sticky action bar (phones) and the "Message the club" sheet */
+.rallyq-prototype .rq.rq-sticky,.rallyq-prototype .rq.rq-sheet-wrap{background:transparent;min-height:0}
+.rallyq-prototype .rq .rq-sticky-bar{display:none}
+@media(max-width:760px){
+ .rallyq-prototype .rq .rq-sticky-bar:not([hidden]){display:block;position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--pg);box-shadow:0 -1px 0 var(--line),0 -12px 24px rgba(0,0,0,.25)}
+ .rallyq-prototype .rq .rq-sticky-bar .btn{width:100%;min-height:52px;font-size:16px}
+}
+.rallyq-prototype .rq .rq-sheet-back{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6)}
+.rallyq-prototype .rq .rq-sheet{position:fixed;z-index:61;left:0;right:0;bottom:0;max-height:90dvh;overflow:auto;background:var(--c1);color:var(--ink);padding:20px 16px calc(20px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+@media(min-width:761px){.rallyq-prototype .rq .rq-sheet{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(480px,92vw);border-radius:22px}}
+.rallyq-prototype .rq .rq-sheet .fld{display:flex;flex-direction:column;gap:6px}
+.rallyq-screen-main .rq .hero .wm{display:none!important}
+
+.rallyq-prototype.rallyq-screen-mystudio .rq button{min-height:44px!important}

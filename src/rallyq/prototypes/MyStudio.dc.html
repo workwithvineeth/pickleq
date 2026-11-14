@@ -49,8 +49,8 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div style="font-size:11px;color:#9FB4A6">Dots = scoring runs by phase of the game. Court position needs the live stream, coming later.</div>
 </section>
 
-<section class="photo ph-tracker" style="border-radius:28px;display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:820px;color:#F1F4EA;box-sizing:border-box">
-<div class="between"><span class="chip ball">DUPR 4.62 ▲ 0.18</span><span class="chip" style="background:rgba(6,20,13,.7)">Hyderabad #14</span></div>
+<section class="photo ph-woman" style="border-radius:28px;display:flex;flex-direction:column;justify-content:space-between;padding:20px;min-height:820px;color:#F1F4EA;box-sizing:border-box">
+<div><span class="chip" style="background:rgba(6,20,13,.7)">Illustration</span><div class="between" style="margin-top:8px"><span class="chip ball">DUPR 4.62 ▲ 0.18</span><span class="chip" style="background:rgba(6,20,13,.7)">Hyderabad #14</span></div></div>
 <div style="display:flex;flex-direction:column;gap:12px">
 <div class="disp" style="font-size:clamp(44px,4.2vw,58px)">Kiran Reddy</div>
 <div style="color:#DDE7DC;font-size:14px">Right side · Two-handed backhand · Banyan Pickleball Club</div>
@@ -85,14 +85,42 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <sc-if value="{{is.Log}}" hint-placeholder-val="{{ false }}">
 <div class="disp" style="font-size:32px">Log a session</div>
 <div class="cap" style="color:#4A5D50">What did you do?</div>
-<div class="row" style="flex-wrap:wrap;gap:6px"><sc-for list="{{types}}" as="t" hint-placeholder-count="3"><button class="btn sm" style="{{t.style}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div>
-<div class="cap" style="color:#4A5D50;margin-top:6px">{{logQ}}</div>
-<div style="min-height:48px;border-radius:14px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(11,36,24,.2);display:flex;align-items:center;padding:0 14px;font-weight:700;font-size:18px">{{logValue}}</div>
-<div class="cap" style="color:#4A5D50;margin-top:6px">Worked on</div>
-<div class="row" style="flex-wrap:wrap;gap:6px"><sc-for list="{{focus}}" as="f" hint-placeholder-count="4"><button class="btn sm" style="{{f.style}}" onClick="{{f.pick}}">{{f.name}}</button></sc-for></div>
-<div class="cap" style="color:#4A5D50;margin-top:6px">How did it feel?</div>
-<div class="row" style="gap:6px"><sc-for list="{{feel}}" as="f" hint-placeholder-count="5"><button class="btn sm" style="{{f.style}}" onClick="{{f.pick}}">{{f.n}}</button></sc-for></div>
-<button class="btn" style="background:#0B2418;color:#D9F24A!important;margin-top:auto" onClick="{{saveLog}}">{{saveLabel}}</button>
+<div class="row" role="group" aria-label="Session type" style="flex-wrap:wrap;gap:6px"><sc-for list="{{types}}" as="t" hint-placeholder-count="2"><button class="btn sm" aria-pressed="{{t.on}}" aria-label="{{t.label}}" style="{{t.style}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div>
+<sc-if value="{{isMatch}}" hint-placeholder-val="{{ true }}">
+<div class="cap" style="color:#4A5D50;margin-top:6px">Opponent</div>
+<input value="{{oppName}}" onChange="{{setOppName}}" placeholder="Name, for example Ravi" aria-label="Opponent name" autocomplete="off" style="min-height:48px;border-radius:14px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3);padding:0 14px;font:inherit;font-weight:700;font-size:16px;color:#0B2418;width:100%;box-sizing:border-box">
+<div class="cap" style="color:#4A5D50;margin-top:6px">How strong was the opponent?</div>
+<div class="row" role="group" aria-label="Opponent strength" style="flex-wrap:wrap;gap:6px"><sc-for list="{{levels}}" as="l" hint-placeholder-count="3"><button class="btn sm" aria-pressed="{{l.on}}" aria-label="{{l.label}}" style="{{l.style}}" onClick="{{l.pick}}">{{l.name}}</button></sc-for></div>
+<input value="{{oppDupr}}" onChange="{{setOppDupr}}" inputmode="decimal" placeholder="Or their DUPR rating, for example 3.85" aria-label="Opponent DUPR rating" style="min-height:48px;border-radius:14px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3);padding:0 14px;font:inherit;font-weight:700;font-size:16px;color:#0B2418;width:100%;box-sizing:border-box">
+<div class="cap" style="color:#4A5D50;margin-top:6px">Result</div>
+<div class="row" role="group" aria-label="How to enter the result" style="flex-wrap:wrap;gap:6px"><sc-for list="{{entries}}" as="e" hint-placeholder-count="2"><button class="btn sm" aria-pressed="{{e.on}}" aria-label="{{e.label}}" style="{{e.style}}" onClick="{{e.pick}}">{{e.name}}</button></sc-for></div>
+<sc-if value="{{isGames}}" hint-placeholder-val="{{ true }}">
+<div style="font-size:12px;color:#4A5D50">Type each game’s score, or tap +1 for every point as you play.</div>
+<sc-for list="{{gameRows}}" as="r" hint-placeholder-count="1">
+<div style="display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;background:#FFFFFF;border-radius:16px;padding:10px 12px">
+<b style="font-size:13px">{{r.title}}</b>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="cap" style="color:#4A5D50">You</span><input value="{{r.me}}" onChange="{{r.setMe}}" inputmode="numeric" placeholder="0" aria-label="{{r.meLabel}}" style="min-height:48px;border-radius:12px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3);padding:0 8px;font:inherit;font-weight:700;font-size:18px;color:#0B2418;width:100%;box-sizing:border-box;text-align:center"><button class="btn sm" aria-label="{{r.plusMeLabel}}" style="background:#2B6E4B;color:#FFFFFF!important;min-height:44px" onClick="{{r.plusMe}}">+1</button></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span class="cap" style="color:#4A5D50">Opponent</span><input value="{{r.them}}" onChange="{{r.setThem}}" inputmode="numeric" placeholder="0" aria-label="{{r.themLabel}}" style="min-height:48px;border-radius:12px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3);padding:0 8px;font:inherit;font-weight:700;font-size:18px;color:#0B2418;width:100%;box-sizing:border-box;text-align:center"><button class="btn sm" aria-label="{{r.plusThemLabel}}" style="background:#0B2418;color:#F1F4EA!important;min-height:44px" onClick="{{r.plusThem}}">+1</button></div>
+</div>
+</sc-for>
+<div class="row" style="gap:8px;flex-wrap:wrap">
+<sc-if value="{{canAddGame}}" hint-placeholder-val="{{ true }}"><button class="btn sm" style="background:#FFFFFF;color:#0B2418;min-height:44px;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3)" onClick="{{addGame}}">Add another game</button></sc-if>
+<sc-if value="{{canRemoveGame}}" hint-placeholder-val="{{ false }}"><button class="btn sm" style="background:#FFFFFF;color:#0B2418;min-height:44px;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3)" onClick="{{removeGame}}">Remove last game</button></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{isQuick}}" hint-placeholder-val="{{ false }}">
+<div class="row" role="group" aria-label="Did you win?" style="flex-wrap:wrap;gap:6px"><sc-for list="{{results}}" as="x" hint-placeholder-count="2"><button class="btn sm" aria-pressed="{{x.on}}" aria-label="{{x.label}}" style="{{x.style}}" onClick="{{x.pick}}">{{x.name}}</button></sc-for></div>
+<input value="{{quickScore}}" onChange="{{setQuickScore}}" placeholder="Score, optional (11–7, 9–11)" aria-label="Score, optional" style="min-height:48px;border-radius:14px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3);padding:0 14px;font:inherit;font-weight:700;font-size:16px;color:#0B2418;width:100%;box-sizing:border-box">
+</sc-if>
+</sc-if>
+<sc-if value="{{isDrill}}" hint-placeholder-val="{{ false }}">
+<div class="cap" style="color:#4A5D50;margin-top:6px">Minutes</div>
+<input value="{{minutes}}" onChange="{{setMinutes}}" inputmode="numeric" placeholder="40" aria-label="Minutes" style="min-height:48px;border-radius:14px;background:#FFFFFF;border:0;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3);padding:0 14px;font:inherit;font-weight:700;font-size:16px;color:#0B2418;width:100%;box-sizing:border-box">
+</sc-if>
+<div class="between" style="margin-top:6px"><span class="cap" style="color:#4A5D50">Shots and skills worked on</span><span style="font-size:12px;color:#4A5D50">{{tagCount}}</span></div>
+<div class="row" role="group" aria-label="Shots and skills" style="flex-wrap:wrap;gap:6px"><sc-for list="{{tags}}" as="g" hint-placeholder-count="12"><button class="btn sm" aria-pressed="{{g.on}}" aria-label="{{g.label}}" style="{{g.style}}" onClick="{{g.pick}}">{{g.name}}</button></sc-for></div>
+<sc-if value="{{hasLogError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:13px;font-weight:700;color:#B3261E">{{logError}}</div></sc-if>
+<button class="btn" style="background:#0B2418;color:#D9F24A!important;margin-top:auto;min-height:48px" onClick="{{saveLog}}" aria-live="polite">{{saveLabel}}</button>
 <div style="font-size:12px;color:#4A5D50">Sessions you log yourself are marked “Self-logged”. They never change your DUPR rating.</div>
 </sc-if>
 

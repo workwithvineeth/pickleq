@@ -1,3 +1,6 @@
+import { flushLinkUnsent } from '../matchdaySafety';
+import { useFlushUnsent } from '../useFlushUnsent';
+import { OfflineBanner } from './OfflineBanner';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
@@ -160,6 +163,8 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  // After a result is saved, the list says so and offers the next match.
+  const [justSaved, setJustSaved] = useState(false);
   // One shared link for every referee: each picks their court once on this phone.
   const pickKey = `pq-court-pick:${token}`;
   const [pick, setPickState] = useState<number | null>(() => { try { const v = Number(localStorage.getItem(pickKey)); return v > 0 ? v : null; } catch { return null; } });
@@ -195,6 +200,9 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
     const h = window.setInterval(() => setTick((x) => x + 1), 15000);
     return () => window.clearInterval(h);
   }, [pin, open]);
+
+  // Scores kept on this phone while offline go out when the list opens, when the signal returns, and every 15 seconds.
+  useFlushUnsent(!!pin && !!src && !!view && !open, (active) => flushLinkUnsent(token, (id, patch) => src!.scorerSave(token, pin, id, patch), active), () => setTick((x) => x + 1));
 
   async function enter() {
     if (!/^\d{4,6}$/.test(typed)) return setErr('Enter the PIN the organiser gave you');
@@ -237,7 +245,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
           doubles={current.namesA.length > 1}
           playedOn={current.playedOn ?? t.startDate}
           send={(patch) => src.scorerSave(token, pin, current.id, patch)}
-          onFinished={() => { setOpen(null); setTick((x) => x + 1); }}
+          onFinished={() => { setOpen(null); setJustSaved(true); setTick((x) => x + 1); }}
           canScore={current.status !== 'done' && current.status !== 'void'}
         />
       </main>
@@ -273,7 +281,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
     );
   }
   const row = (m: ScorerView['matches'][number], cta: string) => (
-    <button key={m.id} type="button" className="match-row" aria-label={`${cta}: ${m.namesA.join(' / ')} against ${m.namesB.join(' / ')}`} onClick={() => setOpen(m.id)}>
+    <button key={m.id} type="button" className="match-row" aria-label={`${cta}: ${m.namesA.join(' / ')} against ${m.namesB.join(' / ')}`} onClick={() => { setJustSaved(false); setOpen(m.id); }}>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block' }}>{m.namesA.join(' / ')}</span>
         <span style={{ display: 'block' }}>{m.namesB.join(' / ')}</span>
@@ -290,6 +298,13 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
       {events.length > 1 && <Segmented label="Which event are you refereeing?" value={evNow} options={[{ value: '', label: 'All' }, ...events.map((x) => ({ value: x, label: /double/i.test(x) ? 'Doubles' : /single/i.test(x) ? 'Singles' : x }))]} onChange={(v) => { setEv(v); setGrp(''); }} />}
       {grpOptions.length > 1 && <Segmented label="Which group?" value={grpNow} options={grpOptions.map((g) => ({ value: g, label: g === 'ko' ? 'Knockouts' : `Group ${poolLetter(Number(g))}` }))} onChange={setGrp} />}
       {err && <div role="status" className="msg msg-bad">{err}</div>}
+      <OfflineBanner />
+      {justSaved && (
+        <div role="status" className="msg pq-saved-note">
+          <b>Result saved</b>
+          {waiting[0] && <> · <button type="button" className="link-btn" aria-label={`Start next: ${waiting[0].namesA.join(' / ')} vs ${waiting[0].namesB.join(' / ')}`} onClick={() => { setJustSaved(false); setOpen(waiting[0].id); }}>Start next: {waiting[0].namesA.join(' / ')} vs {waiting[0].namesB.join(' / ')}</button></>}
+        </div>
+      )}
       {live.length > 0 && <section className="section" aria-label="Playing now"><div className="label">Playing now</div>{live.map((m) => row(m, 'Continue'))}</section>}
       <section className="section" aria-label="Up next">
         <div className="label">Up next</div>

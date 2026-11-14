@@ -19,8 +19,8 @@ export function RallyAdmin({go}:{go:Go}){
  if(data.data===null&&!data.loading)return <div className="rq" style={{minHeight:'50vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>Only RallyQ admins can see this.</div>;
  if(!data.data)return <div className="rq" style={{minHeight:'50vh',display:'grid',placeItems:'center',color:'#9FB4A6'}}>{data.error??'Loading admin…'}</div>;
  const{clubs,events}=data.data;const month=new Date().toISOString().slice(0,7);
- // Approve calls setClubTrusted (admin_set_club_trusted): it marks the club trusted AND approves every unfinished tournament it has. Product decision pending.
- const approve=async(id:string,name:string)=>{try{await b.setClubTrusted(id,true);setMsg(name+' can now host events.');data.reload();}catch(e){setMsg(errorText(e));}};
+ // "Make trusted" calls setClubTrusted (admin_set_club_trusted): it marks the club trusted AND approves every unfinished tournament it has.
+ const approve=async(id:string,name:string)=>{try{await b.setClubTrusted(id,true);setMsg(name+' is trusted. Its waiting tournaments are approved too.');data.reload();}catch(e){setMsg(errorText(e));}};
  const status=(s:string)=>s==='live'?['Live','chip live']:s==='done'?['Done','chip']:['Draft','st wait'];
  const values={
   title:({Clubs:'Clubs on RallyQ',Events:'Events',Brand:'Brand for clubs'} as Record<Tab,string>)[tab],

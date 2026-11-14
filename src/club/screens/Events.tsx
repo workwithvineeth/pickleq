@@ -9,7 +9,7 @@ import { clubMode, inLaunchCity, LAUNCH_CITY } from '../config';
 import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBackend } from '../index';
 import { blankPerson, capText, cleanEmail, entryProblem, rulesLine, upiLink } from '../registration';
 import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
-import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
+import { DemoNote, errorText, Header, shareLink, Skeleton, Status, useLoad } from './common';
 import { OrganiserCard, PosterImage } from './Poster';
 import { friendlyDate, friendlyTime } from '../dates';
 import { entryStatus } from '../../rallyq/studio/myTournamentItems';
@@ -34,7 +34,7 @@ function linkTo(go: Go, name: RouteName, id?: string) {
 /** Loading and errors, in words (never colour alone). */
 function Wait({ error, loading }: { error: string | null; loading?: boolean }) {
   if (error) return <div role="alert" className="note"><b>Something went wrong.</b> {error}</div>;
-  if (loading) return <p className="mut" role="status" style={{ margin: 0 }}>Loading…</p>;
+  if (loading) return <Skeleton rows={4} />;
   return null;
 }
 function DemoLine({ b }: { b: ClubBackend | null }) {
@@ -105,7 +105,7 @@ function EventBadges({ e }: { e: PublicEvent }) {
 
 type BoardFilter = 'all' | 'open' | 'live' | 'week';
 
-export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
+export function EventsBoard({ go, robot, focus }: { go: Go; robot?: boolean; focus?: string }) {
   const b = eventsBackend();
   const state = useLoad(async () => {
     // Real events always show; a phone in demo mode also sees the demo's made-up ones (never instead of the real board).
@@ -133,6 +133,13 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
     return { events, past, pending: queue.filter((q) => q.approval === 'submitted').length, admin, serverDown, signedIn: !!user };
   }, [b, robot]);
   const [kind, setKind] = useState<BoardFilter>('all');
+  // Arriving from an organiser's "Find it on the Events board" link: bring that event's card into view.
+  useEffect(() => {
+    if (!focus || !state.data) return;
+    const el = document.getElementById(`ev-${focus}`);
+    const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el?.closest('article')?.scrollIntoView?.({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+  }, [focus, state.data]);
   const events = state.data?.events ?? [];
   const shown = events.filter((e) => kind === 'all' || (kind === 'open' && e.registrationOpen) || (kind === 'live' && e.status === 'live') || (kind === 'week' && thisWeek(e)));
   // One yellow button on the page: the first event you can enter right now.
@@ -212,7 +219,7 @@ export function EventsBoard({ go, robot }: { go: Go; robot?: boolean }) {
           <div className="mut" style={{ marginTop: 6 }}>List your tournament or run it here: entries, the draw, a referee on every court and live results.</div>
         </div>
         <div className="row" style={{ flexWrap: 'wrap', gap: '8px 18px' }}>
-          <a className="btn ghost" {...linkTo(go, signedIn ? 'club' : 'club-signin')}>{signedIn ? 'My club' : 'Club sign in'}</a>
+          <a className="btn ghost" {...linkTo(go, signedIn ? 'club' : 'club-signin')}>{signedIn ? 'My club' : 'Sign in'}</a>
           <a className="tlink" {...linkTo(go, 'events-post')}>Post a tournament <span aria-hidden="true">→</span></a>
         </div>
       </section>
@@ -358,6 +365,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   }, [slug]);
   const [me, setMe] = useState<EntryPerson>(savedMe);
   const [partner, setPartner] = useState<EntryPerson>(blankPerson);
+  const [partnerOk, setPartnerOk] = useState(false);
   // Your sign-in email is the natural one for your results; you can change it.
   const accountEmail = cleanEmail(state.data?.user?.email);
   useEffect(() => { if (accountEmail) setMe((m) => (m.email?.trim() ? m : { ...m, email: accountEmail })); }, [accountEmail]);
@@ -405,14 +413,17 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   const title = step === 1 ? 'Pick your category.' : step === 2 ? (doubles ? 'Who’s your partner?' : 'Your details.') : step === 3 ? 'Pay the club.' : 'Entry request sent.';
   const payName = PAY_CHOICES.find((c) => c.value === pay)!.short;
 
+  const PARTNER_CONSENT_PROBLEM = 'Tick the box to confirm your partner agrees to share their details.';
   function toPay() {
     const problem = entryProblem(d!.kind, d!.rules, players, true);
     if (problem) return setMsg(problem);
+    if (d!.kind === 'doubles' && !partnerOk) return setMsg(PARTNER_CONSENT_PROBLEM);
     setMsg(null); setPayStep(true);
   }
   async function submit() {
     const problem = entryProblem(d!.kind, d!.rules, players, true);
     if (problem) return setMsg(problem);
+    if (d!.kind === 'doubles' && !partnerOk) return setMsg(PARTNER_CONSENT_PROBLEM);
     if (fee && pay === 'claimed' && ref.trim().length < 4) return setMsg('Add the UPI reference number from your payment');
     setBusy(true); setMsg(null);
     try {
@@ -474,6 +485,12 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
             <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 24 }}>
               <PersonFields v12 label="You" p={me} onChange={setMe} />
               {d.kind === 'doubles' && <PersonFields v12 label="Partner" p={partner} onChange={setPartner} />}
+              {d.kind === 'doubles' && (
+                <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', minHeight: 44, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={partnerOk} onChange={(e) => setPartnerOk(e.target.checked)} style={{ width: 24, height: 24, marginTop: 2, flex: 'none' }} />
+                  <span style={{ fontSize: 14 }}>My partner agrees to share their name, phone and DUPR with the organiser, and to have their name, score and DUPR shown on live scores.</span>
+                </label>
+              )}
               {d.rules.maxDupr !== undefined && <div className="note">{d.kind === 'doubles' && d.rules.duprCap === 'average' ? `This event is for teams with an average DUPR of ${capText(d.rules.maxDupr)} and under, so both players need a rating.` : `This event is for DUPR ${capText(d.rules.maxDupr)} and under, so every player needs a rating.`}</div>}
               <span className="mut" style={{ fontSize: 13 }}>Only this tournament’s organiser sees your phone numbers, emails and ages. Your names, scores and DUPR ratings show on live scores. Everyone must be 18 or over.</span>
             </div>

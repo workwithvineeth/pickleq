@@ -40,9 +40,22 @@ export function Header({ title, onBack, right, id }: { title: string; onBack?: (
   );
 }
 
+const SKEL_CSS = '.rq-skel-list{display:grid;gap:10px}.rq-skel{height:16px;border-radius:8px;background:linear-gradient(90deg,rgba(127,127,127,.14),rgba(127,127,127,.3),rgba(127,127,127,.14));background-size:200% 100%;animation:rq-sk 1.2s linear infinite}@keyframes rq-sk{to{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){.rq-skel{animation:none}}';
+/** Grey bars shaped like content while it loads. The words stay for screen readers. */
+export function Skeleton({ rows = 3 }: { rows?: number }) {
+  const widths = ['100%', '82%', '64%', '90%'];
+  return (
+    <div role="status" className="rq-skel-list">
+      <style>{SKEL_CSS}</style>
+      <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Loading…</span>
+      {Array.from({ length: rows }, (_, i) => <span key={i} className="rq-skel" aria-hidden="true" style={{ width: widths[i % widths.length], height: i === 0 ? 24 : 16 }} />)}
+    </div>
+  );
+}
+
 export function Status({ error, loading }: { error: string | null; loading?: boolean }) {
   if (error) return <div role="alert" className="msg msg-bad">{error}</div>;
-  if (loading) return <p className="small muted" role="status">Loading…</p>;
+  if (loading) return <Skeleton />;
   return null;
 }
 

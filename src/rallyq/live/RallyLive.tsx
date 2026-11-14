@@ -27,6 +27,14 @@ export function updatedLabel(at:number|null,now:number,error:boolean,sample:bool
  const s=Math.max(0,Math.round((now-at)/1000));
  return s<60?'Updated '+s+'s ago':'Updated '+new Date(at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
 }
+/** Two failed refreshes in a row (about 40 s), or a minute with no good refresh: the board may be behind. */
+export function connectionLost(failures:number,at:number|null,now:number,finished=false){return !finished&&(failures>=2||(at!==null&&now-at>60_000));}
+export function liveChipLabel(o:{lost:boolean;sample:boolean;directoryError:boolean;today:string;finished?:boolean}){
+ if(o.finished)return 'Final results · '+o.today;
+ if(o.lost)return 'Connection lost · scores may be behind';
+ if(o.directoryError)return 'Can’t reach live scores · showing a sample';
+ return (o.sample?'Sample scores · ':'Live · ')+o.today;
+}
 /** Sample win chance for the labelled sample (made-up ratings), so the sample shows what the bar looks like. */
 const sampleWin=(a:string,b:string,sa:number,sb:number,gA:number,gB:number,rA:number[],rB:number[])=>winBarFrom(winEstimate({ratingsA:rA,ratingsB:rB,ralliesA:sa+gA*11,ralliesB:sb+gB*11,gamesA:gA,gamesB:gB,pointsA:sa,pointsB:sb,pointsTo:11,bestOf:3}),a,b);
 
@@ -62,10 +70,10 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
  const[chosen,setPick]=useState<{v:number|null;c:number}>({v:null,c:0});
  const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents()).filter(e=>inLaunchCity(e.city)&&e.status==='live'&&e.results):[]},[]);
  const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};const ev=events[pick.v];const scores=usePublicScores(ev?.slug??'');
- const[loadedAt,setLoadedAt]=useState<number|null>(null),[now,setNow]=useState(()=>Date.now());
- useEffect(()=>{if(scores.data&&!scores.error)setLoadedAt(Date.now());},[scores.data,scores.error]);
+ const[now,setNow]=useState(()=>Date.now());
  useEffect(()=>{const t=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(t);},[]);
- if(directory.loading&&!directory.data)return <ShellState name="Live" source={LOADING} go={go} loading/>;
+ // Real scores are on their way: show the skeleton, never the sample.
+ if((directory.loading&&!directory.data)||(ev&&scores.loading&&!scores.data))return <ShellState name="Live" source={LOADING} go={go} loading/>;
  let venues:Venue[]=SAMPLE;
  if(events.length){
   venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
@@ -73,7 +81,7 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
     return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok,win:liveWinBar(d,match)};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
- const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;
- const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample?'chip':'chip live',updated:updatedLabel(loadedAt,now,!!scores.error,isSample),updStyle:scores.error?'color:var(--coral)':'',topLabel:directory.error?'Can’t reach live scores · showing a sample':isSample?'Sample scores · '+today:'Live · '+today};
+ const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=!isSample&&connectionLost(scores.failures,scores.updatedAt,now,finished);
+ const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample||lost||finished?'chip':'chip live',updated:updatedLabel(scores.updatedAt,now,lost||!!scores.error,isSample),updStyle:lost||scores.error?'color:var(--coral)':'',topLabel:liveChipLabel({lost,sample:isSample,directoryError:!!directory.error,today,finished})};
  return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }

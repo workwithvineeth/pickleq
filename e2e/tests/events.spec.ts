@@ -17,6 +17,8 @@ test.describe('Events board and registration (real server, no account)', () => {
     await page.getByRole('tab', { name: 'Entries', exact: true }).click();
     await expect(page.getByRole('cell', { name: "Men's Doubles 3.5", exact: true })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Open Singles 35+', exact: true })).toBeVisible();
+    // The entry fee is shown on the page (₹800 doubles, ₹500 singles).
+    await expect(page.getByText('From ₹500 per entry')).toBeVisible();
     // Category rules remain in the public data contract; the prototype uses one entry CTA.
     const event = (await rpc('public_event', { p_slug: EVENT })).body as {divisions: {name:string;kind:string;fee:number;cap:number;max_dupr:number;min_age:number;taken:number}[]};
     expect(event.divisions.find(d=>d.name==="Men's Doubles 3.5")).toMatchObject({kind:'doubles',fee:800,cap:16,max_dupr:3.5,taken:0});
@@ -128,6 +130,10 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByRole('alert')).toContainText('Robot Partner: check the email address');
     await page.getByRole('group', { name: 'Partner', exact: true }).getByLabel('Partner email').fill('robot.partner@example.test');
+    // The partner's details need the partner's OK first.
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByRole('alert')).toContainText('Tick the box to confirm your partner agrees');
+    await page.getByRole('checkbox', { name: /My partner agrees/ }).check();
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByRole('heading', { name: 'Pay the club.' })).toBeVisible();
     await page.getByRole('button', { name: 'Send my entry' }).click();

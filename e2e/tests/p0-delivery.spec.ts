@@ -126,7 +126,8 @@ test('new-account onboarding UI through confirmation and immediate club dashboar
   await page.getByRole('button', { name: 'Create account', exact: true }).click();
   await page.getByLabel('6-digit code').fill('654321');
   await page.getByRole('button', { name: 'Confirm and sign in' }).click();
-  // A new account isn't running a club yet, so it opens on Player Studio; My clubs is where you create one.
+  // One account for everyone: the first sign-in asks where to go. A new account that isn't running a club yet picks player.
+  await page.getByRole('button', { name: 'I’m a player' }).click();
   await expect(page).toHaveURL(/#\/club-player-studio/);
   await page.goto('#/club');
   await page.getByRole('button', { name: 'Create your club', exact: true }).click();

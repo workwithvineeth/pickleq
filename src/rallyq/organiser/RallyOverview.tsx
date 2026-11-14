@@ -8,10 +8,11 @@ import {ClubHome} from '../../club/screens/ClubHome';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/Overview.dc.html?raw';
 import {holes} from '../holes';
+import {eventsBoardHref} from '../../club/boardLink';
 const coming=/<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">\s*<div class="between"><span style="font-weight:600">Cedar Open[\s\S]*?12 Dec<\/span><\/div>\s*<\/div>/;
 const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace(coming,'<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px"><sc-for list="{{coming}}" as="c" hint-placeholder-count="3"><div class="between"><span style="{{c.style}}">{{c.name}}</span><span class="n" style="font-size:18px">{{c.date}}</span></div></sc-for><sc-if value="{{noComing}}" hint-placeholder-val="{{ false }}"><span class="mut">No events booked yet.</span></sc-if></div>'),[
  ['Tuesday 10 Nov','{{today}}'],['Five days to Cedar Open.','{{headline}}'],
- ['href="Event.dc.html">View public page ↗','href="{{publicHref}}">View public page ↗'],['href="Desk.dc.html">Open tournament desk','href="{{deskHref}}">{{deskLabel}}'],
+ ['href="Event.dc.html">View public page ↗','href="{{publicHref}}">Find it on the Events board ↗'],['href="Desk.dc.html">Open tournament desk','href="{{deskHref}}">{{deskLabel}}'],
  ['Teams entered</div><div class="n acc">24</div><div class="mut" style="font-size:13px">of 32 · 2 waitlist','Teams entered</div><div class="n acc">{{entered}}</div><div class="mut" style="font-size:13px">{{enteredNote}}'],
  ['Courts</div><div class="n">4</div><div class="mut" style="font-size:13px">all with a referee','Courts</div><div class="n">{{courts}}</div><div class="mut" style="font-size:13px">{{courtNote}}'],
  ['Matches planned</div><div class="n">46</div><div class="mut" style="font-size:13px">5:00 to 9:30 pm','Matches planned</div><div class="n">{{matches}}</div><div class="mut" style="font-size:13px">{{matchNote}}'],
@@ -47,7 +48,7 @@ export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
  const values={
   today:new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'}),
   headline:!focus?'No event booked yet.':focus.status==='live'?focus.name+' is live.':days<=0?focus.name+' is today.':days===1?'Tomorrow: '+focus.name+'.':days+' days to '+focus.name+'.',
-  publicHref:'#/event/'+encodeURIComponent(slug),deskHref:focus?'#/club-desk/'+encodeURIComponent(focus.id):'#/club-tournament-new/'+encodeURIComponent(d.club.id),deskLabel:focus?'Open tournament desk':'Create tournament',socialHref:'#/club-social/'+encodeURIComponent(slug),
+  publicHref:eventsBoardHref(focus),deskHref:focus?'#/club-desk/'+encodeURIComponent(focus.id):'#/club-tournament-new/'+encodeURIComponent(d.club.id),deskLabel:focus?'Open tournament desk':'Create tournament',socialHref:'#/club-social/'+encodeURIComponent(slug),
   entered:r.length,enteredNote:pending?pending+' waiting for you':'all confirmed',courts:focus?.courts??0,courtNote:focus?courtsCovered+' with a scorer link':'',
   matches:fm.length,matchNote:fm.length?fm.filter(m=>m.status==='done').length+' played':'draw not made yet',needs:pending+claims,needsNote:claims?claims+' payments to confirm':'nothing waiting',
   tasks:tasks.map((t,i)=>({...t,isNext:i===nx,cls:i===nx?'next':'',box:t.done?'width:22px;height:22px;border-radius:7px;background:#D9F24A;flex:none':'width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 2px #9FB4A6;flex:none',txt:t.done?'color:#9FB4A6;text-decoration:line-through':'font-weight:600'})),
