@@ -1,9 +1,9 @@
 import {act,fireEvent,render,screen,within} from '@testing-library/react';
 import {beforeEach,describe,expect,it,vi} from 'vitest';
 import {OrgShell,PageHead,PublicShell,clubMark,clubShort} from './Shell';
-const {user}=vi.hoisted(()=>({user:vi.fn()}));
-vi.mock('../../club/index',()=>{const backend={currentUser:user};return{backend:()=>backend,eventsBackend:()=>backend};});
-beforeEach(()=>{document.documentElement.dataset.skin='court';document.documentElement.dataset.theme='dark';localStorage.clear();user.mockResolvedValue(null);});
+const {user,clubs}=vi.hoisted(()=>({user:vi.fn(),clubs:vi.fn()}));
+vi.mock('../../club/index',()=>{const backend={currentUser:user,isPlatformAdmin:async()=>false,myClubs:clubs};return{backend:()=>backend,eventsBackend:()=>backend,serverBackend:()=>backend};});
+beforeEach(()=>{document.documentElement.dataset.skin='court';document.documentElement.dataset.theme='dark';localStorage.clear();user.mockResolvedValue(null);clubs.mockResolvedValue([]);});
 describe('v1.2 shells',()=>{
  it('public shell: club leads, nav calls go, phone menu and RallyQ last',async()=>{
   const go=vi.fn();render(<PublicShell go={go} active="events"><PageHead title="Find your next main event."/></PublicShell>);await act(async()=>{});
@@ -19,9 +19,20 @@ describe('v1.2 shells',()=>{
   expect(screen.queryByRole('navigation',{name:'Menu'})).toBeNull();
   const signoffs=document.querySelectorAll('.signoff');expect(signoffs[signoffs.length-1]).toHaveTextContent('Scores byRallyQ');
  });
- it('public shell: signed-in people see My club',async()=>{
+ it('public shell: the RallyQ logo leads every page and goes home when signed out',async()=>{
+  const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenCalledWith('home');
+ });
+ it('public shell: a signed-in player gets My Studio, and the logo opens their Player Studio',async()=>{
   user.mockResolvedValue({email:'a@example.test'});const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
-  fireEvent.click(screen.getByRole('link',{name:'My club'}));expect(go).toHaveBeenCalledWith('club');
+  fireEvent.click(screen.getByRole('link',{name:'My Studio'}));expect(go).toHaveBeenLastCalledWith('club-player-studio');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenLastCalledWith('club-player-studio');
+  expect(screen.queryByRole('link',{name:'My club'})).toBeNull();
+ });
+ it('public shell: someone who runs a club gets My clubs, and the logo opens My clubs',async()=>{
+  user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
+  fireEvent.click(screen.getByRole('link',{name:'My clubs'}));expect(go).toHaveBeenLastCalledWith('club');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenLastCalledWith('club');
  });
  it('mode button toggles Night/Day and remembers it',async()=>{
   render(<PublicShell go={vi.fn()}><p>x</p></PublicShell>);await act(async()=>{});

@@ -2,6 +2,7 @@ import {createContext,useCallback,useContext,useEffect,useLayoutEffect,useMemo,u
 import type {Go} from '../../navigation';
 import {chooseTheme,currentTheme,subscribeTheme} from '../../theme';
 import {eventsBackend} from '../../club/index';
+import {accountLink,useHome} from '../useHome';
 import {scopedCSS} from '../PrototypeScreen';
 import raw from './v12.css?raw';
 import {Q_PATH,Watermark} from './Watermark';
@@ -39,13 +40,12 @@ export type PublicTab='live'|'events'|'studio'|'clubs'|null;
 export async function signOutTo(go:Go){await eventsBackend().signOut().catch(()=>undefined);go('club-signin',undefined,{replace:true});}
 /** Public pages: club leads in the header, RallyQ signs off small and last. */
 export function PublicShell({go,active=null,host=ALL_CLUBS,right,children,footNote}:{go:Go;active?:PublicTab;host?:Host;right?:ReactNode;children:ReactNode;footNote?:string}){
- const[signedIn,setSignedIn]=useState(false),[menu,setMenu]=useState(false);
- useEffect(()=>{let on=true;eventsBackend().currentUser().then(u=>{if(on)setSignedIn(!!u)},()=>undefined);return()=>{on=false}},[]);
+ const home=useHome(),signedIn=home.signedIn,acct=accountLink(home),[menu,setMenu]=useState(false);
  const links:[PublicTab,string,()=>void][]=[['live','Live scores',()=>go('live')],['events','Events',()=>go('events')],['studio','Player Studio',()=>go('club-player-studio')],['clubs','For clubs',()=>go(signedIn?'club':'club-signin')]];
  const nav=(cls:string)=>links.map(([k,label,f])=><a key={k} className={cls&&k===active?'on':undefined} href="#/" aria-current={k===active?'page':undefined} onClick={e=>{e.preventDefault();setMenu(false);f()}}>{label}</a>);
- return <Frame><header className="hdr"><div className="wrap"><HostBlock host={host} onClick={()=>go('events')}/><nav className="nav" aria-label="Main">{nav('x')}</nav>
-  <div className="right">{right??<a className="tlink" href="#/" onClick={e=>{e.preventDefault();go(signedIn?'club':'club-signin')}}>{signedIn?'My club':'Club sign in'}</a>}<ModeButton/><button type="button" className="menu" aria-label="Menu" aria-expanded={menu} onClick={()=>setMenu(!menu)}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><Signoff/></div></div></header>
-  {menu&&<nav className="mpanel" aria-label="Menu">{nav('')}{!right&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);go(signedIn?'club':'club-signin')}}>{signedIn?'My club':'Club sign in'}</a>}{signedIn&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);void signOutTo(go)}}>Sign out</a>}</nav>}
+ return <Frame><header className="hdr"><div className="wrap"><div className="lead"><a className="brand" href="#/" aria-label="RallyQ home" onClick={e=>{e.preventDefault();go(home.route)}}><QMark/><span className="word">RallyQ</span></a><HostBlock host={host} onClick={()=>go('events')}/></div><nav className="nav" aria-label="Main">{nav('x')}</nav>
+  <div className="right">{right??<a className="tlink" href="#/" onClick={e=>{e.preventDefault();go(acct.route)}}>{acct.label}</a>}<ModeButton/><button type="button" className="menu" aria-label="Menu" aria-expanded={menu} onClick={()=>setMenu(!menu)}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><Signoff/></div></div></header>
+  {menu&&<nav className="mpanel" aria-label="Menu">{nav('')}{!right&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);go(acct.route)}}>{acct.label}</a>}{signedIn&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);void signOutTo(go)}}>Sign out</a>}</nav>}
   <main className="wrap" style={{paddingBlock:'28px 40px',display:'flex',flexDirection:'column',gap:28}}>{children}</main>
   <div className="wrap pfoot"><span>{footNote??''}</span><Signoff/></div></Frame>;
 }

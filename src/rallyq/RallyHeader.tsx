@@ -1,7 +1,6 @@
-import {useEffect,useState} from 'react';
 import type {Go} from '../navigation';
-import {eventsBackend} from '../club/index';
 import {PrototypeScreen} from './PrototypeScreen';
+import {accountLink,useHome} from './useHome';
 import raw from './prototypes/Live.dc.html?raw';
 
 type Active='live'|'events'|'studio'|'clubs'|null;
@@ -13,7 +12,6 @@ function build(active:Active){let h=header.replace(/>Club sign in</g,'>{{clubLab
 
 /** The RallyQ public header (logo, main links, Club sign in, Night/Day) for the older screens that aren't prototype files yet. */
 export function RallyHeader({go,active=null}:{go:Go;active?:Active}){
- const[signedIn,setSignedIn]=useState(false);
- useEffect(()=>{let on=true;eventsBackend().currentUser().then(u=>{if(on)setSignedIn(!!u)},()=>undefined);return()=>{on=false}},[]);
- return <PrototypeScreen name="Live" className="rq-header-only" keepTitle go={go} source={build(active)} values={{clubLabel:signedIn?'My club':'Club sign in'}} hrefs={{Overview:signedIn?'#/club':'#/club-signin',Event:'#/events'}}/>;
+ const acct=accountLink(useHome());
+ return <PrototypeScreen name="Live" className="rq-header-only" keepTitle go={go} source={build(active)} values={{clubLabel:acct.label}} hrefs={{Overview:'#/'+acct.route,Event:'#/events'}}/>;
 }
