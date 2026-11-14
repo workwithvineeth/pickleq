@@ -1,7 +1,7 @@
 import { matchResult } from './domain/engine';
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
-import { ClubError, type AuditRow, type SupportSession, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AuditRow, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
 import { pinProblem, randomPin as randomPinOf } from './pins';
@@ -31,6 +31,8 @@ interface DemoState {
   testimonials?: Testimonial[];
   /** Version 1 was a boolean; later sample sets bump SAMPLE_EVENTS_VERSION. */
   eventsSeeded?: boolean | number;
+  /** Emails of people a RallyQ admin added to a club (the demo has no accounts, so it keeps them here by user id). */
+  emails?: Record<string, string>;
 }
 
 const KEY = 'pq-club-demo-v1';
@@ -1294,6 +1296,94 @@ export class DemoBackend implements ClubBackend {
     this.me();
     if (status !== 'live' && status !== 'done') throw new ClubError('Choose live or finished');
     this.tournament(id).status = status;
+    this.save();
+  }
+
+  // ---------- Admin command centre (same rules as migration 20261114100000) ----------
+  private adminOnly() { this.me(); }
+  private purgeTournaments(ids: Set<string>) {
+    const divs = new Set(this.s.divisions.filter((d) => ids.has(d.tournamentId)).map((d) => d.id));
+    this.s.matches = this.s.matches.filter((m) => !(m.tournamentId && ids.has(m.tournamentId)));
+    this.s.entries = this.s.entries.filter((e) => !divs.has(e.divisionId));
+    this.s.divisions = this.s.divisions.filter((d) => !ids.has(d.tournamentId));
+    this.s.registrations = (this.s.registrations ?? []).filter((r) => !ids.has(r.tournamentId));
+    this.s.scorerLinks = (this.s.scorerLinks ?? []).filter((l) => !ids.has(l.tournamentId));
+    for (const id of ids) { delete this.s.eventPins?.[id]; delete this.s.desks?.[id]; }
+    this.s.tournaments = this.s.tournaments.filter((t) => !ids.has(t.id));
+  }
+  async adminDeleteTournament(tournamentId: string, confirmName: string) {
+    this.adminOnly();
+    const t = this.tournament(tournamentId);
+    if (t.status === 'live') throw new ClubError('This tournament is live. Mark it finished first, then delete it.');
+    if (confirmName.trim() !== t.name.trim()) throw new ClubError('Type the tournament name exactly to confirm');
+    const matches = this.s.matches.filter((m) => m.tournamentId === t.id).length;
+    this.audit.unshift({ at: new Date().toISOString(), action: 'admin_tournament_delete', detail: `${t.name} (${t.startDate}): ${matches} match(es), status ${t.status}`, clubId: t.clubId, tournamentId: t.id });
+    this.purgeTournaments(new Set([t.id]));
+    this.save();
+  }
+  async adminDeleteClub(clubId: string, confirmName: string) {
+    this.adminOnly();
+    const c = this.club(clubId);
+    const mine = this.s.tournaments.filter((t) => t.clubId === c.id);
+    if (mine.some((t) => t.status === 'live')) throw new ClubError('This club has a live tournament. Mark it finished first, then delete the club.');
+    if (confirmName.trim() !== c.name.trim()) throw new ClubError('Type the club name exactly to confirm');
+    this.audit.unshift({ at: new Date().toISOString(), action: 'admin_club_delete', detail: `${c.name} (${c.city ?? 'no city'}): ${mine.length} tournament(s)`, clubId: c.id });
+    this.purgeTournaments(new Set(mine.map((t) => t.id)));
+    const keep = (x: { clubId: string }) => x.clubId !== c.id;
+    this.s.matches = this.s.matches.filter(keep); this.s.players = this.s.players.filter(keep); this.s.members = this.s.members.filter(keep);
+    this.s.summaries = this.s.summaries.filter(keep); this.s.testimonials = (this.s.testimonials ?? []).filter(keep);
+    this.s.clubs = this.s.clubs.filter((x) => x.id !== c.id);
+    this.save();
+  }
+  async adminEditMatchResult(match: ClubMatch, games: ClubMatch['games'], reason: string) {
+    this.adminOnly();
+    const current = this.s.matches.find((m) => m.id === match.id);
+    if (!current || current.status !== 'done' || current.updatedAt !== match.updatedAt) throw new ClubError('This result changed. Reload before editing it.');
+    if (reason.trim().length < 3 || reason.trim().length > 300) throw new ClubError('Enter a reason of 3 to 300 characters');
+    const { winner } = matchResult({ games, format: current.format });
+    if (!winner) throw new ClubError('Enter enough games to decide the match');
+    if (!['pool', 'friendly'].includes(current.stage) && winner !== current.winner) throw new ClubError('A knockout winner cannot change here, because the bracket depends on it');
+    this.s.matches = this.s.matches.map((m) => m.id === current.id ? { ...m, games, winner, updatedAt: new Date().toISOString() } : m);
+    this.audit.unshift({ at: new Date().toISOString(), action: 'admin_result_edit', detail: `match ${current.id}: ${reason.trim()}`, clubId: current.clubId, tournamentId: current.tournamentId });
+    this.save();
+  }
+  async adminClubMembers(clubId: string): Promise<AdminMember[]> {
+    const u = this.me(); this.club(clubId);
+    const order: Role[] = ['owner', 'admin', 'coach', 'player'];
+    return this.s.members.filter((m) => m.clubId === clubId).sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role))
+      .map((m) => ({ userId: m.userId, name: m.name, email: m.userId === u.id ? u.email : this.s.emails?.[m.userId], role: m.role, helper: false }));
+  }
+  private owners(clubId: string) { return this.s.members.filter((m) => m.clubId === clubId && m.role === 'owner').length; }
+  async adminSetMemberRole(clubId: string, userId: string, role: Role) {
+    this.adminOnly();
+    const m = this.s.members.find((x) => x.clubId === clubId && x.userId === userId);
+    if (!m) throw new ClubError('That person is not in this club');
+    if (m.role === 'owner' && role !== 'owner' && this.owners(clubId) < 2) throw new ClubError('A club needs an owner. Make someone else an owner first.');
+    this.audit.unshift({ at: new Date().toISOString(), action: 'admin_role_set', detail: `${userId}: ${m.role} to ${role}`, clubId });
+    m.role = role;
+    this.save();
+  }
+  async adminAddClubMember(clubId: string, email: string, role: Role): Promise<'added' | 'invited'> {
+    const u = this.me(); this.club(clubId);
+    const em = email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em) || em.length > 200) throw new ClubError('Enter a valid email');
+    // The demo has no other accounts: yourself joins as that role; anyone else is a person on this phone, kept by email.
+    const userId = em === u.email.toLowerCase() ? u.id : `demo-${em}`;
+    const existing = this.s.members.find((x) => x.clubId === clubId && x.userId === userId);
+    if (existing) existing.role = role;
+    else this.s.members.push({ clubId, userId, role, name: em.split('@')[0] });
+    if (userId !== u.id) (this.s.emails ??= {})[userId] = em;
+    this.audit.unshift({ at: new Date().toISOString(), action: 'admin_role_add', detail: `${em} as ${role}`, clubId });
+    this.save();
+    return 'added';
+  }
+  async adminRemoveClubMember(clubId: string, userId: string) {
+    this.adminOnly();
+    const m = this.s.members.find((x) => x.clubId === clubId && x.userId === userId);
+    if (!m) throw new ClubError('That person is not in this club');
+    if (m.role === 'owner' && this.owners(clubId) < 2) throw new ClubError('A club needs an owner. Make someone else an owner first.');
+    this.audit.unshift({ at: new Date().toISOString(), action: 'admin_role_remove', detail: `${userId} (was ${m.role})`, clubId });
+    this.s.members = this.s.members.filter((x) => x !== m);
     this.save();
   }
 

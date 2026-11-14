@@ -295,6 +295,21 @@ export interface EventsBackend {
   /** Removes a RallyQ admin; never the last one. */
   removePlatformAdmin(email: string): Promise<void>;
 
+  // ---------- Admin command centre: delete, edit results, club roles (RallyQ admins only) ----------
+  /** Deletes a club and everything in it for good. Type the club's name to confirm. Refused while one of its tournaments is live. One audit-log row. */
+  adminDeleteClub(clubId: string, confirmName: string): Promise<void>;
+  /** Deletes a tournament for good, even after people entered or scores were saved. Type its name to confirm. Refused while live. One audit-log row. */
+  adminDeleteTournament(tournamentId: string, confirmName: string): Promise<void>;
+  /** Fixes a finished match's score. Unlike an organiser's correction it also works after pools are complete; a knockout winner still can't change. */
+  adminEditMatchResult(match: ClubMatch, games: ClubMatch['games'], reason: string): Promise<void>;
+  /** The club's people with their ids (the plain club page doesn't carry them). */
+  adminClubMembers(clubId: string): Promise<AdminMember[]>;
+  adminSetMemberRole(clubId: string, userId: string, role: Role): Promise<void>;
+  /** Adds someone by email: an existing account joins at once ('added'); otherwise the role waits for their sign-up ('invited'). */
+  adminAddClubMember(clubId: string, email: string, role: Role): Promise<'added' | 'invited'>;
+  /** Never the club's last owner. */
+  adminRemoveClubMember(clubId: string, userId: string): Promise<void>;
+
   // ---------- Tournament approval ("create freely, go live with approval") ----------
   /** The club's organisers send the tournament to RallyQ. A trusted club's is approved straight away. Returns the new status. */
   submitTournament(id: string, expectedPlayers?: number): Promise<Approval>;
@@ -339,6 +354,7 @@ export interface AdminClubDetail {
   people: { name: string; email?: string; role: Role; helper: boolean }[];
   tournaments: { id: string; name: string; startDate: string; status: ClubTournament['status'] }[];
 }
+export interface AdminMember { userId: string; email?: string; name?: string; role: Role; helper: boolean }
 export interface AdminTournament {
   id: string; name: string; club: string; clubId: string; isTest: boolean; startDate: string; startTime: string; status: ClubTournament['status'];
   listing: Listing; listingStatus: ListingStatus; slug: string; results: boolean; registrations: number; matches: number; matchesDone: number;

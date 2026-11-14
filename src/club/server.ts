@@ -2,7 +2,7 @@ import { cleanLog, cleanSession, logProblem, ratingProblem, sessionProblem, type
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
-import { ClubError, type ClaimEmailOutcome, type ClaimEmailStatus, type ClaimStatus, type SupportSession, type AdminClub, type AdminClubDetail, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type ClaimEmailOutcome, type ClaimEmailStatus, type ClaimStatus, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
 import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { cleanEmail, type DrawPlan } from './registration';
@@ -1051,6 +1051,21 @@ export class ServerBackend implements ClubBackend {
   }
 
   async removePlatformAdmin(email: string) { answer(check(await this.sb.rpc('remove_platform_admin', { p_email: email }))); }
+
+  async adminDeleteClub(clubId: string, confirmName: string) { check(await this.sb.rpc('admin_delete_club', { p_club: clubId, p_confirm_name: confirmName })); }
+  async adminDeleteTournament(tournamentId: string, confirmName: string) { check(await this.sb.rpc('admin_delete_tournament', { p_tournament: tournamentId, p_confirm_name: confirmName })); }
+  async adminEditMatchResult(match: ClubMatch, games: ClubMatch['games'], reason: string) {
+    check(await this.sb.rpc('admin_edit_match_result', { p_match: match.id, p_games: games, p_reason: reason, p_updated_at: match.updatedAt }));
+  }
+  async adminClubMembers(clubId: string): Promise<AdminMember[]> {
+    const rows = (check(await this.sb.rpc('admin_club_members', { p_club: clubId })) as Row[] | null) ?? [];
+    return rows.map((r) => ({ userId: String(r.user_id), email: s(r.email), name: s(r.name), role: r.role as Role, helper: !!r.helper }));
+  }
+  async adminSetMemberRole(clubId: string, userId: string, role: Role) { check(await this.sb.rpc('admin_set_member_role', { p_club: clubId, p_user: userId, p_role: role })); }
+  async adminAddClubMember(clubId: string, email: string, role: Role) {
+    return check(await this.sb.rpc('admin_add_club_member', { p_club: clubId, p_email: email, p_role: role })) === 'invited' ? 'invited' as const : 'added' as const;
+  }
+  async adminRemoveClubMember(clubId: string, userId: string) { check(await this.sb.rpc('admin_remove_club_member', { p_club: clubId, p_user: userId })); }
 }
 
 /** Admin list functions answer an array, or {"error": …} for someone who isn't an admin. */

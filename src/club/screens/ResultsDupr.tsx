@@ -153,7 +153,8 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
           if (!b) return;
           setBusy(true);
           try {
-            await b.correctMatch(correcting, games, reason.trim());
+            // RallyQ admins use the override that also works after pools are complete (a knockout winner still can't change).
+            if (admin) await b.adminEditMatchResult(correcting, games, reason.trim()); else await b.correctMatch(correcting, games, reason.trim());
             setCorrecting(undefined);
             setMsg({ ok: true, text: 'Score corrected.' });
             state.reload();

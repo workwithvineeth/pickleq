@@ -6,7 +6,6 @@ import { useState } from 'react';
 import type { Go } from '../../navigation';
 import type { AdminTournament, ClubBackend } from '../backend';
 import { eventsBackend } from '../index';
-import { ROLE_LABEL } from '../types';
 import { appLink, DemoNote, errorText, shareLink, Status, useLoad } from './common';
 import { deskLink, PinPair } from './Access';
 import { BigLogo } from './Poster';
@@ -15,6 +14,7 @@ import { ApprovalQueue } from './Approvals';
 import { friendlyDate, friendlyDateTime, friendlyTime } from '../dates';
 import { SupportOpenButton } from './Lifecycle';
 import { AdminCommandCentre } from './AdminHome';
+import { AdminPeople, DeleteForGood } from './AdminControl';
 
 export type AdminSection = 'overview' | 'approvals' | 'clubs' | 'tournaments' | 'results' | 'testimonials' | 'admins' | 'desk' | 'branding' | 'marketing' | 'circuit' | 'audit';
 const SECTIONS: { id: AdminSection; label: string; title: string }[] = [
@@ -125,7 +125,7 @@ function Clubs({ go }: { go: Go }) {
   const shown = (state.data ?? []).filter((c) => (tests || !c.isTest) && `${c.name} ${c.city ?? ''} ${c.owners.join(' ')}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <>
-      <p className="small muted" style={{ margin: 0 }}>Trusted clubs’ tournaments skip approval. You can switch trust off at any time; tournaments already approved stay approved.</p>
+      <p className="small muted" style={{ margin: 0 }}>Make a club trusted and its tournaments skip approval (its waiting ones are approved too). You can remove trust at any time; tournaments already approved stay approved.</p>
       <input className="input" type="search" aria-label="Find a club" placeholder="Club, city or owner email" value={q} onChange={(e) => setQ(e.target.value)} />
       <label className="check-row small" style={{ borderTop: 'none' }}><input type="checkbox" checked={tests} onChange={(e) => setTests(e.target.checked)} /> Show the robot’s test club</label>
       <Status error={state.error} loading={state.loading && !state.data} />
@@ -137,19 +137,21 @@ function Clubs({ go }: { go: Go }) {
             <BigLogo src={c.logoUrl} club={c.name} size={56} />
             <b style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', fontSize: 17 }}>{c.name}</b>
             {c.isTest ? <span className="pill">Robot test</span>
-              : <span className={`pill${c.trusted ? ' pill-ok' : ''}`}>{c.trusted ? 'Trusted' : 'Needs approval'}</span>}
+              : <span className={`pill${c.trusted ? ' pill-ok' : ''}`}>{c.trusted ? 'Trusted' : 'Not trusted yet'}</span>}
           </div>
           <div className="small muted">{[c.city, `${c.members} member${c.members === 1 ? '' : 's'}`, `${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}`, c.lastEvent && `last ${day(c.lastEvent)}`].filter(Boolean).join(' · ')}</div>
           <div className="small" style={{ overflowWrap: 'anywhere' }}>Owner: {c.owners.join(', ') || '–'}</div>
           <div className="meta">
             <button type="button" className="btn btn-outline" onClick={() => go('admin-club', c.id)}>People and events</button>
             {!c.isTest && (
-              <button type="button" className="btn btn-outline" role="switch" aria-checked={c.trusted} aria-label={`Trusted club: ${c.name}`} disabled={busy}
-                onClick={() => run(() => b.setClubTrusted(c.id, !c.trusted), c.trusted ? `${c.name} is no longer trusted: new tournaments need your approval` : `${c.name} is trusted: its tournaments skip approval`)}>
-                {c.trusted ? 'Trusted: on' : 'Trusted: off'}
+              <button type="button" className={`btn ${c.trusted ? 'btn-outline' : 'btn-primary'}`} aria-label={c.trusted ? `Remove trust: ${c.name}` : `Make trusted: ${c.name}`} disabled={busy}
+                onClick={() => run(() => b.setClubTrusted(c.id, !c.trusted), c.trusted ? `${c.name} is no longer trusted: new tournaments need your approval` : `${c.name} is trusted: its tournaments skip approval, and its waiting ones are approved`)}>
+                {c.trusted ? 'Remove trust' : 'Make trusted'}
               </button>
             )}
           </div>
+          <div><DeleteForGood kind="club" name={c.name} note={`${c.tournaments} tournament${c.tournaments === 1 ? '' : 's'}, ${c.members} member${c.members === 1 ? '' : 's'} and every entry and score go with it. A club with a live tournament can’t be deleted.`}
+            onDelete={() => b.adminDeleteClub(c.id, c.name)} onDone={() => { state.reload(); }} /></div>
         </section>
       ))}</div>
     </>
@@ -178,15 +180,7 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
             <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', c.id)}>+ Create Tournament</button>
             <SupportOpenButton b={b} clubId={c.id} reason={`Admin club page: ${c.name}`} go={go} label="Open club as support" />
           </div>
-          <section className="card section" aria-label="People">
-            <h2 style={{ fontSize: 16 }}>People ({c.people.length})</h2>
-            {c.people.map((p, i) => (
-              <div key={`${p.name}-${i}`} className="row">
-                <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}{p.email && <span className="small muted" style={{ display: 'block' }}>{p.email}</span>}</span>
-                <span className="pill">{p.helper ? 'Old desk account (no access)' : ROLE_LABEL[p.role]}</span>
-              </div>
-            ))}
-          </section>
+          <AdminPeople clubId={c.id} />
           <section className="card section" aria-label="Tournaments">
             <h2 style={{ fontSize: 16 }}>Tournaments ({c.tournaments.length})</h2>
             {c.tournaments.length === 0 && <p className="small muted" style={{ margin: 0 }}>None yet.</p>}
@@ -197,6 +191,10 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
               </div>
             ))}
             <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('admin', 'tournaments')}>Manage in Events</button>
+          </section>
+          <section className="card section" aria-label="Delete this club">
+            <h2 style={{ fontSize: 16 }}>Delete this club</h2>
+            <DeleteForGood kind="club" name={c.name} onDelete={() => eventsBackend().adminDeleteClub(c.id, c.name)} onDone={onBack} />
           </section>
         </>
       )}
@@ -257,12 +255,17 @@ function Tournaments({ go, resultsOnly = false }: { go: Go; resultsOnly?: boolea
                   {t.status !== 'done' && t.deskToken && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: desk`, deskLink(t.deskToken as string)), 'Desk link shared or copied: send it to the desk team (with the desk PIN)')}>Share desk link</button>}
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('results', t.slug)}>Results</button>}
                   <button type="button" className="btn btn-outline" onClick={() => go('club-results-dupr', t.id)}>View Results &amp; DUPR</button>
+                  {t.matchesDone > 0 && <button type="button" className="btn btn-outline" aria-label={`Edit results: ${t.name}`} onClick={() => go('club-results-dupr', t.id)}>Edit results</button>}
                   <button type="button" className="btn btn-primary" onClick={() => go('club-results-dupr', t.id)}>Add / edit DUPR</button>
                   <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: results and DUPR details`, resultsDuprLink(t.id)), 'Organiser results link shared or copied. The organiser must sign in with access to this club.')}>Share Results with Organiser</button>
                   {t.results && t.slug && <button type="button" className="btn btn-outline" onClick={() => run(() => shareLink(`${t.name}: schedule, scores and results`, appLink(`#/results/${t.slug}`)), 'Public results link shared or copied: send it to the players')}>Share public results</button>}
                   {t.listing !== 'none' && t.listingStatus === 'approved' && t.slug && <button type="button" className="btn btn-outline" onClick={() => go('event', t.slug)}>Event page</button>}
                 </div>
               )}
+            {confirm !== t.id && t.status !== 'live' && (
+              <div><DeleteForGood kind="tournament" name={t.name} note={`${t.registrations} entr${t.registrations === 1 ? 'y' : 'ies'} and ${t.matches} match${t.matches === 1 ? '' : 'es'} go with it.`}
+                onDelete={() => b.adminDeleteTournament(t.id, t.name)} onDone={() => { state.reload(); }} /></div>
+            )}
           </section>
         );
       })}</div>

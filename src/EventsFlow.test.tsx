@@ -342,11 +342,9 @@ describe('Create freely, go live with approval', () => {
 
     // Trusted: the admin switches it on, and the club can pick players (approved at once); switching it off again is allowed.
     window.location.hash = '#/admin/clubs';
-    const sw = await screen.findByRole('switch', { name: 'Trusted club: Smash Yard' });
-    expect(sw).toHaveAttribute('aria-checked', 'false');
-    await user.click(sw);
-    expect(await screen.findByText('Smash Yard is trusted: its tournaments skip approval')).toBeInTheDocument();
-    await user.click(await screen.findByRole('switch', { name: 'Trusted club: Smash Yard' }));
+    await user.click(await screen.findByRole('button', { name: 'Make trusted: Smash Yard' }));
+    expect(await screen.findByText(/Smash Yard is trusted: its tournaments skip approval/)).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Remove trust: Smash Yard' }));
     expect(await screen.findByText(/Smash Yard is no longer trusted/)).toBeInTheDocument();
   });
 });

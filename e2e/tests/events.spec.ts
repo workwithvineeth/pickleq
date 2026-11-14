@@ -266,11 +266,9 @@ test.describe('Create freely, go live with approval (demo club on the phone)', (
     await expect(page.getByRole('region', { name: 'RallyQ approval' })).toHaveCount(0);
 
     await page.goto('#/admin/clubs');
-    const sw = page.getByRole('switch', { name: 'Trusted club: Robot Smash Yard' });
-    await expect(sw).toHaveAttribute('aria-checked', 'false');
-    await sw.click();
-    await expect(page.getByText('Robot Smash Yard is trusted: its tournaments skip approval')).toBeVisible();
-    await page.getByRole('switch', { name: 'Trusted club: Robot Smash Yard' }).click();
+    await page.getByRole('button', { name: 'Make trusted: Robot Smash Yard' }).click();
+    await expect(page.getByText(/Robot Smash Yard is trusted: its tournaments skip approval/)).toBeVisible();
+    await page.getByRole('button', { name: 'Remove trust: Robot Smash Yard' }).click();
     await expect(page.getByText(/Robot Smash Yard is no longer trusted/)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
