@@ -162,8 +162,17 @@ export function crossPoolOrder(rows: StandingRow[], seedOf: (id: string) => numb
 export function crossoverPairs(qualifiers: Qualifier[]): [Qualifier, Qualifier][] | null {
   const pools = [...new Set(qualifiers.map((q) => q.pool))].sort((x, y) => x - y);
   const n = pools.length, per = qualifiers.length / n;
-  if (![2, 4, 8].includes(n) || (per !== 1 && per !== 2)) return null;
   const at = (pool: number, place: number) => qualifiers.find((q) => q.pool === pool && q.place === place);
+  if (n === 2 && per === 4) {
+    // Two pools, top four each (FPL Season 2 chart): QF1 A1 v B4, QF2 A2 v B3, QF3 A3 v B2, QF4 A4 v B1, then SF1 = QF1 v QF4 and
+    // SF2 = QF2 v QF3. Bracket positions 0-1 and 2-3 meet in the semifinals, so the order is QF1, QF4, QF2, QF3.
+    const [a, b] = pools;
+    const order: [number, number, number, number][] = [[a, 1, b, 4], [a, 4, b, 1], [a, 2, b, 3], [a, 3, b, 2]];
+    const out: [Qualifier, Qualifier][] = [];
+    for (const [pa, la, pb, lb] of order) { const x = at(pa, la), y = at(pb, lb); if (!x || !y) return null; out.push([x, y]); }
+    return out;
+  }
+  if (![2, 4, 8].includes(n) || (per !== 1 && per !== 2)) return null;
   const pairs: [Qualifier, Qualifier][] = [];
   if (per === 2) {
     for (let i = 0; i < n; i++) { const a = at(pools[i], 1), b = at(pools[n - 1 - i], 2); if (!a || !b) return null; pairs.push([a, b]); }

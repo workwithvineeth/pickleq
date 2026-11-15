@@ -121,6 +121,15 @@ describe('tournament engine', () => {
     expect(firstKnockoutPairs(uneven, () => 0)).toHaveLength(4);
   });
 
+  it('two pools with the top four each: QF A1vB4, A2vB3, A3vB2, A4vB1 and semifinals QF1vQF4, QF2vQF3', () => {
+    const q = [1, 2].flatMap((pool) => [1, 2, 3, 4].map((place) => ({ entryId: `${'AB'[pool - 1]}${place}`, pool, place })));
+    const ids = (ps: [{ entryId: string }, { entryId: string }][]) => ps.map(([a, b]) => `${a.entryId}v${b.entryId}`);
+    // Positions come in semifinal pairs: [QF1, QF4] feed SF1 and [QF2, QF3] feed SF2.
+    expect(ids(firstKnockoutPairs(q, () => 0))).toEqual(['A1vB4', 'A4vB1', 'A2vB3', 'A3vB2']);
+    // The result does not depend on how the teams are ranked or listed.
+    expect(ids(firstKnockoutPairs([...q].reverse(), (x) => -x.place))).toEqual(['A1vB4', 'A4vB1', 'A2vB3', 'A3vB2']);
+  });
+
   it('next knockout round from finished matches', () => {
     const qf = [0, 1, 2, 3].map((pos) => ({ ...done(`q${pos}`, `a${pos}`, `b${pos}`, [[11, 5]]), stage: 'qf' as const, bracketPos: pos }));
     expect(nextRoundPairs(qf)).toEqual([{ bracketPos: 0, entryA: 'a0', entryB: 'a1' }, { bracketPos: 1, entryA: 'a2', entryB: 'a3' }]);
