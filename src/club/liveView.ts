@@ -21,12 +21,21 @@ export function videoState(video?: CourtVideo, now = Date.now()) {
   return video.status === 'live' && age >= 0 && age <= 180_000 ? 'LIVE' : 'Stream linked';
 }
 
-/** The active match takes precedence over the next scheduled one; completed courts stay visible. */
+/** The active match takes precedence over the next scheduled one; completed courts stay visible. Every live match is shown, even when two share a planned court. */
 export function courtMatches(d: PublicTournament) {
   const matches = d.matches.filter(m => m.court && m.status !== 'void');
   const courts = [...new Set(matches.map(m => m.court!))].sort((a, b) => a - b);
   const rank = (m: PublicMatch) => m.status === 'live' ? 0 : m.status === 'scheduled' ? 1 : 2;
-  return courts.map(court => ({ court, match: matches.filter(m => m.court === court).sort((a, b) => rank(a) - rank(b) || (a.status === 'done' ? (b.slot ?? 0) - (a.slot ?? 0) : (a.slot ?? 0) - (b.slot ?? 0)) || a.id.localeCompare(b.id))[0] }));
+  const out = courts.map(court => ({ court, match: matches.filter(m => m.court === court).sort((a, b) => rank(a) - rank(b) || (a.status === 'done' ? (b.slot ?? 0) - (a.slot ?? 0) : (a.slot ?? 0) - (b.slot ?? 0)) || a.id.localeCompare(b.id))[0] }));
+  // Referees may play a match on a different court from the one planned (one roaming link, they pick the match), so two live
+  // matches can share a planned court. Never hide a live match: show the extra one in the slot of a court with nothing live.
+  const shown = new Set(out.map(x => x.match.id));
+  const extra = matches.filter(m => m.status === 'live' && !shown.has(m.id)).sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0) || a.id.localeCompare(b.id));
+  for (const m of extra) {
+    const spare = out.find(x => x.match.status !== 'live');
+    if (spare) spare.match = m;
+  }
+  return out;
 }
 
 export function matchView(d: PublicTournament, m: PublicMatch) {

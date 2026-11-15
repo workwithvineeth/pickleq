@@ -562,7 +562,7 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyD
             <p className="mut" style={small}>{RUNNERS_UP_TEXT}</p>
           </div>
         )}
-        <p className="mut" style={small}>P played · W won · L lost · Pts won and Pts lost: points scored and conceded (PF, PA) · Diff: points difference (+/−).{pmap ? ' DUPR is shown for each player; “Unrated” means no DUPR rating yet.' : ''}</p>
+        <p className="mut" style={small}>P played · W won · L lost · Pts won and Pts lost: points scored and conceded (PF, PA) · Diff: points difference (+/−).{pmap ? ' DUPR is shown for players who have one.' : ''}</p>
         <p className="mut" style={small}>{tieBreakText(divisionId)}</p>
       </section>
     );

@@ -15,6 +15,13 @@ describe('public live score presentation', () => {
     const d = fixture(); d.matches.unshift({ ...d.matches[1], id: 'early', court: 1, slot: 0 }); d.matches.push({ ...d.matches[0], id: 'void', court: 3, status: 'void' });
     expect(courtMatches(d).map(x => x.match.id)).toEqual(['m', 'n']);
   });
+  it('never hides a live match: two live on one planned court use a court with nothing live', () => {
+    const d = fixture(); d.matches.push({ ...d.matches[0], id: 'also-live', court: 1, slot: 3 });
+    const shown = courtMatches(d);
+    expect(shown.map(x => x.match.id).sort()).toEqual(['also-live', 'm']);
+    expect(shown.every(x => x.match.status === 'live')).toBe(true);
+    expect(new Set(shown.map(x => x.court)).size).toBe(shown.length);
+  });
   it('starts a new game only between games, never after a deciding game', () => {
     const d = fixture(); const m = d.matches[0];
     m.games = [{ a: 11, b: 5, points: '' }]; expect(matchView(d, m)).toMatchObject({ game: 2, pointsA: 0, gamesA: 1 });
