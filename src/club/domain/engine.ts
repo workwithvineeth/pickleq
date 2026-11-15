@@ -189,7 +189,7 @@ export function crossPoolOrder(rows: StandingRow[], seedOf: (id: string) => numb
  * Two teams from the same pool land in opposite halves, so they can only meet again in the final.
  * Returns null when the qualifiers don't fit that shape (e.g. best third-placed teams); the seeded bracket is used then.
  */
-export function crossoverPairs(qualifiers: Qualifier[]): [Qualifier, Qualifier][] | null {
+export function crossoverPairs(qualifiers: Qualifier[], chartFour = false): [Qualifier, Qualifier][] | null {
   const pools = [...new Set(qualifiers.map((q) => q.pool))].sort((x, y) => x - y);
   const n = pools.length, per = qualifiers.length / n;
   const at = (pool: number, place: number) => qualifiers.find((q) => q.pool === pool && q.place === place);
@@ -198,6 +198,16 @@ export function crossoverPairs(qualifiers: Qualifier[]): [Qualifier, Qualifier][
     // SF2 = QF2 v QF3. Bracket positions 0-1 and 2-3 meet in the semifinals, so the order is QF1, QF4, QF2, QF3.
     const [a, b] = pools;
     const order: [number, number, number, number][] = [[a, 1, b, 4], [a, 4, b, 1], [a, 2, b, 3], [a, 3, b, 2]];
+    const out: [Qualifier, Qualifier][] = [];
+    for (const [pa, la, pb, lb] of order) { const x = at(pa, la), y = at(pb, lb); if (!x || !y) return null; out.push([x, y]); }
+    return out;
+  }
+  if (chartFour && n === 4 && per === 2) {
+    // Four pools, top two each (FPL Season 2 organiser chart, 15 Nov 16:35; only for the events in DIFF_FIRST_DIVISIONS):
+    // QF1 A1 v D2, QF2 B1 v C2, QF3 C1 v B2, QF4 A2 v D1, then SF1 = QF1 v QF4 and SF2 = QF2 v QF3.
+    // Bracket positions 0-1 and 2-3 meet in the semifinals, so the order is QF1, QF4, QF2, QF3.
+    const [a, b, c, d] = pools;
+    const order: [number, number, number, number][] = [[a, 1, d, 2], [a, 2, d, 1], [b, 1, c, 2], [c, 1, b, 2]];
     const out: [Qualifier, Qualifier][] = [];
     for (const [pa, la, pb, lb] of order) { const x = at(pa, la), y = at(pb, lb); if (!x || !y) return null; out.push([x, y]); }
     return out;
@@ -217,10 +227,10 @@ export function crossoverPairs(qualifiers: Qualifier[]): [Qualifier, Qualifier][
  * seeded first (better record first), then runners-up, and so on, and pairs are adjusted so two players from the same
  * pool don't meet in the first round when it can be avoided.
  */
-export function firstKnockoutPairs(qualifiers: Qualifier[], rankKey: (q: Qualifier) => number): [Qualifier, Qualifier][] {
+export function firstKnockoutPairs(qualifiers: Qualifier[], rankKey: (q: Qualifier) => number, divisionId?: string): [Qualifier, Qualifier][] {
   const size = qualifiers.length;
   if (!KNOCKOUT_SIZES.includes(size)) throw new Error('Knockouts need 2, 4, 8 or 16 qualifiers');
-  const crossed = crossoverPairs(qualifiers);
+  const crossed = crossoverPairs(qualifiers, diffFirst(divisionId));
   if (crossed) return crossed;
   const seeded = [...qualifiers].sort((x, y) => x.place - y.place || rankKey(x) - rankKey(y));
   const order = bracketOrder(size);

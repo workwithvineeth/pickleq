@@ -131,6 +131,17 @@ describe('tournament engine', () => {
     expect(ids(firstKnockoutPairs([...q].reverse(), (x) => -x.place))).toEqual(['A1vB4', 'A4vB1', 'A2vB3', 'A3vB2']);
   });
 
+  it('FPL four pools with the top two each: QF A1vD2, B1vC2, C1vB2, A2vD1 and semifinals QF1vQF4, QF2vQF3', () => {
+    const q = [1, 2, 3, 4].flatMap((pool) => [1, 2].map((place) => ({ entryId: `${'ABCD'[pool - 1]}${place}`, pool, place })));
+    const ids = (ps: [{ entryId: string }, { entryId: string }][]) => ps.map(([a, b]) => `${a.entryId}v${b.entryId}`);
+    // Positions come in semifinal pairs: [QF1, QF4] feed SF1 and [QF2, QF3] feed SF2.
+    const FPL_MEN = '2148d66b-f037-4026-8c88-578ba391ef75';
+    expect(ids(firstKnockoutPairs(q, () => 0, FPL_MEN))).toEqual(['A1vD2', 'A2vD1', 'B1vC2', 'C1vB2']);
+    expect(ids(firstKnockoutPairs([...q].reverse(), (x) => -x.place, FPL_MEN))).toEqual(['A1vD2', 'A2vD1', 'B1vC2', 'C1vB2']);
+    // Other events keep the usual crossover (A1vD2, B1vC2, C1vB2, D1vA2; semifinals QF1vQF2, QF3vQF4).
+    expect(ids(firstKnockoutPairs(q, () => 0))).toEqual(['A1vD2', 'B1vC2', 'C1vB2', 'D1vA2']);
+  });
+
   it('team-name entries show only the team name; real partners are untouched', () => {
     expect(teamNames(['Rally House', 'Rally House (partner)'])).toEqual(['Rally House']);
     expect(teamNames(['Rally House', 'rally house (Partner)'])).toEqual(['Rally House']);
