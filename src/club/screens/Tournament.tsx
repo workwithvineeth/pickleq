@@ -11,7 +11,7 @@ import { clubMark, ModeButton, OrgShell, PageHead, PublicShell } from '../../ral
 import { Legacy } from './InboxLegacy';
 import { ChampionHero, ResultsPosters, type ChampionInfo } from './ResultsPosters';
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
-import { entryRating, formatFor, matchResult, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, TIE_BREAK_TEXT, type StandingRow } from '../domain/engine';
+import { entryRating, formatFor, matchResult, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, tieBreakText, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor, rememberReturn } from '../index';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, poolsComplete, type NewDivisionInput } from '../plan';
 import { APPROVAL_NOTE, GO_LIVE_NOTE, isAdmin, isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type Division, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
@@ -562,7 +562,7 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyD
           </div>
         )}
         <p className="mut" style={small}>P played · W won · L lost · Pts won and Pts lost: points scored and conceded (PF, PA) · Diff: points difference (+/−).{pmap ? ' DUPR is shown for each player; “Unrated” means no DUPR rating yet.' : ''}</p>
-        <p className="mut" style={small}>{TIE_BREAK_TEXT}</p>
+        <p className="mut" style={small}>{tieBreakText(divisionId)}</p>
       </section>
     );
   }

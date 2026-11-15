@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bracketOrder, crossPoolOrder, knockoutOnlyPairs, standings, TIE_BREAK_TEXT, type StandingRow } from './domain/engine';
+import { bracketOrder, crossPoolOrder, knockoutOnlyPairs, standings, TIE_BREAK_TEXT, tieBreakText, type StandingRow } from './domain/engine';
 import { estimateDay, eventMatches, fasterOptions, minutesOf, shapeOptions } from './estimate';
 import { buildTournamentRows, checkShape, knockoutMatchesToAdd, poolQualifiers, type NewDivisionInput } from './plan';
 import { entryProblem, planDraw } from './registration';
@@ -30,6 +30,33 @@ function playAll(ms: ClubMatch[], seedOf: (e: string) => number) {
     return { ...m, status: 'done' as const, winner: aWins ? 'A' as const : 'B' as const, games: [{ points: '', a: aWins ? 11 : lose, b: aWins ? lose : 11 }] };
   });
 }
+
+describe('points difference first (FPL Season 2 events only)', () => {
+  const FPL_MEN = '2148d66b-f037-4026-8c88-578ba391ef75';
+  const inEvent = (m: ClubMatch, divisionId: string): ClubMatch => ({ ...m, divisionId });
+  // Same results as the head-to-head test above: x and y 2 wins each, x beat y, but y's difference is far better.
+  const base = [done('1', 'x', 'y', 11, 9), done('2', 'x', 'w', 11, 10), done('3', 'y', 'w', 11, 0), done('4', 'x', 'z', 0, 11), done('5', 'y', 'z', 11, 1), done('6', 'z', 'w', 3, 11)];
+  it('ranks by points difference, not wins or head-to-head', () => {
+    const t = standings(['x', 'y', 'z', 'w'], base.map((m) => inEvent(m, FPL_MEN)));
+    const order = t.map((r) => r.entryId);
+    expect(order.indexOf('y')).toBeLessThan(order.indexOf('x'));
+    for (let i = 1; i < t.length; i++) expect(t[i - 1].diff).toBeGreaterThanOrEqual(t[i].diff);
+  });
+  it('level on difference: points scored, then wins, then head-to-head, then seed', () => {
+    // All three end on +0 difference: points scored decides (c 36, b 20, a 16).
+    const ms = [done('1', 'a', 'c', 11, 5), done('2', 'c', 'a', 11, 5), done('3', 'b', 'c', 11, 9), done('4', 'c', 'b', 11, 9)].map((m) => inEvent(m, FPL_MEN));
+    expect(standings(['a', 'b', 'c'], ms).map((r) => r.entryId)).toEqual(['c', 'b', 'a']);
+    // Fully level (same difference, scored, wins): head-to-head, then seed.
+    const h = [done('1', 'p', 'q', 11, 9), done('2', 'q', 'r', 11, 9), done('3', 'r', 'p', 11, 9)].map((m) => inEvent(m, FPL_MEN));
+    const seed = new Map([['p', 3], ['q', 1], ['r', 2]]);
+    expect(standings(['p', 'q', 'r'], h, (e) => seed.get(e) ?? 9).map((r) => r.entryId)).toEqual(['q', 'r', 'p']);
+  });
+  it('other events keep most wins first, and the words match the rule', () => {
+    expect(standings(['x', 'y', 'z', 'w'], base.map((m) => inEvent(m, 'other'))).map((r) => r.entryId).slice(0, 2)).toEqual(['x', 'y']);
+    expect(tieBreakText(FPL_MEN)).toMatch(/points difference.*points scored.*most wins.*head-to-head.*seed/);
+    expect(tieBreakText('other')).toBe(TIE_BREAK_TEXT);
+  });
+});
 
 describe('pool table tie-breaks', () => {
   it('two-way tie on wins: head-to-head decides, even with a worse points difference', () => {

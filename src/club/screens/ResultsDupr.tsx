@@ -3,7 +3,7 @@ import type { Go } from '../../navigation';
 import { backend, rememberReturn, serverBackend } from '../index';
 import { clubMode } from '../config';
 import { friendlyDate } from '../dates';
-import { poolLetter, standings, TIE_BREAK_TEXT } from '../domain/engine';
+import { poolLetter, standings, tieBreakText } from '../domain/engine';
 import { isStaff, KNOCKOUT_STAGES, STAGE_LABEL, type ClubMatch, type Division } from '../types';
 import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resultsReport';
 import { duprCheck, duprCsv } from '../dupr';
@@ -197,7 +197,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
     </section>)}
     {staff && b?.kind === 'server' && data.matches.some((m) => m.status === 'done') && <ClaimLinks tournamentId={data.tournament.id} clubId={data.club.id} tournament={data.tournament.name}
       players={[...new Set(data.entries.flatMap((e) => e.playerIds))].map((pid) => pmap.get(pid)).filter((x): x is NonNullable<typeof x> => !!x && !x.sample)} />}
-    <p className="pq-results-footer">Results from RallyQ · rallyq.in · {TIE_BREAK_TEXT}</p>
+    <p className="pq-results-footer">Results from RallyQ · rallyq.in · {tieBreakText(data.divisions[0]?.id)}</p>
   </div>;
   const t = data.tournament;
   const head = <><PageHead cap={t.name} title={<span id="rd-title">Results &amp; DUPR</span>} /><RefTabs go={go} id={t.id} on="results" /></>;
