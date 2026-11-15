@@ -70,11 +70,11 @@ export function matchResult(m: Pick<ClubMatch, 'games' | 'format'>): MatchResult
 
 /** The tie-break order, in the words shown under every pool table. */
 export const TIE_BREAK_TEXT = 'Ties are split by: 1. most wins; 2. head-to-head (wins in matches between the tied players); 3. points difference (+/−); 4. points scored (PF); 5. seed.';
-/** Events whose organiser asked for points difference first (FPL Season 2, 15 Nov 2026: Men's and Mixed Doubles).
+/** Events whose organiser asked for points difference before head-to-head (FPL Season 2, 15 Nov 2026: Men's and Mixed Doubles).
  * Keyed by event (division) id so finished tournaments keep the order their knockouts were built from.
  * TODO: make this a per-tournament setting (needs a migration) and remove the list. */
 export const DIFF_FIRST_DIVISIONS = new Set(['2148d66b-f037-4026-8c88-578ba391ef75', '3d5f2301-2523-477a-8385-994781085a36']);
-export const TIE_BREAK_TEXT_DIFF = 'Ties are split by: 1. points difference (+/−); 2. points scored (PF); 3. most wins; 4. head-to-head (wins in matches between the tied players); 5. seed.';
+export const TIE_BREAK_TEXT_DIFF = 'Ties are split by: 1. most wins; 2. points difference (+/−); 3. points scored (PF); 4. head-to-head (wins in matches between the tied players); 5. seed.';
 export const diffFirst = (divisionId?: string) => !!divisionId && DIFF_FIRST_DIVISIONS.has(divisionId);
 /** The tie-break words for an event. */
 export const tieBreakText = (divisionId?: string) => (diffFirst(divisionId) ? TIE_BREAK_TEXT_DIFF : TIE_BREAK_TEXT);
@@ -83,7 +83,7 @@ export const RUNNERS_UP_TEXT = 'Best runners-up are compared across pools per ma
 export interface StandingRow { entryId: string; played: number; wins: number; losses: number; pointsFor: number; pointsAgainst: number; diff: number; rank: number }
 
 /**
- * Pool table (events in DIFF_FIRST_DIVISIONS use points difference, points scored, wins, head-to-head, seed instead). Tie-breaks, in order: wins; then head-to-head among the tied entries (wins in matches between them,
+ * Pool table (events in DIFF_FIRST_DIVISIONS use wins, points difference, points scored, head-to-head, seed instead). Tie-breaks, in order: wins; then head-to-head among the tied entries (wins in matches between them,
  * checked again if that leaves a smaller tie); then points difference; then points scored; then seed.
  */
 export function standings(entryIds: string[], matches: ClubMatch[], seedOf: (id: string) => number = () => 0): StandingRow[] {
@@ -115,9 +115,9 @@ export function standings(entryIds: string[], matches: ClubMatch[], seedOf: (id:
     return levels.flatMap((lv) => rankTied(tied.filter((t) => h.get(t.entryId) === lv)));
   };
   if (matches.some((m) => diffFirst(m.divisionId))) {
-    // Points difference first: then points scored, then most wins, then head-to-head among those still level, then seed.
-    const key = (r: StandingRow) => `${r.diff}|${r.pointsFor}|${r.wins}`;
-    const sorted = [...rows.values()].sort((x, y) => y.diff - x.diff || y.pointsFor - x.pointsFor || y.wins - x.wins);
+    // Most wins, then points difference, then points scored, then head-to-head among those still level, then seed.
+    const key = (r: StandingRow) => `${r.wins}|${r.diff}|${r.pointsFor}`;
+    const sorted = [...rows.values()].sort((x, y) => y.wins - x.wins || y.diff - x.diff || y.pointsFor - x.pointsFor);
     const h2hThenSeed = (tied: StandingRow[]): StandingRow[] => {
       if (tied.length < 2) return tied;
       const group = new Set(tied.map((t) => t.entryId));

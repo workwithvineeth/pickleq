@@ -31,18 +31,24 @@ function playAll(ms: ClubMatch[], seedOf: (e: string) => number) {
   });
 }
 
-describe('points difference first (FPL Season 2 events only)', () => {
+describe('wins, then points difference before head-to-head (FPL Season 2 events only)', () => {
   const FPL_MEN = '2148d66b-f037-4026-8c88-578ba391ef75';
   const inEvent = (m: ClubMatch, divisionId: string): ClubMatch => ({ ...m, divisionId });
   // Same results as the head-to-head test above: x and y 2 wins each, x beat y, but y's difference is far better.
   const base = [done('1', 'x', 'y', 11, 9), done('2', 'x', 'w', 11, 10), done('3', 'y', 'w', 11, 0), done('4', 'x', 'z', 0, 11), done('5', 'y', 'z', 11, 1), done('6', 'z', 'w', 3, 11)];
-  it('ranks by points difference, not wins or head-to-head', () => {
+  it('most wins first; level on wins, points difference beats head-to-head', () => {
     const t = standings(['x', 'y', 'z', 'w'], base.map((m) => inEvent(m, FPL_MEN)));
-    const order = t.map((r) => r.entryId);
-    expect(order.indexOf('y')).toBeLessThan(order.indexOf('x'));
-    for (let i = 1; i < t.length; i++) expect(t[i - 1].diff).toBeGreaterThanOrEqual(t[i].diff);
+    // x and y both 2 wins; x beat y, but y's difference is better, so y is first. z and w (1 win each) stay below.
+    expect(t.map((r) => r.entryId).slice(0, 2)).toEqual(['y', 'x']);
+    for (let i = 1; i < t.length; i++) expect(t[i - 1].wins).toBeGreaterThanOrEqual(t[i].wins);
   });
-  it('level on difference: points scored, then wins, then head-to-head, then seed', () => {
+  it('more wins beats a better points difference', () => {
+    // a: 2 narrow wins (+4 total) and one heavy loss; b: 1 big win only.
+    const ms = [done('1', 'a', 'c', 11, 9), done('2', 'a', 'd', 11, 9), done('3', 'b', 'a', 11, 0), done('4', 'c', 'b', 11, 9), done('5', 'd', 'b', 11, 9)].map((m) => inEvent(m, FPL_MEN));
+    const t = standings(['a', 'b', 'c', 'd'], ms);
+    expect(t[0].entryId).toBe('a');
+  });
+  it('level on wins and difference: points scored, then head-to-head, then seed', () => {
     // All three end on +0 difference: points scored decides (c 36, b 20, a 16).
     const ms = [done('1', 'a', 'c', 11, 5), done('2', 'c', 'a', 11, 5), done('3', 'b', 'c', 11, 9), done('4', 'c', 'b', 11, 9)].map((m) => inEvent(m, FPL_MEN));
     expect(standings(['a', 'b', 'c'], ms).map((r) => r.entryId)).toEqual(['c', 'b', 'a']);
@@ -53,7 +59,7 @@ describe('points difference first (FPL Season 2 events only)', () => {
   });
   it('other events keep most wins first, and the words match the rule', () => {
     expect(standings(['x', 'y', 'z', 'w'], base.map((m) => inEvent(m, 'other'))).map((r) => r.entryId).slice(0, 2)).toEqual(['x', 'y']);
-    expect(tieBreakText(FPL_MEN)).toMatch(/points difference.*points scored.*most wins.*head-to-head.*seed/);
+    expect(tieBreakText(FPL_MEN)).toMatch(/most wins.*points difference.*points scored.*head-to-head.*seed/);
     expect(tieBreakText('other')).toBe(TIE_BREAK_TEXT);
   });
 });
