@@ -165,7 +165,7 @@ export function knockoutMatchesToAdd(t: ClubTournament, divisions: Division[], e
     const q = poolQualifiers(div, entries, dm.filter((m) => m.stage === 'pool'));
     if (!KNOCKOUT_SIZES.includes(q.qualifiers.length)) continue;
     const stage = stageForSize(q.qualifiers.length);
-    firstKnockoutPairs(q.qualifiers, (x) => q.order.get(x.entryId) ?? 0).forEach(([a, b], pos) => out.push(koRow(t, div, emap, stage, pos, 1, a.entryId, b.entryId, newId)));
+    firstKnockoutPairs(q.qualifiers, (x) => q.order.get(x.entryId) ?? 0, div.id).forEach(([a, b], pos) => out.push(koRow(t, div, emap, stage, pos, 1, a.entryId, b.entryId, newId)));
   }
   out.push(...laterRounds(t, divisions, entries, matches, newId));
   if (out.length) {
