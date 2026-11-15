@@ -97,7 +97,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         actions={<>
           {!drawn && isApproved(t) && <button type="button" className="btn ghost sm" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: enter now`, eventShareLink(t.publicSlug)) })}>Share the entry link</button>}
           {!drawn && <button type="button" className="btn ghost sm" disabled={busy || !isApproved(t)} onClick={() => run(() => b.updateTournamentDetails(t.id, { registrationOpen: !t.registrationOpen }), t.registrationOpen ? 'Entries closed. Players can’t enter any more.' : 'Entries are open again')}>{t.registrationOpen ? 'Close entries' : 'Open registration'}</button>}
-          {drawn && <button type="button" className="btn ghost sm" onClick={() => go('club-entries', t.id)}>Entries, withdrawals and late entries</button>}
+          {drawn && <button type="button" className="btn ghost sm" onClick={() => go('club-entries', t.id)}>+ Add entry · withdraw · swap player</button>}
         </>} />
       <Legacy><DemoNote b={b} /></Legacy>
       {msg && <div role="status" className={msg.ok ? 'note' : 'warn'} style={{ margin: 0 }}>{msg.text}</div>}

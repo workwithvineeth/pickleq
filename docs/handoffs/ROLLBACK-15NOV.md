@@ -10,3 +10,7 @@ Rollback: push the `rallyq-live` sha above back to `rallyq-live`, write the same
 - Previous `rallyq-live` and `club-ref` (roll back to this): 9ed0a4750b3ae9067e0be0086b63f3c9ad1b07f0
 - New: a01e82704afcc746e7679e702a08db1e4b6c0baf
 - S5 migration applied live before this deploy (7 admin_* functions). It only adds functions, so rolling the code back is safe; the functions stay and are guarded to platform admins.
+
+## Third deploy, knockout crossover for two pools with the top four each (Sun 15 Nov, about 07:55 IST)
+- Previous `rallyq-live` and `club-ref` (roll back to this): a01e82704afcc746e7679e702a08db1e4b6c0baf
+- New: eecbe6c1c2be2c135d77112264d29cd5db95d6ea (only src/club/domain/engine.ts and its test changed)

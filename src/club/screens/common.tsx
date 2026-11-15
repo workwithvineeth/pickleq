@@ -3,6 +3,7 @@ import { Icon } from '../../components/Icon';
 import type { ClubBackend } from '../backend';
 import type { ClubPlayer, Entry } from '../types';
 import { ROLE_LABEL, type Role } from '../types';
+import { teamNames } from '../teamName';
 
 export interface Loaded<T> { data: T | null; error: string | null; loading: boolean; reload: () => void }
 
@@ -76,7 +77,7 @@ export function displayPlayerName(name: string): string {
 }
 
 export function names(ids: string[], players: Map<string, ClubPlayer>): string {
-  return ids.map((id) => displayPlayerName(players.get(id)?.name ?? 'Unknown')).join(' / ');
+  return teamNames(ids.map((id) => displayPlayerName(players.get(id)?.name ?? 'Unknown'))).join(' / ');
 }
 
 export function entryLabel(e: Entry | undefined, players: Map<string, ClubPlayer>): string {

@@ -432,13 +432,13 @@ function DrawPools({ d, division, pmap }: { d: TournamentBundle; division: Divis
     <section aria-label="The draw" className="grid g4">
       {pools.map((p) => (
         <section key={p} className="card" aria-label={`Pool ${poolLetter(p)} draw`} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div className="between"><b className="disp" style={{ fontSize: 22 }}>Pool {poolLetter(p)}</b><span className="cap">Seed · DUPR</span></div>
-          {entries.filter((e) => (e.pool ?? 1) === p).sort((a, b) => (a.seed ?? 99) - (b.seed ?? 99)).map((e) => {
+          <div className="between"><b className="disp" style={{ fontSize: 22 }}>Pool {poolLetter(p)}</b><span className="cap">Team · DUPR</span></div>
+          {entries.filter((e) => (e.pool ?? 1) === p).sort((a, b) => (a.seed ?? 99) - (b.seed ?? 99)).map((e, i) => {
             const avg = entryRating(e.playerIds, pmap, division.kind);
             return (
               <div key={e.id} className="card2" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2, fontSize: 14 }}>
                 <span className="between" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
-                  <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{e.seed !== undefined && <b>{e.seed}. </b>}{e.playerIds.map((id) => displayPlayerName(pmap.get(id)?.name ?? 'Unknown')).join(' / ')}{e.status === 'withdrawn' ? ' (withdrawn)' : ''}</span>
+                  <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}><b>{i + 1}. </b>{names(e.playerIds, pmap)}{e.status === 'withdrawn' ? ' (withdrawn)' : ''}</span>
                   {e.playerIds.length > 1 && avg !== undefined && <span className="n" style={{ fontSize: 16 }}>{avg.toFixed(2)}</span>}
                 </span>
                 <span className="mut" style={{ fontSize: 12 }}>{duprLine(e.playerIds, pmap, division.kind)}</span>

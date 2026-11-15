@@ -8,6 +8,7 @@ import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTour
 import { cleanEmail, type DrawPlan } from './registration';
 import type { Approval, Club, ClubMatch, ScoringMode, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 import { isApproved, NOT_APPROVED, PICK_NEEDS_TRUST } from './types';
+import { teamNames } from './teamName';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
@@ -95,7 +96,7 @@ const toScorerView = (r: Row): ScorerView => {
     matches: ((r.matches as Row[]) ?? []).map((m) => ({
       id: String(m.id), stage: m.stage as ClubMatch['stage'], pool: n(m.pool), round: n(m.round), slot: n(m.slot), court: n(m.court), division: s(m.division),
       format: m.format as Format, games: (m.games as ClubMatch['games']) ?? [], status: m.status as ClubMatch['status'], winner: (m.winner as ClubMatch['winner']) ?? undefined,
-      playedOn: s(m.played_on), namesA: (m.names_a as string[]) ?? [], namesB: (m.names_b as string[]) ?? [],
+      playedOn: s(m.played_on), namesA: teamNames((m.names_a as string[]) ?? []), namesB: teamNames((m.names_b as string[]) ?? []),
     })),
   };
 };
@@ -770,7 +771,7 @@ export class ServerBackend implements ClubBackend {
     return {
       name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '08:00').slice(0, 5), slotMinutes: Number(r.slot_minutes ?? 20), status: r.status as PublicTournament['status'], club: String(r.club),
       divisions: (r.divisions as Row[]).map((d) => ({ id: String(d.id), name: String(d.name), kind: d.kind as Division['kind'], pools: Number(d.pools), advance: Number(d.advance), ...formats(d.format) })),
-      entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), names: (e.names as string[]) ?? [], duprs: ((e.duprs as (number | string | null)[] | null) ?? []).map((x) => (x === null || x === undefined || x === '' ? undefined : Number(x))) })),
+      entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), names: teamNames((e.names as string[]) ?? []), duprs: ((e.duprs as (number | string | null)[] | null) ?? []).map((x) => (x === null || x === undefined || x === '' ? undefined : Number(x))) })),
       matches: (r.matches as Row[]).map((m) => ({
         id: String(m.id), divisionId: s(m.division_id), stage: m.stage as ClubMatch['stage'], pool: n(m.pool), round: n(m.round), bracketPos: n(m.bracket_pos),
         slot: n(m.slot), court: n(m.court), entryA: s(m.entry_a), entryB: s(m.entry_b), games: ((m.games as Row[]) ?? []).map((g) => ({ points: '', a: Number(g.a), b: Number(g.b), ...rallyKeys(g) })),

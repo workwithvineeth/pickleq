@@ -4,6 +4,7 @@ import { biggest, playerClubStats, playerFlags, squadTable } from './analytics';
 import { firstKnockoutPairs, matchResult, nextRoundPairs, planPoolMatches, roundRobinRounds, scheduleSlots, seedOrder, slotTime, snakePools, standings } from './engine';
 import { analyseGame, leadThreshold } from './momentum';
 import { buildSampleClub } from './sample';
+import { teamNames } from '../teamName';
 import { rng, simulateGame } from './simulate';
 import { clubMatchToPersonal } from './toPersonal';
 
@@ -128,6 +129,15 @@ describe('tournament engine', () => {
     expect(ids(firstKnockoutPairs(q, () => 0))).toEqual(['A1vB4', 'A4vB1', 'A2vB3', 'A3vB2']);
     // The result does not depend on how the teams are ranked or listed.
     expect(ids(firstKnockoutPairs([...q].reverse(), (x) => -x.place))).toEqual(['A1vB4', 'A4vB1', 'A2vB3', 'A3vB2']);
+  });
+
+  it('team-name entries show only the team name; real partners are untouched', () => {
+    expect(teamNames(['Rally House', 'Rally House (partner)'])).toEqual(['Rally House']);
+    expect(teamNames(['Rally House', 'rally house (Partner)'])).toEqual(['Rally House']);
+    expect(teamNames(['Asha Rao', 'Lata Iyer'])).toEqual(['Asha Rao', 'Lata Iyer']);
+    expect(teamNames(['Asha Rao', 'Asha Rao (partner)', 'Lata Iyer'])).toEqual(['Asha Rao', 'Asha Rao (partner)', 'Lata Iyer']);
+    expect(teamNames(['Solo'])).toEqual(['Solo']);
+    expect(teamNames([])).toEqual([]);
   });
 
   it('next knockout round from finished matches', () => {

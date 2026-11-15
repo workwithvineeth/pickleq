@@ -336,6 +336,7 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [adding, setAdding] = useState(false);
   const d = state.data;
   const payments=useLoad(async()=>b && d?.tournament.entryMode==='registration'?b.registrations(id):null,[b,id,d?.tournament.entryMode]);
   const pmap = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
@@ -371,6 +372,27 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
       if (plan.matchSides.length) await b!.patchMatches(plan.matchSides.map((m) => ({ id: m.id, patch: { sideA: m.sideA, sideB: m.sideB } })));
     }, `${pmap.get(newPlayer)?.name ?? 'New player'} is in for ${pmap.get(oldId)?.name ?? 'the player'}. Played results keep the original names.`);
   }
+  // The simple way in: just a name and an event. The team joins the pool with the fewest teams. A doubles team made from a
+  // team name alone gets a placeholder partner ("<name> (partner)"), which every screen hides.
+  async function addTeam(name: string) {
+    const clean = name.trim();
+    if (!clean) return setMsg({ ok: false, text: 'Enter the team or player name' });
+    // Check the event can take a new entry before creating anything on the roster.
+    const need = div.kind === 'doubles' ? 2 : 1;
+    const dry = planLateEntry(t, div, Array.from({ length: need }, (_, i) => `new-${i}`), d!.entries, d!.matches, newId);
+    if (typeof dry === 'string') return setMsg({ ok: false, text: dry });
+    setBusy(true); setMsg(null);
+    try {
+      const first = await b!.addPlayer(t.clubId, { name: clean });
+      const ids = [first.id];
+      if (need === 2) ids.push((await b!.addPlayer(t.clubId, { name: `${clean} (partner)` })).id);
+      const plan = planLateEntry(t, div, ids, d!.entries, d!.matches, newId);
+      if (typeof plan === 'string') throw new Error(plan);
+      await b!.addLatePoolEntry(plan.entry, plan.matches);
+      setMsg({ ok: true, text: `${clean} added to ${div.name}, Pool ${poolLetter(plan.entry.pool)}, with ${plan.matches.length} new match${plan.matches.length === 1 ? '' : 'es'}.` });
+      setAdding(false); state.reload();
+    } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
+  }
   function late(playerIds: string[]) {
     const plan = planLateEntry(t, div, playerIds, d!.entries, d!.matches, newId);
     if (typeof plan === 'string') return setMsg({ ok: false, text: plan });
@@ -381,11 +403,15 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
   return (
     <MatchdayShell go={go ?? (() => undefined)} active="entries" d={d}>
       <PageHead cap={`${t.name} · ${formatRule(div.format)}`} title={<span id="entries-title">Entries</span>}
-        actions={t.entryMode === 'registration' && go ? <button type="button" className="btn ghost sm" onClick={() => go('club-inbox', t.id)}>Entries &amp; UPI</button> : undefined} />
+        actions={<>
+          <button type="button" className="btn btn-primary sm" aria-expanded={adding} onClick={() => setAdding(!adding)}>+ Add team</button>
+          {t.entryMode === 'registration' && go ? <button type="button" className="btn ghost sm" onClick={() => go('club-inbox', t.id)}>Entries &amp; UPI</button> : null}
+        </>} />
       <Legacy><DemoNote b={b} /></Legacy>
       {d.divisions.length > 1 && <div className="tabs" role="group" aria-label="Event">{d.divisions.map((x) => <button key={x.id} type="button" className={x.id === div.id ? 'tab on' : 'tab'} aria-pressed={x.id === div.id} onClick={() => { setDivId(x.id); setOpenEntry(null); }}>{x.name}</button>)}</div>}
       <p className="mut" style={{ margin: 0, fontSize: 14 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} in the draw. Withdraw, swap a player or add a late entry here.</p>
       {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}
+      {adding && <AddTeam divisions={d.divisions} divId={div.id} onDiv={(x) => { setDivId(x); setOpenEntry(null); }} busy={busy} onAdd={addTeam} onClose={() => setAdding(false)} />}
       <div className="card"><div className="scroll"><table className="tbl" aria-label="Entries"><thead><tr><th>#</th><th>Team and DUPR</th><th>Pool</th><th>Status</th><th><span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Actions</span></th></tr></thead><tbody>
       {entries.map((e, i) => {
         const out = e.status === 'withdrawn';
@@ -394,9 +420,9 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
         return (
           <Fragment key={e.id}>
             <tr aria-label={names(e.playerIds, pmap)} style={out ? { opacity: 0.6 } : undefined}>
-              <td className="n" style={{ fontSize: 20 }}>{i + 1}</td>
+              <td className="n" style={{ fontSize: 20 }}>{entries.slice(0, i).filter((x) => x.pool === e.pool).length + 1}</td>
               <td><b>{names(e.playerIds, pmap)}</b><div className="mut" style={{ fontSize: 12 }}>{e.playerIds.map((pid) => { const p = pmap.get(pid); const r = div.kind === 'doubles' ? p?.duprDoubles : p?.duprSingles; return `${(p?.name ?? 'Unknown').split(/\s+/)[0]} ${r !== undefined ? fmtRating(r) : 'Unrated'}`; }).join(' · ')}</div></td>
-              <td>Pool {poolLetter(e.pool)} · seed {e.seed ?? '—'}</td>
+              <td>Pool {poolLetter(e.pool)}</td>
               <td><span className={out ? 'st off' : 'st ok'}>{out ? 'Withdrawn' : 'Active'}</span>{paid && <span className="st ok" style={{ marginLeft: 6 }}>Paid</span>}</td>
               <td style={{ textAlign: 'right' }}>{!out && <button type="button" className="btn ghost sm" aria-expanded={isOpen} onClick={() => setOpenEntry(isOpen ? null : e.id)}>{isOpen ? 'Close' : 'Change'}</button>}</td>
             </tr>
@@ -439,6 +465,27 @@ function EntryActions({ e, pmap, free, busy, onWithdraw, onReplace }: { e: Entry
         ? <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setConfirm(true)}>Withdraw…</button>
         : <div className="meta"><button type="button" className="btn btn-primary" disabled={busy} onClick={onWithdraw}>Yes, withdraw</button><button type="button" className="btn btn-outline" onClick={() => setConfirm(false)}>Keep them in</button></div>}
     </div>
+  );
+}
+
+/** Simple add: a name and an event. The team joins the pool with the fewest teams. */
+function AddTeam({ divisions, divId, onDiv, busy, onAdd, onClose }: { divisions: { id: string; name: string }[]; divId: string; onDiv: (id: string) => void; busy: boolean; onAdd: (name: string) => void; onClose: () => void }) {
+  const [name, setName] = useState('');
+  return (
+    <section className="card section" aria-label="Add a team">
+      <h3 style={{ fontSize: 16 }}>Add a team</h3>
+      <input className="input" style={{ fontSize: 16 }} aria-label="Team or player name" placeholder="Team or player name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+      {divisions.length > 1 && (
+        <select className="input" style={{ fontSize: 16 }} aria-label="Event" value={divId} onChange={(e) => onDiv(e.target.value)}>
+          {divisions.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+        </select>
+      )}
+      <p className="small muted" style={{ margin: 0 }}>Joins the pool with the fewest teams and plays everyone in it. Not possible once the knockouts start.</p>
+      <div className="meta">
+        <button type="button" className="btn btn-primary" disabled={busy || !name.trim()} onClick={() => { onAdd(name); setName(''); }}>Add</button>
+        <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
+      </div>
+    </section>
   );
 }
 
