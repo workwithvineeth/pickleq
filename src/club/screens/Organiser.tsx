@@ -412,7 +412,7 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
       <p className="mut" style={{ margin: 0, fontSize: 14 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} in the draw. Withdraw, swap a player or add a late entry here.</p>
       {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}
       {adding && <AddTeam divisions={d.divisions} divId={div.id} onDiv={(x) => { setDivId(x); setOpenEntry(null); }} busy={busy} onAdd={addTeam} onClose={() => setAdding(false)} />}
-      <div className="card"><div className="scroll"><table className="tbl" aria-label="Entries"><thead><tr><th>#</th><th>Team and DUPR</th><th>Pool</th><th>Status</th><th><span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Actions</span></th></tr></thead><tbody>
+      <div className="card"><div className="scroll"><table className="tbl" aria-label="Entries"><thead><tr><th>#</th><th>Team</th><th>Pool</th><th>Status</th><th><span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Actions</span></th></tr></thead><tbody>
       {entries.map((e, i) => {
         const out = e.status === 'withdrawn';
         const isOpen = openEntry === e.id;
@@ -420,8 +420,8 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
         return (
           <Fragment key={e.id}>
             <tr aria-label={names(e.playerIds, pmap)} style={out ? { opacity: 0.6 } : undefined}>
-              <td className="n" style={{ fontSize: 20 }}>{entries.slice(0, i).filter((x) => x.pool === e.pool).length + 1}</td>
-              <td><b>{names(e.playerIds, pmap)}</b><div className="mut" style={{ fontSize: 12 }}>{e.playerIds.map((pid) => { const p = pmap.get(pid); const r = div.kind === 'doubles' ? p?.duprDoubles : p?.duprSingles; return `${(p?.name ?? 'Unknown').split(/\s+/)[0]} ${r !== undefined ? fmtRating(r) : 'Unrated'}`; }).join(' · ')}</div></td>
+              <td className="n" style={{ fontSize: 20 }}>{i + 1}</td>
+              <td><b>{names(e.playerIds, pmap)}</b>{(() => { const rated = e.playerIds.flatMap((pid) => { const p = pmap.get(pid); const r = div.kind === 'doubles' ? p?.duprDoubles : p?.duprSingles; return r !== undefined ? [`${(p?.name ?? 'Unknown').split(/\s+/)[0]} ${fmtRating(r)}`] : []; }); return rated.length ? <div className="mut" style={{ fontSize: 12 }}>DUPR {rated.join(' · ')}</div> : null; })()}</td>
               <td>Pool {poolLetter(e.pool)}</td>
               <td><span className={out ? 'st off' : 'st ok'}>{out ? 'Withdrawn' : 'Active'}</span>{paid && <span className="st ok" style={{ marginLeft: 6 }}>Paid</span>}</td>
               <td style={{ textAlign: 'right' }}>{!out && <button type="button" className="btn ghost sm" aria-expanded={isOpen} onClick={() => setOpenEntry(isOpen ? null : e.id)}>{isOpen ? 'Close' : 'Change'}</button>}</td>

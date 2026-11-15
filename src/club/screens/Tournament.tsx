@@ -703,6 +703,7 @@ function FixtureRow({ m, a, b, onScore }: { m: ClubMatch; a: string; b: string; 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 170 }}>
       <span className="cap">{m.stage === 'pool' ? (m.pool ? `Pool ${poolLetter(m.pool)}` : 'Pool') : STAGE_LABEL[m.stage]}</span>
       <span className={winner === 'A' ? 'acc' : undefined} style={{ fontWeight: winner === 'A' ? 700 : 500, overflowWrap: 'anywhere' }}>{a}</span>
+      <span className="mut" style={{ fontSize: 12 }}>vs</span>
       <span className={winner === 'B' ? 'acc' : undefined} style={{ fontWeight: winner === 'B' ? 700 : 500, overflowWrap: 'anywhere' }}>{b}</span>
       <span className="row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
         {state}{score && <span className="n" style={{ fontSize: 16 }}>{score}</span>}

@@ -23,7 +23,8 @@ const FILTERS: { value: Filter; label: string }[] = [
 const isOut = (r: Registration) => r.status === 'rejected' || r.status === 'withdrawn';
 const toCheck = (r: Registration) => r.payment === 'claimed' && !isOut(r);
 const inFilter = (r: Registration, f: Filter) => f === 'all' || (f === 'check' ? toCheck(r) : f === 'waiting' ? r.status === 'pending' : f === 'out' ? isOut(r) : r.status === f);
-const dupr = (p: EntryPerson) => `${p.name.split(/\s+/)[0]} ${p.dupr !== undefined ? p.dupr.toFixed(2) : 'Unrated'}`;
+/** "Asha 4.20 · Lata 3.95": only players with a DUPR; empty when nobody has one. */
+const duprLine = (ps: EntryPerson[]) => ps.filter((p) => p.dupr !== undefined).map((p) => `${p.name.split(/\s+/)[0]} ${p.dupr!.toFixed(2)}`).join(' · ');
 const PAY_CLS: Record<Payment, string> = { unpaid: 'st off', venue: 'st off', claimed: 'st wait', paid: 'st ok' };
 // Under 640px each entry is a card instead of a row of the 680px-wide table.
 const CARDS_CSS = `@media (max-width:639px){
@@ -132,13 +133,13 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
       </div>
       <div className="card rq-entry-cards">
         <style>{CARDS_CSS}</style>
-        {shown.length > 0 && <div className="scroll"><table className="tbl" aria-label={`${div.name} entries list`}><thead><tr><th>Team and DUPR</th><th>Category</th><th>Payment</th><th>UPI reference</th><th>Status</th><th><span style={SR}>Actions</span></th></tr></thead><tbody>
+        {shown.length > 0 && <div className="scroll"><table className="tbl" aria-label={`${div.name} entries list`}><thead><tr><th>Team</th><th>Category</th><th>Payment</th><th>UPI reference</th><th>Status</th><th><span style={SR}>Actions</span></th></tr></thead><tbody>
           {shown.map((r) => {
             const a = nextAction(r);
             const panel = open?.id === r.id ? open.panel : null;
             return <Fragment key={r.id}>
               <tr aria-label={who(r)} style={isOut(r) ? { opacity: 0.65 } : undefined}>
-                <td><b>{who(r)}</b><div className="mut" style={{ fontSize: 12 }}>{r.players.map(dupr).join(' · ')}</div><div className="mut" style={{ fontSize: 12 }}>{r.source === 'offline' ? 'Added by organiser' : 'Entered online'} · {friendlyDateTime(r.createdAt)}</div></td>
+                <td><b>{who(r)}</b>{duprLine(r.players) && <div className="mut" style={{ fontSize: 12 }}>DUPR {duprLine(r.players)}</div>}<div className="mut" style={{ fontSize: 12 }}>{r.source === 'offline' ? 'Added by organiser' : 'Entered online'} · {friendlyDateTime(r.createdAt)}</div></td>
                 <td className="rq-cat">{div.name}</td>
                 <td><span className={PAY_CLS[r.payment]} style={{ whiteSpace: 'normal' }}>{PAYMENT_LABEL[r.payment]}</span></td>
                 <td className="n rq-ref" style={{ fontSize: 20, letterSpacing: '.05em' }}>{r.paymentRef ?? <span className="mut" style={{ fontSize: 13, letterSpacing: 0 }}>—</span>}</td>
