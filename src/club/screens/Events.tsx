@@ -609,7 +609,7 @@ export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
                 </a>
                 <span className={`${st.cls} wrapok`}>{st.text}</span>
                 <div style={{ flex: '1 1 100%', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
-                  <span>{x.players.map((p) => `${p.name} (${p.dupr !== undefined ? `DUPR ${p.dupr}` : 'Unrated'})`).join(' / ')}</span>
+                  <span>{x.players.map((p) => (p.dupr !== undefined ? `${p.name} (DUPR ${p.dupr})` : p.name)).join(' / ')}</span>
                   {x.fee ? <span className="mut">Entry fee ₹{x.fee}: <span>{PAYMENT_LABEL[x.payment]}</span></span> : null}
                   {x.note && <span>Organiser: {x.note}</span>}
                   {(payUpi || x.results || (active && !x.drawn)) && (

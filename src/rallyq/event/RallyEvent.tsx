@@ -82,7 +82,7 @@ export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:s
  const taken=e.divisions.reduce((s,x)=>s+x.taken,0);
  const caps=e.divisions.map(x=>(x.rules as {maxEntries?:number}).maxEntries).filter((n):n is number=>typeof n==='number');const cap=caps.length===e.divisions.length&&caps.length?caps.reduce((a,b)=>a+b,0):0;
  const live=e.status==='live';
- const entries=d?d.entries.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.names.join(' / '),cat:d.divisions.find(v=>v.id===x.divisionId)?.name??'',dupr:duprLineOf(d,x.id).replace(/^DUPR /,''),st:'',cls:''})):e.divisions.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.taken+' teams entered',cat:x.name,dupr:'—',st:e.registrationOpen?'Open':'Closed',cls:e.registrationOpen?'chip ball':'chip'}));
+ const entries=d?d.entries.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.names.join(' / '),cat:d.divisions.find(v=>v.id===x.divisionId)?.name??'',dupr:duprLineOf(d,x.id).replace(/^DUPR /,'')||'—',st:'',cls:''})):e.divisions.map((x,i)=>({no:String(i+1).padStart(2,'0'),team:x.taken+' teams entered',cat:x.name,dupr:'—',st:e.registrationOpen?'Open':'Closed',cls:e.registrationOpen?'chip ball':'chip'}));
  const primary=primaryAction(e);
  return {
   hasStatus:!d,

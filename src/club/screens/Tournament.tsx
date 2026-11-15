@@ -267,9 +267,10 @@ function Tabs<T extends string>({ label, value, options, onChange }: { label: st
 }
 const cardPad = { padding: 20, display: 'flex', flexDirection: 'column', gap: 12 } as const;
 const small = { fontSize: 12, margin: 0 } as const;
-/** Each player's DUPR, in entry order: "DUPR 3.95 · Unrated". */
+/** The DUPR of each player who has one, in entry order: "DUPR 3.95 · 4.10". Empty when nobody is rated (no "Unrated" noise). */
 function duprLine(ids: string[], pmap: Map<string, ClubPlayer>, kind: DivisionKind): string {
-  return `DUPR ${ids.map((id) => { const r = playerRating(pmap.get(id), kind); return r === undefined ? 'Unrated' : r.toFixed(2); }).join(' · ')}`;
+  const rated = ids.map((id) => playerRating(pmap.get(id), kind)).filter((r): r is number => r !== undefined);
+  return rated.length ? `DUPR ${rated.map((r) => r.toFixed(2)).join(' · ')}` : '';
 }
 
 export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
