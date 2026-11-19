@@ -12,6 +12,8 @@ import {MyTournaments} from './MyTournaments';
 import {signOutTo} from '../shell/Shell';
 import {appLink,shareLink} from '../../club/screens/common';
 const source=holes(raw,[
+ // Cover: a neutral night-court photo from the site until players can add their own (no sample person).
+ ['<section class="photo ph-woman"','<section class="photo ph-studio"'],['background:rgba(6,20,13,.7)">Illustration</span>','background:rgba(6,20,13,.7)">Sample photo</span>'],
  // No public profile until the player is linked to one: never open the sample profile as if it were theirs.
  ['<a class="btn" href="Studio.dc.html" style="background:#0B2418;color:#D9F24A!important">See my public profile</a>','<sc-if value="{{hasProfile}}" hint-placeholder-val="{{ true }}"><a class="btn" href="Studio.dc.html" style="background:#0B2418;color:#D9F24A!important">See my public profile</a></sc-if>'],
  // Overview: share the public profile link (native share sheet, else copied).

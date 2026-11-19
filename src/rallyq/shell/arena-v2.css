@@ -136,3 +136,5 @@
 /* TV (Pad 5 board): the serving team's name and score fill ball green; ink text; no layout shift */
 .rq .mini span:has(> .rqm-srv.on),.rq .mini span:has(> .rqm-srv.on) + .n{background:var(--ball);color:#06140D!important;border-radius:10px;box-shadow:0 0 0 6px var(--ball);transition:background .4s cubic-bezier(.45,0,.25,1),box-shadow .4s cubic-bezier(.45,0,.25,1)}
 .rq .mini span:has(> .rqm-srv.on) .rqm-srv{background:#06140D;border-radius:3px}
+/* Player Studio cover: neutral night court (no sample person) until the player adds a photo */
+.rq .ph-studio{background-color:#0B2418;background-image:linear-gradient(180deg,rgba(6,20,13,.15) 0%,rgba(6,20,13,.35) 45%,rgba(6,20,13,.9) 100%),url(./photos/mobile/live-court-floodlights.jpg)!important;background-size:cover;background-position:center 40%}

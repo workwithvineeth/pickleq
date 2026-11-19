@@ -96,9 +96,9 @@ test('Player Studio fits phone and desktop widths, with readable inputs and usab
     await expect(page.getByText('Log a session', { exact: true })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${theme} at ${width}px`).toBeLessThanOrEqual(width);
-    const portrait = page.locator('section.photo.ph-woman');
-    await expect(portrait.getByText('Illustration', { exact: true })).toBeVisible();
-    expect(await portrait.evaluate(el => getComputedStyle(el).backgroundImage)).toContain('meera.jpg');
+    const portrait = page.locator('section.photo.ph-studio');
+    await expect(portrait.getByText('Sample photo', { exact: true })).toBeVisible();
+    expect(await portrait.evaluate(el => getComputedStyle(el).backgroundImage)).toContain('live-court-floodlights.jpg');
     expect(await portrait.evaluate(el => getComputedStyle(el).animationName)).toBe('none');
     for (const button of await page.locator('.rallyq-screen-mystudio button:visible').all()) {
       expect(await button.evaluate(el => el.getBoundingClientRect().height), await button.textContent()).toBeGreaterThanOrEqual(44);

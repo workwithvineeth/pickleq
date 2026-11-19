@@ -54,5 +54,5 @@ it('Drill or training is one choice that asks for minutes',async()=>{
 });
 it('the player photo panel uses the portrait, not the tracker image',async()=>{
  const{container}=await open();
- const panel=container.querySelector('section.photo');expect(panel?.classList.contains('ph-woman')).toBe(true);expect(panel?.classList.contains('ph-tracker')).toBe(false);expect(panel).toHaveTextContent('Illustration');
+ const panel=container.querySelector('section.photo');expect(panel?.classList.contains('ph-studio')).toBe(true);expect(panel?.classList.contains('ph-woman')).toBe(false);expect(panel?.classList.contains('ph-tracker')).toBe(false);expect(panel).toHaveTextContent('Sample photo');
 });
