@@ -29,7 +29,7 @@ const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
 
 /** Screens without an account (referee court, desk PIN, public results and event pages): no account strip there. */
 /** v1.2 screens bring their own shell (PublicShell / OrgShell): the frame adds nothing around them. */
-const BARE: RouteName[] = ['club', 'club-tournaments', 'club-results', 'club-claim', 'club-join', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-scorers', 'club-results-dupr', 'club-dupr', 'demo', 'events-post'];
+const BARE: RouteName[] = ['club', 'club-tournaments', 'club-results', 'club-claim', 'club-join', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-scorers', 'club-results-dupr', 'club-dupr', 'demo', 'events-post', 'club-player'];
 const NO_ACCOUNT: RouteName[] = ['court', 'desk', 'helper', 'results', 'event', 'club-signin', 'admin-login', 'demo'];
 
 /** "Signed in as … · Sign out" on every signed-in screen, so sign-out is never more than one tap away. */

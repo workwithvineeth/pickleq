@@ -318,8 +318,9 @@ export function PlayerView({ playerId, go, onBack }: { playerId: string; go: Go;
   const recent = d ? playerMatches(playerId, d.matches).slice(0, 8) : [];
   const pct = (v: number | null) => (v === null ? '–' : `${v}%`);
   return (
-    <main className="screen" aria-labelledby="player-title">
-      <Header id="player-title" title={p?.name ?? 'Player'} onBack={onBack} />
+    <OrgShell go={go} active="club" clubName={d?.club.name} clubId={d?.club.id}>
+    <div className="screen pq-orgplayer" aria-labelledby="player-title" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 0 }}>
+      <PageHead cap={d?.club.name ?? 'Player'} title={<span id="player-title">{p?.name ?? 'Player'}</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
       <Status error={state.error} loading={state.loading && !d} />
       {p && stats && (
         <>
@@ -376,7 +377,8 @@ export function PlayerView({ playerId, go, onBack }: { playerId: string; go: Go;
           {d?.myPlayerId === playerId && !isClubApp() && <button type="button" className="btn btn-outline" onClick={() => go('club-sharing', playerId)}>What this club can see about me</button>}
         </>
       )}
-    </main>
+    </div>
+    </OrgShell>
   );
 }
 
