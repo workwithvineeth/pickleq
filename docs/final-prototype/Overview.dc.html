@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Organiser home</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><span class="cap grp">Cedar</span><a class="on" href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Cedar Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap">Tuesday 10 Nov · signed in as Vineeth</span><h1 class="disp">Five days to Cedar Open.</h1><a class="tlink mut" href="Event.dc.html">View the public event page ↗</a></div>
+<div class="row" style="flex-wrap:wrap"><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><a class="btn" href="Desk.dc.html">Open the desk</a></div>
+</div>
+<div class="grid g4">
+<div class="card stat" style="padding:18px"><div class="cap">Teams entered</div><div class="n acc">24</div><div class="mut" style="font-size:13px">of 32 · 2 waitlist</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Payments to check</div><div class="n">3</div><div class="mut" style="font-size:13px"><a href="Entries.dc.html">Check entries →</a></div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Courts</div><div class="n">4</div><div class="mut" style="font-size:13px">a referee link for each</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Matches planned</div><div class="n">46</div><div class="mut" style="font-size:13px">5:00 to 9:30 pm</div></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<section class="card" style="flex:999 1 480px;min-width:0;padding:22px">
+<div class="between"><div><div class="cap acc">Match-day checklist</div><div style="font-weight:700;font-size:18px;margin-top:4px">{{done}} of {{total}} ready</div></div><span class="n acc" style="font-size:36px">{{pct}}</span></div>
+<div class="bar" style="margin-top:12px"><i style="width:{{pct}}"></i></div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="6"><button class="{{t.cls}}" aria-pressed="{{t.on}}" onClick="{{t.toggle}}"><span class="bx" style="{{t.box}}">{{t.tick}}</span><span class="grow" style="{{t.txt}}">{{t.name}}</span><span class="{{t.tag}}">{{t.when}}</span></button></sc-for>
+</div>
+</section>
+<div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px">
+<section class="card"><div class="cap" style="padding:16px 18px 4px">Coming up</div><div class="list">
+<a href="Desk.dc.html"><span class="tile">15</span><span class="grow"><b style="display:block">Cedar Open</b><span class="mut" style="font-size:13px">Sun 15 Nov · 4 courts · 46 matches</span></span><span class="st ok">Ready</span></a>
+<a href="Entries.dc.html"><span class="tile">15</span><span class="grow"><b style="display:block">Banyan DUPR Night</b><span class="mut" style="font-size:13px">Sun 15 Nov · you help Banyan</span></span><span class="st wait">3 to check</span></a>
+<a href="Tournaments.dc.html"><span class="tile">28</span><span class="grow"><b style="display:block">Cedar December League</b><span class="mut" style="font-size:13px">Sat 28 Nov · not published</span></span><span class="st off">Draft</span></a>
+</div></section>
+<section class="card"><div class="between" style="padding:16px 18px 4px"><div class="cap">Your clubs</div><a class="tlink" style="min-height:32px;font-size:13px" href="Club.dc.html">Create a club →</a></div><div class="list">
+<a href="Club.dc.html"><span class="tile lg">CC</span><span class="grow"><b style="display:block">Cedar at Maple Courts</b><span class="mut" style="font-size:13px">Owner · 3 members</span></span><span class="st ok">Trusted</span></a>
+<a href="Club.dc.html"><span class="tile lg">LP</span><span class="grow"><b style="display:block">Banyan Pickleball Club</b><span class="mut" style="font-size:13px">Organiser</span></span><span class="st wait">Awaiting approval</span></a>
+</div></section>
+<section class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px">
+<div class="between"><div class="cap">Match-day PINs</div><button class="tlink" style="min-height:32px;font-size:13px" onClick="{{flipPins}}">{{pinsLabel}}</button></div>
+<sc-for list="{{pins}}" as="p" hint-placeholder-count="2"><div class="card2" style="padding:12px 14px;display:flex;align-items:center;gap:12px"><span class="grow"><span class="cap" style="display:block">{{p.name}}</span><span class="n" style="font-size:30px;letter-spacing:.1em">{{p.pin}}</span></span><button class="btn ghost sm" onClick="{{p.roll}}">New PIN</button></div></sc-for>
+<span class="mut" style="font-size:12px">Only organisers see these. Change them after each event.</span>
+</section>
+</div>
+</div>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a class="on" href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { done: {0:true,1:true,2:true}, showPins: false, pin1: '4826', pin2: '739158' }; }
+
+renderVals() {
+const s = this.state;
+const L = [['Entries link shared on WhatsApp','Done'],['Categories and pools set','Done'],['Referee links sent (4 courts)','Done'],['Court QR codes printed','Fri'],['TV board tested on the venue screen','Sat'],['Dress rehearsal on one court','Sat 14 Nov']];
+const d = s.done; const nx = L.findIndex((x,i) => !d[i]);
+const tasks = L.map(([name,when],i) => ({name, when: d[i] ? 'Done' : (i===nx ? 'Next · '+when : when), on: d[i] ? 'true' : 'false',
+  tag: d[i] ? 'st off' : (i===nx ? 'st ok' : 'st wait'),
+  cls: 'opt'+(i===nx ? ' on' : ''), tick: d[i] ? '✓' : '',
+  box: 'width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:13px;font-weight:800;color:#0B2418;flex:none;'+(d[i] ? 'background:#D9F24A' : 'box-shadow:inset 0 0 0 2px #9FB4A6'),
+  txt: d[i] ? 'color:var(--mut);text-decoration:line-through' : 'font-weight:600',
+  toggle: () => this.setState({done: {...d, [i]: !d[i]}})}));
+const done = L.filter((x,i) => d[i]).length;
+const P = {Referee: s.pin1, Desk: s.pin2};
+return { rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+  tasks, done, total: L.length, pct: Math.round(done/L.length*100) + '%',
+  pins: Object.entries(P).map(([name,pin]) => ({name: name+' PIN', pin: s.showPins ? pin : '•'.repeat(pin.length), roll: () => this.setState(name==='Referee' ? {pin1: String(1000+Math.floor(Math.random()*8999))} : {pin2: String(100000+Math.floor(Math.random()*899999))})})),
+  flipPins: () => this.setState({showPins: !s.showPins}), pinsLabel: s.showPins ? 'Hide' : 'Show'
+};
+}
+}
+</script>
+</body>
+</html>

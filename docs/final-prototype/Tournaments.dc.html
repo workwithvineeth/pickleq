@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Tournaments and Create tournament</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><span class="cap grp">Cedar</span><a href="Overview.dc.html">Home</a><a class="on" href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Cedar Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap">Cedar at Maple Courts</span><h1 class="disp">{{title}}</h1></div>
+<div class="row"><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><sc-if value="{{isList}}" hint-placeholder-val="{{ true }}"><button class="btn" onClick="{{toNew}}">Create tournament</button></sc-if></div>
+</div>
+
+<sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="tabs" role="tablist" aria-label="Show"><sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button role="tab" class="{{f.cls}}" onClick="{{f.pick}}">{{f.name}}</button></sc-for></div>
+<div class="card list">
+<sc-for list="{{rows}}" as="t" hint-placeholder-count="5">
+<a href="{{t.href}}"><span class="tile">{{t.day}}</span><span class="grow" style="min-width:0"><b class="ell" style="display:block;font-size:16px">{{t.name}}</b><span class="mut" style="font-size:13px">{{t.meta}}</span></span><span class="{{t.st}}">{{t.status}}</span><span class="tlink">Open →</span></a>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+<section style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:18px">
+<div class="steps" aria-label="Steps"><sc-for list="{{steps}}" as="s" hint-placeholder-count="5"><button class="{{s.cls}}" onClick="{{s.pick}}"><i>{{s.n}}</i>{{s.name}}</button></sc-for></div>
+<div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px">
+<sc-if value="{{s1}}" hint-placeholder-val="{{ true }}"><div class="form">
+<div class="fld"><label for="tn">Tournament name</label><input id="tn" class="inp" value="Cedar December League"></div>
+<div class="form two"><div class="fld"><label for="td">Date</label><input id="td" class="inp" value="Sat 28 Nov 2026"></div><div class="fld"><label for="tt">Start time</label><input id="tt" class="inp" value="5:00 pm"></div></div>
+<div class="form two"><div class="fld"><label for="tv">Venue</label><input id="tv" class="inp" value="Maple Courts, Hyderabad"></div><div class="fld"><label for="tc">Courts</label><input id="tc" class="inp" value="4"></div></div>
+</div></sc-if>
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:10px">
+<div class="mut" style="font-size:13px">Pick the categories. Each one gets its own draw.</div>
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="4"><div class="opt" style="cursor:default"><span class="grow"><b style="display:block">{{c.name}}</b><span class="mut" style="font-size:13px">{{c.sub}}</span></span><button class="{{c.sw}}" aria-label="{{c.aria}}" onClick="{{c.toggle}}"><span></span></button></div></sc-for>
+</div></sc-if>
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:12px">
+<div class="grid g2" style="gap:12px"><sc-for list="{{formats}}" as="f" hint-placeholder-count="3"><button class="{{f.cls}}" onClick="{{f.pick}}"><span class="dot"></span><span><b style="display:block">{{f.name}}</b><span class="mut" style="font-size:13px">{{f.sub}}</span></span></button></sc-for></div>
+<div class="form two"><div class="fld"><label for="gp">Games to</label><input id="gp" class="inp" value="11, win by 2"></div><div class="fld"><label for="gf">Finals</label><input id="gf" class="inp" value="Best of 3"></div></div>
+<div class="note">{{estimate}}</div>
+</div></sc-if>
+<sc-if value="{{s4}}" hint-placeholder-val="{{ false }}"><div class="form">
+<div class="form two"><div class="fld"><label for="cap">Teams per category</label><input id="cap" class="inp" value="16"></div><div class="fld"><label for="fee">Entry fee per team</label><input id="fee" class="inp" value="[YOUR PRICE]"></div></div>
+<div class="fld"><label for="upi">Club UPI ID</label><input id="upi" class="inp" value="[CLUB UPI ID]"><span class="hint">Players pay the club directly and paste their UPI reference. RallyQ never holds money.</span></div>
+<div class="fld"><label for="cl">Entries close</label><input id="cl" class="inp" value="Thu 26 Nov, 9 pm"></div>
+</div></sc-if>
+<sc-if value="{{s5}}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{pubs}}" as="p" hint-placeholder-count="3"><div class="opt" style="cursor:default"><span class="grow"><b style="display:block">{{p.name}}</b><span class="mut" style="font-size:13px">{{p.sub}}</span></span><button class="{{p.sw}}" aria-label="{{p.aria}}" onClick="{{p.toggle}}"><span></span></button></div></sc-for>
+</div></sc-if>
+</div>
+<div class="between"><button class="tlink mut" onClick="{{prev}}">{{prevLabel}}</button><button class="btn" onClick="{{next}}">{{nextLabel}}</button></div>
+</section>
+<aside class="card" style="flex:1 1 300px;padding:20px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden">
+<div class="cap">Preview on Events</div>
+<div class="row"><span class="tile">CC</span><span><span class="cap" style="display:block">Hosted by</span><b style="font-size:14px">Cedar at Maple Courts</b></span></div>
+<div class="disp" style="font-size:28px">Cedar December League</div>
+<div class="mut" style="font-size:13px">Sat 28 Nov · 5:00 pm · Maple Courts · 4 courts</div>
+<div class="row" style="gap:6px;flex-wrap:wrap"><sc-for list="{{onCats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for></div>
+<span class="{{pubChip}}" style="align-self:flex-start">{{pubLabel}}</span>
+</aside>
+</div>
+</sc-if>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a class="on" href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { v: 'list', f: 'All', step: 1, fmt: 'pools', cats: { md: true, wd: true, mx: true, ws: false }, pub: { board: true, entries: true, dupr: false }, done: false }; }
+renderVals() {
+  const s = this.state;
+  const T = [['13','Cedar Open','Today · 4 courts · 46 matches','Live','st live','Desk.dc.html','live'],['15','Banyan DUPR Night','Sun 15 Nov · 24 teams','Entries open','st ok','Entries.dc.html','up'],['28','Cedar December League','Sat 28 Nov · draft','Draft','st off','Tournaments.dc.html','up'],['29','Cedar Diwali Doubles','Thu 29 Oct · 20 teams','Finished','st off','Results.dc.html','done']];
+  const keep = t => s.f==='All' || (s.f==='Live' && t[6]==='live') || (s.f==='Upcoming' && t[6]==='up') || (s.f==='Finished' && t[6]==='done');
+  const ST = ['Basics','Categories','Format','Entries & pay','Publish'];
+  const C = [['md','Men’s doubles','Pools of 4, top 2 through'],['wd','Women’s doubles','Pools of 4, top 2 through'],['mx','Mixed doubles','DUPR under 4.5'],['ws','Women’s singles','Open']];
+  const F = [['pools','Pools then knockout','Everyone plays 3, then a bracket'],['ko','Straight knockout','Quickest, one loss and out'],['rr','Round robin','Everyone plays everyone']];
+  const P = [['board','Show on RallyQ Events','Players in Hyderabad can find it'],['entries','Open entries now','Players can enter and pay'],['dupr','Send results to DUPR','After you confirm the results']];
+  const on = C.filter(c => s.cats[c[0]]);
+  const mins = s.fmt==='ko' ? 150 : s.fmt==='rr' ? 330 : 270;
+  const sw = v => v ? 'sw on' : 'sw';
+  return {
+    rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+    isList: s.v==='list', isNew: s.v==='new', title: s.v==='list' ? 'Tournaments' : 'Create tournament',
+    toNew: () => this.setState({v:'new', step:1, done:false}),
+    filters: ['All','Live','Upcoming','Finished'].map(n => ({name:n, cls: n===s.f ? 'tab on' : 'tab', pick: () => this.setState({f:n})})),
+    rows: T.filter(keep).map(([day,name,meta,status,st,href]) => ({day,name,meta,status,st,href})),
+    steps: ST.map((n,i) => ({n: i+1 < s.step ? '✓' : i+1, name:n, cls: i+1===s.step ? 'on' : (i+1 < s.step ? 'done' : ''), pick: () => this.setState({step:i+1})})),
+    s1: s.step===1, s2: s.step===2, s3: s.step===3, s4: s.step===4, s5: s.step===5,
+    cats: C.map(([k,name,sub]) => ({name,sub, sw: sw(s.cats[k]), aria: (s.cats[k] ? 'Turn off ' : 'Turn on ')+name, toggle: () => this.setState({cats: {...s.cats, [k]: !s.cats[k]}})})),
+    formats: F.map(([k,name,sub]) => ({name,sub, cls: s.fmt===k ? 'opt on' : 'opt', pick: () => this.setState({fmt:k})})),
+    estimate: 'About ' + Math.floor(mins/60) + ' h ' + (mins%60) + ' min on 4 courts for ' + on.length + ' categories of 16 teams. Finishes around ' + (s.fmt==='ko' ? '7:30' : s.fmt==='rr' ? '10:30' : '9:30') + ' pm.',
+    pubs: P.map(([k,name,sub]) => ({name,sub, sw: sw(s.pub[k]), aria: (s.pub[k] ? 'Turn off ' : 'Turn on ')+name, toggle: () => this.setState({pub: {...s.pub, [k]: !s.pub[k]}})})),
+    onCats: on.map(c => c[1]),
+    pubChip: s.done ? 'st ok' : 'st off', pubLabel: s.done ? (s.pub.entries ? 'Entries open' : 'Published') : 'Draft',
+    prev: () => s.step>1 ? this.setState({step: s.step-1}) : this.setState({v:'list'}), prevLabel: s.step>1 ? '← Back' : '← All tournaments',
+    next: () => s.step<5 ? this.setState({step: s.step+1}) : this.setState({done:true}),
+    nextLabel: s.step<5 ? 'Continue' : (s.done ? 'Published ✓' : 'Publish tournament')
+  };
+}
+}
+</script>
+</body>
+</html>

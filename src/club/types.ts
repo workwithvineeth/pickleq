@@ -1,0 +1,321 @@
+import type { Format, Momentum } from '../domain/types';
+
+export type Role = 'owner' | 'admin' | 'coach' | 'player';
+export const STAFF_ROLES: Role[] = ['owner', 'admin', 'coach'];
+export const isStaff = (r: Role | null | undefined) => !!r && STAFF_ROLES.includes(r);
+export const isAdmin = (r: Role | null | undefined) => r === 'owner' || r === 'admin';
+export const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', admin: 'Admin', coach: 'Coach', player: 'Player' };
+
+/** How big a lead counts for "came back" / "lost a lead", by game length. Clubs can change these. */
+export interface Thresholds { lead11: number; lead15: number; lead21: number }
+export const DEFAULT_THRESHOLDS: Thresholds = { lead11: 4, lead15: 5, lead21: 7 };
+
+export interface ClubSettings { thresholds?: Thresholds }
+
+export interface Club {
+  id: string;
+  name: string;
+  city?: string;
+  inviteCode: string;
+  settings: ClubSettings;
+  /** Its first events-board listing was approved, so later ones go straight on. */
+  verified?: boolean;
+  /** The club's logo (shown on its pages, event pages and public results). */
+  logoUrl?: string;
+  /** Legacy hosting flag retained for compatibility. Migration 0018 approves all clubs;
+   * permission to go live is decided per tournament. */
+  hosting?: HostingStatus;
+  /** Trusted by RallyQ: its tournaments are approved without asking. Only RallyQ admins switch it. */
+  trusted?: boolean;
+  hostingReason?: string;
+  hostingPhone?: string;
+  hostingNote?: string;
+}
+
+export type HostingStatus = 'pending' | 'approved' | 'rejected';
+/** True when the club may host tournaments. */
+export const canHost = (c: Pick<Club, 'hosting'>) => !c.hosting || c.hosting === 'approved';
+
+export interface Member { userId: string; role: Role; name: string }
+
+/** What a player chose to share from their personal RallyQ. Nothing is shared unless switched on. */
+export interface Share { record?: boolean; tags?: boolean; training?: boolean }
+
+export interface ClubPlayer {
+  id: string;
+  clubId: string;
+  name: string;
+  duprSingles?: number;
+  duprDoubles?: number;
+  /** The player's DUPR ID, needed to send results to DUPR. */
+  duprId?: string;
+  userId?: string;
+  /** When the player claimed this entry in Player Studio. */
+  claimedAt?: string;
+  /** Contact email (staff only; stored separately from the roster). */
+  email?: string;
+  share: Share;
+  sample?: boolean;
+}
+
+export type TournamentStatus = 'draft' | 'live' | 'done';
+export interface ClubTournament {
+  id: string;
+  /** Phase 3 lifecycle: cancelled (kept, closed to scoring and registration) and archived (hidden from lists). */
+  cancelledAt?: string;
+  cancelReason?: string;
+  archivedAt?: string;
+  clubId: string;
+  name: string;
+  startDate: string;
+  /** HH:MM */
+  startTime: string;
+  courts: number;
+  slotMinutes: number;
+  status: TournamentStatus;
+  isPublic: boolean;
+  publicSlug: string;
+  /** Module 2: where it is, how players enter, and whether it's on the RallyQ events board. */
+  city?: string;
+  venue?: string;
+  about?: string;
+  /** Phone or WhatsApp number players contact (listed-only events). */
+  contact?: string;
+  /** Organiser's own sign-up page (listed-only events). */
+  link?: string;
+  entryMode?: EntryMode;
+  registrationOpen?: boolean;
+  /** Last day to enter, YYYY-MM-DD (India time). */
+  entriesClose?: string;
+  /** The organiser's UPI ID, for players paying entry fees straight to them. */
+  upiId?: string;
+  listing?: Listing;
+  listingStatus?: ListingStatus;
+  rejectReason?: string;
+  reviewedAt?: string;
+  drawnAt?: string;
+  /** The tournament's poster (an image address, or a data: image in the demo). */
+  posterUrl?: string;
+  /** RallyQ's approval of this tournament. Missing means approved (older demo samples). */
+  approval?: Approval;
+  /** Why RallyQ said no (the club sees it). */
+  approvalReason?: string;
+  approvalRequestedAt?: string;
+  approvalExpected?: number;
+}
+
+/**
+ * "Create freely, go live with approval": a club creates the tournament, its events and entries without asking.
+ * The draw, referee and desk links, scoring, the public results link, the public registration form and the events board
+ * need RallyQ's approval of the tournament. A trusted club's tournaments are approved automatically.
+ */
+export type Approval = 'draft' | 'submitted' | 'approved' | 'rejected';
+export const isApproved = (t: Pick<ClubTournament, 'approval'>) => !t.approval || t.approval === 'approved';
+export const APPROVAL_NOTE = 'Submit at least 24 hours before your event.';
+/** The one sentence on how approval works (migration 0018: clubs need no approval; each tournament does, unless the club is trusted). */
+export const GO_LIVE_NOTE = 'Set up tournaments any time. RallyQ approves each one before its draw, scoring and public pages go live.';
+export const PICK_NEEDS_TRUST = 'Picking the players makes the draw straight away, which needs RallyQ’s approval. Choose “They register”, add your players as entries, submit the tournament, then make the draw once it’s approved.';
+export const NOT_APPROVED = 'RallyQ hasn’t approved this tournament yet. Submit it for approval first.';
+
+/** A club's testimonial about RallyQ. No phone numbers or emails. */
+export type TestimonialStatus = 'pending' | 'approved' | 'hidden' | 'withdrawn';
+export interface Testimonial {
+  id: string;
+  clubId: string;
+  club?: string;
+  rating: number;
+  quote: string;
+  personName: string;
+  personRole: string;
+  /** Where the photo is stored (private), and an address to show it for a while. */
+  photoPath?: string;
+  photoUrl?: string;
+  status: TestimonialStatus;
+  featured: boolean;
+  createdAt: string;
+}
+export const TESTIMONIAL_MAX = 400;
+export const TESTIMONIAL_CONSENT = 'RallyQ may use this on its website and social media';
+export const TESTIMONIAL_STATUS_LABEL: Record<TestimonialStatus, string> = { pending: 'Pending', approved: 'Approved', hidden: 'Hidden', withdrawn: 'Withdrawn' };
+/** True when the text looks like it has an email address or a phone number (7+ digits), like the server's check. */
+export const hasContactDetails = (text: string) => /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text) || /\d{7,}/.test(text.replace(/[\s().+-]/g, ''));
+
+
+/** roster: the organiser picks players (Module 1). registration: players sign up, then the organiser draws. */
+export type EntryMode = 'roster' | 'registration';
+/** none: not on the board. listed: on the board only, players contact the organiser. run: run on RallyQ. */
+export type Listing = 'none' | 'listed' | 'run';
+export type ListingStatus = 'none' | 'pending' | 'approved' | 'rejected';
+export type DivisionGender = 'open' | 'men' | 'women' | 'mixed';
+export const GENDER_LABEL: Record<DivisionGender, string> = { open: 'Open', men: 'Men', women: 'Women', mixed: 'Mixed' };
+
+/** Who may enter an event, and how many. */
+export interface DivisionRules {
+  /** DUPR cap: every player's rating (or, with duprCap 'average', a doubles team's average) must be this or under. */
+  maxDupr?: number;
+  /** 'each' (default): every player under the cap. 'average': the doubles team's average rating. */
+  duprCap?: 'each' | 'average';
+  gender?: DivisionGender;
+  /** Age group, e.g. 35 for 35+. Everyone must be 18 or over in any case. */
+  minAge?: number;
+  /** Most entries accepted; more go on the waitlist. */
+  cap?: number;
+  /** Entry fee in rupees, per entry (team for doubles). */
+  fee?: number;
+}
+
+export type PlayerGender = 'm' | 'f' | 'x';
+/** One person on an entry form. Phone is needed for online entries; offline entries may leave it empty. */
+export interface EntryPerson {
+  name: string; phone: string; duprId?: string; dupr?: number; gender: PlayerGender | ''; age?: number;
+  /** Optional; used to email the player their results and claim link. Only the club's staff and the player see it. */
+  email?: string;
+  /** No age given, but the organiser confirmed the player is 18 or over (imported entries only). */
+  adult?: boolean;
+}
+
+export type RegistrationStatus = 'pending' | 'accepted' | 'waitlist' | 'rejected' | 'withdrawn';
+export type Payment = 'unpaid' | 'venue' | 'claimed' | 'paid';
+export const REG_STATUS_LABEL: Record<RegistrationStatus, string> = { pending: 'Waiting for the organiser', accepted: 'Accepted', waitlist: 'On the waitlist', rejected: 'Not accepted', withdrawn: 'Withdrawn' };
+export const PAYMENT_LABEL: Record<Payment, string> = { unpaid: 'Not paid', venue: 'Paying at the venue', claimed: 'Paid by UPI · not checked yet', paid: 'Paid' };
+
+export interface Registration {
+  id: string;
+  tournamentId: string;
+  divisionId: string;
+  clubId: string;
+  userId?: string;
+  source: 'online' | 'offline';
+  players: EntryPerson[];
+  status: RegistrationStatus;
+  payment: Payment;
+  paymentRef?: string;
+  note?: string;
+  entryId?: string;
+  createdAt: string;
+}
+
+export type DivisionKind = 'singles' | 'doubles';
+export interface Division {
+  id: string;
+  tournamentId: string;
+  clubId: string;
+  name: string;
+  kind: DivisionKind;
+  /** Pool games */
+  format: Format;
+  /** Knockout games (stored inside format JSON on the server) */
+  koFormat: Format;
+  pools: number;
+  /** Places going through from each pool to the knockouts (0 = no knockouts, unless shape is 'ko'). */
+  advance: number;
+  sort: number;
+  rules?: DivisionRules;
+  /** 'ko': knockout only (single elimination, byes for the top seeds). Otherwise pools (or one round robin) first. */
+  shape?: 'ko';
+  /** Best runners-up: this many next-placed entries also go through, ranked across pools (e.g. 5 pools: winners + 3 best seconds). */
+  extra?: number;
+  /** Knockout rounds with their own game format (games to, best of); rounds not listed use koFormat. */
+  stageFormats?: Partial<Record<KnockoutStage, Format>>;
+}
+
+export interface Entry {
+  id: string;
+  divisionId: string;
+  clubId: string;
+  playerIds: string[];
+  seed?: number;
+  pool?: number;
+  /** Withdrawn entries keep their played results; their unplayed matches become void. */
+  status?: 'active' | 'withdrawn';
+}
+
+/** A link that lets someone score without an account. Only coaches and admins see these. */
+export interface ScorerLink {
+  id: string;
+  tournamentId: string;
+  clubId: string;
+  /** Empty = any court. */
+  court?: number;
+  token: string;
+  pin: string;
+  label?: string;
+  revoked: boolean;
+  lastUsedAt?: string;
+}
+
+/** What a scorer link opens: the event and the matches it may score. Names and scores only. */
+export interface ScorerView {
+  court?: number;
+  label?: string;
+  club: string;
+  tournament: { name: string; startDate: string; startTime: string; slotMinutes: number; courts: number; status: TournamentStatus };
+  matches: { id: string; stage: Stage; pool?: number; round?: number; slot?: number; court?: number; division?: string; format: Format; games: ClubGame[]; status: ClubMatchStatus; winner?: 'A' | 'B'; playedOn?: string; namesA: string[]; namesB: string[] }[];
+}
+
+export type Stage = 'pool' | 'r32' | 'r16' | 'qf' | 'sf' | 'final' | 'friendly';
+export type KnockoutStage = 'r32' | 'r16' | 'qf' | 'sf' | 'final';
+export const KNOCKOUT_STAGES: KnockoutStage[] = ['r32', 'r16', 'qf', 'sf', 'final'];
+export const STAGE_LABEL: Record<Stage, string> = { pool: 'Pool', r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-final', sf: 'Semi-final', final: 'Final', friendly: 'Club match' };
+/** Heading for a whole knockout round. */
+export const ROUND_LABEL: Record<KnockoutStage, string> = { r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-finals', sf: 'Semi-finals', final: 'Final' };
+
+/** One game. points is the order points were won: "A" for side A, "B" for side B. Empty if only the final score was entered. */
+/**
+ * One game. `points` = the scored points in order (A/B). With side-out or rally scoring the referee's pad also keeps
+ * `rallies` (every rally in order, A/B = who won it; side-out rallies score nothing), `mode` and, for side-out, `serve`
+ * (who served first). Final scores typed in have none of these.
+ */
+export interface ClubGame { points: string; a: number; b: number; rallies?: string; mode?: ScoringMode; serve?: 'A' | 'B' }
+/** How the referee scores: side-out (traditional: only the serving side scores) or rally scoring (every rally scores). */
+export type ScoringMode = 'sideout' | 'rally';
+
+/** void: cancelled by the organiser (e.g. a team withdrew); not played and not counted. */
+export type ClubMatchStatus = 'scheduled' | 'live' | 'done' | 'void';
+export interface ClubMatch {
+  id: string;
+  clubId: string;
+  tournamentId?: string;
+  divisionId?: string;
+  stage: Stage;
+  pool?: number;
+  round?: number;
+  /** Position within a knockout round, from 0 at the top of the bracket. */
+  bracketPos?: number;
+  slot?: number;
+  court?: number;
+  entryA?: string;
+  entryB?: string;
+  sideA: string[];
+  sideB: string[];
+  format: Format;
+  games: ClubGame[];
+  status: ClubMatchStatus;
+  winner?: 'A' | 'B';
+  playedOn?: string;
+  updatedAt: string;
+}
+
+/** Numbers a player shares from their personal app. Never raw matches or notes. */
+export interface SummaryData {
+  generatedAt: string;
+  record?: { matches: number; wins: number; singles: [number, number]; doubles: [number, number]; closeWins: number; closeLosses: number };
+  tags?: { tag: string; inLosses: number; losses: number; inWins: number; wins: number }[];
+  training?: { hours30d: number; sessions30d: number; drills: { category: string; made: number; attempts: number }[] };
+}
+export interface SharedSummary { playerId: string; data: SummaryData; updatedAt: string }
+
+export interface GameAnalysis {
+  a: number;
+  b: number;
+  /** Momentum from side A's point of view. */
+  momentumA: Momentum;
+  momentumB: Momentum;
+  /** Score (A–B) the comeback started from or the lead was lost from. */
+  fromA?: number;
+  fromB?: number;
+  /** Whether each side ever stood one point from winning the game. */
+  gamePointA: boolean;
+  gamePointB: boolean;
+  complete: boolean;
+}

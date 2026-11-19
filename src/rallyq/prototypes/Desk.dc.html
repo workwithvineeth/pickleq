@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Tournament Desk</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="rq">
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a href="MyStudio.dc.html">My Player Studio</a><a href="Overview.dc.html">Organiser</a><a class="on" href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a href="Social.dc.html">Social</a><a href="Admin.dc.html">Admin</a></div></nav>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu">
+<a class="brand" href="Main.dc.html" style="min-height:52px;margin-bottom:10px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="font-size:22px">RallyQ</span></a>
+<span class="cap" style="padding:6px 12px">Cedar · Maple Courts</span>
+<a href="Overview.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"></path></svg>Home</a>
+<a class="on" href="Desk.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Tournament desk</a>
+<a href="Event.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg>Events</a>
+<a href="Referee.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M11 18h2"></path></svg>Referee scorer</a>
+<a href="Social.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="12" cy="12" r="4"></circle></svg>Social studio</a>
+<a href="TV.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8"></path></svg>TV board</a>
+</aside>
+<main class="main" style="display:flex;flex-direction:column;gap:20px;position:relative;overflow:hidden"><svg class="courtlines" viewBox="0 0 1100 600" preserveAspectRatio="none" aria-hidden="true" style="left:max(16px,2.4vw);right:max(16px,2.4vw);top:140px;width:calc(100% - 2 * max(16px,2.4vw));height:620px"><g><rect x="1" y="1" width="1098" height="598"></rect><line x1="550" y1="1" x2="550" y2="599" stroke-width="3"></line><line x1="380" y1="1" x2="380" y2="599"></line><line x1="720" y1="1" x2="720" y2="599"></line><line x1="1" y1="300" x2="380" y2="300"></line><line x1="720" y1="300" x2="1099" y2="300"></line></g></svg>
+<div class="between"><div><div class="row"><span class="chip live">Match day</span><span class="cap">Sun 15 Nov · 6:42 pm</span></div><h1 class="disp" style="font-size:clamp(34px,4vw,50px);margin-top:8px">Cedar Open · Desk</h1></div>
+<div class="row" style="flex-wrap:wrap;gap:4px 20px"><a class="tlink mut" href="TV.dc.html">TV board ↗</a><a class="tlink mut" href="Live.dc.html">Public live scores ↗</a></div></div>
+
+<div class="grid g4">
+<div class="card stat" style="padding:16px"><div class="cap">Played</div><div class="n">{{played}}</div><div class="mut" style="font-size:13px">of 46 matches</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">On court</div><div class="n acc">{{onCourt}}</div><div class="mut" style="font-size:13px">live now</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">Waiting</div><div class="n">{{waiting}}</div><div class="mut" style="font-size:13px">in the queue</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">Running</div><div class="n gold">+6 min</div><div class="mut" style="font-size:13px">behind plan</div></div>
+</div>
+
+<div class="cap" style="position:relative">Courts · drawn as courts</div>
+<div class="grid g4">
+<sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
+<div class="card mini" style="padding:18px;display:flex;flex-direction:column;gap:12px;min-height:300px"><svg viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true"><g><rect x="1" y="1" width="198" height="298"></rect><line x1="1" y1="150" x2="199" y2="150" stroke-width="4"></line><line x1="1" y1="105" x2="199" y2="105"></line><line x1="1" y1="195" x2="199" y2="195"></line><line x1="100" y1="1" x2="100" y2="105"></line><line x1="100" y1="195" x2="100" y2="299"></line></g></svg>
+<div class="between"><span class="disp" style="font-size:24px">{{c.name}}</span><span class="{{c.chip}}">{{c.status}}</span></div>
+<sc-if value="{{c.busy}}" hint-placeholder-val="{{ true }}">
+<div class="mut" style="font-size:12px">{{c.stage}} · Ref {{c.ref}}</div>
+<div class="score"><span class="t">{{c.a}}</span><span class="n acc" style="font-size:26px">{{c.sa}}</span><span class="t mut">{{c.b}}</span><span class="n" style="font-size:26px">{{c.sb}}</span></div>
+<a class="btn ghost sm" href="Referee.dc.html" style="margin-top:auto">Open scorer</a>
+</sc-if>
+<sc-if value="{{c.free}}" hint-placeholder-val="{{ false }}">
+<div class="mut" style="font-size:14px">Court free. Next up:</div>
+<div style="font-weight:700">{{nextUp}}</div>
+<button class="btn sm" style="margin-top:auto" disabled="{{c.blocked}}" onClick="{{c.call}}">{{c.callLabel}}</button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div class="card" style="padding:8px 10px">
+<div class="between" style="padding:10px 6px"><div class="cap">Queue</div><button class="btn ghost sm" onClick="{{finish}}">Finish a match (demo)</button></div>
+<div class="scroll"><table class="tbl"><thead><tr><th>#</th><th>Match</th><th>Stage</th><th>Players checked in</th><th>Est. start</th></tr></thead><tbody>
+<sc-for list="{{queue}}" as="q" hint-placeholder-count="5"><tr><td class="n mut" style="font-size:18px">{{q.no}}</td><td style="font-weight:600">{{q.m}}</td><td class="mut">{{q.s}}</td><td><button class="{{q.cls}}" style="border:0;cursor:pointer;font-family:inherit;min-height:32px" onClick="{{q.checkin}}">{{q.ci}}</button></td><td class="n" style="font-size:18px">{{q.t}}</td></tr></sc-for>
+</tbody></table></div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+constructor(p){
+  super(p);
+  this.state = {
+    played: 21,
+    courts: [
+      {name:'Court 1',a:'Varun / Neel',b:'Imran / Joseph',sa:10,sb:10,stage:'Open SF',ref:'Asif'},
+      {name:'Court 2',a:'Ishaan / Arav',b:'Asha / Lata',sa:7,sb:5,stage:'Mixed SF',ref:'Meena'},
+      {name:'Court 3',a:'Kabir / Omar',b:'Dev / Yash',sa:3,sb:8,stage:'Pool A',ref:'Ravi'},
+      null
+    ],
+    queue: [
+      ['Fatima / Zara vs Gita / Rekha','Women’s QF',true,'6:50'],
+      ['Sid / Rahul vs Leela / Tara','Mixed QF',true,'7:05'],
+      ['Teja / Kiran vs Rohan / Ajay','Pool C',false,'7:15'],
+      ['Sana / Pooja vs Asha / Lata','Women’s SF',true,'7:30'],
+      ['Winners SF1 vs Winners SF2','Open final',false,'8:15']
+    ]
+  };
+}
+renderVals() {
+  const s = this.state;
+  const head = s.queue[0];
+  const blocked = !head || !head[2];
+  const courts = s.courts.map((c,i) => c ? ({...c, busy:true, free:false, status:'Live', chip:'chip live'}) : ({name:'Court '+(i+1), busy:false, free:true, status:'Free', chip:'chip ball',
+    blocked, callLabel: !head ? 'Queue empty' : (head[2] ? 'Call to Court ' + (i+1) : 'Waiting for check-in'),
+    call: () => { if (blocked) return; const [a,b] = head[0].split(' vs '); const cs = s.courts.slice(); cs[i] = {name:'Court '+(i+1),a,b,sa:0,sb:0,stage:head[1],ref:'Desk'}; this.setState({courts: cs, queue: s.queue.slice(1)}); }}));
+  return {
+    courts, played: s.played,
+    onCourt: s.courts.filter(Boolean).length,
+    waiting: s.queue.length,
+    nextUp: head ? head[0] : 'Queue empty',
+    queue: s.queue.map((q,i) => ({no:i+1, m:q[0], s:q[1], ci: q[2] ? 'All 4 in' : '3 of 4 · tap to check in', cls: q[2] ? 'chip ball' : 'chip gold', t:q[3],
+      checkin: () => { const qq = s.queue.map(x => x.slice()); qq[i][2] = true; this.setState({queue: qq}); }})),
+    finish: () => { const cs = s.courts.slice(); const i = cs.findIndex(Boolean); if (i < 0) return; cs[i] = null; this.setState({courts: cs, played: s.played + 1}); }
+  };
+}
+}
+</script>
+</body>
+</html>

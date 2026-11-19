@@ -9,14 +9,22 @@
     "typecheck": "tsc -b",
     "build:live": "tsc -b && vite build --mode live --outDir dist/live",
     "build:preview": "tsc -b && vite build --mode preview --outDir dist/preview",
-    "lint": "oxlint"
+    "build:club": "tsc -b && vite build --mode club --outDir dist/club",
+    "lint": "oxlint",
+    "check": "node scripts/check.mjs",
+    "robot:summary": "node e2e/summary.mjs e2e/results.json",
+    "db:test": "bash scripts/db-tests.sh"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.3.0",
     "@fontsource/fraunces": "^5.3.0",
+    "@sentry/browser": "^11.12.0",
+    "@supabase/supabase-js": "^2.118.0",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "jspdf": "4.2.1",
+    "posthog-js": "^1.449.2",
+    "qrcode-generator": "^1.5.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "recharts": "^3.10.1",

@@ -25,12 +25,12 @@ function Topic({ title, children }: { title: string; children: ReactNode }) {
 
 export function Help({ go, onBack }: { go: Go; onBack: () => void }) {
   return (
-    <Page title="How to use PICKLEQ" onBack={onBack}>
+    <Page title="How to use RallyQ" onBack={onBack}>
       <p className="small muted" style={{ margin: 0 }}>Tap a topic to open it. Everything here works offline.</p>
       <Topic title="Start here: install and back up">
         <ol>
           <li><b>iPhone:</b> open the link in Safari, tap Share, then <i>Add to Home Screen</i>. <b>Android:</b> in Chrome, tap ⋮, then <i>Install app</i>.</li>
-          <li>Always open PICKLEQ from the home-screen icon. That’s where your data lives.</li>
+          <li>Always open RallyQ from the home-screen icon. That’s where your data lives.</li>
           <li><b>Back up weekly</b> (Settings → Backup). The file is locked with your password. Keep it in Drive or Files.</li>
           <li>On iPhone, deleting the home-screen icon deletes the app’s data. Back up first.</li>
         </ol>
@@ -45,7 +45,7 @@ export function Help({ go, onBack }: { go: Go; onBack: () => void }) {
         <p>Old matches from a notebook: Matches → <i>Add an old match</i> (score only).</p>
       </Topic>
       <Topic title="Ratings, stats and form">
-        <p>Tap a rating card on Home to add a DUPR reading whenever you check DUPR. PICKLEQ never calculates ratings itself.</p>
+        <p>Tap a rating card on Home to add a DUPR reading whenever you check DUPR. RallyQ never calculates ratings itself.</p>
         <p>The Stats tab shows win %, close games, momentum, opponent strength, energy, head-to-head and partners. Use the filters at the top for time range and singles or doubles.</p>
       </Topic>
       <Topic title="Training, goals and pro clips">
@@ -87,7 +87,7 @@ export function Privacy({ onBack }: { onBack: () => void }) {
     <Page title="Privacy and your data" onBack={onBack}>
       <section className="card section">
         <h2 style={{ fontSize: 18 }}>What’s stored, and where</h2>
-        <p style={{ margin: 0 }}>Your matches, players, ratings, training, goals, tournaments, clip choices and Claude conversations are stored <b>only on this phone</b>, inside this app. There is no PICKLEQ server and no account.</p>
+        <p style={{ margin: 0 }}>Your matches, players, ratings, training, goals, tournaments, clip choices and Claude conversations are stored <b>only on this phone</b>, inside this app. There is no RallyQ server and no account.</p>
       </section>
       <section className="card section">
         <h2 style={{ fontSize: 18 }}>When anything leaves the phone</h2>
@@ -99,7 +99,7 @@ export function Privacy({ onBack }: { onBack: () => void }) {
         </ul>
       </section>
       <section className="card section">
-        <h2 style={{ fontSize: 18 }}>What PICKLEQ never does</h2>
+        <h2 style={{ fontSize: 18 }}>What RallyQ never does</h2>
         <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <li>No analytics, ads, tracking or crash reporting.</li>
           <li>Your Claude key stays on this phone. It isn’t in backups, exports or the app’s code.</li>

@@ -1,0 +1,111 @@
+import { expect, test } from '@playwright/test';
+import { canUseServer, resetSandbox, rest, rpc, TEST, wrongPin, type Sandbox } from './helpers';
+
+/** What someone with no account can and can't do on the club server. API only, so it runs once (Android project). */
+test.describe('Server security (no account)', () => {
+  test.skip(!canUseServer, 'Needs the real server sandbox');
+  test.skip(({ browserName }) => browserName !== 'chromium', 'API checks run once');
+  let box: Sandbox;
+  test.beforeAll(async () => { box = await resetSandbox(); });
+
+  test('club tables are closed to visitors', async () => {
+    for (const t of ['clubs', 'club_members', 'club_players', 'club_claims', 'tournaments', 'divisions', 'entries', 'club_matches', 'scorer_links', 'shared_summaries', 'profiles', 'registrations', 'platform_admins']) {
+      const r = await rest(`${t}?select=*&limit=5`);
+      if (r.status === 200) expect(r.body, t).toEqual([]);
+      else expect(r.status, t).toBeGreaterThanOrEqual(400);
+    }
+    const ins = await rest('clubs', { method: 'POST', body: JSON.stringify({ name: 'Robot intruder' }) });
+    expect(ins.status).toBeGreaterThanOrEqual(400);
+    const upd = await rest(`club_matches?id=eq.${TEST.match.court2}`, { method: 'PATCH', headers: { prefer: 'return=representation' }, body: JSON.stringify({ status: 'done' }) });
+    expect(upd.status >= 400 || (Array.isArray(upd.body) && upd.body.length === 0)).toBe(true);
+  });
+
+  test('account-only and server-only functions refuse visitors', async () => {
+    for (const [fn, args] of [
+      ['create_club', { club_name: 'Robot', club_city: '', my_name: 'Robot' }],
+      ['join_club', { code: 'pqrobot001', claim: null, my_name: 'Robot' }],
+      ['set_member_role', { cid: '00000000-0000-0000-0000-000000000000', member: '00000000-0000-0000-0000-000000000000', new_role: 'admin' }],
+      ['scorer_check', { p_token: box.links.court1.token, p_pin: box.links.court1.pin }],
+      ['robot_reset', {}],
+      ['import_entries', { p_tournament: '00000000-0000-0000-0000-000000000000', p_rows: [] }],
+      ['person_key', { p: {} }],
+      // The admin dashboard: closed to visitors (and refused to non-admin accounts by the functions themselves).
+      ['admin_overview', {}],
+      ['admin_clubs', {}],
+      ['admin_club', { p_club: '00000000-0000-0000-0000-000000000000' }],
+      ['admin_tournaments', {}],
+      ['admin_set_club_verified', { p_club: '00000000-0000-0000-0000-000000000000', p_verified: true }],
+      ['admin_set_club_hosting', { p_club: '00000000-0000-0000-0000-000000000000', p_approve: true, p_reason: null }],
+      ['request_hosting', { p_club: '00000000-0000-0000-0000-000000000000', p_phone: '9876543210', p_note: 'x' }],
+      ['admin_set_tournament_status', { p_tournament: '00000000-0000-0000-0000-000000000000', p_status: 'live' }],
+      ['remove_platform_admin', { p_email: 'robot@example.com' }],
+    ] as const) {
+      const r = await rpc(fn, args);
+      expect(r.status, fn).toBeGreaterThanOrEqual(400);
+    }
+  });
+
+  test('the reset function refuses anyone who isn’t the robot', async () => {
+    const { SUPABASE_URL } = await import('./helpers');
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/robot-reset`, { method: 'POST', headers: { 'x-github-oidc': 'not-a-token' } });
+    expect(r.status).toBe(401);
+  });
+
+  test('scorer links: wrong PIN, wrong court and bad scores are refused', async () => {
+    const c1 = box.links.court1;
+    expect((await rpc('scorer_open', { p_token: c1.token, p_pin: wrongPin(c1.pin) })).body).toEqual({ error: 'Wrong PIN' });
+    const game = [{ points: 'A', a: 1, b: 0 }];
+    const other = await rpc('scorer_save', { p_token: c1.token, p_pin: c1.pin, p_match: TEST.match.court2, p_games: game, p_status: 'live', p_winner: null, p_played_on: null });
+    expect(JSON.stringify(other.body)).toContain('isn\'t on your court');
+    const bad = await rpc('scorer_save', { p_token: c1.token, p_pin: c1.pin, p_match: TEST.match.golden, p_games: [{ points: 'X<script>', a: 1, b: 0 }], p_status: 'live', p_winner: null, p_played_on: null });
+    expect(JSON.stringify(bad.body)).toContain('right shape');
+    const noWinner = await rpc('scorer_save', { p_token: c1.token, p_pin: c1.pin, p_match: TEST.match.golden, p_games: game, p_status: 'done', p_winner: null, p_played_on: null });
+    expect(JSON.stringify(noWinner.body)).toContain('needs a winner');
+    const finished = await rpc('scorer_save', { p_token: c1.token, p_pin: c1.pin, p_match: TEST.match.finished, p_games: game, p_status: 'live', p_winner: null, p_played_on: null });
+    expect(JSON.stringify(finished.body)).toContain('already finished');
+  });
+
+  test('8 wrong PINs lock a link for 15 minutes, even for the right PIN', async () => {
+    const l = box.links.lockout;
+    for (let i = 0; i < 8; i++) await rpc('scorer_open', { p_token: l.token, p_pin: wrongPin(l.pin) });
+    const r = await rpc('scorer_open', { p_token: l.token, p_pin: l.pin });
+    expect(JSON.stringify(r.body)).toContain('Too many wrong PINs');
+  });
+
+  test('public results and scorer views carry names and scores only', async () => {
+    const pub = JSON.stringify((await rpc('public_tournament', { slug: TEST.slug })).body);
+    const view = JSON.stringify((await rpc('scorer_open', { p_token: box.links.court2.token, p_pin: box.links.court2.pin })).body);
+    for (const [name, json] of [['results', pub], ['scorer view', view]]) {
+      // DUPR is public on results by choice (Vineeth, 13 Nov); the scorer view still never carries it.
+      for (const secret of [...(name === 'results' ? [] : ['dupr']), 'user_id', 'email', 'claim', 'invite', 'token', '"pin"']) expect(json, `${name}: ${secret}`).not.toContain(secret);
+    }
+    expect(pub).not.toContain('"points"'); // the point-by-point order stays private
+    expect(pub).toContain('Asha Test');
+  });
+
+  test('a tournament PaddleQ hasn’t approved: no public results, no entry page, no board, no desk; the admin functions refuse visitors', async () => {
+    expect(box.pending?.slug).toBe('pqe2epend1');
+    const results = await rpc('public_tournament', { slug: box.pending!.slug });
+    expect(results.status).toBe(200);
+    expect(results.body).toBeNull();
+    const event = await rpc('public_event', { p_slug: box.pending!.slug });
+    expect(event.body).toBeNull();
+    const board = await rpc('public_events', { p_include_test: true });
+    expect(JSON.stringify(board.body)).not.toContain('E2E Pending Cup');
+    const desk = await rpc('desk_open', { p_token: box.pending!.desk.token, p_pin: box.pending!.desk.pin });
+    expect(JSON.stringify(desk.body)).toContain('approved');
+    for (const [fn, args] of [
+      ['submit_tournament', { p_tournament: '00000000-0000-0000-0000-000000000000', p_expected: null }],
+      ['admin_decide_tournament', { p_tournament: '00000000-0000-0000-0000-000000000000', p_approve: true, p_reason: null }],
+      ['admin_set_club_trusted', { p_club: '00000000-0000-0000-0000-000000000000', p_trusted: true }],
+      ['approval_queue', {}],
+      ['submit_testimonial', { p_club: '00000000-0000-0000-0000-000000000000', p_rating: 5, p_quote: 'x', p_name: 'x', p_role: 'x', p_photo: null, p_consent: true }],
+      ['admin_testimonials', {}],
+    ] as const) {
+      const r = await rpc(fn, args);
+      expect(r.status, fn).toBeGreaterThanOrEqual(400);
+    }
+    const tm = await rest('club_testimonials?select=*&limit=5');
+    expect(tm.status >= 400 || (Array.isArray(tm.body) && tm.body.length === 0)).toBe(true);
+  });
+});

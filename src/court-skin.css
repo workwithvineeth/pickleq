@@ -1,0 +1,39 @@
+/* Court Green semantic overrides; the existing screen layouts stay intact. */
+ :root[data-skin=court],:root[data-skin=court] .pq-brand{--solid:var(--pq-primary);--on-solid:var(--pq-on-primary);--win-bg:var(--pq-surface-raised);--win-fg:var(--pq-ink);--loss-bg:var(--pq-surface-raised);--loss-fg:var(--pq-muted);--warn-bg:var(--pq-surface-raised);--warn-fg:var(--pq-ink)}
+ :root[data-skin=court] :is(.pq-hero,.pq-l-hero,.pq-band,.pq-flow){background:var(--pq-hero);color:var(--pq-hero-text);--pq-logo-ink:var(--pq-ball);--pq-logo-cutout:var(--pq-hero)}
+ :root[data-skin=court] :is(.pq-ws-tile,.pq-ws-top-tile,.pq-l-logo .pq-l-mark){background:#D9F24A;--pq-logo-ink:#0B2418;--pq-logo-cutout:#D9F24A}
+ :root[data-skin=court] :is(.pq-caption,.pq-tagline){font-family:var(--pq-wordmark-font);font-style:italic}
+ :root[data-skin=court] :is(.btn-primary,.pq-btn,.pq-l-btn-primary,.pq-l-btn-cream){background:var(--pq-primary)!important;color:var(--pq-on-primary)!important;border-color:var(--pq-primary);box-shadow:none}
+ :root[data-skin=court] :is(.pq-proto .lg,.pq-proto .lgd,.pq-proto .pq-panel,.pq-proto .pq-kpi,.pq-matchday .card,.pq-matchday .match-row){background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2));-webkit-backdrop-filter:var(--pq-panel-filter);backdrop-filter:var(--pq-panel-filter);box-shadow:var(--pq-panel-shadow)}
+ :root[data-skin=court] .pq-proto .photo::before{background:rgba(43,110,75,.2);mix-blend-mode:multiply;opacity:1}
+ :root[data-skin=court] .pq-proto .photo::after{background:linear-gradient(180deg,rgba(6,20,13,.35),rgba(6,20,13,.12) 35%,rgba(6,20,13,.94))}
+ :root[data-skin=court] .pq-proto .lgd{color:var(--pq-hero-text)}
+ :root[data-skin=court] .pq-overview .pq-kpi-value{color:var(--pq-ink)}
+ :root[data-skin=court] :is(.pq-tag-live,.pq-live-badge){background:var(--pq-live-bg);color:var(--pq-ball);border:1px solid var(--pq-line)}
+ :root[data-skin=court] .pq-proto .chip.b:not(.pq-live-badge){background:var(--pq-surface-raised);color:var(--pq-ink);box-shadow:none;border:1px solid var(--pq-line)}
+ :root[data-skin=court] .pq-brand .score-tap-a{background:#1E5A3A!important;color:var(--pq-hero-text)!important}
+ :root[data-skin=court] .pq-brand .score-tap-b{background:#0D2218!important;color:var(--pq-hero-text)!important}
+ :root[data-skin=court] .pq-referee .score-tap .big{color:var(--pq-ball)!important}
+ :root[data-skin=court] .pq-referee .pq-gamepoint-strip{background:var(--pq-coral);color:#0B2418}
+ :root[data-skin=court] .pq-referee .pq-gamepoint{color:var(--pq-ink)}
+ :root[data-skin=court] .pq-champion{background:var(--pq-gold);color:#0B2418}
+ :root[data-skin=court] .pq-brand :is(.msg-bad,.pill-bad){color:var(--pq-error-text)}
+ :root[data-skin=court] .pq-demo-note{background:var(--pq-surface);color:var(--pq-ink);border-color:var(--pq-line);border-left-color:var(--pq-ball)}
+ :root[data-skin=court] .pq-glass{-webkit-backdrop-filter:var(--pq-panel-filter);backdrop-filter:var(--pq-panel-filter);box-shadow:var(--pq-panel-shadow)}
+ :root[data-skin=court] .pq-glass::before{background:linear-gradient(140deg,var(--pq-glass-edge),transparent 60%,var(--pq-glass-edge))}
+ :root[data-skin=court] .pq-entry-summary{background:var(--pq-hero)}
+ :root[data-skin=court] .pq-skin-control select{border-color:var(--pq-muted)}
+ :root[data-skin=court] .toast-inline button{background:var(--pq-primary);color:var(--pq-on-primary)}
+ @media(prefers-reduced-motion:reduce),(prefers-reduced-transparency:reduce),(update:slow){:root[data-skin=court] :is(.pq-glass,.pq-proto .lg,.pq-proto .lgd,.pq-proto .pq-panel,.pq-proto .pq-kpi,.pq-matchday .card){-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--pq-surface)}}
+ :root[data-skin=court][data-pq-effects=off] :is(.pq-glass,.pq-proto .lg,.pq-proto .lgd,.pq-proto .pq-panel,.pq-proto .pq-kpi,.pq-matchday .card){-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--pq-surface)}
+ 
+/* Final skin roles win over legacy per-screen effects and inverse headers. */
+ :root[data-skin=court] .app.pq-brand{background:var(--pq-bg)}
+ :root[data-skin=court] :is(.pq-glass,.pq-proto .lg,.pq-proto .lgd,.pq-proto .pq-panel,.pq-proto .pq-kpi,.pq-matchday .card,.pq-matchday .match-row){-webkit-backdrop-filter:var(--pq-panel-filter)!important;backdrop-filter:var(--pq-panel-filter)!important}
+ :root[data-skin=court] :is(.pq-hero,.pq-band,.pq-flow) :is(.pq-wordmark,.pq-band-name,.pq-flow-title){color:var(--pq-hero-text)}
+ :root[data-skin=court] :is(.pq-hero,.pq-band,.pq-flow) :is(.pq-caption,.pq-band-kick,.pq-story-text,.pq-flow-sub,p){color:var(--pq-hero-muted)}
+ :root[data-skin=court] .pq-hero .pq-live-chip{background:var(--pq-live-bg);color:var(--pq-ball)}
+ :root[data-skin=court][data-pq-effects=off] :is(.pq-glass,.pq-proto .lg,.pq-proto .lgd,.pq-proto .pq-panel,.pq-proto .pq-kpi,.pq-matchday .card){-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+ @media(prefers-reduced-motion:reduce),(prefers-reduced-transparency:reduce),(update:slow){:root[data-skin=court] :is(.pq-glass,.pq-proto .lg,.pq-proto .lgd,.pq-proto .pq-panel,.pq-proto .pq-kpi,.pq-matchday .card){-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
+ 
+:root[data-skin=court] .app.pq-brand .screen>.header:first-child .pill{background:var(--pq-surface-raised)!important;color:var(--pq-ink)!important}

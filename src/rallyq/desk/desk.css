@@ -1,0 +1,16 @@
+/* Desk-only styles. Status pills fade in when they change (opacity only). On phones the courts become compact rows,
+   so the match tools stay within reach, and "Call to Court N" sticks to the bottom above the home indicator. */
+@keyframes rqdFade{from{opacity:0}to{opacity:1}}
+.rq .rqd-pill{animation:rqdFade .2s ease-out}
+.rq .rqd-court{min-height:300px;padding:18px;gap:12px}
+.rq .rqd-court > .rqd-body{gap:12px}
+.rq .rqd-sum{display:none}
+@media (max-width:639px){
+.rq .rqd-courts{gap:8px}
+.rq .rqd-court{min-height:64px;padding:10px 14px;gap:2px}
+.rq .rqd-court > svg.lines,.rq .rqd-more{display:none}
+.rq .rqd-court > .rqd-body{gap:2px}
+.rq .rqd-court .disp{font-size:18px!important}
+.rq .rqd-sum{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rq .rqd-call{position:sticky;bottom:0;z-index:5;padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
+}

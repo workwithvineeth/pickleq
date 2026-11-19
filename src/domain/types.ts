@@ -9,6 +9,8 @@ export interface Format {
   pointsTo: PointsTo;
   bestOf: BestOf;
   scoring: Scoring;
+  /** Golden point: at one point from the target each (e.g. 10–10), the next point wins. Otherwise games are won by 2. */
+  golden?: boolean;
 }
 
 export type Momentum = 'came-back' | 'lost-lead' | 'dominated' | 'neither';
@@ -49,6 +51,9 @@ export interface HistoryEntry {
   changes: HistoryChange[];
 }
 
+/** Where a match imported from Club mode came from. */
+export interface ClubLink { matchId: string; clubName: string }
+
 export interface Match {
   id: string;
   /** yyyy-mm-dd */
@@ -71,6 +76,8 @@ export interface Match {
   shotRatings?: Record<string, number>;
   /** Set when the match was played in a tournament you've entered in PICKLEQ. */
   tournament?: TournamentLink;
+  /** Set when the match came from your club (Club mode). Used to avoid adding it twice. */
+  club?: ClubLink;
   createdAt: number;
   updatedAt: number;
   deletedAt?: number;

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Live</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}">
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a href="Main.dc.html">Home</a><a class="on" href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a href="MyStudio.dc.html">My Player Studio</a><a href="Overview.dc.html">Organiser</a><a href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a href="Social.dc.html">Social</a><a href="Admin.dc.html">Admin</a></div></nav>
+<header class="hdr"><div class="wrap">
+<a class="brand" href="Main.dc.html"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a>
+<nav class="nav" aria-label="Main"><a class="on" href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">For clubs</a></nav>
+<div class="right"><a class="tlink" href="Overview.dc.html">Sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></div>
+</div></header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">For clubs</a><a href="Overview.dc.html">Sign in</a></nav></sc-if>
+
+<div class="wrap" style="padding-block:24px 64px;display:flex;flex-direction:column;gap:22px">
+<div class="between"><div><span class="chip live">Live · {{today}}</span><h1 class="disp" style="font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1></div>
+<div class="tabs" role="group" aria-label="Venue"><sc-for list="{{venues}}" as="v" hint-placeholder-count="4"><button class="{{v.cls}}" onClick="{{v.pick}}">{{v.name}}</button></sc-for></div></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:10px">
+<div class="cap">Courts · tap to follow</div>
+<sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
+<button onClick="{{c.pick}}" class="card" style="{{c.ring}};text-align:left;border:0;cursor:pointer;font:inherit;color:inherit;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div class="between" style="width:100%"><span class="cap">{{c.court}} · {{c.stage}}</span><span class="{{c.chip}}">{{c.status}}</span></div>
+<div class="score" style="width:100%"><span class="t">{{c.a}}</span><span class="n p">{{c.sa}}</span><span class="t mut">{{c.b}}</span><span class="n p mut">{{c.sb}}</span></div>
+</button>
+</sc-for>
+</div>
+
+<div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+<div class="photo ph-live" style="border-radius:24px;padding:28px;min-height:420px;display:flex;flex-direction:column;justify-content:space-between;gap:20px">
+<div class="between"><div class="row"><span class="{{sel.chip}}">{{sel.status}}</span><span class="cap" style="color:#DDE7DC">{{sel.court}} · {{venue}} · {{sel.stage}}</span></div><span class="cap" style="color:#DDE7DC">Game {{sel.game}} of 3 · to 11</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;align-items:center">
+<div class="disp" style="font-size:clamp(28px,3.4vw,46px)"><span class="serve" style="width:12px;height:12px"></span>{{sel.a}}</div><div class="n acc" style="font-size:clamp(80px,10vw,150px)">{{sel.sa}}</div>
+<div class="disp" style="font-size:clamp(28px,3.4vw,46px);color:#C9D6CC">{{sel.b}}</div><div class="n" style="font-size:clamp(80px,10vw,150px)">{{sel.sb}}</div>
+</div>
+<div class="between"><div class="row" style="gap:8px"><span class="cap" style="color:#DDE7DC">Games</span><sc-for list="{{sel.games}}" as="g" hint-placeholder-count="2"><span class="chip">{{g}}</span></sc-for></div><span class="mut" style="font-size:13px">Updated 4 s ago · scored by court referee</span></div>
+</div>
+
+<div class="grid g3">
+<div class="card" style="padding:18px"><div class="cap">Last 6 points</div><div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap"><sc-for list="{{sel.pts}}" as="p" hint-placeholder-count="6"><span class="{{p.cls}}">{{p.who}}</span></sc-for></div></div>
+<div class="card" style="padding:18px"><div class="cap">Longest run</div><div class="n acc" style="font-size:40px;margin-top:8px">{{sel.run}}</div><div class="mut" style="font-size:13px">points in a row</div></div>
+<div class="card" style="padding:18px;display:flex;gap:14px;align-items:center"><div style="width:52px;height:52px;border-radius:14px;background:#D9F24A;color:#0B2418;display:grid;place-items:center;font-weight:800;flex:none">{{clubMark}}</div><div style="min-width:0"><div class="cap">Hosted by</div><div style="font-weight:700">{{clubName}}</div><a href="Event.dc.html" style="font-size:13px">Event page →</a></div></div>
+</div>
+
+<div class="card" style="padding:18px"><div class="between"><div class="cap">Up next on {{sel.court}}</div><a class="tlink" href="TV.dc.html">Venue TV board →</a></div>
+<div class="mut" style="margin-top:8px">{{sel.next}}</div></div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { v: 0, c: 0 }; }
+renderVals() {
+  const V = [
+    {name:'Banyan', club:'Banyan Pickleball Club', mark:'LP', courts:[
+      {court:'Court 1',stage:'Pool A',a:'Teja / Kiran',b:'Rohan / Ajay',sa:8,sb:5,game:1,games:[],status:'Live',run:4,next:'Pool A · Sana / Pooja vs Leela / Tara',pts:'AABAAB'},
+      {court:'Court 2',stage:'Men’s QF',a:'Rao / Iyer',b:'Khan / Patel',sa:9,sb:7,game:2,games:['11–8'],status:'Live',run:5,next:'QF 2 · Reddy / Naidu vs Das / Jain',pts:'ABAAAB'},
+      {court:'Court 3',stage:'Women’s SF',a:'Meera / Divya',b:'Ananya / Ritu',sa:11,sb:6,game:2,games:['11–9','11–6'],status:'Final',run:6,next:'Final at 7:40 pm',pts:'AAAABA'},
+      {court:'Court 4',stage:'Pool C',a:'Sai / Vikram',b:'Harsha / Nikhil',sa:2,sb:3,game:1,games:[],status:'Live',run:2,next:'Pool C · Arun / Bala vs Chetan / Dev',pts:'BBAABA'}]},
+    {name:'Cedar', club:'Cedar · Maple Courts', mark:'CC', courts:[
+      {court:'Court 1',stage:'Open SF',a:'Varun / Neel',b:'Imran / Joseph',sa:10,sb:10,game:3,games:['11–7','8–11'],status:'Live',run:3,next:'Final at 8:15 pm',pts:'ABABAB'},
+      {court:'Court 2',stage:'Pool B',a:'Asha / Lata',b:'Gita / Rekha',sa:4,sb:7,game:1,games:[],status:'Live',run:4,next:'Pool B · round 4',pts:'BBBABB'}]},
+    {name:'MPC', club:'MPC Sample North', mark:'MPC', courts:[
+      {court:'Court 1',stage:'DUPR round 3',a:'Mohan / Ravi',b:'Suresh / Prem',sa:6,sb:6,game:1,games:[],status:'Live',run:3,next:'Round 4 at 7:20 pm',pts:'ABBAAB'}]},
+    {name:'Willow Players', club:'Willow Players Bowenpally', mark:'EP', courts:[
+      {court:'Court 1',stage:'Mixed QF',a:'Kavya / Arjun',b:'Nisha / Rahul',sa:3,sb:1,game:1,games:[],status:'Live',run:3,next:'QF 3 · Priya / Om vs Zoya / Sam',pts:'AABBAA'}]}
+  ];
+  const v = V[this.state.v] || V[0];
+  const ci = Math.min(this.state.c, v.courts.length - 1);
+  const mk = (x) => ({...x, chip: x.status==='Live' ? 'chip live' : 'chip gold'});
+  const s = mk(v.courts[ci]);
+  s.pts = s.pts.split('').map(ch => ({who: ch==='A' ? s.a.split(' / ')[0] : s.b.split(' / ')[0], cls: ch==='A' ? 'chip ball' : 'chip'}));
+  return {
+    rqCls: this.state.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !this.state.day}), modeLabel: this.state.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: this.state.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+    menuOpen: !!this.state.menu, toggleMenu: () => this.setState({menu: !this.state.menu}),
+    venue: v.name, clubName: v.club, clubMark: v.mark,
+    venues: V.map((x,i) => ({name:x.name, cls: i===this.state.v ? 'tab on' : 'tab', pick: () => this.setState({v:i, c:0})})),
+    courts: v.courts.map((x,i) => ({...mk(x), ring: i===ci ? 'box-shadow:inset 0 0 0 2px #D9F24A' : 'box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)', pick: () => this.setState({c:i})})),
+    sel: s
+  };
+}
+}
+</script>
+</body>
+</html>

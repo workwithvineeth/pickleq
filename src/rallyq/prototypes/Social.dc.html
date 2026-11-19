@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Social Studio</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/b768dd433323797a7bd85932d8cd0b4f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="rq">
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype</b><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live</a><a href="Event.dc.html">Event</a><a href="Studio.dc.html">Public profile</a><a href="MyStudio.dc.html">My Player Studio</a><a href="Overview.dc.html">Organiser</a><a href="Desk.dc.html">Desk</a><a href="Referee.dc.html">Referee</a><a href="TV.dc.html">TV board</a><a class="on" href="Social.dc.html">Social</a><a href="Admin.dc.html">Admin</a></div></nav>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu">
+<a class="brand" href="Main.dc.html" style="min-height:52px;margin-bottom:10px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="font-size:22px">RallyQ</span></a>
+<span class="cap" style="padding:6px 12px">Cedar · Maple Courts</span>
+<a href="Overview.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"></path></svg>Home</a>
+<a href="Desk.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10"></path></svg>Tournament desk</a>
+<a class="on" href="Social.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="12" cy="12" r="4"></circle></svg>Social studio</a>
+<a href="TV.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8"></path></svg>TV board</a>
+</aside>
+<main class="main" style="display:flex;flex-direction:column;gap:20px">
+<div><div class="cap">Social studio</div><h1 class="disp" style="font-size:clamp(34px,4vw,50px);margin-top:6px">Post it before the trophies come out.</h1></div>
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+<div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:18px">
+<div><div class="cap" style="margin-bottom:8px">1 · Template</div><div class="tabs" role="group" aria-label="Template"><sc-for list="{{tpls}}" as="t" hint-placeholder-count="4"><button class="{{t.cls}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div></div>
+<div><div class="cap" style="margin-bottom:8px">2 · Poster colour</div><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px"><sc-for list="{{styles}}" as="s" hint-placeholder-count="4"><button onClick="{{s.pick}}" style="{{s.sw}}"><span style="{{s.lbl}}">{{s.name}}</span></button></sc-for></div></div>
+<div><div class="cap" style="margin-bottom:8px">3 · Size</div><div class="tabs" role="group" aria-label="Size"><sc-for list="{{sizes}}" as="z" hint-placeholder-count="3"><button class="{{z.cls}}" onClick="{{z.pick}}">{{z.name}}</button></sc-for></div></div>
+<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px"><div class="mut" style="font-size:13px">Filled in from the desk. Club tile and RallyQ sign-off added automatically.</div><div class="row" style="flex-wrap:wrap"><button class="btn" onClick="{{save}}">{{saveLabel}}</button><button class="btn ghost" onClick="{{save}}">Send to WhatsApp</button></div></div>
+</div>
+<div style="flex:999 1 420px;min-width:0;display:flex;justify-content:center;padding:20px;background:#091A11;border-radius:24px">
+<div class="{{photoCls}}" style="{{poster}}">
+<div class="between" style="position:relative"><div class="row" style="gap:10px"><div style="width:54px;height:54px;border-radius:14px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 0 0 1px rgba(11,36,24,.25)">CC</div><div><div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.75">Hosted by</div><div style="font-size:17px;font-weight:800">Cedar</div></div></div><span class="{{chipCls}}">{{chip}}</span></div>
+<div style="position:relative;display:flex;flex-direction:column;gap:10px">
+<div style="font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.8">{{kicker}}</div>
+<div class="disp" style="font-size:{{headSize}}">{{head}}</div>
+<div class="n" style="font-size:44px;color:{{accent}}">{{big}}</div>
+<div class="between" style="font-size:13px;opacity:.85"><span>{{foot}}</span><span class="row" style="gap:6px"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:{{ink}};--a:{{accent}};width:20px;height:20px"><use href="#fq"></use></svg><span class="word" style="font-size:15px">RallyQ</span></span></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { t: 'Champion', s: 'Night', z: 'Post 4:5', saved: false }; }
+renderVals() {
+  const s = this.state;
+  const ST = {
+    Night:{bg:'#06140D',ink:'#F1F4EA',acc:'#D9F24A',photo:true},
+    Day:{bg:'#2B6E4B',ink:'#FFFFFF',acc:'#D9F24A',photo:false},
+    Ball:{bg:'#D9F24A',ink:'#0B2418',acc:'#0B2418',photo:false},
+    Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}
+  };
+  const TP = {
+    'Entries open':{kicker:'Sun 15 Nov · Maple Courts',head:'Cedar Open. Entries open.',big:'24 / 32',foot:'Enter at rallyq · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-entries'},
+    'Live now':{kicker:'Court 1 · Open SF',head:'Varun / Neel vs Imran / Joseph',big:'10 – 10',foot:'See live scores on RallyQ',chip:'Live',chipCls:'chip live',ph:'ph-livenow'},
+    'Result':{kicker:'Mixed SF · Final score',head:'Ishaan / Arav are into the final.',big:'11–7 · 11–5',foot:'Final at 8:15 pm',chip:'Result',chipCls:'chip',ph:'ph-result'},
+    'Champion':{kicker:'Cedar Open · Open doubles',head:'Champions. Varun & Neel.',big:'11–9 · 8–11 · 11–6',foot:'Sun 15 Nov · Maple Courts',chip:'Champions',chipCls:'chip gold',ph:'ph-champions'}
+  };
+  const st = ST[s.s], tp = TP[s.t];
+  const dims = ({'Post 4:5':'width:400px;height:500px','Story 9:16':'width:300px;height:533px','Square':'width:440px;height:440px'})[s.z];
+  const usePhoto = st.photo;
+  return {
+    tpls: Object.keys(TP).map(n => ({name:n, cls: n===s.t ? 'tab on' : 'tab', pick: () => this.setState({t:n, saved:false})})),
+    styles: Object.keys(ST).map(n => ({name:n, pick: () => this.setState({s:n, saved:false}),
+      sw: `height:72px;border-radius:14px;border:0;cursor:pointer;font:inherit;display:flex;align-items:flex-end;padding:8px;background:${ST[n].bg};box-shadow:${n===s.s ? 'inset 0 0 0 3px #D9F24A,0 0 0 2px #06140D' : 'inset 0 0 0 1px rgba(241,244,234,.2)'}`,
+      lbl: `font-size:12px;font-weight:700;color:${ST[n].ink}`})),
+    sizes: ['Post 4:5','Story 9:16','Square'].map(n => ({name:n, cls: n===s.z ? 'tab on' : 'tab', pick: () => this.setState({z:n})})),
+    photoCls: usePhoto ? 'photo ' + tp.ph : '',
+    poster: `${dims};border-radius:18px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;background-color:${st.bg};color:${st.ink};box-shadow:0 20px 60px rgba(0,0,0,.4)`,
+    headSize: s.z==='Story 9:16' ? '38px' : '44px',
+    kicker: tp.kicker, head: tp.head, big: tp.big, foot: tp.foot, chip: tp.chip, chipCls: tp.chipCls,
+    accent: st.acc, ink: st.ink,
+    save: () => this.setState({saved:true}),
+    saveLabel: s.saved ? 'Saved ✓' : 'Save image'
+  };
+}
+}
+</script>
+</body>
+</html>

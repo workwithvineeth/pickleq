@@ -15,6 +15,11 @@ import { activeMatches } from '../db/matches';
 import { recordSummary, winPct, type WinLoss } from '../domain/record';
 import type { Go } from '../navigation';
 import { NextTournamentCard } from './Tournaments';
+import { lazy, Suspense } from 'react';
+import { isClubEnabled } from '../club/config';
+
+const ClubHomeCard = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('../club/screens/HomeCard')) : null;
+const ClubHeaderButton = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('../club/screens/HeaderButton')) : null;
 
 function today(): string {
   return new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -52,12 +57,13 @@ export function Home({ go }: { go: Go }) {
         <div className="brand-row">
           <Logo size={44} />
           <div>
-            <h1 id="home-title" className="brand">PICKLEQ</h1>
+            <h1 id="home-title" className="brand">RallyQ</h1>
             <div className="small muted">{today()}</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {channel === 'preview' && <span className="badge badge-preview">Preview</span>}
+          {channel === 'preview' && !isClubEnabled() && <span className="badge badge-preview">Preview</span>}
+          {isClubEnabled() && ClubHeaderButton && <Suspense fallback={null}><ClubHeaderButton go={go} /></Suspense>}
           <button type="button" className="icon-btn" aria-label="Settings" onClick={() => go('settings')}>
             <Icon name="settings" size={20} />
           </button>
@@ -121,6 +127,8 @@ export function Home({ go }: { go: Go }) {
       {top && <InsightCard insight={top} action={<button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('coach')}>See all insights</button>} />}
 
       <NextTournamentCard go={go} />
+
+      {isClubEnabled() && ClubHomeCard && <Suspense fallback={null}><ClubHomeCard go={go} /></Suspense>}
 
       {matches && matches.length === 0 && (
         <EmptyState icon="ball" title="Log your first match"

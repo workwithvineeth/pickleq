@@ -1,0 +1,109 @@
+/* RallyQ design tokens · Maroon & Cream · v1 (9 Nov 2026)
+   Source: brand-guide.md (31 Oct) + liquid-glass round (9 Nov). Sign-off: Vineeth. */
+:root, :root[data-skin="maroon"]{
+  /* Semantic roles supplement the supplied reference palette. */
+  --pq-bg:var(--pq-cream); --pq-maroon-ui:var(--pq-maroon); --pq-maroon-text:var(--pq-maroon);
+  --pq-surface-raised:#EADFD0; --pq-tint:var(--pq-maroon-tint); --pq-error-text:var(--pq-error);
+  /* brand */
+  --pq-maroon:#7A1F2B; --pq-maroon-hi:#9B2E3E; --pq-maroon-lo:#5E1520;
+  --pq-cream:#F3EBDD; --pq-surface:#FFFDF8; --pq-ink:#1E1A17; --pq-muted:#6B625A;
+  --pq-line:#E4D9C8; --pq-maroon-light:#C9A9AE; --pq-maroon-tint:#F6E6E8;
+  /* signals: use sparingly */
+  --pq-ball:#D9F24A;      /* LIVE only: live dot, serve dot */
+  --pq-gold:#B8862B;      /* winners only: champions, game point, golden point */
+  --pq-gold-text:#8A6214; /* gold text on cream */
+  --pq-court:#2E6B45;     /* courts, seat maps, imagery; never buttons */
+  --pq-error:#C0392B;     /* field errors only */
+  --pq-on-maroon-muted:#E9CBCF; --pq-on-maroon-soft:#EAD8D2;
+  --pq-night:#1A0B0E;     /* hero / stream backgrounds */
+  /* type */
+  --pq-font-display:'Fraunces',Georgia,serif;           /* 600; italic 500 for emphasis */
+  --pq-font-score:'Archivo',system-ui,sans-serif;       /* font-stretch:68%; weight 800; tabular-nums */
+  --pq-font-body:'DM Sans',system-ui,sans-serif;        /* 400/500/700; labels = 700, tracked caps .16em */
+  /* shape */
+  --pq-radius-card:26px; --pq-radius-pill:999px; --pq-tap:44px;
+  /* liquid glass (light) */
+  --pq-glass-1:rgba(255,253,248,.74); --pq-glass-2:rgba(255,253,248,.40);
+  --pq-glass-blur:26px; --pq-glass-sat:175%;
+  --pq-glass-edge:rgba(255,255,255,.85); --pq-glass-shadow:rgba(70,12,22,.28); --pq-glass-inner:rgba(122,31,43,.10);
+}
+:root[data-theme="dark"] {
+  --pq-bg:#120709; --pq-surface:#30141B; --pq-surface-raised:#3C1C24; --pq-line:#65414A; --pq-tint:#4A2A2F; --pq-error-text:#F2B8B5; --pq-maroon-ui:#C25A68; --pq-maroon-text:#E79AA5; --pq-ink:#F3EBDD; --pq-muted:#BCAEA2;
+  --pq-glass-1:rgba(48,20,27,.62); --pq-glass-2:rgba(30,12,17,.38); --pq-glass-edge:rgba(255,255,255,.22); --pq-glass-shadow:rgba(0,0,0,.5);
+}
+@media (prefers-color-scheme: dark) {
+:root:is([data-theme="auto"], :not([data-theme])) {
+  --pq-bg:#120709; --pq-surface:#30141B; --pq-surface-raised:#3C1C24; --pq-line:#65414A; --pq-tint:#4A2A2F; --pq-error-text:#F2B8B5; --pq-maroon-ui:#C25A68; --pq-maroon-text:#E79AA5; --pq-ink:#F3EBDD; --pq-muted:#BCAEA2;
+  --pq-glass-1:rgba(48,20,27,.62); --pq-glass-2:rgba(30,12,17,.38); --pq-glass-edge:rgba(255,255,255,.22); --pq-glass-shadow:rgba(0,0,0,.5);
+}
+}
+/* liquid glass panel */
+.pq-glass{position:relative;border-radius:var(--pq-radius-card);background:linear-gradient(160deg,var(--pq-glass-1),var(--pq-glass-2));
+  -webkit-backdrop-filter:blur(var(--pq-glass-blur)) saturate(var(--pq-glass-sat));backdrop-filter:blur(var(--pq-glass-blur)) saturate(var(--pq-glass-sat));
+  box-shadow:inset 0 1px 1px var(--pq-glass-edge),inset 0 -14px 34px -16px var(--pq-glass-inner),0 24px 50px -26px var(--pq-glass-shadow)}
+.pq-glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.08) 34%,rgba(255,255,255,0) 60%,rgba(255,255,255,.55));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+/* primary button */
+.pq-btn{min-height:var(--pq-tap);border-radius:var(--pq-radius-pill);padding:0 24px;font:700 14px var(--pq-font-body);color:var(--pq-on-brand);border:0;
+  background:linear-gradient(180deg,var(--pq-maroon-hi),var(--pq-maroon) 55%,var(--pq-maroon-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -3px 8px rgba(0,0,0,.22)}
+/* score numerals */
+.pq-score{font-family:var(--pq-font-score);font-stretch:68%;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* Filled brand surfaces keep cream text: the lifted dark UI token is for outlines.
+   Use maroon-text for text on dark surfaces to retain readable contrast. */
+.pq-btn { display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+.pq-btn:focus-visible, .pq-chip:focus-visible { outline:3px solid var(--pq-maroon-text); outline-offset:3px; }
+.pq-btn:disabled, .pq-chip:disabled { opacity:.55; cursor:default; }
+.pq-chip { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:var(--pq-tap); min-width:var(--pq-tap); padding:6px 14px; border:1px solid var(--pq-line); border-radius:var(--pq-radius-pill); background:var(--pq-surface); color:var(--pq-ink); font:500 14px var(--pq-font-body); }
+.pq-chip[aria-pressed='true'] { background:var(--pq-maroon); border-color:var(--pq-maroon); color:var(--pq-on-brand); }
+.pq-live-dot { display:inline-block; flex:none; width:8px; height:8px; border-radius:50%; background:var(--pq-ball); box-shadow:0 0 0 2px var(--pq-maroon); }
+/* Plain glass is available explicitly for low-end devices. No hardware probing
+   or animation is needed; unsupported blur also gets an opaque surface. */
+.pq-glass-plain, [data-pq-effects='off'] .pq-glass { background:var(--pq-surface); -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none; }
+.pq-glass-plain::before, [data-pq-effects='off'] .pq-glass::before { display:none; }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .pq-glass { background:var(--pq-surface); }
+}
+@media (prefers-reduced-motion:reduce), (prefers-reduced-transparency:reduce), (update:slow) {
+  .pq-glass { background:var(--pq-surface); -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none; }
+  .pq-glass::before { display:none; }
+}
+
+/* T16 · Prototype 6 [data-skin=axis], values copied without palette substitutions.
+   Legacy role names remain aliases so the staging layouts need no rebuild here. */
+:root {
+ --pq-on-brand:#F3EBDD;--pq-hero-text:#F3EBDD;--pq-hero-muted:#D9CCBE;--pq-hero:#1A0B0E;--pq-hero-2:#2A1218;
+ --pq-display-weight:600;--pq-display-transform:none;--pq-display-spacing:-.035em;--pq-display-stretch:100%;--pq-display-line-height:.92;
+ --pq-wordmark-font:'Fraunces',Georgia,serif;--pq-shadow-tint:rgba(122,31,43,.16);
+}
+:root[data-skin="axis"] {
+ --pq-maroon:#D7FF3B;--pq-maroon-hi:#E6FF7A;--pq-maroon-lo:#B9E21C;--pq-on-brand:#0B0F04;
+ --pq-hero:#06080B;--pq-hero-2:#0E1319;--pq-hero-text:#F3F2EC;--pq-hero-muted:#A9B2BC;--pq-hero-accent:#D7FF3B;
+ --pq-blob-1:#1C3A2A;--pq-blob-2:#D7FF3B;--pq-blob-3:#2A6B4A;--pq-blob-4:#3A4652;
+ --pq-font-display:'Archivo',system-ui,sans-serif;--pq-display-weight:800;--pq-display-transform:uppercase;--pq-display-spacing:-.01em;--pq-display-stretch:66%;--pq-display-line-height:.86;
+ --pq-bg:#F2F2EC;--pq-cream:#F3F2EC;--pq-surface:#FFFFFF;--pq-surface-raised:#E5E8E4;--pq-ink:#0D1116;--pq-muted:#5A636C;
+ --pq-line:rgba(13,17,22,.1);--pq-maroon-text:#3F6B00;--pq-maroon-ui:#3F6B00;--pq-tint:rgba(120,170,0,.1);--pq-maroon-light:#B8C0C8;--pq-maroon-tint:rgba(120,170,0,.1);
+ --pq-glass-1:rgba(255,255,255,.7);--pq-glass-2:rgba(255,255,255,.38);--pq-glass-edge:rgba(255,255,255,.9);--pq-glass-shadow:rgba(10,20,10,.22);--pq-glass-inner:rgba(80,120,0,.08);
+ --pq-ball:#D7FF3B;--pq-court:#1E5A3A;--pq-error:#FF5A4E;--pq-error-text:#B6261C;--pq-night:#06080B;
+ --pq-on-maroon-muted:#0B0F04;--pq-on-maroon-soft:#0B0F04;--pq-shadow-tint:rgba(10,20,10,.16);
+}
+:root[data-skin="axis"][data-theme="dark"] {
+ --pq-bg:#06080B;--pq-surface:#0D1116;--pq-surface-raised:#141A21;--pq-ink:#F3F2EC;--pq-muted:#A9B2BC;
+ --pq-line:rgba(255,255,255,.1);--pq-maroon-text:#D7FF3B;--pq-maroon-ui:#D7FF3B;--pq-tint:rgba(215,255,59,.1);--pq-maroon-light:#4A5560;
+ --pq-glass-1:rgba(30,38,46,.6);--pq-glass-2:rgba(14,19,25,.36);--pq-glass-edge:rgba(255,255,255,.2);--pq-glass-shadow:rgba(0,0,0,.55);--pq-glass-inner:rgba(255,255,255,.03);--pq-error-text:#FF8F86;
+}
+@media(prefers-color-scheme:dark){
+ :root[data-skin="axis"]:is([data-theme="auto"],:not([data-theme])) {
+ --pq-bg:#06080B;--pq-surface:#0D1116;--pq-surface-raised:#141A21;--pq-ink:#F3F2EC;--pq-muted:#A9B2BC;
+ --pq-line:rgba(255,255,255,.1);--pq-maroon-text:#D7FF3B;--pq-maroon-ui:#D7FF3B;--pq-tint:rgba(215,255,59,.1);--pq-maroon-light:#4A5560;
+ --pq-glass-1:rgba(30,38,46,.6);--pq-glass-2:rgba(14,19,25,.36);--pq-glass-edge:rgba(255,255,255,.2);--pq-glass-shadow:rgba(0,0,0,.55);--pq-glass-inner:rgba(255,255,255,.03);--pq-error-text:#FF8F86;
+ }
+}
+
+:root{--pq-chalk-rgb:243,235,221;--pq-brand-rgb:122,31,43;--pq-hero-rgb:26,11,14}:root[data-skin="axis"]{--pq-chalk-rgb:243,242,236;--pq-brand-rgb:215,255,59;--pq-hero-rgb:6,8,11}
+
+/* T18 Court Green: Night first; Day is an explicit or Auto/device choice. */
+:root[data-skin="court"]{--pq-bg:#06140D;--pq-bg2:#091A11;--pq-surface:#0D2218;--pq-surface-raised:#133022;--pq-ink:#F1F4EA;--pq-muted:#9FB4A6;--pq-line:rgba(241,244,234,.11);--pq-maroon:#D9F24A;--pq-maroon-hi:#E4F75A;--pq-maroon-lo:#C7DE3B;--pq-maroon-ui:#D9F24A;--pq-maroon-text:#D9F24A;--pq-on-brand:#0B2418;--pq-cream:#F1F4EA;--pq-primary:#F1F4EA;--pq-on-primary:#0B2418;--pq-ball:#D9F24A;--pq-gold:#E8C35A;--pq-gold-text:#E8C35A;--pq-coral:#FF655C;--pq-error:#FF8A7A;--pq-error-text:#FF8A7A;--pq-court:#1E5A3A;--pq-court-kitchen:#7A2430;--pq-night:#06140D;--pq-hero:#06140D;--pq-hero-2:#091A11;--pq-hero-text:#F1F4EA;--pq-hero-muted:#9FB4A6;--pq-hero-accent:#D9F24A;--pq-on-maroon-muted:#0B2418;--pq-on-maroon-soft:#0B2418;--pq-maroon-light:#9FB4A6;--pq-tint:rgba(217,242,74,.14);--pq-maroon-tint:rgba(217,242,74,.14);--pq-glass-1:rgba(19,48,34,.62);--pq-glass-2:rgba(6,20,13,.5);--pq-glass-edge:rgba(255,255,255,.14);--pq-glass-shadow:rgba(0,0,0,.45);--pq-glass-inner:rgba(255,255,255,.03);--pq-glass-blur:22px;--pq-glass-sat:175%;--pq-panel-filter:blur(22px) saturate(175%);--pq-panel-shadow:inset 0 1px 1px rgba(255,255,255,.14),0 24px 50px -26px rgba(0,0,0,.45);--pq-live-bg:rgba(217,242,74,.14);--pq-font-display:'Archivo',system-ui,sans-serif;--pq-display-weight:800;--pq-display-transform:none;--pq-display-spacing:-.045em;--pq-display-stretch:100%;--pq-display-line-height:.9;--pq-blob-1:#1E5A3A;--pq-blob-2:#133022;--pq-blob-3:#7A2430;--pq-blob-4:#091A11;--pq-chalk-rgb:241,244,234;--pq-brand-rgb:217,242,74;--pq-hero-rgb:6,20,13;}
+:root[data-skin="court"][data-theme="light"]{--pq-bg:#2B6E4B;--pq-bg2:#286A47;--pq-surface:#245F40;--pq-surface-raised:#1F5538;--pq-ink:#FFFFFF;--pq-muted:#DDEBDF;--pq-line:rgba(255,255,255,.22);--pq-maroon:#E4F75A;--pq-maroon-ui:#E4F75A;--pq-maroon-text:#E4F75A;--pq-ball:#E4F75A;--pq-primary:#F4F6F0;--pq-gold:#FFE18A;--pq-gold-text:#FFE18A;--pq-error:#FFE0D8;--pq-error-text:#FFE0D8;--pq-glass-1:#245F40;--pq-glass-2:#245F40;--pq-glass-edge:rgba(255,255,255,.22);--pq-glass-shadow:transparent;--pq-glass-inner:transparent;--pq-glass-blur:0px;--pq-panel-filter:none;--pq-panel-shadow:none;--pq-hero-text:#FFFFFF;--pq-hero-muted:#DDEBDF;--pq-live-bg:#0B2418;}
+@media(prefers-color-scheme:light){:root[data-skin="court"][data-theme="auto"]{--pq-bg:#2B6E4B;--pq-bg2:#286A47;--pq-surface:#245F40;--pq-surface-raised:#1F5538;--pq-ink:#FFFFFF;--pq-muted:#DDEBDF;--pq-line:rgba(255,255,255,.22);--pq-maroon:#E4F75A;--pq-maroon-ui:#E4F75A;--pq-maroon-text:#E4F75A;--pq-ball:#E4F75A;--pq-primary:#F4F6F0;--pq-gold:#FFE18A;--pq-gold-text:#FFE18A;--pq-error:#FFE0D8;--pq-error-text:#FFE0D8;--pq-glass-1:#245F40;--pq-glass-2:#245F40;--pq-glass-edge:rgba(255,255,255,.22);--pq-glass-shadow:transparent;--pq-glass-inner:transparent;--pq-glass-blur:0px;--pq-panel-filter:none;--pq-panel-shadow:none;--pq-hero-text:#FFFFFF;--pq-hero-muted:#DDEBDF;--pq-live-bg:#0B2418;}}

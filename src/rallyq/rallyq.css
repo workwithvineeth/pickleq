@@ -1,0 +1,121 @@
+.rallyq-prototype{min-height:100dvh;width:100%;isolation:isolate}.rallyq-prototype .rq{min-height:100dvh}.rallyq-prototype .rq button{font-family:inherit}.rallyq-prototype .rq .proto{display:none}.rallyq-prototype .rq :focus-visible{outline:3px solid var(--ball);outline-offset:4px}.rallyq-prototype .rq .mode{min-height:44px;min-width:60px;align-items:center;padding:9px 3px}.rallyq-prototype .rq .tab{min-height:44px}.rallyq-prototype .rq .btn.sm{min-height:44px}.rallyq-prototype .rq .hdr{position:sticky!important;top:0;z-index:30!important;transition:background .2s}.rallyq-prototype[data-scrolled] .rq .hdr{background:var(--pg);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line)}.rallyq-prototype .rq .rq-club-tile{display:inline-flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex:none;background:#F1F4EA;color:#0B2418;font-family:'DM Sans',sans-serif;font-weight:800}.rq-club-tile>img{position:absolute;inset:0;background:#F1F4EA;z-index:1}.rq-club-tile[data-logo-failed]>span{visibility:visible!important}.rq-hosted{display:inline-flex;align-items:center;gap:10px;min-height:44px}.rq-hosted>span{display:grid;text-align:left}.rq-hosted small{font-size:10px;color:var(--mut,#9FB4A6)}.rq-hosted b{font-size:14px;line-height:1.25}.rallyq-prototype .rq img{max-width:100%}.rallyq-prototype .rq .main{width:auto;max-width:none}.rallyq-prototype .rq .nav{position:static;transform:none;bottom:auto;max-width:none;border-radius:0;box-shadow:none;background:none;padding:0;z-index:auto;width:auto;border-top:0;grid-auto-flow:initial;grid-auto-columns:initial}.rallyq-prototype .rq .row{margin:0}.rallyq-prototype .rq .card{margin:0}.rallyq-prototype .rq .tbl th,.rallyq-prototype .rq .tbl td{color:inherit}.rallyq-prototype .rq .tbl th{color:var(--mut)}.rallyq-prototype .rq .glass{background:linear-gradient(145deg,rgba(19,48,34,.7),rgba(6,20,13,.54));-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}.rallyq-prototype .rq.day .glass{background:var(--c1);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}.rallyq-prototype .rq .chip.live{background:#FF655C!important;color:#1A0603!important}.rallyq-prototype .rq .chip.live::before{background:#1A0603!important}.rallyq-prototype .rq .hchip{background:#FF655C!important;color:#1A0603!important;border-color:transparent!important}.rallyq-prototype .rq .hchip .pdot{background:#1A0603!important;box-shadow:0 0 0 5px rgba(26,6,3,.12)!important}.rallyq-prototype .rq .hchip .pdot::after{border-color:#1A0603!important}@media(max-width:600px){.rallyq-prototype .rq .side{flex-basis:100%;border-right:0;border-bottom:1px solid var(--line);flex-direction:row;overflow:auto;flex-wrap:nowrap;padding:10px 16px}.rallyq-prototype .rq .side>.brand{display:none}.rallyq-prototype .rq .side>a{white-space:nowrap;flex:none;min-height:44px}.rallyq-prototype .rq .side>.cap,.rallyq-prototype .rq .side>div[style*="margin-top:auto"]{display:none}.rallyq-prototype .rq .hdr .wrap{gap:10px}.rallyq-prototype .rq .hdr .brand .word{font-size:24px}.rallyq-prototype .rq .hdr .wrap>.nav{display:none}.rallyq-prototype .rq .main{padding-top:20px}.rallyq-prototype .rq .btn{min-height:44px}}@media(prefers-reduced-motion:reduce){.rallyq-prototype .rq *,.rallyq-prototype .rq *::before,.rallyq-prototype .rq *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.rallyq-screen-main .rq .hero{padding-top:72px}.rallyq-screen-main .rq .hero>.hdr{position:fixed!important;left:0;right:0;top:0;width:100%;background:transparent}.rallyq-screen-main[data-scrolled] .rq .hero>.hdr{background:var(--pg)}@media(max-width:760px){.rallyq-screen-main .rq .hero{padding-top:60px}}
+
+/* RallyQ referee scorer (prototype look) */
+.rq-ref-grid{gap:12px!important}
+.rq-ref-grid .score-tap{border-radius:22px!important;min-height:220px;display:flex!important;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;padding:16px!important}
+.rq-ref-grid .score-tap .big{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:clamp(88px,22vw,128px)!important;line-height:.9;letter-spacing:-.01em}
+.rq-ref-grid .score-tap .pq-referee-name{font-weight:700;font-size:15px}
+.rq-ref-grid .score-tap:not(:disabled):active{transform:scale(.985)}
+.rq-ref-banner{display:flex;flex-direction:column;gap:4px;padding:14px;border-radius:18px;background:var(--surf,#0D2218);color:var(--ink,#F1F4EA);font-size:14px}
+.rq-ref-banner b{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.rq-ref-game{box-shadow:inset 0 0 0 2px #D9F24A}.rq-ref-game b{color:#D9F24A}
+.rq-ref-match{box-shadow:inset 0 0 0 2px #E8C35A}.rq-ref-match b{color:#E8C35A}
+
+/* Keep the Event content within narrow phones; tables retain their own scroll. */
+.rallyq-screen-event .rq>.wrap{width:100%;min-width:0;box-sizing:border-box}
+.rallyq-screen-event .rq .tabs{min-width:0;max-width:100%}
+
+@media (prefers-reduced-motion:reduce){.pq-score-flash,[class*='pq-score']{animation:none!important;transition:none!important}}
+.rallyq-screen-main .rq section.sec{overflow-x:clip}
+.rallyq-prototype .rq .chip{white-space:nowrap}
+
+/* Meera photo: slow drift inside its card (never steps out) */
+@keyframes rqDrift{from{background-position:65% 0%}to{background-position:65% 14%}}
+.rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:rqDrift 12s ease-in-out infinite alternate}
+@media (prefers-reduced-motion:reduce){.rallyq-prototype .rq .ph-man,.rallyq-prototype .rq .ph-woman{animation:none}}
+.rallyq-prototype.rq-header-only .rq{min-height:0!important;background:transparent}
+.rallyq-prototype.rq-header-only{position:sticky;top:0;z-index:30;min-height:0!important;height:auto!important}
+.rq-public-page{min-height:calc(100vh - 120px);padding-bottom:40px}
+/* Older public screens under the RallyQ header: page title in the new display style, no lime band */
+.rq-public-page>main>header.header{background:transparent!important;color:var(--text,#F1F4EA)!important;box-shadow:none!important;border-radius:0!important;padding-top:28px!important}
+.rq-public-page>main>header.header .screen-title{font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:800;letter-spacing:-.03em;font-size:clamp(40px,6vw,64px);line-height:.95;color:inherit!important}
+.rq-public-page>main{max-width:1180px;margin-inline:auto}
+.rq-public-page .pq-flow .pq-flow-brand,.rq-public-page .pq-flow>.pq-flow-logo{display:none}
+.rq-public-page>main>header.header button,.rq-public-page>main>header.header a{color:#F1F4EA!important;border-color:rgba(241,244,234,.28)!important;background:rgba(241,244,234,.06)!important}
+.rq-public-page>main>header.header button svg{stroke:currentColor}
+.rq.day~.app .rq-public-page,.app.rq-public-page>main>header.header{}
+
+/* The old app's global classes (.row, .card, .chip, .empty, .col) must not restyle prototype markup */
+.rallyq-prototype .rq .row{padding:0;border-top:0;justify-content:flex-start}
+.rallyq-prototype .rq .card{padding:0}
+.rallyq-prototype .rq .chip{border:0}
+.rallyq-prototype .rq .empty{display:block}
+.rallyq-prototype .rq .col{display:block;font-size:inherit;align-items:stretch;justify-content:normal;height:auto;gap:0}
+.rallyq-prototype .rq :is(h1,h2,h3,h4){letter-spacing:normal}
+/* v1.2 shells: the header scrolls with the page (prototype), it never floats over the content */
+.rallyq-prototype.rq-v12 .rq .hdr{position:relative!important;z-index:1!important}
+/* Printing a v1.2 page (Results & DUPR "Save as PDF"): only the content, no menus or buttons */
+@media print{.rallyq-prototype .no-print,.rallyq-prototype .hdr,.rallyq-prototype .side,.rallyq-prototype .wm,.rallyq-prototype .pfoot{display:none!important}}
+/* Several club tiles in a header: overlap a little less so three-letter marks are never cut off */
+.rallyq-prototype .rq .tiles .tile+.tile{margin-left:-4px!important}
+.rallyq-prototype .rq .tiles .tile{font-size:12px!important;letter-spacing:-.02em}
+/* Results & DUPR (organiser): the per-group tables, players and matches in the v1.2 look */
+.rallyq-prototype .rq .pq-results-page>section,.rallyq-prototype .rq .pq-results-page>section>section{display:flex;flex-direction:column;gap:14px}
+.rallyq-prototype .rq .pq-results-page .card.section{background:var(--c1)!important;border-radius:22px!important;padding:20px!important;box-shadow:inset 0 0 0 1px var(--line)!important}
+.rallyq-prototype .rq .pq-results-page h2{font-family:var(--disp,inherit);font-size:28px;font-weight:800;margin:0;color:var(--ink)}
+.rallyq-prototype .rq .pq-results-page h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0;color:var(--mut)}
+.rallyq-prototype .rq .pq-results-page h4{font-size:13px;margin:6px 0 0;color:var(--mut)}
+.rallyq-prototype .rq .pq-results-table{display:block;overflow-x:auto;width:100%}
+.rallyq-prototype .rq .pq-results-table th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)!important}
+.rallyq-prototype .rq .pq-results-table td{vertical-align:top}
+.rallyq-prototype .rq .pq-result-qualifier td:first-child{box-shadow:inset 3px 0 0 var(--ball)}
+.rallyq-prototype .rq .pq-result-position{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--c2);font-weight:800;margin-right:8px}
+.rallyq-prototype .rq .pq-result-player{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rallyq-prototype .rq .pq-result-player>span:first-child{font-weight:700}
+.rallyq-prototype .rq .pq-result-edit-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
+.rallyq-prototype .rq .pq-result-edit-player{background:var(--c2);border-radius:16px;padding:12px}
+.rallyq-prototype .rq .pq-result-edit-player label{display:flex;flex-direction:column;gap:4px;flex:1 1 110px}
+.rallyq-prototype .rq .pq-result-missing{color:var(--ink)!important;font-weight:700}
+.rallyq-prototype .rq .pq-result-input-missing{box-shadow:inset 0 0 0 1px var(--ball)!important}
+.rallyq-prototype .rq .pq-result-match{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.rallyq-prototype .rq .pq-result-score{font-weight:800;font-size:16px;text-align:center;color:var(--ink)}
+.rallyq-prototype .rq .pq-result-winner .pq-result-player>span:first-child{color:var(--ball)}
+.rallyq-prototype .rq .pq-results-champions{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:10px}
+.rallyq-prototype .rq .pq-results-champion{display:flex;flex-direction:column;gap:4px;padding:16px;border-radius:18px;box-shadow:inset 0 0 0 2px var(--gold)}
+.rallyq-prototype .rq .pq-results-champion b{font-size:22px}
+.rallyq-prototype .rq .pq-results-footer{color:var(--mut);font-size:12px}
+@media (max-width:560px){.rallyq-prototype .rq .pq-result-match{grid-template-columns:1fr;text-align:left}.rallyq-prototype .rq .pq-result-score{text-align:left}}
+/* Older shared buttons inside a v1.2 page: outline buttons look like ghost buttons, never a second yellow one */
+.rallyq-prototype .rq .btn.btn-outline{background:transparent!important;color:var(--ink)!important;box-shadow:inset 0 0 0 1px rgba(241,244,234,.28)!important}
+.rallyq-prototype .rq.day .btn.btn-outline{background:rgba(6,24,15,.25)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)!important}
+.rallyq-prototype .rq .btn.btn-outline.pq-danger{color:var(--ink)!important}
+.rallyq-prototype .rq .pq-results-champion{background:rgba(232,193,90,.08)!important;color:var(--ink)!important}
+.rallyq-prototype .rq .pq-results-champion *{color:inherit}
+@media screen{.rallyq-prototype .rq .pq-results-heading h2{display:none}.rallyq-prototype .rq .pq-results-heading{text-align:left}}
+.rallyq-prototype .rq .pq-results-table td:first-child{display:flex;align-items:flex-start;gap:8px;min-width:170px}
+.rallyq-prototype .rq .pq-results-table th,.rallyq-prototype .rq .pq-results-table td{padding:10px 10px!important;white-space:nowrap}
+.rallyq-prototype .rq .pq-results-table td:first-child{white-space:normal}
+.rallyq-prototype .rq .pq-results-page section.card{max-width:none}
+.rallyq-prototype .rq .pq-result-position{color:var(--ink)!important}
+/* Rows in a .list can be real buttons too (same look as the prototype's links) */
+.rallyq-prototype .rq .list>button{display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 18px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;width:100%;cursor:pointer;text-align:left}
+.rallyq-prototype .rq .list>button:last-child{border-bottom:0}
+.rallyq-prototype .rq .list>button:hover{background:rgba(255,255,255,.06)}
+.rallyq-prototype .rq .list>button:focus-visible{outline:2px solid var(--ball);outline-offset:-2px}
+.rallyq-prototype .rq .list>.empty{padding:16px 18px}
+.rallyq-prototype .rallyq-prototype svg.wm{display:none}
+/* Win predictor bar (live score cards on Home, Live, Event, TV): an estimate, leader ball-yellow, the other muted */
+.rallyq-prototype .wp{display:flex;flex-direction:column;gap:6px;width:100%}
+.rallyq-prototype .wp-bar{height:6px;border-radius:999px;overflow:hidden}
+.rallyq-prototype .wp-lead{color:#D9F24A}
+.rallyq-prototype .wp-other{color:#9FB4A6;font-weight:600}
+
+/* Page transitions (navigation.ts): quick cross-fade, off with reduced motion. */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.22s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}
+
+/* Event page: sticky action bar (phones) and the "Message the club" sheet */
+.rallyq-prototype .rq.rq-sticky,.rallyq-prototype .rq.rq-sheet-wrap{background:transparent;min-height:0}
+.rallyq-prototype .rq .rq-sticky-bar{display:none}
+@media(max-width:760px){
+ .rallyq-prototype .rq .rq-sticky-bar:not([hidden]){display:block;position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--pg);box-shadow:0 -1px 0 var(--line),0 -12px 24px rgba(0,0,0,.25)}
+ .rallyq-prototype .rq .rq-sticky-bar .btn{width:100%;min-height:52px;font-size:16px}
+}
+.rallyq-prototype .rq .rq-sheet-back{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6)}
+.rallyq-prototype .rq .rq-sheet{position:fixed;z-index:61;left:0;right:0;bottom:0;max-height:90dvh;overflow:auto;background:var(--c1);color:var(--ink);padding:20px 16px calc(20px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+@media(min-width:761px){.rallyq-prototype .rq .rq-sheet{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(480px,92vw);border-radius:22px}}
+.rallyq-prototype .rq .rq-sheet .fld{display:flex;flex-direction:column;gap:6px}
+.rallyq-screen-main .rq .hero .wm{display:none!important}
+
+.rallyq-prototype.rallyq-screen-mystudio .rq button{min-height:44px!important}

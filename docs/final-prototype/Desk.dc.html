@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Desk</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><span class="cap grp">Cedar</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Cedar Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a class="on" href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap"><span class="chip live" style="margin-right:8px">Live</span>Cedar Open · Sun 15 Nov · 6:42 pm</span><h1 class="disp">Desk</h1></div>
+<div class="row" style="flex-wrap:wrap;gap:4px 18px"><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><a class="tlink mut" href="TV.dc.html">TV board ↗</a><a class="tlink mut" href="Live.dc.html">Public live scores ↗</a></div>
+</div>
+<div class="grid g4">
+<div class="card stat" style="padding:16px"><div class="cap">Played</div><div class="n">{{played}}</div><div class="mut" style="font-size:13px">of 46 matches</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">On court</div><div class="n acc">{{onCourt}}</div><div class="mut" style="font-size:13px">live now</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">In the queue</div><div class="n">{{waiting}}</div><div class="mut" style="font-size:13px">checked in or waiting</div></div>
+<div class="card stat" style="padding:16px"><div class="cap">Running</div><div class="n">+6 min</div><div class="mut" style="font-size:13px">behind plan</div></div>
+</div>
+<div class="between"><div class="cap">Courts · tap a court to fix its match</div><span class="mut" style="font-size:12px">Scores come from the referee on each court</span></div>
+<div class="grid g4">
+<sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
+<button class="{{c.cls}}" onClick="{{c.pick}}" style="border:0;font:inherit;text-align:left;cursor:pointer;padding:18px;display:flex;flex-direction:column;gap:12px;min-height:300px;color:#F4F7EE"><svg class="lines" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true"><g><rect x="1" y="1" width="198" height="298"></rect><line x1="1" y1="150" x2="199" y2="150" stroke-width="3"></line><line x1="1" y1="105" x2="199" y2="105"></line><line x1="1" y1="195" x2="199" y2="195"></line><line x1="100" y1="1" x2="100" y2="105"></line><line x1="100" y1="195" x2="100" y2="299"></line></g></svg>
+<span class="between" style="width:100%"><b class="disp" style="font-size:26px">{{c.name}}</b><span class="{{c.chip}}">{{c.status}}</span></span>
+<span class="mut" style="font-size:12px">{{c.meta}}</span>
+<sc-if value="{{c.busy}}" hint-placeholder-val="{{ true }}">
+<span style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;width:100%;margin-top:auto">
+<b class="ell" style="font-size:15px">{{c.a}}</b><span class="n" style="font-size:46px;color:#E4F75A">{{c.sa}}</span>
+<span class="ell" style="font-size:15px;color:#C9D9CD">{{c.b}}</span><span class="n" style="font-size:46px">{{c.sb}}</span>
+</span>
+<span class="{{c.refCls}}" style="font-size:12px">{{c.ref}}</span>
+</sc-if>
+<sc-if value="{{c.free}}" hint-placeholder-val="{{ false }}">
+<span style="margin-top:auto;display:flex;flex-direction:column;gap:6px"><span class="mut" style="font-size:13px">Free. Next up:</span><b style="font-size:16px">{{nextUp}}</b><span class="mut" style="font-size:12px">{{nextNote}}</span></span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{hasFree}}" hint-placeholder-val="{{ true }}"><div class="card" style="padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center"><span class="grow"><b>{{freeName}} is free.</b> <span class="mut">{{callHint}}</span></span><button class="btn" disabled="{{blocked}}" onClick="{{call}}">{{callLabel}}</button></div></sc-if>
+
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+<section class="card" style="flex:999 1 520px;min-width:0;padding:22px;display:flex;flex-direction:column;gap:16px">
+<div><div class="cap">{{selMeta}}</div><h2 class="disp" style="font-size:30px;margin-top:6px">{{selA}} v {{selB}}</h2></div>
+<div class="tabs" role="tablist" aria-label="Fix this match"><sc-for list="{{tools}}" as="t" hint-placeholder-count="3"><button role="tab" class="{{t.cls}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div>
+<sc-if value="{{isResult}}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:12px">
+<div class="mut" style="font-size:13px">For a score that came in on paper. Games to 11, win by 2. Nothing shows as final until you save it.</div>
+<sc-for list="{{games}}" as="g" hint-placeholder-count="3"><div class="row" style="gap:10px"><span class="cap" style="width:64px">Game {{g.n}}</span><input class="inp n" style="max-width:92px;text-align:center;font-size:24px" aria-label="{{g.la}}" value="{{g.a}}"><span class="mut">–</span><input class="inp n" style="max-width:92px;text-align:center;font-size:24px" aria-label="{{g.lb}}" value="{{g.b}}"></div></sc-for>
+<button class="btn alt" style="align-self:flex-start" onClick="{{save}}">{{saveLabel}}</button></div></sc-if>
+<sc-if value="{{isWalk}}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:12px">
+<div class="mut" style="font-size:13px">Who didn’t turn up or retired? The other side goes through. Results show “W/O”.</div>
+<div class="grid g2" style="gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))"><sc-for list="{{sides}}" as="sd" hint-placeholder-count="2"><button class="{{sd.cls}}" onClick="{{sd.pick}}"><span class="dot"></span><span><b style="display:block">{{sd.name}}</b><span class="mut" style="font-size:13px">Didn’t turn up or retired</span></span></button></sc-for></div>
+<button class="btn alt" style="align-self:flex-start" onClick="{{save}}">{{walkLabel}}</button></div></sc-if>
+<sc-if value="{{isMove}}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:12px">
+<div class="mut" style="font-size:13px">Move the match to a free court. Players, the referee link and the TV board follow it.</div>
+<div class="row" style="gap:10px;flex-wrap:wrap"><sc-for list="{{moves}}" as="m" hint-placeholder-count="4"><button class="{{m.cls}}" onClick="{{m.pick}}" style="width:auto;flex:1 1 120px"><span class="dot"></span><span><b style="display:block">{{m.name}}</b><span class="mut" style="font-size:12px">{{m.state}}</span></span></button></sc-for></div>
+<button class="btn alt" style="align-self:flex-start" onClick="{{save}}">{{moveLabel}}</button></div></sc-if>
+<sc-if value="{{saved}}" hint-placeholder-val="{{ false }}"><div class="note">{{savedText}}</div></sc-if>
+</section>
+<section class="card" style="flex:1 1 360px;min-width:0">
+<div class="between" style="padding:16px 18px 6px"><div class="cap">Queue</div><button class="tlink mut" style="min-height:32px;font-size:13px" onClick="{{finish}}">Finish a match (demo)</button></div>
+<div class="list">
+<sc-for list="{{queue}}" as="q" hint-placeholder-count="5"><div><span class="n mut" style="font-size:20px;width:22px">{{q.no}}</span><span class="grow" style="min-width:0"><b class="ell" style="display:block;font-size:14px">{{q.m}}</b><span class="mut" style="font-size:12px">{{q.s}} · about {{q.t}}</span></span><button class="{{q.cls}}" style="border:0;cursor:pointer;font-family:inherit;min-height:32px" onClick="{{q.checkin}}">{{q.ci}}</button></div></sc-for>
+</div>
+</section>
+</div>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a class="on" href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1350}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { played: 21, sel: 0, tool: 'Enter a result', side: 'b', move: 3, saved: false,
+  courts: [ {a:'Varun Rao / Neel Iyer',b:'Imran Khan / Joseph D’Souza',sa:10,sb:10,stage:'Men’s semi-final',ref:'Asif',g:3},
+            {a:'Ishaan / Arav',b:'Asha / Lata',sa:7,sb:5,stage:'Mixed semi-final',ref:'Meena',g:2},
+            {a:'Kabir / Omar',b:'Dev / Yash',sa:3,sb:8,stage:'Pool A',ref:'Ravi',g:1,off:true}, null ],
+  queue: [ ['Fatima / Zara vs Gita / Rekha','Women’s QF',true,'6:50'], ['Sid / Rahul vs Leela / Tara','Mixed QF',true,'7:05'], ['Teja / Kiran vs Rohan / Ajay','Pool C',false,'7:15'], ['Winner SF1 vs Winner SF2','Men’s final',false,'8:15'] ] }; }
+
+renderVals() {
+const s = this.state;
+const tools = ['Enter a result','Walkover or retired','Change court'];
+const head = s.queue[0]; const blocked = !head || !head[2];
+const free = s.courts.findIndex(c => !c);
+const courts = s.courts.map((c,i) => c ? ({name:'Court '+(i+1), busy:true, free:false, status:'Live', chip:'st live', a:c.a, b:c.b, sa:c.sa, sb:c.sb, meta:c.stage+' · Game '+c.g,
+    ref: c.off ? 'Referee offline 2 min · scores paused' : 'Referee '+c.ref+' · connected', refCls: c.off ? 'st no wrapok' : 'mut',
+    cls: 'cglass'+(s.sel===i ? ' sel' : ''), pick: () => this.setState({sel:i, saved:false})})
+  : ({name:'Court '+(i+1), busy:false, free:true, status:'Free', chip:'st ok', meta:'Ready for the next match', cls:'cglass', pick: () => {}}));
+const c = s.courts[s.sel] || s.courts.find(Boolean);
+return { rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+  courts, played: s.played, onCourt: s.courts.filter(Boolean).length, waiting: s.queue.length,
+  nextUp: head ? head[0] : 'Queue empty', nextNote: head ? (head[2] ? 'All 4 players checked in' : 'Waiting for check-in') : '',
+  hasFree: free >= 0, freeName: 'Court '+(free+1), blocked,
+  callHint: !head ? 'The queue is empty.' : (head[2] ? 'Call the next match when the court is clear.' : 'Check the players in before you call them.'),
+  callLabel: !head ? 'Queue empty' : (head[2] ? 'Call to Court '+(free+1) : 'Waiting for check-in'),
+  call: () => { if (blocked || free < 0) return; const [a,b] = head[0].split(' vs '); const cs = s.courts.slice(); cs[free] = {a,b,sa:0,sb:0,stage:head[1],ref:'Asif',g:1}; this.setState({courts: cs, queue: s.queue.slice(1)}); },
+  queue: s.queue.map((q,i) => ({no:i+1, m:q[0], s:q[1], t:q[3], ci: q[2] ? 'All 4 in' : '3 of 4 · check in', cls: q[2] ? 'st ok' : 'st wait',
+    checkin: () => { const qq = s.queue.map(x => x.slice()); qq[i][2] = true; this.setState({queue: qq}); }})),
+  finish: () => { const cs = s.courts.slice(); const i = cs.findIndex(Boolean); if (i < 0) return; cs[i] = null; this.setState({courts: cs, played: s.played + 1, sel: cs.findIndex(Boolean)}); },
+  selA: c ? c.a : '—', selB: c ? c.b : '—', selMeta: c ? 'Court '+(s.courts.indexOf(c)+1)+' · '+c.stage : '',
+  tools: tools.map(n => ({name:n, cls: n===s.tool ? 'tab on' : 'tab', pick: () => this.setState({tool:n, saved:false})})),
+  isResult: s.tool===tools[0], isWalk: s.tool===tools[1], isMove: s.tool===tools[2],
+  games: [[1,'11','8'],[2,'9','11'],[3,'11','7']].map(([n,a,b]) => ({n,a,b, la:'Game '+n+' first team', lb:'Game '+n+' second team'})),
+  sides: c ? [['a',c.a],['b',c.b]].map(([k,name]) => ({name, cls: s.side===k ? 'opt on' : 'opt', pick: () => this.setState({side:k, saved:false})})) : [],
+  moves: s.courts.map((x,i) => ({name:'Court '+(i+1), state: x ? 'In use' : 'Free', cls: (s.move===i ? 'opt on' : 'opt'), pick: () => { if (!x) this.setState({move:i, saved:false}); }})),
+  save: () => this.setState({saved:true}), saved: s.saved,
+  saveLabel: s.saved ? 'Result saved ✓' : 'Save result', walkLabel: s.saved ? 'Walkover saved ✓' : 'Save walkover', moveLabel: s.saved ? 'Moved ✓' : 'Move to Court '+(s.move+1),
+  savedText: s.tool===tools[0] ? 'Saved. The live page, TV board and results are updated. Logged as a desk change.' : s.tool===tools[1] ? 'Walkover saved. Undo it from this match if it was a mistake.' : 'Moved. The referee link follows the match.'
+};
+}
+}
+</script>
+</body>
+</html>

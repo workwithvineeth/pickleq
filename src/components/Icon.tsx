@@ -1,5 +1,6 @@
 const paths = {
   home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+  events: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h3',
   matches: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   train: 'M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12',
   stats: 'M4 20V10M10 20V4M16 20v-7M2 20h20',

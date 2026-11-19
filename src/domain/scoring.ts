@@ -13,6 +13,11 @@ export function checkGame(format: Format, you: number | null, them: number | nul
   const hi = Math.max(you, them);
   const lo = Math.min(you, them);
   if (hi < format.pointsTo) return fail(`The winner needs at least ${format.pointsTo}`);
+  if (format.golden) {
+    // Golden point: nobody goes past the target, and a 1-point margin is only possible from the golden point.
+    if (hi > format.pointsTo) return fail(`With golden point, the winner finishes on exactly ${format.pointsTo}`);
+    return ok;
+  }
   if (hi - lo < 2) return fail('The winner must win by 2');
   if (hi > format.pointsTo && hi - lo !== 2) return fail(`Past ${format.pointsTo}, the margin must be exactly 2`);
   return ok;
@@ -94,7 +99,7 @@ export function scoreLine(match: Pick<Match, 'outcome' | 'games'>): string {
 
 export function formatLabel(f: Format): string {
   const games = f.bestOf === 1 ? '1 game' : 'Best of 3';
-  return `${games} to ${f.pointsTo} · ${f.scoring === 'sideout' ? 'side-out' : 'rally'}`;
+  return `${games} to ${f.pointsTo} · ${f.scoring === 'sideout' ? 'side-out' : 'rally'}${f.golden ? ' · golden point' : ''}`;
 }
 
 export function momentumLabel(g: Game): string | null {

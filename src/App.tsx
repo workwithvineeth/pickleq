@@ -28,12 +28,22 @@ import { TournamentForm, TournamentList, TournamentView } from './screens/Tourna
 import { purgeOldTournaments } from './db/tournaments';
 import { decodeLink } from './domain/tournaments';
 
+import { isClubEnabled } from './club/config';
+
 // Charts are large; load the Stats screen only when it's opened.
 const Stats = lazy(() => import('./screens/Stats').then((m) => ({ default: m.Stats })));
+// Club mode is its own bundle, loaded only when opened (and only in builds that switch it on).
+// The check is written out here (not via isClubEnabled) so Live and Preview builds leave the club files out entirely.
+const ClubRoutes = import.meta.env.VITE_CLUB === 'on' || import.meta.env.MODE === 'test' ? lazy(() => import('./club/screens/ClubRoutes')) : null;
+
+// Opened from a Club sign-in email (…/?code=…): show the sign-in screen, which finishes it.
+if (import.meta.env.VITE_CLUB === 'on' && /[?&](code|error_description)=/.test(window.location.search) && !window.location.hash.startsWith('#/club-signin')) {
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/club-signin`);
+}
 
 export default function App() {
   const [route, go, back] = useRoute();
-  const isTab = (TABS as string[]).includes(route.name);
+  const isTab = (TABS as string[]).includes(route.name) && (route.name !== 'events' || isClubEnabled());
   const [locked, setLocked] = useState(() => pinEnabled());
 
   // Lock again when you come back after the chosen time away (a few seconds' grace so the share sheet doesn't lock you out).
@@ -58,7 +68,8 @@ export default function App() {
 
   return (
     <div className="app">
-      {route.name === 'home' && <Home go={go} />}
+      {(route.name === 'home' || (isClubRoute(route.name) && !isClubEnabled())) && <Home go={go} />}
+      {isClubRoute(route.name) && isClubEnabled() && ClubRoutes && <Suspense fallback={<main className="screen"><p className="small muted">Loading…</p></main>}><ClubRoutes route={route} go={go} back={back} /></Suspense>}
       {route.name === 'matches' && <Matches go={go} key={route.id ?? 'all'} initialFilter={route.id === 'incomplete' ? 'incomplete' : 'all'} />}
       {route.name === 'train' && <Train go={go} />}
       {route.name === 'stats' && <Suspense fallback={<main className="screen"><h1 className="screen-title">Stats</h1></main>}><Stats go={go} /></Suspense>}
@@ -98,4 +109,8 @@ export default function App() {
       <UpdatePrompt />
     </div>
   );
+}
+
+function isClubRoute(name: string): boolean {
+  return name.startsWith('club') || name.startsWith('event') || ['results', 'court', 'helper', 'desk', 'my-entries', 'admin-listings', 'admin', 'admin-club'].includes(name);
 }

@@ -1,0 +1,340 @@
+[
+  {
+    "id": 1,
+    "name": "hero-night-rally",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-9ab4daf1-30e6-404e-97b5-35b1152cc017.png",
+    "source_size": [
+      1672,
+      941
+    ],
+    "desktop_size": [
+      2400,
+      1350
+    ],
+    "mobile_size": [
+      1080,
+      1440
+    ],
+    "desktop_bytes": 394276,
+    "mobile_bytes": 237519,
+    "desktop_quality": 92,
+    "mobile_quality": 92,
+    "slot": "Home hero",
+    "persona": "Competitor",
+    "analogy": "ESPN / FanCode",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 2,
+    "name": "live-court-floodlights",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-2f82286a-3946-4b44-9965-ea4b687b04b2.png",
+    "source_size": [
+      1619,
+      971
+    ],
+    "desktop_size": [
+      2000,
+      1200
+    ],
+    "mobile_size": [
+      1080,
+      1163
+    ],
+    "desktop_bytes": 251590,
+    "mobile_bytes": 91103,
+    "desktop_quality": 92,
+    "mobile_quality": 92,
+    "slot": "Live only",
+    "persona": "All",
+    "analogy": "ESPN / FanCode",
+    "mobile_treatment": "contain on Night background",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 3,
+    "name": "tv-board-arena",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-5725a2f8-4b6a-4b65-bcc9-f71eb7b2733a.png",
+    "source_size": [
+      1619,
+      971
+    ],
+    "desktop_size": [
+      2000,
+      1200
+    ],
+    "mobile_size": [
+      1080,
+      831
+    ],
+    "desktop_bytes": 317816,
+    "mobile_bytes": 141995,
+    "desktop_quality": 92,
+    "mobile_quality": 92,
+    "slot": "Home TV board",
+    "persona": "Status player",
+    "analogy": "ESPN / FanCode",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 4,
+    "name": "social-friends",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-dd343ce2-4258-4b18-9fc3-ac99fb769e88.png",
+    "source_size": [
+      1619,
+      971
+    ],
+    "desktop_size": [
+      2000,
+      1200
+    ],
+    "mobile_size": [
+      1080,
+      831
+    ],
+    "desktop_bytes": 341586,
+    "mobile_bytes": 155604,
+    "desktop_quality": 92,
+    "mobile_quality": 92,
+    "slot": "Home Social posts",
+    "persona": "Social group",
+    "analogy": "Strava",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 5,
+    "name": "club-night",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-0501695c-5586-4fe1-a6c0-01bd25ea6489.png",
+    "source_size": [
+      1619,
+      971
+    ],
+    "desktop_size": [
+      2000,
+      1200
+    ],
+    "mobile_size": [
+      1080,
+      831
+    ],
+    "desktop_bytes": 389548,
+    "mobile_bytes": 170586,
+    "desktop_quality": 90,
+    "mobile_quality": 92,
+    "slot": "Home club branding",
+    "persona": "Club owner",
+    "analogy": "Playtomic / CourtReserve",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 6,
+    "name": "day-court-aerial",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-2fe25e85-0e78-499d-a610-6c3c3dd7be1a.png",
+    "source_size": [
+      1672,
+      941
+    ],
+    "desktop_size": [
+      2400,
+      1350
+    ],
+    "mobile_size": [
+      1080,
+      1440
+    ],
+    "desktop_bytes": 399194,
+    "mobile_bytes": 250818,
+    "desktop_quality": 62,
+    "mobile_quality": 92,
+    "slot": "Home day section",
+    "persona": "Lapsed / new",
+    "analogy": "Community discovery",
+    "mobile_treatment": "contain on Night background",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 7,
+    "name": "event-crowd-courtside",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-98c62861-db13-4efb-ac6f-50badcde70b9.png",
+    "source_size": [
+      1774,
+      887
+    ],
+    "desktop_size": [
+      2400,
+      1200
+    ],
+    "mobile_size": [
+      1080,
+      1108
+    ],
+    "desktop_bytes": 389653,
+    "mobile_bytes": 156833,
+    "desktop_quality": 86,
+    "mobile_quality": 92,
+    "slot": "Event header",
+    "persona": "Social group",
+    "analogy": "IPL / WPBL",
+    "mobile_treatment": "contain on Night background",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 8,
+    "name": "player-competitor",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-a54b35e5-1c25-43d6-a8e3-2045beb93f59.png",
+    "source_size": [
+      1122,
+      1402
+    ],
+    "desktop_size": [
+      1600,
+      2000
+    ],
+    "mobile_size": [
+      1080,
+      1440
+    ],
+    "desktop_bytes": 343840,
+    "mobile_bytes": 193523,
+    "desktop_quality": 92,
+    "mobile_quality": 92,
+    "slot": "Public profile demo",
+    "persona": "Competitor",
+    "analogy": "DUPR",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 9,
+    "name": "player-tracker",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-c5660b6a-fec9-402c-9dbe-6f096ba65658.png",
+    "source_size": [
+      1003,
+      1568
+    ],
+    "desktop_size": [
+      1600,
+      2667
+    ],
+    "mobile_size": [
+      1080,
+      2271
+    ],
+    "desktop_bytes": 368672,
+    "mobile_bytes": 237718,
+    "desktop_quality": 88,
+    "mobile_quality": 92,
+    "slot": "My Studio demo / home phone",
+    "persona": "Tracker",
+    "analogy": "Strava",
+    "mobile_treatment": "contain on Night background",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 10,
+    "name": "entries-still-life",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-609303ba-bfcd-4310-b724-0014d68535cb.png",
+    "source_size": [
+      1122,
+      1402
+    ],
+    "desktop_size": [
+      1600,
+      2000
+    ],
+    "mobile_size": [
+      1080,
+      554
+    ],
+    "desktop_bytes": 399386,
+    "mobile_bytes": 148052,
+    "desktop_quality": 82,
+    "mobile_quality": 92,
+    "slot": "Overview poster / Studio tip",
+    "persona": "Organiser",
+    "analogy": "Playtomic",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 11,
+    "name": "social-champions",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-97a24717-de9d-43c4-8abe-34d1a1142e57.png",
+    "source_size": [
+      1122,
+      1402
+    ],
+    "desktop_size": [
+      1600,
+      2000
+    ],
+    "mobile_size": [
+      1080,
+      1351
+    ],
+    "desktop_bytes": 361529,
+    "mobile_bytes": 213317,
+    "desktop_quality": 90,
+    "mobile_quality": 92,
+    "slot": "Social Champions",
+    "persona": "Status player",
+    "analogy": "IPL / WPBL",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 12,
+    "name": "social-result",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-f9e2f5ad-33cb-41ae-9d57-1ee4900d71df.png",
+    "source_size": [
+      1122,
+      1402
+    ],
+    "desktop_size": [
+      1600,
+      2000
+    ],
+    "mobile_size": [
+      1080,
+      1351
+    ],
+    "desktop_bytes": 365340,
+    "mobile_bytes": 247228,
+    "desktop_quality": 88,
+    "mobile_quality": 92,
+    "slot": "Social Result",
+    "persona": "Social group / lapsed",
+    "analogy": "Community",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  },
+  {
+    "id": 13,
+    "name": "organiser-hands",
+    "source": "/Users/kathi.staines@zomato.com/.codex/generated_images/01a1c9c3-0c26-71a1-a0f8-35138df11c1d/exec-ebf2479d-ecec-4c4f-8dc1-c5a2feb3f82e.png",
+    "source_size": [
+      1619,
+      971
+    ],
+    "desktop_size": [
+      2000,
+      1200
+    ],
+    "mobile_size": [
+      1080,
+      831
+    ],
+    "desktop_bytes": 330965,
+    "mobile_bytes": 143363,
+    "desktop_quality": 92,
+    "mobile_quality": 92,
+    "slot": "Optional organiser header",
+    "persona": "Organiser",
+    "analogy": "Playtomic",
+    "mobile_treatment": "focal crop",
+    "status": "generated; final approval pending"
+  }
+]

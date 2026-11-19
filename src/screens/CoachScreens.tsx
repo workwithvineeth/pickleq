@@ -221,7 +221,7 @@ export function CoachSettings({ onBack }: { onBack: () => void }) {
         <h2 style={{ fontSize: 18 }}>Your Claude API key</h2>
         <ol className="small" style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <li>Sign in at <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener noreferrer">platform.claude.com</a> and open API keys.</li>
-          <li>Tap Create key, name it PICKLEQ, and copy it. It starts with sk-ant-.</li>
+          <li>Tap Create key, name it RallyQ, and copy it. It starts with sk-ant-.</li>
           <li>Under Billing, buy a small prepaid credit and leave auto-reload off. Claude stops when the credit runs out, so you can’t overspend.</li>
         </ol>
         {saved && <div className="kv"><span>Saved key</span><span>{maskKey(saved)}</span></div>}

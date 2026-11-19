@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Referee links and Results</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<div class="shell">
+<aside class="side" aria-label="Organiser menu"><a class="host" href="Overview.dc.html"><span class="tile">CC</span><span><span class="cap">Hosted by</span><b>Cedar at Maple Courts</b></span></a><span class="cap grp">Cedar</span><a href="Overview.dc.html">Home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><span class="cap grp">Cedar Open · Sun 15 Nov</span><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Pools &amp; knockouts</a><a href="Desk.dc.html">Desk</a><a class="on" href="RefLinks.dc.html">Referees &amp; results</a><a href="TV.dc.html">TV board</a><a class="signoff" href="Main.dc.html"><span>Run on</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></a></aside>
+<main class="main" style="display:flex;flex-direction:column;gap:22px">
+<div class="between">
+<div class="pg-h"><span class="cap">Cedar Open</span><h1 class="disp">{{title}}</h1></div>
+<button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button>
+</div>
+<div class="tabs" role="tablist" aria-label="View"><sc-for list="{{views}}" as="v" hint-placeholder-count="2"><button role="tab" class="{{v.cls}}" onClick="{{v.pick}}">{{v.name}}</button></sc-for></div>
+
+<sc-if value="{{isRef}}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note">One link per court. The referee opens it on their phone, types the PIN and scores. No account, no app. Only organisers see the PIN; change it after each event.</div>
+<div class="grid g2">
+<sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
+<section class="card mini" style="padding:20px;display:flex;flex-direction:column;gap:12px;min-height:200px">
+<svg viewBox="0 0 300 200" preserveAspectRatio="none" aria-hidden="true"><g><rect x="1" y="1" width="298" height="198"></rect><line x1="150" y1="1" x2="150" y2="199" stroke-width="4"></line><line x1="105" y1="1" x2="105" y2="199"></line><line x1="195" y1="1" x2="195" y2="199"></line><line x1="1" y1="100" x2="105" y2="100"></line><line x1="195" y1="100" x2="299" y2="100"></line></g></svg>
+<div class="between"><b class="disp" style="font-size:26px">{{c.name}}</b><span class="{{c.st}}">{{c.state}}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">{{c.match}}</b><span class="mut" style="font-size:12px">{{c.seen}}</span><span class="n" style="font-size:15px;letter-spacing:.02em;color:#C9D9CD">{{c.link}}</span></div>
+<div class="row" style="flex-wrap:wrap;margin-top:auto"><button class="{{c.btn}}" onClick="{{c.send}}">{{c.sendLabel}}</button><button class="btn ghost sm" onClick="{{c.copy}}">{{c.copyLabel}}</button></div>
+</section>
+</sc-for>
+</div>
+<div class="card" style="padding:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span class="grow"><span class="cap" style="display:block">Referee PIN · same for every court</span><span class="n" style="font-size:34px;letter-spacing:.1em">{{pinShown}}</span></span><button class="tlink" onClick="{{flipPin}}">{{pinLabel}}</button><button class="btn ghost sm" onClick="{{roll}}">New PIN</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{isRes}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="card list">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="3">
+<div><span class="grow"><b style="display:block">{{c.name}}</b><span class="mut" style="font-size:13px">{{c.sub}}</span></span><span class="{{c.st}}">{{c.state}}</span><button class="{{c.btn}}" onClick="{{c.confirm}}">{{c.label}}</button></div>
+</sc-for>
+</div>
+<div class="grid g3">
+<section class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px"><div class="cap">Share</div><div class="disp" style="font-size:24px">Results page</div><div class="mut" style="font-size:13px">Public link with standings and the bracket.</div><a class="btn ghost sm" style="align-self:flex-start" href="Results.dc.html">Open results →</a></section>
+<section class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px"><div class="cap">Download</div><div class="disp" style="font-size:24px">CSV for DUPR</div><div class="mut" style="font-size:13px">Referee-scored matches only, in DUPR’s format.</div><button class="btn ghost sm" style="align-self:flex-start" onClick="{{dl}}">{{dlLabel}}</button></section>
+<section class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px"><div class="cap">Post</div><div class="disp" style="font-size:24px">Result posters</div><div class="mut" style="font-size:13px">Made once results are confirmed: Champion, Final, Story and WhatsApp. <a href="Results.dc.html">See them →</a></div><button class="{{postBtn}}" style="align-self:flex-start" onClick="{{post}}">{{postLabel}}</button></section>
+</div>
+</div>
+</sc-if>
+</main>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a class="on" href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { v: 'ref', pin: '4826', copied: 0, sent: {}, ok: { wd: true } }; }
+renderVals() {
+  const s = this.state;
+  const C = [[1,'Connected','st ok','Men’s SF · Varun / Neel v Imran / Joseph','Last update 4 s ago'],[2,'Connected','st ok','Mixed SF · Ishaan / Arav v Asha / Lata','Last update 9 s ago'],[3,'Not opened','st wait','Pool A · Kabir / Omar v Dev / Yash','Link not opened yet'],[4,'Not opened','st wait','Free · next: Women’s QF','Link not opened yet']];
+  const K = [['md','Men’s doubles','46 matches · all referee-scored'],['wd','Women’s doubles','28 matches · all referee-scored'],['mx','Mixed','32 matches · 2 typed at the desk']];
+  const nc = C.find(c => c[1]==='Not opened' && !s.sent[c[0]]); const nextCourt = nc ? nc[0] : 0;
+  const nextCat = (K.find(k => !s.ok[k[0]]) || [])[0];
+  return {
+    rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+    views: [['ref','Referee links'],['res','Results & DUPR']].map(([k,n]) => ({name:n, cls: s.v===k ? 'tab on' : 'tab', pick: () => this.setState({v:k})})),
+    isRef: s.v==='ref', isRes: s.v==='res', title: s.v==='ref' ? 'Referee links' : 'Results & DUPR',
+    courts: C.map(([n,state,st,match,seen]) => ({match, seen, btn: n===nextCourt ? 'btn sm' : 'btn ghost sm', name:'Court '+n, state, st, link:'rallyq.in/ref/CC-open/c'+n, copy: () => this.setState({copied:n}), copyLabel: s.copied===n ? 'Copied ✓' : 'Copy link', send: () => this.setState({sent: {...s.sent, [n]: true}}), sendLabel: s.sent[n] ? 'Sent ✓' : 'Send on WhatsApp'})),
+    pinShown: s.showPin ? s.pin : '••••', flipPin: () => this.setState({showPin: !s.showPin}), pinLabel: s.showPin ? 'Hide' : 'Show', pin: s.pin, roll: () => this.setState({pin: String(1000 + Math.floor(Math.random()*8999))}),
+    cats: K.map(([k,name,sub]) => ({name,sub, state: s.ok[k] ? 'Confirmed' : 'To confirm', st: s.ok[k] ? 'st ok' : 'st wait', btn: k===nextCat ? 'btn sm' : 'btn ghost sm', label: s.ok[k] ? 'Undo' : 'Confirm results', confirm: () => this.setState({ok: {...s.ok, [k]: !s.ok[k]}})})),
+    dl: () => this.setState({dl:true}), dlLabel: s.dl ? 'Downloaded ✓' : 'Download CSV',
+    postBtn: nextCat ? 'btn ghost sm' : 'btn sm', post: () => this.setState({posted:true}), postLabel: s.posted ? 'Posters ready ✓' : 'Make the posters'
+  };
+}
+}
+</script>
+</body>
+</html>

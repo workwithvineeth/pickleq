@@ -35,7 +35,7 @@ export function Ratings({ onBack }: { onBack: () => void }) {
         <button type="button" className="icon-btn" aria-label="Back" onClick={onBack}><Icon name="back" size={20} /></button>
         <h1 id="ratings-title" className="screen-title" style={{ flex: 1 }}>DUPR ratings</h1>
       </header>
-      <p className="small muted" style={{ margin: 0 }}>Copy your rating from the DUPR app whenever it changes. PICKLEQ never calculates or changes ratings.</p>
+      <p className="small muted" style={{ margin: 0 }}>Copy your rating from the DUPR app whenever it changes. RallyQ never calculates or changes ratings.</p>
       <Segmented label="Rating type" value={kind} onChange={(k) => { setKind(k); setMsg(null); }}
         options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} />
 

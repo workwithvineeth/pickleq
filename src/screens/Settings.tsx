@@ -1,11 +1,13 @@
+import { ThemeSwitch } from '../components/ThemeSwitch';
 import { useState } from 'react';
 import { Chips, Field } from '../components/Controls';
 import { checkNewPin, LOCK_AFTER, lockAfter, pinEnabled, removePin, setLockAfter, setPin, tryPin, type LockAfter } from '../lock/pin';
 import { Icon } from '../components/Icon';
-import { appVersion, channel } from '../config';
+import { appVersion, buildId, channel } from '../config';
 import { clearAllData, loadSampleData } from '../db/sample';
 import { isInstalled } from '../install';
 import type { Go } from '../navigation';
+import { isClubEnabled } from '../club/config';
 
 export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
   const installed = isInstalled();
@@ -20,7 +22,7 @@ export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
         <h1 id="settings-title" className="screen-title" style={{ flex: 1 }}>Settings</h1>
       </header>
       <section className="card" aria-label="About this app">
-        <div className="row"><span>Version</span><span className="muted">{appVersion}</span></div>
+        <div className="row"><span>Version</span><span className="muted">{appVersion} · build {buildId}</span></div>
         <div className="row"><span>Version type</span><span className="muted">{channel === 'preview' ? 'Preview (sample data)' : 'Live (your data)'}</span></div>
         <div className="row"><span>Installed on home screen</span><span className="muted">{installed ? 'Yes' : 'No'}</span></div>
         <div className="row"><span>Where your data lives</span><span className="muted">This phone only</span></div>
@@ -28,9 +30,15 @@ export function Settings({ onBack, go }: { onBack: () => void; go: Go }) {
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('backup')}>
         <span>Backup, restore and export</span><span>›</span>
       </button>
+      {isClubEnabled() && (
+        <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('club')}>
+          <span>Club mode</span><span>›</span>
+        </button>
+      )}
+      <section className="card section" aria-label="Theme"><h2>Theme</h2><ThemeSwitch /><p className="small muted">Auto follows your device.</p></section>
       <AppLock />
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('help')}>
-        <span>How to use PICKLEQ</span><span>›</span>
+        <span>How to use RallyQ</span><span>›</span>
       </button>
       <button type="button" className="banner-btn" style={{ background: 'var(--card)', color: 'var(--text)' }} onClick={() => go('privacy')}>
         <span>Privacy and your data</span><span>›</span>
@@ -89,7 +97,7 @@ function AppLock() {
   return (
     <section className="card section" aria-label="App lock">
       <div className="header"><h2 style={{ fontSize: 18 }}>App lock</h2><span className={`pill ${on ? 'pill-ok' : ''}`}>{on ? 'On' : 'Off'}</span></div>
-      <p className="small muted" style={{ margin: 0 }}>A 4–6 digit PIN to open PICKLEQ. It keeps people who pick up your phone out of the app. It doesn’t encrypt your data, and if you forget it the only way back in is to erase the app’s data and restore a backup.</p>
+      <p className="small muted" style={{ margin: 0 }}>A 4–6 digit PIN to open RallyQ. It keeps people who pick up your phone out of the app. It doesn’t encrypt your data, and if you forget it the only way back in is to erase the app’s data and restore a backup.</p>
       {mode === 'idle' && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-outline" onClick={() => { setMode('set'); setMsg(null); }}>{on ? 'Change PIN' : 'Turn on app lock'}</button>

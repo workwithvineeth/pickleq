@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Player Studio</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tile">LP</span><span><span class="cap">Home club</span><b>Banyan Pickleball Club</b></span></a><nav class="nav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a class="on" href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><span class="chip">Signed in · Meera</span><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a><a href="SignIn.dc.html">Club sign in</a></nav></sc-if>
+
+<div class="wrap" style="padding-block:20px 64px;display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:stretch">
+<div class="photo ph-man" style="flex:1 1 360px;min-height:520px;border-radius:24px;padding:26px;display:flex;flex-direction:column;justify-content:space-between">
+<div class="between"><span class="cap" style="color:#DDE7DC">Player Studio</span><span class="chip ball">DUPR 4.21 ▲ 0.06</span></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<h1 class="disp" style="font-size:clamp(56px,6vw,88px)">Meera Patel</h1>
+<div style="color:#DDE7DC">Left side · Banyan Pickleball Club · Hyderabad</div>
+<div class="row" style="gap:8px;flex-wrap:wrap"><span class="chip">Women’s doubles</span><span class="chip">Mixed</span><span class="chip">Best: QF · Banyan DUPR Night</span></div>
+</div>
+</div>
+<div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+<div class="between"><span class="row" style="gap:8px"><span class="st ok">Public profile</span><span class="mut" style="font-size:13px">Tournament matches only, scored by referees</span></span><a class="tlink" href="MyStudio.dc.html">Open my Player Studio →</a></div>
+<div class="grid g4">
+<div class="card stat" style="padding:18px"><div class="cap">Matches</div><div class="n">38</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Win rate</div><div class="n acc">68%</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Best run</div><div class="n">9</div></div>
+<div class="card stat" style="padding:18px"><div class="cap">Venues</div><div class="n">5</div></div>
+</div>
+<div class="card" style="padding:20px">
+<div class="between"><div class="cap">Form · last 10</div><span class="mut" style="font-size:13px">Newest on the right</span></div>
+<div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap"><sc-for list="{{form}}" as="f" hint-placeholder-count="10"><span class="{{f.cls}}" style="min-width:34px;justify-content:center">{{f.r}}</span></sc-for></div>
+</div>
+<div class="card" style="padding:20px;flex:1">
+<div class="between"><div class="tabs" role="tablist" aria-label="Studio sections"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button role="tab" class="{{t.cls}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div></div>
+<sc-if value="{{isMatches}}" hint-placeholder-val="{{ true }}">
+<div class="scroll" style="margin-top:12px"><table class="tbl"><thead><tr><th>Date</th><th>Event</th><th>With</th><th>Against</th><th>Score</th><th>Result</th></tr></thead><tbody>
+<sc-for list="{{matches}}" as="m" hint-placeholder-count="6"><tr><td class="mut">{{m.d}}</td><td>{{m.e}}</td><td>{{m.w}}</td><td class="mut">{{m.v}}</td><td class="n" style="font-size:18px">{{m.s}}</td><td><span class="{{m.cls}}">{{m.r}}</span></td></tr></sc-for>
+</tbody></table></div>
+</sc-if>
+<sc-if value="{{isVenues}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
+<sc-for list="{{venues}}" as="v" hint-placeholder-count="5"><div><div class="between" style="font-size:14px"><span style="font-weight:600">{{v.n}}</span><span class="n" style="font-size:18px">{{v.w}} W · {{v.p}}</span></div><div class="bar" style="margin-top:6px"><i style="width:{{v.p}}"></i></div></div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isShare}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;align-items:center">
+<div class="photo ph-man" style="width:260px;height:325px;border-radius:18px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;flex:none">
+<div class="between"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A;width:28px;height:28px"><use href="#fq"></use></svg><span class="chip ball">Win</span></div>
+<div><div class="cap" style="color:#DDE7DC">Banyan DUPR Night</div><div class="disp" style="font-size:34px;margin-top:4px">Meera Patel</div><div class="n acc" style="font-size:40px;margin-top:6px">11–8 · 11–7</div><div style="font-size:11px;color:#DDE7DC;margin-top:6px">Hosted by Banyan Pickleball Club · Scores by RallyQ</div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0;flex:1 1 220px">
+<div style="font-weight:700;font-size:18px">Your win, ready to post</div>
+<div class="mut" style="font-size:14px">4:5 Instagram size. Tags the club. Made the moment the referee closed the match. Only you see it until you post.</div>
+<div class="row" style="flex-wrap:wrap;gap:8px 20px"><button class="btn sm" onClick="{{share}}">{{shareLabel}}</button><a class="tlink" href="Social.dc.html">More templates →</a></div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+</div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a href="Results.dc.html">Results</a><a class="on" href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { tab: 'Matches', shared: false }; }
+renderVals() {
+  const s = this.state;
+  const T = ['Matches','Venues','Share card'];
+  const fr = 'WWLWWWLWWW'.split('').map(r => ({r, cls: r==='W' ? 'chip ball' : 'chip'}));
+  const M = [
+    ['15 Nov','Banyan DUPR Night','Divya','Asha / Lata','11–8 · 11–7','W'],
+    ['15 Nov','Banyan DUPR Night','Divya','Gita / Rekha','11–9','W'],
+    ['8 Nov','MPC DUPR Night','Divya','Fatima / Zara','7–11 · 11–9 · 9–11','L'],
+    ['1 Nov','Cedar Social','Ananya','Kavya / Ritu','11–6','W'],
+    ['25 Oct','Willow Players League','Divya','Sana / Pooja','11–4','W'],
+    ['18 Oct','Birch Courts Mixer','Divya','Leela / Tara','9–11','L']
+  ].map(([d,e,w,v,s,r]) => ({d,e,w,v,s,r, cls: r==='W' ? 'chip ball' : 'chip'}));
+  return {
+    rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+    form: fr, matches: M,
+    tabs: T.map(n => ({name:n, cls: n===this.state.tab ? 'tab on' : 'tab', pick: () => this.setState({tab:n})})),
+    isMatches: this.state.tab==='Matches', isVenues: this.state.tab==='Venues', isShare: this.state.tab==='Share card',
+    venues: [['Banyan Pickleball Club',12,'80%'],['MPC Sample North',6,'60%'],['Cedar · Maple Courts',4,'67%'],['Willow Players Bowenpally',3,'75%'],['Birch Courts Malkajgiri',1,'33%']].map(([n,w,p]) => ({n,w,p})),
+    share: () => this.setState({shared:true}),
+    shareLabel: this.state.shared ? 'Saved to your phone ✓' : 'Save for Instagram'
+  };
+}
+}
+</script>
+</body>
+</html>

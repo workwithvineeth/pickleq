@@ -1,0 +1,31 @@
+import { expect, test } from '@playwright/test';
+test.use({actionTimeout:15000});
+test('overview has real live courts, compact phone frame, account settings and existing actions', async ({page}) => {
+  await page.route('https://*.supabase.co/**', r => r.fulfill({json:[]}));
+  await page.setViewportSize({width:320,height:568});
+  await page.goto('#/demo');
+  await page.getByLabel('Your name in the demo').fill('Alex');
+  await page.getByRole('button',{name:'Open PQ Demo Club'}).click();
+  await expect(page.getByRole('heading',{name:'Overview',exact:true})).toBeVisible();
+  const overviewUrl=page.url();
+  const live=page.getByRole('region',{name:'Live now'});
+  await expect(live).toBeVisible();
+  await expect(live.locator('.pq-overview-court:visible')).toHaveCount(4);
+  await expect(live.locator('.pq-overview-court').first().locator('.pq-score')).toHaveCount(2);
+  const card=live.locator('.pq-overview-court').first();
+  expect(await card.locator('.tmr').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(15);
+  expect(await card.locator('.pq-score').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(40);
+  expect(await live.locator('.pq-overview-courts').evaluate(el=>el.scrollWidth>el.clientWidth)).toBeTruthy();
+  // v1.2: the organiser shell (club side menu, page head, section tabs) replaces the old account strip and menus.
+  await expect(page.getByRole('complementary',{name:'Organiser menu'})).toHaveCount(1);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await expect(page.getByRole('region',{name:'Needs you'})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:'Create tournament',exact:true})).toBeVisible();
+  await live.getByRole('button',{name:'Scores →'}).first().click();
+  await expect(page).toHaveURL(/#\/results\//);
+  await page.evaluate(()=>{const k='pq-club-demo-v1',d=JSON.parse(localStorage.getItem(k)!);for(const t of d.tournaments){if(t.status==='live')t.status='done';if(t.status==='draft')t.startDate='2000-01-01';}localStorage.setItem(k,JSON.stringify(d));});
+  await page.goto(overviewUrl);await page.reload();await expect(page.getByRole('heading',{name:'Overview',exact:true})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Live now'})).toHaveCount(0);
+  await expect(page.getByRole('region',{name:'Your tournaments'})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:/PQ Demo Night/})).toContainText('Draft');
+});

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ Results</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/936f9b5bec921ce5e2d700be40c8e821">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}" style="min-height:100vh">
+<svg class="wm motif" viewBox="0 0 100 100" aria-hidden="true" style="--c:rgba(241,244,234,.07);--a:rgba(217,242,74,.55)"><use href="#fq"></use></svg>
+<header class="hdr"><div class="wrap"><a class="host" href="Main.dc.html"><span class="tile">LP</span><span><span class="cap">Hosted by</span><b>Banyan Pickleball Club</b></span></a><nav class="nav" aria-label="Main"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a></nav><div class="right"><a class="tlink" href="SignIn.dc.html">Club sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div></div></header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Events.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="SignIn.dc.html">For clubs</a><a href="SignIn.dc.html">Club sign in</a></nav></sc-if>
+<main class="wrap" style="padding-block:28px 40px;display:flex;flex-direction:column;gap:28px">
+<div class="between" style="align-items:flex-end">
+<div class="pg-h"><span class="cap acc">Final results · confirmed by Banyan · every match scored by a referee</span><h1 class="disp">Banyan DUPR Night</h1><span class="mut">Sun 8 Nov · Banyan Pickleball Club, Gachibowli · 24 teams · 3 categories</span></div>
+<div class="row" style="flex-wrap:wrap"><button class="tlink" onClick="{{dl}}">{{dlLabel}}</button><button class="btn" onClick="{{copy}}">{{copyLabel}}</button></div>
+</div>
+<div class="tabs" role="tablist" aria-label="Category"><sc-for list="{{cats}}" as="c" hint-placeholder-count="3"><button role="tab" class="{{c.cls}}" onClick="{{c.pick}}">{{c.name}}</button></sc-for></div>
+
+<section class="card champ" style="padding:0;overflow:hidden;display:flex;flex-wrap:wrap">
+<div style="flex:999 1 520px;min-width:0;padding:30px;display:flex;flex-direction:column;gap:16px;justify-content:space-between">
+<div class="between"><span class="chip gold">Champions · Women’s doubles</span><span class="row" style="gap:10px"><span class="tile">LP</span><span><span class="cap" style="display:block">Hosted by</span><b>Banyan Pickleball Club</b></span></span></div>
+<div><h2 class="disp" style="font-size:clamp(48px,6.4vw,104px)">Meera Patel<br>&amp; Divya Iyer</h2><div class="mut" style="margin-top:10px">DUPR 3.95 · 3.92 · won all 5 matches</div></div>
+<div class="row" style="gap:12px 24px;flex-wrap:wrap;align-items:baseline"><span class="n acc" style="font-size:clamp(56px,7vw,112px)">11–7 · 11–9</span><span class="mut">beat Asha / Lata in the final</span></div>
+</div>
+<div class="poster ph p-man" style="flex:1 1 300px;min-height:380px;border-radius:0;box-shadow:none;justify-content:flex-end"><span class="cap" style="color:#DDEBDF">Sample photo</span></div>
+</section>
+
+<div class="grid g3">
+<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:6px"><span class="cap">Runners-up</span><b class="disp" style="font-size:30px">Asha / Lata</b><span class="mut" style="font-size:13px">Lost the final 7–11 · 9–11 · DUPR 4.02 · Unrated</span></div>
+<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:6px"><span class="cap">Semi-finals</span><b class="disp" style="font-size:24px">Fatima / Zara</b><b class="disp" style="font-size:24px">Gita / Rekha</b></div>
+<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:6px"><span class="cap">The night in numbers</span><span class="row" style="gap:22px"><span><span class="n acc" style="font-size:44px">58</span><span class="mut" style="display:block;font-size:12px">matches</span></span><span><span class="n" style="font-size:44px">967</span><span class="mut" style="display:block;font-size:12px">points scored</span></span><span><span class="n" style="font-size:44px">0</span><span class="mut" style="display:block;font-size:12px">scoring errors</span></span></span></div>
+</div>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+<div class="between"><div><h2 class="disp" style="font-size:34px">Posters for the winners</h2><div class="mut" style="font-size:14px;margin-top:6px">Made when Banyan confirmed the results. Players share them; the club is always credited.</div></div><button class="tlink mut" onClick="{{remake}}">{{remakeLabel}}</button></div>
+<sc-if value="{{making}}" hint-placeholder-val="{{ false }}"><div class="grid g4"><div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div></div><div class="mut" style="font-size:13px">Making posters… this takes a few seconds.</div></sc-if>
+<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+<div class="grid g4" style="align-items:start">
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px">
+<div class="poster ph p-man champ" style="aspect-ratio:4/5"><span class="corner c1"></span><span class="corner c2"></span>
+<div class="between" style="padding:6px 8px 0 14px"><span class="row" style="gap:8px"><span class="ptile">LP</span><span style="font-size:11px;line-height:1.2">Hosted by<br><b>Banyan</b></span></span><span class="chip gold">Champions</span></div>
+<div style="padding:0 6px 6px"><div class="disp" style="font-size:34px">Meera &amp; Divya</div><div class="n" style="font-size:34px;color:#D9F24A;margin-top:4px">11–7 · 11–9</div><div class="between" style="font-size:11px;margin-top:8px;color:#DDEBDF"><span>Banyan DUPR Night · Women’s doubles</span><span class="row" style="gap:5px"><svg viewBox="0 0 100 100" aria-hidden="true" width="14" height="14" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="font-size:12px">RallyQ</span></span></div></div>
+</div>
+<figcaption class="between"><span><b style="font-size:14px">Champion</b><span class="mut" style="display:block;font-size:12px">Post 4:5 · gold for champions only</span></span><button class="btn ghost sm" onClick="{{save}}">Download</button></figcaption>
+</figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px">
+<div class="poster ph p-ball" style="aspect-ratio:4/5"><span class="corner c1"></span>
+<div class="between" style="padding:6px 0 0 14px"><span class="cap" style="color:#F1F4EA">Final</span><span class="ptile">LP</span></div>
+<div><div class="cap" style="color:#D9F24A">Your match. Your moment.</div><div class="disp" style="font-size:30px;margin-top:6px">Asha &amp; Lata</div><div class="n" style="font-size:30px;margin-top:4px">7–11 · 9–11</div><div style="font-size:11px;margin-top:8px;color:#DDEBDF">Runners-up · Hosted by Banyan · Scores by RallyQ</div></div>
+</div>
+<figcaption class="between"><span><b style="font-size:14px">Final result</b><span class="mut" style="display:block;font-size:12px">Post 4:5 · every finalist</span></span><button class="btn ghost sm" onClick="{{save}}">Download</button></figcaption>
+</figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px">
+<div class="poster ph p-hero" style="aspect-ratio:9/16;max-height:420px"><span class="corner c1"></span>
+<div class="between"><span class="ptile">LP</span><span class="chip">Final</span></div>
+<div><div class="n" style="font-size:64px;color:#D9F24A">11–9</div><div class="disp" style="font-size:24px;margin-top:4px">Meera &amp; Divya win Banyan DUPR Night</div><div style="font-size:11px;margin-top:8px;color:#DDEBDF">Hosted by Banyan · Scores by RallyQ</div></div>
+</div>
+<figcaption class="between"><span><b style="font-size:14px">Story</b><span class="mut" style="display:block;font-size:12px">9:16 · Instagram and WhatsApp</span></span><button class="btn ghost sm" onClick="{{save}}">Download</button></figcaption>
+</figure>
+<figure style="margin:0;display:flex;flex-direction:column;gap:10px">
+<div class="wa"><div class="bub"><div class="prev"><div class="poster ph p-man" style="aspect-ratio:16/9;border-radius:0;box-shadow:none;padding:10px;justify-content:flex-end"><span class="n" style="font-size:26px;color:#D9F24A">11–7 · 11–9</span><span style="font-size:11px">Champions · Banyan DUPR Night</span></div><div style="padding:8px;font-size:11px;color:#9FB4A6">Hosted by Banyan · rallyq</div></div>Champions at Banyan DUPR Night: Meera &amp; Divya, 11–7 · 11–9. Full results on RallyQ.<div style="text-align:right;font-size:10px;color:#9FB4A6;margin-top:4px">9:41 pm ✓✓</div></div></div>
+<figcaption class="between"><span><b style="font-size:14px">WhatsApp share</b><span class="mut" style="display:block;font-size:12px">Link preview + one line · shared by the player</span></span><button class="btn ghost sm" onClick="{{save}}">Copy</button></figcaption>
+</figure>
+</div>
+<div class="mut" style="font-size:12px">{{saveNote}}</div>
+</sc-if>
+</section>
+
+<section class="card" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+<div class="between"><h2 class="disp" style="font-size:30px">Pool standings</h2><div class="tabs"><sc-for list="{{pools}}" as="q" hint-placeholder-count="4"><button class="{{q.cls}}" onClick="{{q.pick}}">{{q.name}}</button></sc-for></div></div>
+<div class="scroll"><table class="tbl" style="min-width:760px"><thead><tr><th>#</th><th>Team and DUPR</th><th>P</th><th>W</th><th>L</th><th>Pts won</th><th>Pts lost</th><th>Diff</th><th></th></tr></thead><tbody>
+<sc-for list="{{table}}" as="r" hint-placeholder-count="4"><tr><td class="n" style="font-size:22px">{{r.rank}}</td><td><b>{{r.team}}</b><div class="mut" style="font-size:12px">{{r.dupr}}</div></td><td class="n" style="font-size:18px">{{r.p}}</td><td class="n acc" style="font-size:20px">{{r.w}}</td><td class="n" style="font-size:18px">{{r.l}}</td><td class="n" style="font-size:18px">{{r.pf}}</td><td class="n" style="font-size:18px">{{r.pa}}</td><td class="n" style="font-size:18px">{{r.d}}</td><td><span class="{{r.q}}">{{r.qt}}</span></td></tr></sc-for>
+</tbody></table></div>
+<span class="mut" style="font-size:12px">Ranked by wins, then points difference, then head-to-head. DUPR shown for each player; “Unrated” means no DUPR rating yet.</span>
+</section>
+
+<section class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+<div class="between"><h2 class="disp" style="font-size:30px">Knockout</h2><span class="mut" style="font-size:13px">Pools cross: A1 v D2 · B1 v C2 · C1 v B2 · D1 v A2</span></div>
+<div class="scroll"><div class="bracket" style="min-width:760px">
+<div class="col"><div class="cap">Quarter-finals</div><sc-for list="{{qf}}" as="m" hint-placeholder-count="4"><div class="m"><div class="cap" style="justify-content:flex-start;padding:8px 14px 0">{{m.lab}}</div><div class="{{m.aw}}"><span>{{m.a}}</span><span class="n">{{m.sa}}</span></div><div class="{{m.bw}}"><span>{{m.b}}</span><span class="n">{{m.sb}}</span></div></div></sc-for></div>
+<div class="col"><div class="cap">Semi-finals</div><sc-for list="{{sf}}" as="m" hint-placeholder-count="2"><div class="m"><div class="{{m.aw}}"><span>{{m.a}}</span><span class="n">{{m.sa}}</span></div><div class="{{m.bw}}"><span>{{m.b}}</span><span class="n">{{m.sb}}</span></div></div></sc-for></div>
+<div class="col"><div class="cap" style="color:var(--gold)">Final · champions</div><div class="m champ"><div class="w"><span>Meera / Divya</span><span class="n">11 · 11</span></div><div><span>Asha / Lata</span><span class="n">7 · 9</span></div></div></div>
+</div></div>
+<span class="mut" style="font-size:12px">Ratings go to DUPR once the club confirms the results.</span>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:12px">
+<h2 class="disp" style="font-size:28px">Other results</h2>
+<div class="card list">
+<a href="Results.dc.html"><span class="tile">MPC</span><span class="grow"><b>MPC Monday Social</b><span class="mut" style="display:block;font-size:13px">Mon 2 Nov · Hosted by MPC Sample North · 16 teams · Champions Kavya / Nisha</span></span><span class="tlink">Open →</span></a>
+<a href="Results.dc.html"><span class="tile">CC</span><span class="grow"><b>Cedar Diwali Doubles</b><span class="mut" style="display:block;font-size:13px">Thu 29 Oct · Hosted by Cedar · 20 teams · Champions Kabir / Omar</span></span><span class="tlink">Open →</span></a>
+</div>
+</section>
+</main>
+<div class="wrap pfoot"><span>Sample players, clubs, scores and photos.</span><span class="signoff"><span>Scores by</span><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word">RallyQ</span></span></div>
+<nav class="proto" aria-label="Prototype screens"><div class="wrap"><b>Prototype only · not in the app</b><i>Public</i><a href="Main.dc.html">Home</a><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Event page</a><a href="Events.dc.html">Events</a><a class="on" href="Results.dc.html">Results</a><a href="Studio.dc.html">Player profile</a><a href="SignIn.dc.html">Sign in</a><a href="MyEntries.dc.html">Enter · My entries</a><i>Player</i><a href="MyStudio.dc.html">My Player Studio</a><i>Club</i><a href="Overview.dc.html">Organiser home</a><a href="Tournaments.dc.html">Tournaments</a><a href="Entries.dc.html">Entries &amp; UPI</a><a href="Draw.dc.html">Draw</a><a href="Club.dc.html">Club &amp; team</a><a href="Social.dc.html">Social studio</a><i>Match day</i><a href="Desk.dc.html">Desk</a><a href="RefLinks.dc.html">Referees</a><a href="Referee.dc.html">Referee scorer</a><a href="TV.dc.html">TV board</a><i>Admin</i><a href="Admin.dc.html">Admin</a><i>System</i><a href="System.dc.html">System</a></div></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3000}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { cat: 'Women’s doubles', pool: 'A' }; }
+
+renderVals() {
+const s = this.state;
+const D = (a,b) => 'DUPR ' + a + ' · ' + b;
+const pools = {
+ A: [['1','Meera Patel / Divya Iyer',D('3.95','3.92'),3,3,0,33,15,'+18'],['2','Sana / Pooja',D('3.70','3.62'),3,2,1,30,23,'+7'],['3','Neha / Priya',D('3.48','3.40'),3,1,2,24,30,'−6'],['4','Ritu / Kavya',D('3.21','Unrated'),3,0,3,14,33,'−19']],
+ B: [['1','Asha Rao / Lata Nair',D('4.02','Unrated'),3,3,0,33,18,'+15'],['2','Leela / Tara',D('3.80','3.71'),3,2,1,31,27,'+4'],['3','Anjali / Swati',D('3.52','3.44'),3,1,2,26,29,'−3'],['4','Divya K / Isha',D('3.30','3.22'),3,0,3,15,31,'−16']],
+ C: [['1','Fatima Khan / Zara Ali',D('3.71','3.66'),3,3,0,33,20,'+13'],['2','Ananya / Ritu',D('3.66','3.58'),3,2,1,29,25,'+4'],['3','Pooja / Nisha',D('3.42','3.36'),3,1,2,25,28,'−3'],['4','Kriti / Meghna',D('3.25','3.18'),3,0,3,17,31,'−14']],
+ D: [['1','Gita / Rekha',D('3.68','3.60'),3,3,0,33,21,'+12'],['2','Shreya / Diya',D('3.60','3.55'),3,2,1,30,26,'+4'],['3','Tanvi / Roshni',D('3.44','3.39'),3,1,2,24,29,'−5'],['4','Aisha / Sneha',D('3.28','Unrated'),3,0,3,18,29,'−11']]
+};
+const M = (lab,a,b,sa,sb) => ({lab,a,b,sa,sb, aw: sa>sb ? 'w' : '', bw: sb>sa ? 'w' : ''});
+return { rqCls: s.day ? 'rq day' : 'rq', flipMode: () => this.setState({day: !s.day}), modeLabel: s.day ? 'Switch to night mode' : 'Switch to day mode', modeIcon: s.day ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z', menuOpen: !!s.menu, toggleMenu: () => this.setState({menu: !s.menu}),
+  cats: ['Women’s doubles','Men’s doubles','Mixed'].map(n => ({name:n, cls: n===s.cat ? 'tab on' : 'tab', pick: () => this.setState({cat:n})})),
+  pools: ['A','B','C','D'].map(n => ({name:'Pool '+n, cls: n===s.pool ? 'tab on' : 'tab', pick: () => this.setState({pool:n})})),
+  table: pools[s.pool].map(([rank,team,dupr,p,w,l,pf,pa,d],i) => ({rank,team,dupr,p,w,l,pf,pa,d, q: i<2 ? 'st ok' : '', qt: i<2 ? 'Through' : ''})),
+  qf: [M('QF1 · A1 v D2','Meera / Divya','Shreya / Diya',11,6),M('QF2 · B1 v C2','Asha / Lata','Ananya / Ritu',11,8),M('QF3 · C1 v B2','Fatima / Zara','Leela / Tara',11,9),M('QF4 · D1 v A2','Gita / Rekha','Sana / Pooja',11,7)],
+  sf: [M('','Meera / Divya','Fatima / Zara',11,6),M('','Asha / Lata','Gita / Rekha',11,9)],
+  making: !!s.making, ready: !s.making,
+  remake: () => { this.setState({making:true}); setTimeout(() => this.setState({making:false}), 1600); }, remakeLabel: s.making ? 'Making…' : 'Make again',
+  save: () => this.setState({saved:true}), saveNote: s.saved ? 'Saved to your downloads ✓' : 'Sample photos. Players add their own photo, or the club adds one from the night.',
+  dl: () => this.setState({dld:true}), dlLabel: s.dld ? 'Downloaded ✓' : 'Download results',
+  copy: () => this.setState({copied:true}), copyLabel: s.copied ? 'Link copied ✓' : 'Share results'
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+import {expect,test} from '@playwright/test';
+import {assertContrast} from './contrast';
+test('match day keeps tournament tabs, desk and point scoring usable on a phone',async({page})=>{
+ await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));
+ await page.setViewportSize({width:390,height:844});await page.goto('#/demo');
+ await page.getByLabel('Your name in the demo').fill('Alex');await page.getByRole('button',{name:'Open PQ Demo Club'}).click();
+ await page.getByRole('region',{name:'Your tournaments'}).getByRole('button',{name:/PQ Demo Open/}).click();
+ await expect(page.getByRole('heading',{name:'PQ Demo Open',level:1})).toBeVisible();
+ await page.getByRole('group',{name:'Tournament view'}).getByRole('button',{name:'Pools',exact:true}).click();
+ await expect(page.getByRole('region',{name:'Pools',exact:true})).toBeVisible();
+ await page.getByRole('group',{name:'Tournament view'}).getByRole('button',{name:'Knockouts',exact:true}).click();
+ await expect(page.getByRole('region',{name:'Knockouts',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Desk view',exact:true}).click();await page.getByRole('button',{name:/Results, walkovers and court changes/}).click();
+ await expect(page.getByRole('progressbar',{name:'Matches completed'})).toBeVisible();
+ await expect(page.getByRole('region',{name:'Courts',exact:true})).toBeVisible();
+ const deskUrl=page.url();
+ await page.getByRole('button',{name:'Score',exact:true}).first().click();
+ const scoring=page.getByRole('group',{name:'How are you scoring?'});await expect(scoring).toBeVisible();await scoring.getByRole('button',{name:'Rally scoring'}).click();
+ const a=page.locator('.score-tap-a'),b=page.locator('.score-tap-b');
+ await expect(a).toBeVisible();expect(await a.evaluate(el=>parseFloat(getComputedStyle(el.querySelector('.big')!).fontSize))).toBeGreaterThanOrEqual(88);
+ expect((await b.boundingBox())!.y).toBeGreaterThan((await a.boundingBox())!.y);
+ const before=Number(await a.locator('.big').textContent());await a.click();await expect(a.locator('.big')).toHaveText(String(before+1));
+ await page.getByRole('button',{name:'Undo last point',exact:true}).click();await expect(a.locator('.big')).toHaveText(String(before));
+ await a.focus();await page.keyboard.press("Tab");await expect(b).toBeFocused();expect(await b.evaluate(el=>getComputedStyle(el).outlineStyle)).not.toBe("none");await assertContrast(b,"outline");await page.keyboard.press("Shift+Tab");await expect(a).toBeFocused();await assertContrast(a,"outline");
+ await page.waitForTimeout(600);
+ const limit=await page.evaluate(()=>{const d=JSON.parse(localStorage.getItem("pq-club-demo-v1")!),id=location.hash.split("/").at(-1);return d.matches.find((m:{id:string})=>m.id===id).format.pointsTo-1;});
+ for(let i=before;i<limit;i++){await a.click();await expect(a.locator(".big")).toHaveText(String(i+1));await page.waitForTimeout(600);}
+ const strip=page.locator('.pq-gamepoint-strip');await expect(strip).toContainText('GAME POINT');await assertContrast(strip);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+ const originalId=deskUrl.split("/").at(-1)!;
+ const emptyId=await page.evaluate(originalId=>{const k="pq-club-demo-v1",d=JSON.parse(localStorage.getItem(k)!),id=crypto.randomUUID(),t=d.tournaments.find((t:{id:string})=>t.id===originalId),v=d.divisions.find((v:{tournamentId:string})=>v.tournamentId===originalId);d.tournaments.push({...t,id,name:"Empty match-day fixture",status:"draft",drawnAt:undefined,isPublic:false,publicSlug:"empty-"+id});d.divisions.push({...v,id:crypto.randomUUID(),tournamentId:id,advance:0});localStorage.setItem(k,JSON.stringify(d));return id;},originalId);
+ await page.goto("#/club-desk/"+emptyId);await page.reload();await expect(page.getByText("No match ready to call",{exact:true}).first()).toBeVisible();await expect(page.getByRole("progressbar",{name:"Matches completed"})).toHaveCount(0);
+});
