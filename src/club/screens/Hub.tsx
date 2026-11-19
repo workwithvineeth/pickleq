@@ -222,7 +222,7 @@ function DemoTour({ go, clubId }: { go: Go; clubId?: string }) {
     { title: '2 · You approve it (admin)', text: 'Admin → Approvals: Approve, or Reject with a reason the club sees. Trusted clubs skip this.', to: () => go('admin', 'approvals') },
     { title: '3 · The organiser’s dashboard', text: 'Their club page: logo, tournaments, players and members.', to: () => (clubId ? go('club-view', clubId) : go('club')) },
     { title: '4 · Tournaments on the Events page', text: 'Posters and club logos; players enter in the app.', to: () => go('events') },
-    { title: '5 · The admin overview', text: 'Matches scored, clubs and tournaments at a glance.', to: () => go('admin', 'overview') },
+    { title: '5 · The admin overview', text: 'Matches scored, clubs and tournaments at a glance.', to: () => go('admin') },
   ];
   return (
     <section className="card" aria-label="Demo tour">
@@ -351,7 +351,7 @@ export function ClubSignIn({ go, admin = false, landing = false, onSignedIn }: {
     if (admin) {
       const ok = await b?.isPlatformAdmin().catch(() => false);
       if (!ok) { await b?.signOut(); setMsg({ ok: false, text: 'This account isn’t a RallyQ admin. Organisers sign in on the normal sign-in page.' }); return; }
-      go('admin', 'overview', { replace: true });
+      go('admin', undefined, { replace: true });
       return;
     }
     const back = takeReturn();

@@ -148,6 +148,6 @@ describe('Sign in with a password', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('isn’t a RallyQ admin');
     expect(fake.signOut).toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
-    await vi.waitFor(() => expect(go).toHaveBeenCalledWith('admin', 'overview', { replace: true }));
+    await vi.waitFor(() => expect(go).toHaveBeenCalledWith('admin', undefined, { replace: true }));
   });
 });
