@@ -107,3 +107,12 @@
   .rq .tr2{padding:12px 14px;gap:8px}
 }
 @media (prefers-reduced-motion:reduce){.rq .tr2 .srv.on,.rq .lq .lqs{animation:none}}
+
+/* ---- Confirmed results (Results, Event): gold only for the confirmed champion, with the Champion Reveal ---- */
+.rq .champ{position:relative;overflow:hidden;isolation:isolate}
+.rq .champ .n.acc{color:var(--gold)}
+.rq .champ::before{content:"";position:absolute;inset:-40% 10% auto;height:520px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 0%,rgba(232,195,90,.24),transparent 62%);animation:rqglow 1200ms var(--rq-ease,cubic-bezier(.23,1,.32,1)) both}
+.rq .champ::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--gold);transform-origin:left;animation:rqrail 950ms var(--rq-ease,cubic-bezier(.23,1,.32,1)) both}
+@keyframes rqglow{from{opacity:0}to{opacity:1}}
+@keyframes rqrail{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.rq .champ::before,.rq .champ::after{animation:none}}
