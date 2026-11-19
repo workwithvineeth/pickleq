@@ -1,0 +1,1684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RallyQ Final Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=DM+Sans:opsz,wght@9..40,400..700&family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500&display=swap">
+<style>
+/* ============================================================
+   RallyQ · Final prototype · v2 · Arena System (Claude × ChatGPT, approved by Vineeth)
+   Floodlit glass in Night and Day · Sea Glass vs Tide Blue · coral = act now · The Q keeps score.
+   TV is always Night. Motion = JJ's picks kept exactly + the locked Arena motion table.
+   ============================================================ */
+:root{color-scheme:dark}
+:root{
+  --rq-ease:cubic-bezier(.23,1,.32,1);
+  --display:'Archivo','Arial Narrow',sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#020A06}
+body{font-family:var(--body);-webkit-font-smoothing:antialiased;color:#F1F4EA;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid #D9F24A;outline-offset:2px}
+
+/* ---------- tokens ---------- */
+.app,.night{
+  --pg:#06140D;--alt:#091A11;--c1:rgba(8,30,19,.6);--c2:rgba(19,48,34,.62);--c3:rgba(26,61,43,.62);
+  --ink:#F1F4EA;--mut:#9FB4A6;--soft:#BFD0C4;--ball:#D9F24A;--on:#0B2418;--gold:#E8C35A;
+  --sea:#76E0D0;--tide:#7EAEF2;--signal:#BDCBC6;--danger:#AD2945;--coral:#FF655C; /* coral = act now: tickets, spots left, needs a look, running behind, blockers. Never a team, never a score */
+  --gblur:blur(16px) saturate(1.1);--work:rgba(10,33,26,.85);
+  --line:rgba(241,244,234,.10);--line2:rgba(241,244,234,.18);--edge:inset 0 0 0 1px rgba(241,244,234,.2),inset 0 1px 0 rgba(241,244,234,.1),0 16px 48px rgba(0,0,0,.28);
+  --glass:linear-gradient(160deg,rgba(19,48,34,.66),rgba(6,20,13,.52));--blur:blur(22px) saturate(150%);
+  --glassEdge:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(241,244,234,.11),0 30px 60px -30px rgba(0,0,0,.6);
+  --fade:linear-gradient(180deg,rgba(6,20,13,.15) 10%,rgba(6,20,13,.94));
+  --paper:#F1F4EA;--paperInk:#0B2418;--paperMut:#4A5D50;
+}
+.app[data-theme="day"]{ /* Day v3, exactly the live site: court photo + court-green tint + glass */
+  --pg:#2B6E4B;--alt:rgba(6,24,15,.32);--c1:rgba(8,30,19,.52);--c2:rgba(255,255,255,.09);--c3:rgba(6,24,15,.32);
+  --ink:#F4F7EE;--mut:#D5E3D8;--soft:#EAF3EC;--ball:#E4F75A;--sea:#8CEADB;--tide:#7EAEF2;--signal:#DDE6E2;--work:rgba(8,30,19,.85);
+  --line:rgba(255,255,255,.16);--line2:rgba(255,255,255,.34);--edge:inset 0 0 0 1px rgba(255,255,255,.25),inset 0 1px 0 rgba(255,255,255,.12),0 16px 48px rgba(6,20,13,.22);
+  --glass:rgba(8,30,19,.52);--blur:blur(16px) saturate(1.1);--glassEdge:inset 0 0 0 1px rgba(255,255,255,.25),inset 0 1px 0 rgba(255,255,255,.12);
+  --fade:linear-gradient(180deg,rgba(18,64,40,.05) 10%,rgba(24,74,47,.92));
+}
+.app[data-theme="day"] .night,.night{color:var(--ink)}
+.app[data-theme="day"] .tvwrap{ /* TV is always Night */
+  --pg:#06140D;--alt:#091A11;--c1:rgba(8,30,19,.6);--c2:rgba(19,48,34,.62);--c3:rgba(26,61,43,.62);--ink:#F1F4EA;--mut:#9FB4A6;--soft:#BFD0C4;--ball:#D9F24A;--sea:#76E0D0;
+  --line:rgba(241,244,234,.10);--line2:rgba(241,244,234,.18);--edge:inset 0 0 0 1px rgba(241,244,234,.10);
+  --glass:linear-gradient(160deg,rgba(19,48,34,.66),rgba(6,20,13,.52));--blur:blur(22px) saturate(150%);
+  --glassEdge:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(241,244,234,.11);
+}
+
+/* ---------- shell: director bar + device ---------- */
+.app{height:100%;display:flex;flex-direction:column;background:#020A06}
+.dir{flex:none;display:flex;align-items:center;gap:10px 16px;padding:8px max(12px,2vw);background:#020A06;border-bottom:1px solid rgba(241,244,234,.08);color:#F1F4EA;font-size:12px;flex-wrap:wrap;position:relative;z-index:20}
+.dir .lg{display:flex;align-items:center;gap:8px;flex:none}
+.dir .lg b{font-weight:800;letter-spacing:.14em;font-size:10px;text-transform:uppercase;color:#9FB4A6}
+.jr{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;align-items:center}
+.jr::-webkit-scrollbar{display:none}
+.jr .grp{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#6F8778;padding:0 4px 0 10px;white-space:nowrap}
+.jr .grp:first-child{padding-left:0}
+.jr a{white-space:nowrap;color:#BFD0C4;text-decoration:none;padding:7px 10px;border-radius:999px;font-weight:600}
+.jr a:hover{color:#F1F4EA;background:rgba(241,244,234,.06)}
+.jr a.on{background:#F1F4EA;color:#06140D}
+.tg{display:flex;gap:6px;flex:none}
+.seg{display:inline-flex;padding:3px;border-radius:999px;background:#0D2218;box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)}
+.seg button{border:0;background:none;min-height:30px;padding:0 11px;border-radius:999px;font-size:12px;font-weight:700;color:#9FB4A6}
+.seg button[aria-pressed="true"]{background:#F1F4EA;color:#06140D}
+.stage{flex:1;min-height:0;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;background:radial-gradient(80% 60% at 50% 0%,#0B2418,#020A06 70%)}
+.device{width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background:linear-gradient(180deg,rgba(6,20,13,.80) 0%,rgba(6,20,13,.90) 55%,rgba(6,20,13,.95) 100%),var(--bgN) center 30%/cover no-repeat,#06140D;color:var(--ink);position:relative;scroll-behavior:smooth;transition:background-color .3s}
+.app[data-theme="day"] .device{background:linear-gradient(180deg,rgba(43,110,75,.80) 0%,rgba(36,95,64,.84) 45%,rgba(24,68,45,.92) 100%),var(--bgD) center 35%/cover no-repeat,#2B6E4B}
+.app[data-device="phone"] .stage{align-items:center;padding:14px 0}
+.app[data-device="phone"] .device{width:390px;height:min(844px,100%);border-radius:46px;box-shadow:0 0 0 10px #000,0 0 0 11px #2a3a31,0 40px 80px -20px rgba(0,0,0,.7);scrollbar-width:none}
+.app[data-device="phone"] .device::-webkit-scrollbar{display:none}
+@media (max-width:520px){.app[data-device="phone"] .stage{padding:0}.app[data-device="phone"] .device{width:100%;height:100%;border-radius:0;box-shadow:none}}
+.scr{container:scr/inline-size;min-height:100%;display:flex;flex-direction:column}
+
+/* ---------- type + atoms ---------- */
+.disp{font-family:var(--display);font-weight:800;letter-spacing:-.045em;line-height:.92;margin:0;text-wrap:balance}
+.n{font-family:var(--display);font-stretch:62%;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.01em}
+.word{font-family:var(--serif);font-weight:600;letter-spacing:-.02em;line-height:1}
+.ser{font-family:var(--serif);font-weight:500}
+.cap{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.cap.acc{color:var(--soft)} /* lime is for "now" only */
+.mut{color:var(--mut)}.acc{color:var(--ball)}.gold{color:var(--gold)}
+.app[data-theme="day"] .acc{color:var(--ball)}
+p{margin:0}
+.wrap{width:100%;max-width:1240px;margin:0 auto;padding-left:max(16px,3cqw);padding-right:max(16px,3cqw)}
+.card{background:var(--c1);border-radius:20px;box-shadow:var(--edge);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+.ct,.rl,.kpi,.court,.receiptln,.readiness,.map,.final,.arena,.padscore,.tabs,.bm{-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+.work{background:var(--work)!important;-webkit-backdrop-filter:blur(20px)!important;backdrop-filter:blur(20px)!important}
+.card2{background:var(--c2);border-radius:14px}
+.glass{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--glassEdge);border-radius:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:999px;font-weight:700;font-size:14px;background:var(--ball);color:var(--on);border:0;text-decoration:none;transition:transform 120ms var(--rq-ease)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn.chalk{background:var(--ink);color:#06140D}
+.btn.sm{min-height:36px;padding:0 14px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--c2);color:var(--ink);white-space:nowrap}
+.chip.live{background:var(--ball);color:var(--on)}
+.chip.live i{width:7px;height:7px;border-radius:50%;background:var(--on);animation:breathe 1.8s ease-in-out infinite}
+.chip.coral{background:var(--coral);color:#1A0603}
+.chip.gold{background:var(--gold);color:#2A1D00}
+.chip.line{background:transparent;box-shadow:inset 0 0 0 1px var(--line2);color:var(--mut)}
+.chip.stale{background:var(--signal);color:#06140D}
+.chip.stale::before{content:"◷";font-size:12px;letter-spacing:0}
+.chip.danger{background:var(--danger);color:#fff}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.3}}
+.photo{position:relative;overflow:hidden;background-size:cover;background-position:center;isolation:isolate}
+.photo::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--fade)}
+.tile{width:44px;height:44px;border-radius:12px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font:800 13px/1 var(--display);font-stretch:75%;flex:none;letter-spacing:.02em}
+.tile.sm{width:28px;height:28px;border-radius:8px;font-size:10px}
+.sec{padding-block:56px 0}
+.sech{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.h2{font-size:clamp(34px,5.4cqw,64px)}
+.grid{display:grid;gap:14px}
+.row{display:flex;align-items:center;gap:12px}
+.sp{flex:1}
+.hide{display:none!important}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.toast{position:absolute;left:50%;bottom:90px;transform:translate(-50%,20px);background:var(--ink);color:#06140D;padding:12px 18px;border-radius:14px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:opacity .24s var(--rq-ease),transform .24s var(--rq-ease);z-index:60;max-width:90%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--c1);box-shadow:var(--edge);width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.tabs button{border:0;background:none;min-height:38px;padding:0 16px;border-radius:999px;font-weight:700;font-size:13px;color:var(--mut);white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--ink);color:#06140D}
+
+/* ---------- views ---------- */
+.view{display:none;flex:1;flex-direction:column;animation:vin .35s var(--rq-ease)}
+.view.on{display:flex}
+.view:not(.on){display:none!important}
+@keyframes vin{from{opacity:0}to{opacity:1}}
+
+/* public header */
+.hdr{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--pg) 78%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.app[data-theme="day"] .hdr{background:rgba(6,24,15,.38)}
+.hdr .wrap{display:flex;align-items:center;gap:20px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.brand .word{font-size:23px}
+.hnav{display:flex;gap:4px}
+.hnav a{color:var(--soft);text-decoration:none;font-weight:600;font-size:14px;padding:8px 12px;border-radius:999px}
+.hnav a:hover,.hnav a.on{color:var(--ink);background:var(--c2)}
+.bnav{display:none}
+@container scr (max-width:760px){
+  .hnav,.hdr .hcta{display:none}
+  .bnav{display:grid;grid-template-columns:repeat(5,1fr);position:sticky;bottom:0;z-index:30;background:color-mix(in srgb,var(--pg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:6px 6px calc(10px + env(safe-area-inset-bottom,0px))}
+  .app[data-theme="day"] .bnav{background:rgba(6,24,15,.55)}
+  .bnav a{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;color:var(--mut);text-decoration:none;font-size:10.5px;font-weight:700;border-radius:12px}
+  .bnav a.on{color:var(--ink)}
+  .bnav a.on .ic{color:var(--ball)}
+}
+
+/* ===== HOME ===== */
+.hero{min-height:min(760px,92vh);display:flex;flex-direction:column}
+.hero .ph{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 35%;}
+@keyframes drift{to{transform:scale(1.1) translate(-1.5%,-1%)}}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,20,13,.95) 0%,rgba(6,20,13,.72) 48%,rgba(6,20,13,.25) 100%),linear-gradient(180deg,transparent 60%,var(--pg))}
+.app[data-theme="day"] .hero::before{background:linear-gradient(90deg,rgba(30,85,54,.94) 0%,rgba(30,85,54,.7) 50%,rgba(30,85,54,.2) 100%),linear-gradient(180deg,transparent 60%,var(--pg))}
+.hero::after{display:none}
+.hbody{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:40px;align-items:center;padding-block:48px 110px}
+.hh{font-size:clamp(54px,9cqw,128px);margin:18px 0 22px}
+.hh span{display:block;animation:rise .9s var(--rq-ease) both}
+.hh span+span{color:var(--ball);animation-delay:.1s}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.lede{max-width:520px;font-size:18px;color:var(--soft);margin-bottom:28px}
+.hchip{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;background:rgba(19,48,34,.62);box-shadow:inset 0 0 0 1px rgba(241,244,234,.14);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--ball);animation:breathe 1.8s ease-in-out infinite}
+.hcard{padding:18px;display:block;text-decoration:none;color:var(--ink);animation:rise .9s .3s var(--rq-ease) both}
+.ticker{position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line);background:rgba(6,20,13,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden;padding-block:14px}
+.app[data-theme="day"] .ticker{background:rgba(6,24,15,.45)}
+.ticker .tr{display:flex;gap:44px;white-space:nowrap;width:max-content;animation:tick 70s linear infinite;padding-left:32px;color:var(--mut);font-size:14px}
+.ticker b{color:var(--ink)}
+@keyframes tick{to{transform:translateX(-50%)}}
+.crt{position:absolute;right:-60px;top:-60px;width:300px;height:300px;opacity:.9;pointer-events:none}
+@container scr (max-width:900px){.hbody{grid-template-columns:minmax(0,1fr);padding-block:28px 100px}.hcard{max-width:440px}}
+.ev{display:flex;flex-direction:column;min-height:300px;border-radius:22px;padding:18px;color:#F1F4EA;text-decoration:none;justify-content:space-between;box-shadow:var(--edge)}
+.ev .disp{font-size:30px}
+.trio{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+.split{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px}
+@container scr (max-width:860px){.split{grid-template-columns:minmax(0,1fr)}}
+.foot{margin-top:72px;padding-block:28px 40px;border-top:1px solid var(--line);color:var(--mut);font-size:13px}
+
+/* ===== SCOREBOARD (shared) ===== */
+.sb{display:flex;flex-direction:column;gap:var(--g,8px);position:relative;border-radius:var(--r,18px);transition:box-shadow .3s}
+.sb.hold{box-shadow:0 0 0 2px var(--ink)}
+.sb.final{box-shadow:none}
+.sbh{display:flex;align-items:center;gap:8px;font-size:var(--meta,12px);color:var(--mut);font-weight:600;min-height:26px}
+.sbh .meta{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr2{position:relative;display:grid;grid-template-columns:var(--sv,10px) minmax(0,1fr) auto var(--pw,56px);align-items:center;gap:var(--cg,10px);padding:var(--rp,10px 12px);border-radius:var(--rr,14px);background:var(--rowbg,var(--c2));overflow:hidden;isolation:isolate}
+.srv{width:var(--dot,9px);height:var(--dot,9px);border-radius:50%;background:var(--ball);opacity:0;justify-self:center;box-shadow:0 0 0 1.5px var(--on)}
+.srv.on{opacity:1}
+.nm{min-width:0;display:flex;flex-direction:column;line-height:1.15}
+.nm b{font-weight:700;font-size:var(--name,15px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm small{font-size:var(--meta,12px);color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm small.won{color:var(--ink);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.gms{display:flex;gap:5px}
+.gms i{width:calc(var(--dot,9px)*.85);height:calc(var(--dot,9px)*.85);border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2);display:block;transition:background-color .3s}
+.gms i.w{background:var(--ink);box-shadow:none}
+.pts{position:relative;overflow:hidden;text-align:right;font-size:var(--pts,46px);line-height:.92;height:1em;font-family:var(--display);font-stretch:62%;font-weight:800;font-variant-numeric:tabular-nums}
+.pts .v{display:block}
+.pts.lead{color:var(--ball)}
+.pts.gold{color:var(--gold)}
+.fx{position:absolute;inset:0;pointer-events:none;z-index:-1;opacity:0;background:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--ball) 70%,transparent) 45%,transparent 90%);background-size:200% 100%}
+.call{display:flex;justify-content:space-between;align-items:baseline;font-size:var(--meta,12px);color:var(--mut);font-weight:600;padding:0 12px}
+/* Arena v2: team rails (Sea Glass / Tide Blue), Living Q, chalk game point, gold rail only when confirmed */
+.tr2[data-t="0"]{--tc:var(--sea)}.tr2[data-t="1"]{--tc:var(--tide)}
+.tr2::before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:3px;border-radius:0 3px 3px 0;background:var(--tc)}
+.sb.living .tr2::before{width:4px}
+.tr2.gp{box-shadow:inset 0 0 0 2px var(--ink)}
+.tr2.mp{box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 5px rgba(241,244,234,.22)}
+.tr2 .grl{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--gold);transform:scaleX(0);transform-origin:left;z-index:1}
+.sb.hold .tr2{box-shadow:none}
+.sb.hold{box-shadow:0 0 0 3px var(--ink)}
+.xchip:not(.hide){background:transparent!important;color:var(--ink)!important;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.sbg{display:grid;grid-template-columns:minmax(0,1fr) var(--lq,120px);gap:var(--g,8px);align-items:center}
+.sbg>.rows{display:flex;flex-direction:column;gap:var(--g,8px);min-width:0}
+.lq{position:relative;display:grid;place-items:center}
+.lq svg{width:100%;height:auto;overflow:visible;display:block}
+.lq .lqn{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+.lq .lqn b{display:block;font-family:var(--display);font-stretch:62%;font-weight:900;font-size:calc(var(--lq,120px)*.2);line-height:1}
+.lq .lqn span{font-size:calc(var(--lq,120px)*.055);font-weight:800;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.tagl{display:none;align-items:center;gap:6px;margin-top:3px;min-height:18px}
+.sb.living .tagl{display:flex}
+.sno{display:inline-grid;place-items:center;min-width:calc(var(--meta,12px)*1.5);height:calc(var(--meta,12px)*1.5);padding:0 4px;border-radius:5px;background:var(--ink);color:#06140D;font-style:normal;font-weight:800;font-size:var(--meta,12px);visibility:hidden}
+.sno.on{visibility:visible}
+.tagt{font-size:calc(var(--meta,12px)*.85);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+.runm{display:flex;gap:2px;width:calc(var(--meta,12px)*6)}
+.runm i{flex:1;height:4px;border-radius:2px;background:rgba(241,244,234,.12)}
+.runm i.f{background:var(--tc)}
+.arena .sb{--lq:clamp(96px,16cqw,170px)}
+.tvmain .sb{--lq:12cqw}
+.md .arena .sb{--lq:46px}
+.md .arena .sbg,.sbg.tight{grid-template-columns:minmax(0,1fr)}
+.md .arena .lq{position:absolute;top:-2px;right:0;width:var(--lq)}
+.md .arena .lq .lqn span{display:none}
+@container scr (max-width:560px){.arena .sb{--lq:46px}.arena .sbg{grid-template-columns:minmax(0,1fr)}.arena .lq{position:absolute;top:-4px;right:0;width:var(--lq)}.arena .lq .lqn span{display:none}}
+.call .n{font-size:var(--callsz,18px);color:var(--ink);letter-spacing:.02em}
+
+/* ===== EVENT ===== */
+.evhero{min-height:440px;display:flex;align-items:flex-end;padding-block:40px}
+.evhero .ph{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 40%}
+.host{display:flex;align-items:center;gap:12px}
+.meter{height:8px;border-radius:99px;background:var(--c3);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ink);border-radius:99px;transform-origin:left;animation:grow 1.2s var(--rq-ease) both}
+@keyframes grow{from{transform:scaleX(0)}}
+.bk{display:grid;grid-template-columns:repeat(3,minmax(200px,1fr));gap:18px;overflow-x:auto;padding-bottom:6px;position:relative}
+.bk .col{display:flex;flex-direction:column;justify-content:space-around;gap:12px}
+.bm{border-radius:14px;background:var(--c1);box-shadow:var(--edge);padding:8px 12px;font-size:13.5px;position:relative;transition:box-shadow .4s var(--rq-ease),background-color .4s}
+.bm .t{display:flex;justify-content:space-between;gap:8px;padding:4px 0}
+.bm .t+.t{border-top:1px solid var(--line)}
+.bm .t b{font-weight:600}
+.bm .t.w b{font-weight:800}
+.bm .t .n{font-size:18px}
+.bm.lit{box-shadow:inset 0 0 0 2px var(--sea)}
+.bm.lit .t.f b{color:var(--sea)}
+.bm.livem::after{content:"Live";position:absolute;top:-9px;right:10px;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:var(--ball);color:var(--on);padding:2px 6px;border-radius:99px}
+.champ{border-radius:24px;min-height:420px;display:flex;align-items:flex-end;padding:24px}
+.champ .ph{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 25%}
+.sticky-cta{display:none}
+@container scr (max-width:760px){.sticky-cta{display:flex;position:sticky;bottom:72px;z-index:25;margin:16px;gap:10px;padding:10px;border-radius:20px}}
+
+/* ===== LIVE · Living Arena ===== */
+.arena{border-radius:28px;padding:22px;position:relative;overflow:hidden;isolation:isolate;box-shadow:var(--edge);background:var(--c1)}
+.arena .ph{position:absolute;inset:0;z-index:-3;background-size:cover;background-position:center 30%;opacity:.38;filter:saturate(.8)}
+.app[data-theme="day"] .arena .ph{opacity:.18}
+.arena::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(6,20,13,.35),var(--c1) 82%)}
+.app[data-theme="day"] .arena::before{background:linear-gradient(180deg,rgba(36,96,63,.55),var(--c1) 82%)}
+.flood{position:absolute;inset:-30% 5% auto;height:560px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 0%,rgba(217,242,74,.20),transparent 62%);opacity:.6;transition:opacity .6s var(--rq-ease),inset .6s var(--rq-ease),background .6s}
+.arena[data-light="warm"] .flood{opacity:.35}
+.arena[data-light="live"] .flood{opacity:.85}
+.arena[data-light="mp"] .flood{opacity:1;inset:-30% 26% auto}
+.arena[data-light="final"] .flood{opacity:1;background:radial-gradient(ellipse at 50% 0%,rgba(232,195,90,.30),transparent 62%)}
+.arena .sb{--pts:clamp(64px,13cqw,140px);--name:clamp(16px,2cqw,22px);--pw:clamp(84px,14cqw,170px);--dot:12px;--rp:14px 18px;--rr:18px;--rowbg:rgba(19,48,34,.55);--g:10px}
+.app[data-theme="day"] .arena .sb{--rowbg:var(--c2)}
+.dna{display:flex;gap:3px;height:64px;align-items:center;margin-top:18px;touch-action:none}
+.dna i{flex:1;max-width:14px;border-radius:3px;background:var(--line2);height:26px;transition:background-color .2s}
+.dna i.a{transform:translateY(-15px)}
+.dna i.b{transform:translateY(15px);background:var(--tide)}
+.dna i.a{background:var(--sea)}
+.dna i.so{height:8px;opacity:.55}
+.dna i.run{height:34px;filter:brightness(1.12)}
+.dna i.now{outline:2px solid var(--ball);outline-offset:2px}
+.dna i.new{animation:barIn .42s var(--rq-ease)}
+@keyframes barIn{from{opacity:0;scale:1 0}}
+.story{font-family:var(--serif);font-size:clamp(18px,2.2cqw,24px);text-align:center;margin-top:14px;min-height:1.5em}
+.wpb{display:flex;height:6px;border-radius:99px;overflow:hidden;background:var(--c3);margin-top:8px}
+.wpb i{display:block;height:100%;background:var(--ball);transition:width .6s var(--rq-ease)}
+.wpdelta{opacity:0;transition:opacity .2s}
+.wpdelta.on{opacity:1}
+.livegrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+@container scr (max-width:960px){.livegrid{grid-template-columns:minmax(0,1fr)}}
+.miniw{position:sticky;top:64px;height:0;z-index:20}
+.mini{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--c2);box-shadow:var(--edge);border-radius:0 0 16px 16px;transform:translateY(-110%);opacity:0;transition:transform .24s var(--rq-ease),opacity .24s;pointer-events:none}
+.mini.on{transform:none;opacity:1;pointer-events:auto}
+.mini .n{font-size:28px}
+.ct{display:block;text-decoration:none;color:var(--ink);padding:12px;border-radius:18px;background:var(--c1);box-shadow:var(--edge)}
+.ct .sb{--pts:32px;--name:13.5px;--pw:40px;--dot:8px;--rp:8px 10px;--rr:12px;--g:6px;--meta:11px}
+
+/* ===== RESULTS ===== */
+.reslist{display:grid;gap:10px}
+.rl{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:var(--c1);box-shadow:var(--edge);text-align:left;border:0;color:var(--ink);width:100%}
+.rl.on{box-shadow:inset 0 0 0 2px var(--ink)}
+.rl .n{font-size:22px}
+.final{position:relative;overflow:hidden;border-radius:28px;padding:24px;background:var(--c1);box-shadow:var(--edge);isolation:isolate}
+.final .glow{position:absolute;inset:-40% 10% auto;height:520px;z-index:-1;background:radial-gradient(ellipse at 50% 0%,rgba(232,195,90,.26),transparent 62%);opacity:0;transition:opacity 1s var(--rq-ease)}
+.final.revealed .glow{opacity:1}
+.gscore{display:flex;gap:10px;flex-wrap:wrap}
+.gscore span{padding:6px 12px;border-radius:10px;background:var(--c2);font-size:20px}
+.gscore span.w{background:color-mix(in srgb,var(--gold) 22%,var(--c2));color:var(--gold)}
+.rw .dna{cursor:ew-resize}
+.rwscore{display:flex;align-items:center;justify-content:center;gap:.22em;font-size:clamp(72px,14cqw,150px)}
+input[type=range]{width:100%;accent-color:var(--ball);height:44px}
+.sheet{position:absolute;inset:0;z-index:50;background:rgba(2,10,6,.72);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .24s var(--rq-ease)}
+.sheet.on{opacity:1;pointer-events:auto}
+.sheet .in{width:min(420px,100%);max-height:100%;overflow:auto;transform:translateY(20px);transition:transform .3s var(--rq-ease)}
+.sheet.on .in{transform:none}
+.mem{aspect-ratio:9/16;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:22px;color:#F1F4EA;position:relative;isolation:isolate;background:#06140D}
+.mem .ph{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 30%;opacity:.55}
+.mem::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.5),rgba(6,20,13,.1) 30%,rgba(6,20,13,.95) 70%)}
+
+/* ===== TV ===== */
+.tvwrap{padding:20px;display:flex;flex-direction:column;gap:14px;align-items:center;background:#020A06;flex:1}
+.tv{width:100%;max-width:1400px;aspect-ratio:16/9;border-radius:14px;padding:clamp(5px,1cqw,12px);background:#000;box-shadow:0 0 0 1px #20412F,0 40px 80px -30px #000;container:tv/inline-size}
+.tvin{height:100%;border-radius:8px;background:#06140D;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 30cqw;grid-template-rows:auto minmax(0,1fr) auto;gap:1.6cqw;padding:2.4cqw 2.8cqw;position:relative;isolation:isolate;color:#F1F4EA}
+.tvin .ph{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;opacity:.22}
+.tvin::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(70% 60% at 30% 0%,rgba(217,242,74,.12),transparent 60%),linear-gradient(180deg,rgba(6,20,13,.4),#06140D 90%)}
+.tvtop{grid-column:1/-1;display:flex;align-items:center;gap:1.4cqw;font-size:1.5cqw;color:#BFD0C4}
+.tvtop .tile{width:5.2cqw;height:5.2cqw;border-radius:1.2cqw;font-size:1.5cqw}
+.tvtop b{font-size:2.1cqw;color:#F1F4EA;font-family:var(--display);font-weight:800;letter-spacing:-.02em}
+.tvmain{display:flex;flex-direction:column;justify-content:center;gap:1cqw;min-height:0}
+.tvmain .sb{--pts:10.5cqw;--name:3.2cqw;--meta:1.5cqw;--pw:13cqw;--dot:1.8cqw;--sv:2cqw;--rp:.9cqw 2cqw;--rr:1.4cqw;--g:1.1cqw;--cg:2cqw;--rowbg:rgba(19,48,34,.6);--callsz:3cqw}
+.tvmain .sbh{min-height:3.4cqw}
+.tvmain .chip{font-size:1.3cqw;min-height:3cqw;padding:0 1.2cqw}
+.tvmain .dna{height:5cqw;gap:.3cqw;margin-top:.4cqw}
+.tvmain .dna i{height:2cqw;max-width:1.2cqw}
+.tvmain .dna i.a{transform:translateY(-1.15cqw)}.tvmain .dna i.b{transform:translateY(1.15cqw)}
+.tvmain .dna i.so{height:.7cqw}
+.tvrail{display:flex;flex-direction:column;gap:1cqw;min-height:0}
+.tvc{border-radius:1.4cqw;background:rgba(13,34,24,.8);box-shadow:inset 0 0 0 1px rgba(241,244,234,.1);padding:1.1cqw 1.3cqw}
+.tvc .sb{--pts:3.4cqw;--name:1.45cqw;--meta:1.05cqw;--pw:4.6cqw;--dot:.95cqw;--sv:1cqw;--rp:.6cqw 1cqw;--rr:.8cqw;--g:.5cqw;--cg:.8cqw;--rowbg:rgba(19,48,34,.6)}
+.tvc .sbh{min-height:1.8cqw}
+.tvc .chip{font-size:.85cqw;min-height:1.7cqw;padding:0 .7cqw}
+.tvbot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:1.35cqw;color:#9FB4A6;border-top:1px solid rgba(241,244,234,.1);padding-top:1.2cqw}
+.tvbot .word{font-size:1.9cqw;color:#F1F4EA}
+.brk{position:absolute;inset:0;z-index:5;background:#06140D;display:flex;opacity:0;pointer-events:none;transition:opacity .6s var(--rq-ease)}
+.brk.on{opacity:1}
+.brk .ph{opacity:.5}
+.brk .bi{position:absolute;inset:0;padding:4cqw 5cqw;display:flex;flex-direction:column;justify-content:flex-end;gap:1.2cqw;opacity:0;transition:opacity .6s}
+.brk .bi.on{opacity:1}
+.brk .bi::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,20,13,.95),rgba(6,20,13,.4))}
+.brk .k{font-size:1.4cqw}
+.brk .disp{font-size:7cqw}
+
+/* ===== REFEREE (work zone: calm, instant) ===== */
+.pad{max-width:560px;width:100%;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.padtop{display:flex;align-items:center;gap:10px}
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;background:var(--c2)}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--ball)}
+.sync.syncing i{background:var(--mut)}
+.sync.off{background:var(--signal);color:#06140D}.sync.off i{background:#06140D}
+.padscore{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center;gap:8px;padding:14px;border-radius:20px;background:var(--c1);box-shadow:var(--edge)}
+.padscore .n{font-size:86px}
+.padscore .call{justify-content:center;grid-column:1/-1;font-size:13px}
+.taps{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:240px}
+.score-tap{border:0;border-radius:24px;background:var(--c2);box-shadow:var(--edge);display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:18px;text-align:left;gap:6px;position:relative;overflow:hidden;min-height:200px}
+.score-tap b{font-size:20px;font-weight:800;line-height:1.1}
+.score-tap small{color:var(--mut);font-weight:600}
+.score-tap.srvside{box-shadow:inset 0 0 0 3px var(--ink),0 0 0 1px rgba(6,20,13,.4)}
+#tapA,#mdTapA{background:var(--sea);color:#06140D}#tapB,#mdTapB{background:var(--tide);color:#06140D}
+#tapA small,#tapB small,#mdTapA small,#mdTapB small{color:rgba(6,20,13,.72)}
+.score-tap{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -24px 40px rgba(6,20,13,.12)}
+.score-tap.srvside::after{content:"";position:absolute;top:14px;right:14px;width:16px;height:16px;border-radius:50%;background:var(--ball);box-shadow:0 0 0 2px #06140D}
+.score-tap .rip{background:rgba(255,255,255,.5)!important}
+.padscore>div:first-child b{color:var(--sea)}.padscore>div:nth-child(3) b{color:var(--tide)}
+.score-tap .rip{position:absolute;width:20px;height:20px;border-radius:50%;background:color-mix(in srgb,var(--ball) 45%,transparent);pointer-events:none;transform:translate(-50%,-50%)}
+.receiptln{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:var(--c1);box-shadow:var(--edge);font-size:14px;min-height:56px}
+.receiptln b{font-weight:700}
+
+/* ===== DESK ===== */
+.deskgrid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@container scr (max-width:980px){.deskgrid{grid-template-columns:minmax(0,1fr)}}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@container scr (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{padding:14px 16px;border-radius:16px;background:var(--c1);box-shadow:var(--edge)}
+.kpi .n{font-size:38px;margin-top:6px}
+.courts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@container scr (max-width:560px){.courts{grid-template-columns:minmax(0,1fr)}}
+.court{position:relative;border-radius:18px;padding:14px;background:var(--c1);box-shadow:var(--edge);min-height:170px;display:flex;flex-direction:column;gap:8px;overflow:hidden;isolation:isolate;transition:box-shadow .4s var(--rq-ease)}
+.court svg.cl{position:absolute;inset:10px;width:calc(100% - 20px);height:calc(100% - 20px);z-index:-1;opacity:.35}
+.court.need{box-shadow:inset 0 0 0 2px var(--ball),0 0 0 6px color-mix(in srgb,var(--ball) 14%,transparent)}
+.court.need::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(60% 80% at 50% 0%,color-mix(in srgb,var(--ball) 16%,transparent),transparent 70%)}
+.court .sb{--pts:28px;--name:13px;--pw:36px;--dot:8px;--rp:6px 10px;--rr:10px;--g:5px;--meta:11px;--rowbg:color-mix(in srgb,var(--c2) 85%,transparent)}
+.q{display:grid;gap:8px}
+.qi{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--c2);font-size:13.5px}
+.qi .n{font-size:20px;color:var(--mut)}
+.qi.nx{box-shadow:inset 0 0 0 2px var(--ball)}
+.readiness{position:relative;overflow:hidden;border-radius:22px;padding:22px;background:var(--c1);box-shadow:var(--edge);isolation:isolate}
+.readiness .flood{inset:-50% 10% auto;height:420px;opacity:var(--lv,.1)}
+.chk{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:14.5px}
+.chk button{width:28px;height:28px;border-radius:8px;border:0;background:var(--c2);box-shadow:inset 0 0 0 1.5px var(--line2);display:grid;place-items:center;flex:none;color:var(--on)}
+.chk.done button{background:var(--ball);box-shadow:none}
+.chk.block{color:var(--coral)}
+
+/* ===== ADMIN ===== */
+.map{position:relative;border-radius:24px;background:var(--c1);box-shadow:var(--edge);overflow:hidden;aspect-ratio:16/10}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.pin{cursor:default}
+.pin .ring{transform-box:fill-box;transform-origin:center;animation:np 3.6s ease-out infinite}
+@keyframes np{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(3.4)}}
+
+/* ===== STUDIO ===== */
+.sthead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:22px 14px}
+.avatar{width:56px;height:56px;border-radius:18px;background-size:cover;background-position:center 20%;box-shadow:var(--edge)}
+.loop{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.loop>div{border-radius:0;padding:6px 10px;background:transparent;box-shadow:inset 0 -2px 0 var(--line);color:var(--mut);display:flex;flex-direction:column;gap:0}
+.loop>div b{font-family:var(--display);font-stretch:70%;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.01em}
+.loop>div small{font-size:11px;color:var(--mut);font-weight:600}
+.loop>div.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ball)}
+.loop>div.on small{color:var(--mut)}
+@container scr (max-width:560px){.loop>div small{display:none}.loop>div{padding:6px 4px}}
+.st3{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr) minmax(0,.9fr);gap:16px;align-items:start}
+@container scr (max-width:1080px){.st3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@container scr (max-width:720px){.st3{grid-template-columns:minmax(0,1fr)}}
+.stabs{position:sticky;bottom:0;z-index:30;display:none}
+@container scr (max-width:760px){
+  .stabs{display:grid;grid-template-columns:repeat(4,1fr);background:color-mix(in srgb,var(--pg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:6px 6px calc(10px + env(safe-area-inset-bottom,0px))}
+  .app[data-theme="day"] .stabs{background:rgba(6,24,15,.55)}
+  .stabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;color:var(--mut);font-size:10.5px;font-weight:700}
+  .stabs button[aria-selected="true"]{color:var(--ink)}
+  .stabs button[aria-selected="true"] .ic{color:var(--ball)}
+  .sttop{display:none!important}
+}
+/* Athlete Cover: the player is the panel (public and private share it) */
+.acover{position:relative;border-radius:28px;overflow:hidden;min-height:clamp(520px,58cqw,660px);margin-top:18px;isolation:isolate;box-shadow:var(--edge);display:flex;flex-direction:column;justify-content:flex-end}
+@container scr (max-width:560px){.acover{min-height:650px;border-radius:24px;margin-top:10px}}
+.acph{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 22%}
+.acover::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.5) 0%,rgba(6,20,13,0) 20%,rgba(6,20,13,0) 40%,rgba(6,20,13,.86) 80%,rgba(6,20,13,.96) 100%)}
+.app[data-theme="day"] .acover::before{background:linear-gradient(180deg,rgba(24,68,45,.5) 0%,rgba(24,68,45,0) 20%,rgba(24,68,45,0) 40%,rgba(24,68,45,.86) 80%,rgba(24,68,45,.96) 100%)}
+.actop{position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
+.pvsw{display:inline-flex;padding:3px;border-radius:999px;background:rgba(6,20,13,.5);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur);box-shadow:var(--edge)}
+.pvsw button{border:0;background:none;min-height:38px;padding:0 14px;border-radius:999px;font-weight:700;font-size:12.5px;color:#DCE6DE}
+.pvsw button[aria-pressed="true"]{background:#F1F4EA;color:#06140D}
+.acq{width:96px;padding:8px;border-radius:18px;display:grid;justify-items:center;gap:2px;text-align:center;background:rgba(8,30,19,.55);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur);box-shadow:var(--edge);color:#F1F4EA}
+.acq span{font-size:8.5px;font-weight:800;letter-spacing:.08em;color:#DCE6DE;text-transform:uppercase;line-height:1.25}
+.acin{padding:22px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr) auto;align-items:end;color:#F1F4EA}
+@container scr (max-width:760px){.acin{grid-template-columns:minmax(0,1fr);padding:16px}}
+.acnm{font-family:var(--display);font-stretch:66%;font-weight:900;font-size:clamp(76px,12cqw,150px);line-height:.82;text-transform:uppercase;margin:10px 0 0;letter-spacing:-.01em}
+.dupr{display:inline-flex;align-items:baseline;gap:6px;padding:5px 10px;border-radius:12px;background:var(--ball);color:var(--on);font-weight:800;font-size:12px}
+.dupr b{font-family:var(--display);font-stretch:62%;font-size:28px;font-weight:900;line-height:1}
+.acst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-width:min(100%,360px)}
+.acst>div{padding:10px 8px;border-radius:16px;text-align:center;background:rgba(8,30,19,.55);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur);box-shadow:var(--edge)}
+.acst b{display:block;font-family:var(--display);font-stretch:62%;font-weight:900;font-size:30px;line-height:1}
+.acst span{font-size:10.5px;color:#DCE6DE}
+.stnav{padding-block:16px 12px}
+[data-view="studio"].pub [data-stp]:not([data-stp="public"]),[data-view="studio"].pub .loop,[data-view="studio"].pub .sttop,[data-view="studio"].pub .stabs{display:none!important}
+[data-view="studio"]:not(.pub) [data-stp="public"]{display:none!important}
+.tsc{position:relative;width:min(100%,280px);aspect-ratio:9/16;border-radius:24px;overflow:hidden;background-size:cover;background-position:center 15%;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;color:#F1F4EA;isolation:isolate;box-shadow:0 24px 48px rgba(0,0,0,.45)}
+.tsc::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.15),rgba(6,20,13,.96) 62%)}
+.tsc h3{font-family:var(--display);font-stretch:66%;font-weight:900;font-size:40px;line-height:.86;text-transform:uppercase;margin:0}
+.tss{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.tss div{border-radius:10px;padding:7px 3px;text-align:center;background:rgba(8,30,19,.6);box-shadow:inset 0 0 0 1px rgba(241,244,234,.18)}
+.tss div.hot{box-shadow:inset 0 0 0 1px var(--sea)}.tss div.hot b{color:var(--sea)}
+.tss b{display:block;font-family:var(--display);font-stretch:62%;font-weight:900;font-size:20px;line-height:1}
+.tss span{font-size:7.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#DCE6DE}
+/* Receipt */
+.receipt{perspective:1400px;width:100%;max-width:420px;margin:0 auto}
+.rc-inner{position:relative;transition:transform .7s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.receipt.flipped .rc-inner{transform:rotateY(180deg)}
+.face{background:var(--paper);color:var(--paperInk);border-radius:20px;padding:22px 22px 18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;position:relative;overflow:hidden;box-shadow:0 30px 60px -30px rgba(0,0,0,.6)}
+.face::after{content:"";position:absolute;left:0;right:0;top:57%;border-top:2px dashed rgba(11,36,24,.2)}
+.face .crtq{position:absolute}
+.face.back{position:absolute;inset:0;transform:rotateY(180deg);display:flex;flex-direction:column;gap:10px}
+.face.back::after{display:none}
+.rc-top{display:flex;justify-content:space-between;gap:10px;font:700 11px/1.2 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--paperMut)}
+.rc-club{font-family:var(--display);font-stretch:80%;font-weight:900;font-size:15px;letter-spacing:.06em;color:var(--paperInk)}
+.rc-kick{margin-top:18px;font:700 11px/1.2 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--paperMut)}
+.rc-head{font-family:var(--display);font-stretch:70%;font-weight:900;font-size:clamp(40px,11cqw,54px);line-height:.95;text-transform:uppercase;margin-top:6px;min-height:2em}
+.rc-line{font-family:var(--serif);font-size:16px;margin-top:8px;min-height:1.5em}
+.dnaS{display:grid;gap:6px;margin-top:24px}
+.dnaR{display:grid;grid-template-columns:40px minmax(0,1fr);gap:8px;align-items:center}
+.dnaR span{font:700 10px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--paperMut)}
+.dnaR .d{display:flex;gap:2px;height:30px;align-items:center}
+.dnaR .d i{flex:1;height:12px;border-radius:2px;background:rgba(11,36,24,.72)}
+.dnaR .d i.us{transform:translateY(-7px)}
+.dnaR .d i.th{transform:translateY(7px);background:rgba(11,36,24,.25)}
+.dnaR .d i.hot{background:#2B6E4B}
+.rc-foot{display:flex;justify-content:space-between;gap:10px;margin-top:16px;font:600 11px/1.3 var(--body);color:var(--paperMut)}
+.rc-serial{font-family:var(--display);font-stretch:70%;font-weight:800;font-size:13px;letter-spacing:.08em;color:var(--paperInk)}
+.never{display:inline-flex;align-self:flex-start;font:800 11px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;padding:6px 9px;border-radius:99px;border:1px solid var(--paperMut);color:var(--paperMut)}
+.coach{margin:0}.coach dt{font:700 11px/1.2 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--paperMut);margin-top:10px}.coach dd{margin:4px 0 0;font-size:14.5px}
+.mchips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.mchips button{border:0;min-height:40px;padding:0 14px;border-radius:999px;background:var(--c2);box-shadow:var(--edge);font-weight:700;font-size:13px}
+.mchips button[aria-pressed="true"]{background:var(--ink);color:#06140D;box-shadow:none}
+.book{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
+.page{flex:0 0 220px;scroll-snap-align:start;border-radius:16px;padding:16px;background:var(--paper);color:var(--paperInk);min-height:270px;display:flex;flex-direction:column;gap:6px;position:relative}
+.page .pn{font-family:var(--display);font-stretch:62%;font-weight:800;font-size:40px;line-height:1;color:rgba(11,36,24,.18);position:absolute;right:14px;top:10px}
+.page .pb{margin-top:auto;font-family:var(--serif);font-style:italic;font-size:13px;color:#2B6E4B;border-top:1px dashed rgba(11,36,24,.25);padding-top:8px}
+.page.cover{background:#0B2418;color:#F1F4EA;box-shadow:inset 0 0 0 1px rgba(241,244,234,.14)}
+.page.spread{flex-basis:300px;background:linear-gradient(90deg,var(--paper) 49.6%,rgba(11,36,24,.25) 50%,var(--paper) 50.4%)}
+.steps{display:flex;align-items:center;gap:10px}
+.steps button{width:44px;height:44px;border-radius:14px;border:0;background:var(--c2);box-shadow:var(--edge);font-size:22px;font-weight:700}
+.steps .n{font-size:48px;min-width:1.4em;text-align:center}
+.tagb{display:flex;flex-wrap:wrap;gap:8px}
+.tagb button{border:0;min-height:36px;padding:0 12px;border-radius:999px;background:var(--c2);box-shadow:var(--edge);font-size:13px;font-weight:600}
+.tagb button[aria-pressed="true"]{background:var(--ink);color:#06140D}
+.streak{display:flex;gap:6px}
+.streak i{flex:1;height:38px;border-radius:8px;background:var(--c2);display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--mut)}
+.streak i.p{background:var(--ink);color:#06140D}
+.streak i.r{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.rec{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:14px 0;border-top:1px solid var(--line);align-items:center}
+.rec .n{font-size:34px;grid-row:span 2}
+.src{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--line2);color:var(--mut)}
+.src.ref{color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+
+/* ===== NOTES ===== */
+.notes{max-width:980px}
+.notes h3{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-.02em;margin:34px 0 10px}
+.notes p,.notes li{color:var(--soft);font-size:15px;line-height:1.6}
+.notes ul{padding-left:20px;margin:8px 0}
+.notes table{width:100%;border-collapse:collapse;font-size:14px}
+.notes th,.notes td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.notes th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.notes code{font-size:13px;background:var(--c2);padding:1px 6px;border-radius:6px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.sw{border-radius:14px;overflow:hidden;box-shadow:var(--edge);font-size:12px}
+.sw i{display:block;height:56px}.sw div{padding:8px 10px;background:var(--c1)}
+
+
+/* ===== MATCH DAY (one point, every screen) ===== */
+.md{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1fr) minmax(0,1.55fr);gap:16px;align-items:start;margin-top:22px}
+@container scr (max-width:1180px){.md{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.md .mdtv{grid-column:1/-1}}
+@container scr (max-width:700px){.md{grid-template-columns:minmax(0,1fr)}}
+.mdc{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mdc>.row.cap{font-size:10.5px}
+.mdpad{padding:14px;display:flex;flex-direction:column;gap:10px}
+.mdpad .taps{min-height:0}
+.mdpad .score-tap{min-height:150px;padding:14px}
+.mdpad .score-tap .n{font-size:64px;line-height:.9}
+.mdpad .score-tap b{font-size:16px}
+.md .arena{padding:16px;border-radius:22px}
+.md .arena .sb{--pts:clamp(44px,5cqw,64px);--name:15px;--pw:clamp(52px,5cqw,72px);--dot:10px;--rp:10px 14px}
+.md .story{font-size:18px}
+.md .dna{height:52px}
+.md .tv{max-width:none}
+
+/* ===== MATCH SIGNATURE (ChatGPT's jaw-drop: every match leaves a mark) ===== */
+.sig{display:block;width:100%;height:auto;color:var(--ink);overflow:visible}
+.sig line{stroke-linecap:round;transition:opacity .2s}
+.sig line.dim{opacity:.14}
+.sig line.cur{stroke-width:4}
+.sigrow{display:grid;grid-template-columns:190px minmax(0,1fr);gap:18px;align-items:center;margin:18px 0 8px;padding:14px;border-radius:18px;background:var(--c2)}
+@container scr (max-width:520px){.sigrow{grid-template-columns:110px minmax(0,1fr)}}
+/* ===== reduced motion (also the director toggle) ===== */
+.app.rm *,.app.rm *::before,.app.rm *::after{animation-duration:150ms!important;animation-iteration-count:1!important;transition-duration:150ms!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:150ms!important;animation-iteration-count:1!important;transition-duration:150ms!important}}
+.ph-hero{background-image:url(DATAURI)}
+.ph-courtlive{background-image:url(DATAURI)}
+.ph-player{background-image:url(DATAURI)}
+.ph-champ{background-image:url(DATAURI)}
+.ph-club{background-image:url(DATAURI)}
+.ph-aerial{background-image:url(DATAURI)}
+.ph-crowd{background-image:url(DATAURI)}
+.ph-arena{background-image:url(DATAURI)}
+.ph-stills{background-image:url(DATAURI)}
+.ph-result{background-image:url(DATAURI)}
+.ph-meera{background-image:url(DATAURI)}
+.app{--bgN:url(DATAURI);--bgD:url(DATAURI)}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="q" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--qc,#F1F4EA)" stroke-width="10"/><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--qa,#D9F24A)" stroke-width="3"/><circle cx="83" cy="83" r="11" style="fill:var(--qa,#D9F24A)"/></symbol>
+  <symbol id="qs" viewBox="0 0 100 100"><path d="M60 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V60" fill="none" style="stroke:var(--qc,#F1F4EA)" stroke-width="12"/><circle cx="83" cy="83" r="12.5" style="fill:var(--qa,#D9F24A)"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-club" viewBox="0 0 24 24"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/></symbol>
+</svg>
+
+<div class="app" id="app" data-theme="night" data-device="desktop">
+  <nav class="dir" aria-label="Prototype controls">
+    <div class="lg"><svg viewBox="0 0 100 100" width="22" height="22" aria-hidden="true"><use href="#q"/></svg><b>Final prototype</b><span class="chip line" style="min-height:20px;font-size:9.5px;padding:0 8px">Sample data</span></div>
+    <div class="jr" id="jr">
+      <span class="grp">Start</span><a href="#matchday">Match day</a><span class="grp">Fan</span><a href="#home">Home</a><a href="#event">Event</a><a href="#live">Live</a><a href="#results">Results</a>
+      <span class="grp">Player</span><a href="#studio">Player Studio</a>
+      <span class="grp">Club</span><a href="#referee">Referee pad</a><a href="#desk">Tournament Desk</a><a href="#overview">Organiser</a><a href="#tv">Venue TV</a>
+      <span class="grp">RallyQ</span><a href="#admin">Admin</a>
+      <span class="grp">Build</span><a href="#notes">Build notes</a>
+    </div>
+    <div class="tg">
+      <div class="seg" role="group" aria-label="Theme"><button data-theme-set="night" aria-pressed="true">Night</button><button data-theme-set="day" aria-pressed="false">Day</button></div>
+      <div class="seg" role="group" aria-label="Device"><button data-dev="desktop" aria-pressed="true">Desktop</button><button data-dev="phone" aria-pressed="false">Phone</button></div>
+      <div class="seg" role="group" aria-label="Motion"><button id="rmBtn" aria-pressed="false" title="Preview reduced motion">Calm</button></div>
+    </div>
+  </nav>
+
+  <div class="stage"><div class="device" id="device"><div class="scr" id="scr">
+
+  <!-- ========== shared public header ========== -->
+  <header class="hdr" id="pubHdr"><div class="wrap">
+    <a class="brand" href="#home"><svg viewBox="0 0 100 100" width="30" height="30" aria-hidden="true"><use href="#q"/></svg><span class="word">RallyQ</span></a>
+    <nav class="hnav" aria-label="Main"><a href="#event">Events</a><a href="#live">Live</a><a href="#results">Results</a><a href="#studio">Player Studio</a><a href="#overview">For clubs</a></nav>
+    <span class="sp"></span>
+    <span class="chip live hide" id="hdrLive"><i></i>Live</span>
+    <a class="btn sm hcta" href="#event">Enter tournament</a>
+  </div></header>
+
+
+  <!-- ========== MATCH DAY ========== -->
+  <section class="view" data-view="matchday" aria-label="Match day: one point, every screen">
+    <div class="wrap" style="padding-block:24px 48px">
+      <div class="row" style="flex-wrap:wrap;gap:12px 40px;align-items:flex-end">
+        <div><span class="cap acc">RallyQ final prototype · Claude × ChatGPT · start here</span><h1 class="disp" style="font-size:clamp(48px,7.4cqw,104px);margin-top:12px">One point.<br><span class="acc">Every screen.</span></h1></div>
+        <p class="mut" style="max-width:440px;font-size:15px">Tap a team on the referee pad. The point lands on the pad at once, then on the public Live page and the venue TV, with JJ's count, pulse and wash. Try Undo, go offline, and finish the match: gold appears only after you confirm it.</p>
+      </div>
+      <div class="md">
+        <div class="mdc"><div class="row cap"><span>Referee pad</span><span class="sp"></span><span>Work zone · calm</span></div>
+          <div class="card mdpad work">
+            <div class="row"><div><b style="font-size:14px">Court 2 · Semi-final 2</b><div class="mut" style="font-size:12px" id="mdGame">Game 1 · best of 3</div></div><span class="sp"></span><button class="sync" id="mdSync" title="Tap to go offline"><i></i><span>Saved</span></button></div>
+            <div class="taps"><button class="score-tap" id="mdTapA"><small id="mdSubA">Serving</small><span class="n" id="mdA">0</span><b>Meera &amp; Divya</b></button><button class="score-tap" id="mdTapB"><small id="mdSubB">Receiving</small><span class="n" id="mdB">0</span><b>Asha &amp; Lata</b></button></div>
+            <div class="row" style="justify-content:space-between;font-size:13px"><span class="mut">Referee call</span><b class="n" id="mdCall" style="font-size:22px">0–0–2</b></div>
+            <div class="receiptln" style="min-height:48px;font-size:13px"><span class="sp" id="mdPr">Auto-play is running. Tap to take over.</span><button class="btn ghost sm" id="mdUndo" disabled><svg class="ic"><use href="#i-undo"/></svg>Undo</button></div>
+            <button class="btn chalk sm" id="mdConfirm" disabled>Confirm final score</button>
+          </div></div>
+        <div class="mdc"><div class="row cap"><span>Public Live · phone</span><span class="sp"></span><span>Show zone</span></div>
+          <div class="arena" id="mdArena" data-light="live"><div class="ph ph-courtlive"></div><div class="flood"></div><div id="mdBoard"></div><p class="story" id="mdStory">Every point matters.</p><div class="dna" id="mdDna" aria-hidden="true"></div><div class="row" style="font-size:12px;margin-top:10px"><span class="mut">Win chance · an estimate</span><span class="sp"></span><b class="n" style="font-size:20px" id="mdWp">50%</b></div></div>
+          <a class="btn ghost sm" href="#live" style="align-self:flex-start">Open the full Live page</a></div>
+        <div class="mdc mdtv"><div class="row cap"><span>Venue TV</span><span class="sp"></span><span>Show zone · always Night</span></div>
+          <div class="tvwrap" style="padding:0;background:none"><div class="tv"><div class="tvin" id="mdTv"><div class="ph ph-arena"></div><div class="tvtop"><span class="tile">LPC</span><div><span style="display:block">Hosted by Loki's Pickleball Club</span><b>Hyderabad Winter Smash</b></div></div><div class="tvmain"><div id="mdTvBoard"></div><div class="dna" id="mdTvDna" aria-hidden="true"></div></div><div class="tvrail" id="mdTvRail"></div><div class="tvbot"><span>Follow live on rallyq.in</span><span class="row" style="gap:.8cqw"><svg viewBox="0 0 100 100" style="width:2.4cqw;height:2.4cqw" aria-hidden="true"><use href="#q"/></svg><span class="word">RallyQ</span></span></div></div></div></div>
+          <div class="row" style="gap:8px;flex-wrap:wrap"><a class="btn ghost sm" href="#tv">Open the full TV board</a><a class="btn ghost sm" href="#desk">See the Desk</a><a class="btn ghost sm" href="#studio">Player Studio</a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOME ========== -->
+  <section class="view" data-view="home" aria-label="Home">
+    <div class="hero photo">
+      <div class="ph ph-hero"></div>
+      <div class="wrap hbody">
+        <div>
+          <span class="hchip"><span class="pdot"></span>Live now · Hyderabad Winter Smash · Hosted by Loki's</span>
+          <h1 class="disp hh"><span>Your court.</span><span>The main event.</span></h1>
+          <p class="lede">Enter club tournaments, follow every point live, and keep every result that matters. Built for Hyderabad's pickleball clubs.</p>
+          <div class="row" style="flex-wrap:wrap;gap:10px 22px"><a class="btn" href="#event">Enter tournament</a><a href="#live" style="color:var(--ink);font-weight:700;text-decoration:none;display:inline-flex;gap:8px;align-items:center">Follow live <svg class="ic"><use href="#i-arrow"/></svg></a></div>
+        </div>
+        <a class="glass hcard" href="#live" aria-label="Court 2 live score. Open the live arena.">
+          <div id="heroBoard"></div>
+          <div class="row" style="margin-top:12px;font-size:12px;color:var(--mut)"><span>Semi-final · Mixed 3.5</span><span class="sp"></span><span>Win chance <b id="heroWp" style="color:var(--ink)">—</b></span></div>
+        </a>
+      </div>
+      <div class="ticker" aria-hidden="true"><div class="tr" id="ticker"></div></div>
+    </div>
+
+    <div class="wrap">
+      <section class="sec">
+        <div class="sech"><div><span class="cap">01 · This weekend in Hyderabad</span><h2 class="disp h2" style="margin-top:10px">The court is set.<br><span class="acc">Entries are open.</span></h2></div><a class="btn ghost sm" href="#event">All events</a></div>
+        <div class="grid trio">
+          <a class="ev photo ph-club" href="#event"><div class="row"><span class="chip live"><i></i>Live</span><span class="sp"></span><span class="tile sm">LPC</span></div><div><span class="cap" style="color:#BFD0C4">Sat 28 Nov · Gachibowli</span><div class="disp" style="margin:8px 0 6px">Hyderabad Winter Smash</div><p style="font-size:14px;color:#BFD0C4">Hosted by Loki's Pickleball Club · 32 teams · Mixed, Men's, Women's 3.5</p></div></a>
+          <a class="ev photo ph-courtlive" href="#event"><div class="row"><span class="chip coral">Tickets on sale</span><span class="sp"></span><span class="tile sm">R33</span></div><div><span class="cap" style="color:#BFD0C4">Thu 3 Dec · Kondapur</span><div class="disp" style="margin:8px 0 6px">Rally33 Night Ladder</div><p style="font-size:14px;color:#BFD0C4">Hosted by Rally33 · 18 of 24 spots taken · ₹600 per player</p></div></a>
+          <a class="ev photo ph-aerial" href="#event"><div class="row"><span class="chip">Entries open</span><span class="sp"></span><span class="tile sm">TPY</span></div><div><span class="cap" style="color:#BFD0C4">Sat 12 Dec · Kokapet</span><div class="disp" style="margin:8px 0 6px">The Pickle Yard Social</div><p style="font-size:14px;color:#BFD0C4">Hosted by The Pickle Yard · Round robin, all levels · ₹900 per team</p></div></a>
+        </div>
+      </section>
+
+      <section class="sec">
+        <div class="sech"><div><span class="cap">02 · Live now</span><h2 class="disp h2" style="margin-top:10px">Every point matters.</h2></div><a class="btn ghost sm" href="#live">Open the arena</a></div>
+        <div class="grid" id="homeCourts" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))"></div>
+      </section>
+
+      <section class="sec">
+        <div class="split">
+          <div class="card" style="padding:28px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden">
+            <svg class="crt" viewBox="0 0 100 100" aria-hidden="true" style="--qc:rgba(241,244,234,.16)"><use href="#q"/></svg>
+            <span class="cap">03 · Player Studio</span>
+            <h2 class="disp h2">Your match.<br><span class="acc">Your moment.</span></h2>
+            <p class="mut" style="max-width:460px">After every referee-scored event you get a Receipt: the moment you stole it, drawn from your real rallies. It grows into your Season Book.</p>
+            <p class="ser acc" style="font-style:italic;font-size:19px">Out of the kitchen, into the stats.</p>
+            <div><a class="btn" href="#studio">Open my Studio</a></div>
+          </div>
+          <div class="photo ph-player" style="border-radius:22px;min-height:380px;display:flex;align-items:flex-end;padding:20px;box-shadow:var(--edge)">
+            <div class="glass" style="padding:14px 16px;width:100%;max-width:340px"><span class="cap">Receipt 0042 · Loki's</span><div class="disp" style="font-size:30px;margin-top:6px">They led 9–4.<br>You won 12–10.</div><p class="mut" style="font-size:12px;margin-top:8px">Sample photo and player. Never a stock photo as a real player.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <div class="sech"><div><span class="cap">04 · For clubs</span><h2 class="disp h2" style="margin-top:10px">Give players a reason<br>to choose <span class="acc">your court.</span></h2></div></div>
+        <div class="grid trio">
+          <a class="card" href="#desk" style="padding:22px;text-decoration:none;color:var(--ink)"><svg class="ic" style="width:26px;height:26px;color:var(--ball)"><use href="#i-bolt"/></svg><div class="disp" style="font-size:26px;margin:14px 0 8px">Run match day from one desk</div><p class="mut" style="font-size:14px">Courts drawn as courts. The one that needs you lights up. You confirm every move.</p></a>
+          <a class="card" href="#tv" style="padding:22px;text-decoration:none;color:var(--ink)"><svg class="ic" style="width:26px;height:26px;color:var(--ball)"><use href="#i-tv"/></svg><div class="disp" style="font-size:26px;margin:14px 0 8px">Your club, on TV</div><p class="mut" style="font-size:14px">The venue screen shows every court, walkout cards between matches and your logo first.</p></a>
+          <a class="card" href="#referee" style="padding:22px;text-decoration:none;color:var(--ink)"><svg class="ic" style="width:26px;height:26px;color:var(--ball)"><use href="#i-check"/></svg><div class="disp" style="font-size:26px;margin:14px 0 8px">Score every point from your phone</div><p class="mut" style="font-size:14px">Big taps, clear Undo, works offline. Nothing celebrates before the referee confirms.</p></a>
+        </div>
+      </section>
+
+
+      <footer class="foot"><div class="row" style="flex-wrap:wrap;gap:12px"><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><use href="#q"/></svg><span class="word" style="font-size:20px;color:var(--ink)">RallyQ</span><span class="sp"></span><span>Hyderabad first. All names, scores and photos here are sample data.</span></div></footer>
+    </div>
+  </section>
+
+  <!-- ========== EVENT ========== -->
+  <section class="view" data-view="event" aria-label="Event">
+    <div class="evhero photo"><div class="ph ph-crowd"></div>
+      <div class="wrap" style="display:flex;flex-direction:column;gap:14px">
+        <div class="host"><span class="tile">LPC</span><div><span class="cap" style="color:#BFD0C4">Hosted by</span><div style="font-weight:700;color:#F1F4EA">Loki's Pickleball Club · at Gachibowli Courts</div></div></div>
+        <h1 class="disp" style="font-size:clamp(48px,8cqw,104px);color:#F1F4EA">Hyderabad<br><span class="acc">Winter Smash</span></h1>
+        <div class="row" style="flex-wrap:wrap;gap:8px"><span class="chip" id="evStateChip">Entries open</span><span class="chip line" style="color:#DCE6DE">Sat 28 Nov · 8:00 am</span><span class="chip line" style="color:#DCE6DE">Mixed 3.5 · DUPR rated</span><span class="chip line" style="color:#DCE6DE">₹1,200 per team</span></div>
+      </div>
+    </div>
+    <div class="wrap" style="padding-top:22px">
+      <div class="tabs" role="tablist" id="evTabs"><button role="tab" data-ev="before" aria-selected="true">Before · entries</button><button role="tab" data-ev="during" aria-selected="false">During · live</button><button role="tab" data-ev="after" aria-selected="false">After · champions</button></div>
+      <p class="mut" style="font-size:13px;margin-top:10px">One link that changes with the event. Switch the stage to see all three.</p>
+
+      <div data-evp="before" class="sec" style="padding-top:28px">
+        <div class="split">
+          <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px">
+            <span class="cap">Spots</span>
+            <div class="row"><span class="n" style="font-size:64px">28</span><span class="mut" style="font-size:18px">of 32 teams</span><span class="sp"></span><span class="chip coral">4 spots left</span></div>
+            <div class="meter"><i style="width:87.5%"></i></div>
+            <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:14px">
+              <div><span class="cap">Format</span><p style="margin-top:4px">Pools, then knockouts</p></div>
+              <div><span class="cap">Games</span><p style="margin-top:4px">Best of 3 to 11</p></div>
+              <div><span class="cap">Closes</span><p style="margin-top:4px">Thu 26 Nov, 9 pm</p></div>
+            </div>
+            <div class="row" style="gap:10px;flex-wrap:wrap"><button class="btn" data-open="entrySheet">Enter tournament</button><button class="btn ghost" data-toast="Message sent to Loki's. They usually reply within an hour.">Message the club</button></div>
+          </div>
+          <div class="card" style="padding:8px 20px">
+            <span class="cap" style="display:block;padding:14px 0 4px">Teams entered · latest</span>
+            <div id="entries"></div>
+          </div>
+        </div>
+      </div>
+
+      <div data-evp="during" class="sec hide" style="padding-top:28px">
+        <div class="sech"><div><span class="cap">Road to the final</span><h2 class="disp" style="font-size:40px;margin-top:8px">Follow a team.<br><span class="acc">Watch the path light up.</span></h2></div>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700" class="cap">Follow
+            <select id="follow" style="min-height:44px;border-radius:12px;background:var(--c2);border:0;box-shadow:var(--edge);padding:0 12px;color:var(--ink);font-size:14px;text-transform:none;letter-spacing:0">
+              <option value="">Nobody</option><option value="AL" selected>Asha &amp; Lata</option><option value="MD">Meera &amp; Divya</option><option value="KN">Kiran &amp; Neha</option>
+            </select></label></div>
+        <div class="bk" id="bracket"></div>
+        <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" data-toast="Fit to screen">Fit to screen</button><button class="btn ghost sm" data-toast="Jumped to the semi-finals">Jump to semi-finals</button><a class="btn sm" href="#live">Open live arena</a></div>
+      </div>
+
+      <div data-evp="after" class="sec hide" style="padding-top:28px">
+        <div class="champ photo"><div class="ph ph-champ"></div>
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:560px;color:#F1F4EA">
+            <span class="chip gold" style="align-self:flex-start">Champions · confirmed</span>
+            <h2 class="disp" style="font-size:clamp(44px,7cqw,84px)">Asha &amp; Lata</h2>
+            <p style="font-size:18px;color:#DCE6DE">Won the Winter Smash Mixed 3.5 final 11–7, 9–11, 11–8 over Meera &amp; Divya. Hosted by Loki's Pickleball Club.</p>
+            <div class="row" style="gap:10px;flex-wrap:wrap"><a class="btn" href="#results">See every result</a><button class="btn ghost" style="color:#F1F4EA" data-toast="Club story ready for WhatsApp">Share the champions</button></div>
+            <p style="font-size:12px;color:#BFD0C4">Gold appears only once the referee confirms the final. Sample photo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sticky-cta glass"><div style="flex:1"><b>₹1,200 per team</b><br><span class="mut" style="font-size:12px">4 spots left</span></div><button class="btn" data-open="entrySheet">Enter</button></div>
+    <div style="height:60px"></div>
+  </section>
+
+  <!-- ========== LIVE ========== -->
+  <section class="view" data-view="live" aria-label="Live">
+    <div class="miniw"><div class="mini" id="mini"><span class="chip live"><i></i>Court 2</span><b style="font-size:14px" class="sp" id="miniNames">Meera &amp; Divya v Asha &amp; Lata</b><span class="n" id="miniScore">0–0</span></div></div>
+    <div class="wrap" style="padding-top:22px">
+      <div class="row" style="flex-wrap:wrap;gap:10px;margin-bottom:14px"><span class="tile sm">LPC</span><div><span class="cap">Hyderabad Winter Smash · Hosted by Loki's</span><div style="font-weight:700">Live · 4 courts · updated <span id="fresh">just now</span></div></div><span class="sp"></span><button class="btn ghost sm" id="staleBtn" title="Preview what stale data looks like">Preview stale</button></div>
+      <div class="livegrid">
+        <div>
+          <div class="arena" id="arena" data-light="live">
+            <div class="ph ph-courtlive"></div><div class="flood"></div>
+            <div id="arenaBoard"></div>
+            <p class="story" id="story" aria-live="polite">Every point matters.</p>
+            <div class="dna" id="liveDna" role="img" aria-label="Match DNA for this game: one mark per rally, up for Meera and Divya, down for Asha and Lata. Short marks are side-outs."></div>
+            <div class="row" style="margin-top:12px;font-size:12px;color:var(--mut);flex-wrap:wrap;gap:6px 12px"><span class="cap">Match DNA · this game</span><span class="sp"></span><span>Tall = point · short = side-out · lime = the run</span></div>
+            <div style="margin-top:16px"><div class="row" style="font-size:13px"><b id="wpA">Meera &amp; Divya</b><span class="chip ball wpdelta" id="wpDelta" style="background:var(--ball);color:var(--on)">+12 pts</span><span class="sp"></span><span class="mut">Win chance, an estimate</span><b class="n" style="font-size:22px" id="wpN">50%</b></div><div class="wpb"><i id="wpBar" style="width:50%"></i></div></div>
+          </div>
+          <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><a class="btn ghost sm" href="#referee">Score this court</a><a class="btn ghost sm" href="#tv">See it on the venue TV</a><span class="sp"></span><span class="mut" style="font-size:12px">Following · <b class="n" style="font-size:16px;color:var(--ink)">128</b></span></div>
+        </div>
+        <aside style="display:flex;flex-direction:column;gap:12px">
+          <span class="cap">Other courts</span>
+          <div id="liveCourts" style="display:grid;gap:10px"></div>
+          <div class="card" style="padding:16px"><span class="cap">Up next · Court 4</span><p style="margin-top:8px;font-weight:700">Kiran &amp; Neha v Rohan &amp; Sameer</p><p class="mut" style="font-size:13px">Quarter-final 4 · about 12 min</p></div>
+        </aside>
+      </div>
+      <div style="height:40px"></div>
+      <div class="card" style="padding:20px" id="scrollProof"><span class="cap">Scroll down: the score folds into a bar that stays on screen.</span><p class="mut" style="margin-top:8px;font-size:14px">Score, server, game and "updated" time are always readable. If data goes stale it turns Signal grey and stops saying Live.</p></div>
+      <div style="height:420px"></div>
+    </div>
+  </section>
+
+  <!-- ========== RESULTS ========== -->
+  <section class="view" data-view="results" aria-label="Results">
+    <div class="wrap" style="padding-top:26px">
+      <span class="cap">Hyderabad Winter Smash · Mixed 3.5 · Hosted by Loki's</span>
+      <h1 class="disp" style="font-size:clamp(44px,7cqw,88px);margin:10px 0 22px">The final becomes <span class="acc">history.</span></h1>
+      <div class="livegrid" style="grid-template-columns:minmax(0,1fr) 340px">
+        <div class="final" id="final">
+          <div class="glow"></div>
+          <div class="row" style="flex-wrap:wrap;gap:8px"><span class="chip gold" id="finChip">Final · confirmed</span><span class="chip line">Semi-final 1 · Court 2</span><span class="sp"></span><span class="mut" style="font-size:12px">Referee: Sana K · confirmed 4:42 pm</span></div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;margin-top:18px">
+            <div><b style="font-size:18px">Arav &amp; Ishaan</b><br><span class="mut" style="font-size:13px">Banyan PC</span></div>
+            <div class="rwscore n"><span id="rwA">0</span><span class="mut" style="font-size:.5em">–</span><span id="rwB">0</span></div>
+            <div style="text-align:right"><b style="font-size:18px" class="gold">Asha &amp; Lata</b><br><span class="mut" style="font-size:13px">Loki's</span></div>
+          </div>
+          <div class="gscore n" style="justify-content:center;margin-top:6px"><span>11–8</span><span class="w">7–11</span><span class="w">10–12</span></div>
+          <p class="story" id="rwStory">Drag along the Match DNA to rewind game 3.</p>
+          <div class="rw"><div class="dna" id="rwDna" role="img" aria-label="Match DNA for game 3, one mark per point, up for Arav and Ishaan, down for Asha and Lata"></div>
+          <label class="cap" for="rwScrub" style="display:block;margin-top:12px">Rally Rewind · point <span id="rwN">0</span> of <span id="rwT">0</span></label>
+          <input type="range" id="rwScrub" min="0" value="0"></div>
+          <div class="sigrow"><svg class="sig" id="rwSig" role="img" aria-label="Match Signature for game 3: one stroke per point around the RallyQ court line. Outward for Arav and Ishaan, inward for Asha and Lata, ball green for the six-point run."></svg><div><span class="cap acc">Match Signature · game 3</span><p class="ser" style="font-size:19px;margin-top:6px">Every match leaves a mark.</p><p class="mut" style="font-size:13px;margin-top:4px">One stroke per point around the court line, drawn only from the confirmed rally record. Tap a stroke to see that moment.</p></div></div>
+          <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="rwPlay">Play game 3</button><button class="btn ghost" id="rwJump">Jump to the turning point</button><button class="btn ghost" id="rwShare"><svg class="ic"><use href="#i-share"/></svg>Share this moment</button></div>
+        </div>
+        <aside>
+          <span class="cap">All results · confirmed only</span>
+          <div class="reslist" id="reslist" style="margin-top:12px"></div>
+          <button class="btn ghost sm" style="margin-top:12px" data-toast="DUPR export ready for the organiser">Export for DUPR</button>
+        </aside>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </section>
+
+  <!-- ========== TV ========== -->
+  <section class="view tvwrap" data-view="tv" aria-label="Venue TV">
+    <div class="tv"><div class="tvin" id="tvin">
+      <div class="ph ph-arena"></div>
+      <div class="tvtop"><span class="tile">LPC</span><div><span style="display:block">Hosted by Loki's Pickleball Club</span><b>Hyderabad Winter Smash</b></div><span class="sp"></span><span id="tvClock" class="n" style="font-size:2.6cqw;color:#F1F4EA">4:18</span></div>
+      <div class="tvmain"><div id="tvBoard"></div><div class="dna" id="tvDna" aria-hidden="true"></div></div>
+      <div class="tvrail" id="tvRail"></div>
+      <div class="tvbot"><span>Up next on Court 4 · <b style="color:#F1F4EA">Kiran &amp; Neha v Rohan &amp; Sameer</b></span><span>Follow live on rallyq.in</span><span class="row" style="gap:.8cqw"><svg viewBox="0 0 100 100" style="width:2.4cqw;height:2.4cqw" aria-hidden="true"><use href="#q"/></svg><span class="word">RallyQ</span></span></div>
+      <div class="brk" id="brk">
+        <div class="bi photo" data-b="0"><div class="ph ph-player"></div><span class="cap acc k">Walkout · next on Court 2</span><div class="disp">Kiran &amp; Neha</div><div class="ser" style="font-size:2.4cqw;color:#BFD0C4">v Rohan &amp; Sameer · Quarter-final 4</div><div id="tvLastDna" style="max-width:50cqw"><span class="cap k" style="display:block;margin-bottom:.6cqw">Their last meeting · Rally33 Ladder, 12 Nov · 11–9</span><div class="dna" style="height:4cqw;gap:.3cqw"></div></div></div>
+        <div class="bi photo" data-b="1"><div class="ph ph-courtlive"></div><span class="cap k" style="color:#BFD0C4">Brought to you by</span><div class="disp" style="color:#F1F4EA">[ Your sponsor here ]</div><div class="ser" style="font-size:2.4cqw;color:#BFD0C4">Sponsor slot · 10 seconds · club sells it</div></div>
+        <div class="bi photo" data-b="2"><div class="ph ph-champ"></div><span class="chip gold" style="font-size:1.4cqw;min-height:3cqw;padding:0 1.2cqw;align-self:flex-start">Champions · confirmed</span><div class="disp" style="color:#E8C35A">Asha &amp; Lata</div><div class="ser" style="font-size:2.4cqw;color:#F1F4EA">Winter Smash Mixed 3.5 · Hosted by Loki's</div></div>
+      </div>
+    </div></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn ghost sm" id="brkBtn" style="color:#F1F4EA">Preview a broadcast break</button><span style="font-size:12px;color:#9FB4A6;max-width:520px">Always Night. Breaks only run between matches. A live point cuts straight back to the scoreboard.</span></div>
+  </section>
+
+  <!-- ========== REFEREE ========== -->
+  <section class="view" data-view="referee" aria-label="Referee pad">
+    <div class="pad"><div class="work" style="position:absolute;inset:0;z-index:-1;border-radius:0;pointer-events:none;background:rgba(6,20,13,.35)!important"></div>
+      <div class="padtop"><a class="brand" href="#home" aria-label="RallyQ home"><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><use href="#qs"/></svg></a><div><b style="font-size:15px">Court 2 · Semi-final 2</b><div class="mut" style="font-size:12px">Winter Smash · you are the referee</div></div><span class="sp"></span><button class="sync" id="sync" title="Tap to preview offline"><i></i><span>Saved</span></button></div>
+      <div class="padscore">
+        <div><b style="font-size:14px">Meera &amp; Divya</b><div class="n" id="padA">0</div><div class="gms" id="padGA" style="justify-content:center"></div></div>
+        <div class="mut n" style="font-size:40px">–</div>
+        <div><b style="font-size:14px">Asha &amp; Lata</b><div class="n" id="padB">0</div><div class="gms" id="padGB" style="justify-content:center"></div></div>
+        <div class="call"><span>Call&nbsp;</span><b class="n" id="padCall" style="font-size:22px;color:var(--ink)">0–0–2</b><span id="padGame">&nbsp;· Game 1</span></div>
+      </div>
+      <div class="taps"><button class="score-tap" id="tapA"><small>Rally won by</small><b>Meera &amp; Divya</b><small id="tapAsub">Serving</small></button><button class="score-tap" id="tapB"><small>Rally won by</small><b>Asha &amp; Lata</b><small id="tapBsub">Receiving</small></button></div>
+      <div class="receiptln" id="pr"><svg class="ic" style="color:var(--mut)"><use href="#i-check"/></svg><span id="prText" class="sp">Point Receipt: your last tap shows here.</span><button class="btn ghost sm" id="undoBtn" disabled><svg class="ic"><use href="#i-undo"/></svg>Undo</button></div>
+      <button class="btn chalk" id="confirmBtn" disabled>Confirm final score</button>
+      <p class="mut" style="font-size:12px;text-align:center">Work zone: calm and instant. Live, the venue TV and the Desk update from your taps.</p>
+    </div>
+  </section>
+
+  <!-- ========== DESK ========== -->
+  <section class="view" data-view="desk" aria-label="Tournament Desk">
+    <div class="wrap" style="padding-top:22px">
+      <div class="row" style="flex-wrap:wrap;gap:10px"><div><span class="cap">Tournament Desk · Winter Smash</span><h1 class="disp" style="font-size:clamp(36px,5cqw,56px);margin-top:6px">Match day, under control.</h1></div><span class="sp"></span><span class="sync"><i></i><span>Saved · 4:18 pm</span></span></div>
+      <div class="kpis" style="margin-top:18px"><div class="kpi"><span class="cap">Played</span><div class="n">14</div></div><div class="kpi"><span class="cap">On court</span><div class="n" id="kOn">3</div></div><div class="kpi"><span class="cap">Waiting</span><div class="n" id="kWait">6</div></div><div class="kpi"><span class="cap">Running behind</span><div class="n" id="kLate" style="color:var(--coral)">12 min</div></div></div>
+      <div class="deskgrid" style="margin-top:16px">
+        <div class="courts" id="deskCourts"></div>
+        <aside style="display:flex;flex-direction:column;gap:12px">
+          <div class="card" style="padding:18px" id="decision">
+            <span class="cap acc">Decision preview · Court 4</span>
+            <p style="font-weight:700;font-size:17px;margin-top:8px">Next eligible: QF4 · Kiran &amp; Neha v Rohan &amp; Sameer</p>
+            <ul class="mut" style="font-size:13.5px;padding-left:18px;margin:8px 0 12px;display:grid;gap:4px"><li>Both teams have been off court 26+ minutes.</li><li>No player is in another match.</li><li>Assigning now brings the day back to 4 min behind.</li></ul>
+            <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="assignBtn">Assign to Court 4</button><button class="btn ghost" data-toast="Pick any waiting match from the queue">Choose another</button></div>
+            <p class="mut" style="font-size:12px;margin-top:10px">RallyQ suggests. You decide.</p>
+          </div>
+          <div class="card" style="padding:16px"><span class="cap">Queue</span><div class="q" id="queue" style="margin-top:10px"></div></div>
+        </aside>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </section>
+
+  <!-- ========== ORGANISER OVERVIEW ========== -->
+  <section class="view" data-view="overview" aria-label="Organiser overview">
+    <div class="wrap" style="padding-top:22px">
+      <span class="cap">Loki's Pickleball Club · organiser</span>
+      <h1 class="disp" style="font-size:clamp(36px,5cqw,60px);margin:6px 0 18px">Matchday launch readiness</h1>
+      <div class="split">
+        <div class="readiness" id="ready"><div class="flood"></div>
+          <div class="row"><span class="n" style="font-size:72px" id="readyN">3/6</span><div><b id="readyT">Lights warming up</b><p class="mut" style="font-size:13px">The floodlight turns fully on only when every item is done.</p></div></div>
+          <div id="checks" style="margin-top:14px"></div>
+        </div>
+        <div style="display:grid;gap:12px">
+          <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="kpi"><span class="cap">Teams entered</span><div class="n">28</div></div><div class="kpi"><span class="cap">Courts</span><div class="n">4</div></div><div class="kpi"><span class="cap">Matches planned</span><div class="n">47</div></div><div class="kpi"><span class="cap">Event page views</span><div class="n" data-count="1932">0</div></div></div>
+          <div class="card photo ph-stills" style="min-height:220px;padding:18px;display:flex;align-items:flex-end;border-radius:20px"><div><span class="chip ball" style="background:var(--ball);color:var(--on)">Poster ready</span><div class="disp" style="font-size:28px;margin-top:8px;color:#F1F4EA">Entries open poster</div><p style="font-size:13px;color:#BFD0C4">Hosted by Loki's · Instagram 1080×1350 and WhatsApp</p></div></div>
+          <a class="btn" href="#desk">Open Tournament Desk</a>
+        </div>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </section>
+
+  <!-- ========== ADMIN ========== -->
+  <section class="view" data-view="admin" aria-label="Admin">
+    <div class="wrap" style="padding-top:22px">
+      <span class="cap">RallyQ admin · only you see this</span>
+      <h1 class="disp" style="font-size:clamp(36px,5cqw,60px);margin:6px 0 18px">Network pulse · <span class="acc">Hyderabad</span></h1>
+      <div class="split">
+        <div class="map"><svg viewBox="0 0 800 500" id="mapsvg" aria-label="Map of RallyQ clubs in Hyderabad"></svg></div>
+        <div style="display:grid;gap:12px;align-content:start">
+          <div class="card" style="padding:18px"><div class="row"><span class="tile sm">ACE</span><div class="sp"><b>Ace Arena, Banjara Hills</b><p class="mut" style="font-size:13px">Asked to join · 2 courts · 3 days ago</p></div></div><div class="row" style="gap:8px;margin-top:12px"><button class="btn sm" data-toast="Ace Arena approved">Approve club</button><button class="btn ghost sm" data-toast="Asked for a court photo">Ask for details</button></div></div>
+          <div class="card" style="padding:18px"><div class="row"><span class="tile sm">R33</span><div class="sp"><b>Rally33 · 6 events run</b><p class="mut" style="font-size:13px">No disputed scores. Ready to publish events without review.</p></div></div><div class="row" style="gap:8px;margin-top:12px"><button class="btn sm" data-toast="Rally33 is now trusted">Make trusted</button></div></div>
+          <div class="card" style="padding:18px;box-shadow:inset 0 0 0 1.5px var(--coral)"><div class="row"><span class="chip coral">Needs a look</span><span class="sp"></span><span class="mut" style="font-size:12px">2 min ago</span></div><p style="margin-top:10px;font-weight:700">Court 3 at Loki's has not synced for 90 seconds</p><p class="mut" style="font-size:13px">Public pages show "Last updated 90 s ago" and stop saying Live.</p></div>
+        </div>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </section>
+
+  <!-- ========== PLAYER STUDIO ========== -->
+  <section class="view" data-view="studio" aria-label="Player Studio">
+    <div class="wrap">
+      <div class="acover" id="acover">
+        <div class="acph ph-meera" role="img" aria-label="Meera Rao on court (live-site photo)"></div>
+        <div class="actop">
+          <div class="pvsw" role="group" aria-label="Which studio"><button data-pv="private" aria-pressed="true">My studio</button><button data-pv="public" aria-pressed="false">Public card</button></div>
+          <div class="acq"><svg class="sig" id="acSig" aria-hidden="true"></svg><span>Last final<br>11–9 · 7–11 · 11–8</span></div>
+        </div>
+        <div class="acin">
+          <div>
+            <span class="chip" data-em id="acKick" style="background:rgba(6,20,13,.5);box-shadow:var(--edge)">My Player Studio · only you see this</span>
+            <h1 class="acnm" data-em>Meera<br>Rao</h1>
+            <div class="row" data-em style="flex-wrap:wrap;gap:8px;margin-top:10px"><span class="dupr">DUPR <b>3.61</b></span><span style="font-size:13px;color:#DCE6DE">Loki's Pickleball Club · partner Divya Iyer</span></div>
+          </div>
+          <div class="acst" data-em><div><b>17</b><span>Referee-scored</span></div><div><b>71%</b><span>Close games won</span></div><div><b>8</b><span>Best run</span></div></div>
+        </div>
+      </div>
+      <div class="sthead stnav">
+        <span class="cap" id="stWhere">Private · Home</span>
+        <span class="sp"></span>
+        <div class="tabs sttop" role="tablist" id="stTabsTop"><button role="tab" data-st="home" aria-selected="true">Home</button><button role="tab" data-st="events" aria-selected="false">Events</button><button role="tab" data-st="practice" aria-selected="false">Practice</button><button role="tab" data-st="club" aria-selected="false">Club</button></div>
+      </div>
+      <div class="loop" id="loop" aria-label="Where you are in the loop">
+        <div data-loop="before"><b>Before</b><small>Events · calm</small></div><div data-loop="during"><b>During</b><small>The arena</small></div><div data-loop="after" class="on"><b>After</b><small>The Receipt</small></div><div data-loop="between"><b>Between</b><small>Practice</small></div><div data-loop="back"><b>Back</b><small>Your club</small></div>
+      </div>
+
+      <!-- Studio Home -->
+      <div data-stp="home" style="padding-top:18px">
+        <div class="st3">
+          <div class="card" style="padding:20px">
+            <div class="row"><span class="cap acc">Your latest page</span><span class="sp"></span><span class="src ref">Referee scored · confirmed</span></div>
+            <div style="margin-top:14px" class="receipt" id="receipt">
+              <div class="rc-inner">
+                <div class="face front" aria-live="polite">
+                  <svg class="sig crtq" id="rcSig" aria-hidden="true" style="color:#0B2418;opacity:.32;width:132px;height:132px;right:-34px;top:-34px"></svg>
+                  <div class="rc-top" style="max-width:72%;flex-direction:column;gap:4px"><span class="rc-club">Loki's Pickleball Club</span><span>15 Nov · DUPR Night</span></div>
+                  <div class="rc-kick" id="rcKick">The moment you stole it</div>
+                  <div class="rc-head" id="rcHead">—</div>
+                  <p class="rc-line" id="rcLine"></p>
+                  <div class="dnaS" id="dnaS" role="img" aria-label="Event DNA, one strip per match"></div>
+                  <div class="rc-foot"><span>Meera &amp; Divya · DUPR Night · 3 matches<br>Referee scored · Confirmed</span><span style="text-align:right"><span class="rc-serial">Receipt 0042</span><br>Run on RallyQ</span></div>
+                </div>
+                <div class="face back">
+                  <div class="rc-top"><span class="rc-club">Just for you</span><span class="never">Never published</span></div>
+                  <dl class="coach"><dt>From your rallies</dt><dd id="cFact">—</dd><dt>Possible explanation, not proven</dt><dd>Both of your losing runs began straight after you won a point. That can mean a rushed next rally.</dd><dt>Try next time</dt><dd>After you win a point, take your full time before the next serve.</dd></dl>
+                  <p style="margin:auto 0 0;font-size:12px;color:var(--paperMut)">Written from your three referee-scored matches. No share button, on purpose.</p>
+                </div>
+              </div>
+            </div>
+            <div class="mchips" role="group" aria-label="Which moment leads"><button data-m="comeback" aria-pressed="true">The comeback</button><button data-m="run">The run</button><button data-m="close">The finish</button><button id="flip">Turn over</button></div>
+            <div class="row" style="justify-content:center;margin-top:12px"><button class="btn sm" data-open="pubSheet"><svg class="ic"><use href="#i-share"/></svg>Publish…</button></div>
+          </div>
+          <div style="display:grid;gap:16px">
+            <div class="card" style="padding:20px"><div class="row"><span class="cap">DUPR · as your club saved it</span><span class="src" style="margin-left:8px">DUPR</span><span class="sp"></span><b class="n acc" style="font-size:30px">3.61</b></div><svg viewBox="0 0 320 120" style="width:100%;margin-top:10px" id="dupr" aria-label="DUPR history steps at rated events: 3.42 to 3.61"></svg><p class="mut" style="font-size:12px">Steps only at rated events. RallyQ never calculates its own rating.</p></div>
+            <div class="card" style="padding:20px"><span class="cap">Next · Before</span><p style="font-weight:700;font-size:18px;margin-top:8px">Rally33 Night Ladder</p><p class="mut" style="font-size:13px">Thu 3 Dec · Kondapur · with Divya</p><div class="row" style="margin-top:12px;gap:16px"><div><span class="n" style="font-size:42px" id="cdD">13</span><span class="cap" style="display:block">days</span></div><div><span class="n" style="font-size:42px" id="cdH">07</span><span class="cap" style="display:block">hours</span></div><span class="sp"></span><button class="btn sm" data-stgo="events">Get ready</button></div></div>
+          </div>
+          <div style="display:grid;gap:16px">
+            <div class="card" style="padding:18px;box-shadow:inset 0 0 0 1.5px var(--ball)"><span class="cap acc">One next action</span><p style="font-weight:700;margin-top:8px">2 practice games need a score</p><p class="mut" style="font-size:13px">Tuesday and Thursday at Loki's. Takes 20 seconds.</p><button class="btn sm" style="margin-top:12px" data-stgo="practice">Log them</button></div>
+            <div class="card" style="padding:18px"><span class="cap">Close to a record</span><p style="margin-top:8px"><b>Longest run at Loki's:</b> 9. Your best is 8.</p><p class="mut" style="font-size:13px;margin-top:4px">Set in the R16 on 15 Nov.</p></div>
+            <div class="card" style="padding:18px"><div class="row"><span class="cap">This season</span><span class="sp"></span><span class="src ref">Referee scored</span></div><div class="row" style="margin-top:8px;gap:18px"><div><span class="n acc" style="font-size:36px">6</span><span class="cap" style="display:block">events</span></div><div><span class="n" style="font-size:36px">3</span><span class="cap" style="display:block">comebacks</span></div><div><span class="n" style="font-size:36px">71%</span><span class="cap" style="display:block">close games won</span></div></div><p class="mut" style="font-size:12px;margin-top:6px">From 17 referee-scored matches.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Studio Events -->
+      <div data-stp="events" class="hide" style="padding-top:18px">
+        <div class="st3" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+          <div class="card" style="padding:20px">
+            <span class="cap">Before · Rally33 Night Ladder</span>
+            <p style="font-weight:700;font-size:18px;margin-top:8px">Thu 3 Dec · first match 7:30 pm · Court 1</p>
+            <div style="margin-top:12px" id="prep"></div>
+            <div class="card2" style="padding:14px;margin-top:14px"><span class="cap acc">Preparation card · private</span><p style="margin-top:6px;font-size:14px">In your last 6 deciding games you and Divya won 4. Two of the losses came after leading by 3 or more.</p><p class="mut" style="font-size:12px;margin-top:6px">From 17 referee-scored matches. Not a chat.</p></div>
+          </div>
+          <div class="card" style="padding:20px">
+            <span class="cap">The archive · every match, two labelled sources</span>
+            <div id="archive" style="margin-top:8px"></div>
+          </div>
+        </div>
+        <section class="sec" style="padding-top:28px">
+          <div class="sech"><div><span class="cap">The Season Book · 2026</span><h2 class="disp" style="font-size:36px;margin-top:8px">Every Receipt becomes a page.</h2></div><span class="mut" style="font-size:13px">Swipe the book →</span></div>
+          <div class="book" id="book"></div>
+        </section>
+      </div>
+
+      <!-- Studio Practice -->
+      <div data-stp="practice" class="hide" style="padding-top:18px">
+        <div class="st3" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+          <div class="card" style="padding:20px;display:grid;gap:16px">
+            <div class="row"><span class="cap">Quick log · Tuesday at Loki's</span><span class="sp"></span><span class="src">Self-logged</span></div>
+            <div class="row" style="justify-content:space-around;flex-wrap:wrap;gap:16px">
+              <div style="text-align:center"><span class="cap">You &amp; Divya</span><div class="steps"><button data-stp-step="a,-1" aria-label="Minus">−</button><span class="n" id="plA">11</span><button data-stp-step="a,1" aria-label="Plus">+</button></div></div>
+              <div style="text-align:center"><span class="cap">Them</span><div class="steps"><button data-stp-step="b,-1" aria-label="Minus">−</button><span class="n" id="plB">7</span><button data-stp-step="b,1" aria-label="Plus">+</button></div></div>
+            </div>
+            <div><span class="cap">Went well</span><div class="tagb" style="margin-top:8px"><button aria-pressed="true">Third-shot drop</button><button aria-pressed="false">Resets</button><button aria-pressed="false">Serve depth</button><button aria-pressed="false">Patience</button></div></div>
+            <div><span class="cap">Needs work</span><div class="tagb" style="margin-top:8px"><button aria-pressed="false">Speed-ups</button><button aria-pressed="true">Returns</button><button aria-pressed="false">Stacking</button></div></div>
+            <button class="btn" data-toast="Saved as self-logged. It never touches DUPR or records.">Save practice game</button>
+          </div>
+          <div style="display:grid;gap:16px;align-content:start">
+            <div class="card" style="padding:20px"><span class="cap">This week · rest days keep the streak</span><div class="streak" style="margin-top:12px"><i class="p">M</i><i class="p">T</i><i class="r">W</i><i class="p">T</i><i class="r">F</i><i class="p">S</i><i>S</i></div><p style="margin-top:10px"><b class="n acc" style="font-size:28px">12</b> day streak · 2 rest days count</p></div>
+            <div class="card" style="padding:20px"><span class="cap">Drill · third-shot drops</span><div class="row" style="margin-top:10px"><span class="n" style="font-size:44px">64</span><span class="mut">of 100 reps this week</span></div><div class="meter" style="margin-top:10px"><i style="width:64%"></i></div></div>
+            <div class="card2" style="padding:14px"><p style="font-size:13px" class="mut">Practice is final score only. Nobody taps every point on a Tuesday. It feeds your next Before card, never a record.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Studio Public (what anyone sees from a shared link) -->
+      <div data-stp="public" style="padding-top:18px">
+        <div class="st3" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
+          <div class="card" style="padding:20px">
+            <div class="row"><span class="cap">Tournament results</span><span class="sp"></span><span class="src ref">Referee scored</span></div>
+            <div style="margin-top:8px">
+              <div class="rec"><div><b>DUPR Night · QF</b><p class="mut" style="font-size:13px">15 Nov · Loki's · with Divya v Kiran &amp; Neha</p></div><span class="chip" style="background:var(--ink);color:#06140D">Won 11–9 · 7–11 · 11–8</span></div>
+              <div class="rec"><div><b>DUPR Night · R16</b><p class="mut" style="font-size:13px">15 Nov · Loki's · v Das &amp; Pillai</p></div><span class="chip" style="background:var(--ink);color:#06140D">Won 11–6 · 11–8</span></div>
+              <div class="rec"><div><b>Banyan Open · R16</b><p class="mut" style="font-size:13px">8 Nov · Banyan PC · v Arav &amp; Ishaan</p></div><span class="chip line">Lost 9–11 · 11–13</span></div>
+            </div>
+            <p class="mut" style="font-size:12px;margin-top:10px">Only confirmed, referee-scored tournament matches appear here. Practice, goals and coach notes never do.</p>
+          </div>
+          <div class="card" style="padding:20px;display:grid;gap:14px;justify-items:center">
+            <div class="row" style="width:100%"><span class="cap">Match moment · built from the rally record</span></div>
+            <div class="tsc ph-meera"><span class="chip" style="position:absolute;top:12px;left:12px;background:rgba(6,20,13,.55);min-height:22px;font-size:9.5px">Sample</span>
+              <span class="cap" style="color:var(--ball)">RallyQ · match moment</span>
+              <h3>Two serves.<br>Both gone.<br><span style="color:var(--sea)">Then the run.</span></h3>
+              <div class="tss"><div><b>01</b><span>Server 1 out</span></div><div><b>02</b><span>Server 2 out</span></div><div><b>↗</b><span>Side-out</span></div><div class="hot"><b>+4</b><span>Their run</span></div></div>
+              <div class="row" style="font-size:10px;color:#BFD0C4;gap:8px"><span>Meera &amp; Divya · DUPR Night QF<br>Hosted by Loki's Pickleball Club</span><span class="sp"></span><svg viewBox="0 0 100 100" width="20" height="20" aria-hidden="true"><use href="#q"/></svg></div>
+            </div>
+            <button class="btn sm" data-toast="Saved as a 9:16 image for Instagram Stories">Save for Instagram</button>
+            <p class="mut" style="font-size:12px;text-align:center">Offered only when two receiving rallies beat Server 1 and Server 2, then a scoring run follows, in a confirmed match.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Studio Club -->
+      <div data-stp="club" class="hide" style="padding-top:18px">
+        <div class="st3" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+          <div style="display:grid;gap:16px;align-content:start">
+            <div class="card photo ph-club" style="border-radius:20px;min-height:220px;padding:18px;display:flex;align-items:flex-end"><div style="color:#F1F4EA"><span class="cap" style="color:#BFD0C4">Loki's · next club night</span><div class="disp" style="font-size:30px;margin:6px 0">Thursday Doubles Night</div><p style="font-size:13px;color:#DCE6DE">Thu 26 Nov · 7 pm · 14 going, including Divya</p><button class="btn sm" style="margin-top:10px" data-toast="Entered with Divya. She gets a tap to confirm.">Enter with Divya</button></div></div>
+            <div class="card" style="padding:18px"><span class="cap">Good game</span><p style="margin-top:8px;font-size:14px">Asha &amp; Lata sent you a <b>Good game</b> after the final. <button class="btn ghost sm" style="margin-left:6px" data-toast="Good game sent back">Send one back</button></p></div>
+          </div>
+          <div class="card" style="padding:20px">
+            <div class="row"><span class="cap acc">The Club Record Book · Loki's</span><span class="sp"></span><span class="src ref">Referee scored</span></div>
+            <p class="mut" style="font-size:13px;margin-top:6px">Feats, not rankings. One holder per record. Nobody named without consent.</p>
+            <div id="records" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+      <div style="height:40px"></div>
+    </div>
+    <nav class="stabs" role="tablist" id="stTabsBot"><button role="tab" data-st="home" aria-selected="true"><svg class="ic"><use href="#i-home"/></svg>Home</button><button role="tab" data-st="events" aria-selected="false"><svg class="ic"><use href="#i-cal"/></svg>Events</button><button role="tab" data-st="practice" aria-selected="false"><svg class="ic"><use href="#i-bolt"/></svg>Practice</button><button role="tab" data-st="club" aria-selected="false"><svg class="ic"><use href="#i-club"/></svg>Club</button></nav>
+  </section>
+
+  <!-- ========== BUILD NOTES ========== -->
+  <section class="view" data-view="notes" aria-label="Build notes">
+    <div class="wrap notes" style="padding-block:28px 60px">
+      <span class="cap">For the models and people building the real product</span>
+      <h1 class="disp" style="font-size:clamp(40px,6cqw,72px);margin:10px 0 8px">Build notes</h1>
+      <p>This file is the target look and behaviour. It is one self-contained HTML file with sample data and no backend. Build it into the existing app on <code>rallyq-live</code> (React + Vite, <code>src/rallyq/*</code>). Every name, score and photo is sample data.</p>
+
+      <h3>1 · The three laws (from the Living Arena plan)</h3>
+      <ul><li><b>Work earns trust through certainty. Show earns attention through emotion. Match DNA connects them through truth.</b></li><li>Every spectacular treatment has one screenshot-worthy resting state and one transition. Nothing celebrates before a result is confirmed. Gold only for confirmed winners.</li><li>Every animation can be switched off without losing information (try <b>Calm</b> in the top bar).</li></ul>
+
+      <h3>2 · Brand tokens (Brand Bible v1, <code>shell/v12.css</code>)</h3>
+      <div class="swatches">
+        <div class="sw"><i style="background:#06140D;box-shadow:inset 0 -1px 0 rgba(241,244,234,.1)"></i><div><b>Night</b> #06140D</div></div><div class="sw"><i style="background:#0D2218"></i><div><b>Card</b> #0D2218 / #133022</div></div><div class="sw"><i style="background:#2B6E4B"></i><div><b>Court Green</b> #2B6E4B · Day page</div></div><div class="sw"><i style="background:#D9F24A"></i><div><b>Ball Green</b> #D9F24A</div></div><div class="sw"><i style="background:#F1F4EA"></i><div><b>Chalk</b> #F1F4EA</div></div><div class="sw"><i style="background:#E8C35A"></i><div><b>Gold</b> #E8C35A · winners</div></div><div class="sw"><i style="background:#FF655C"></i><div><b>Coral</b> #FF655C · act now</div></div><div class="sw"><i style="background:#76E0D0"></i><div><b>Sea Glass</b> #76E0D0 · Team A</div></div><div class="sw"><i style="background:#7EAEF2"></i><div><b>Tide Blue</b> #7EAEF2 · Team B</div></div><div class="sw"><i style="background:#BDCBC6"></i><div><b>Signal</b> #BDCBC6 · stale / offline</div></div><div class="sw"><i style="background:#AD2945"></i><div><b>Danger</b> #AD2945 · destructive</div></div><div class="sw"><i style="background:#9FB4A6"></i><div><b>Muted</b> #9FB4A6 · day #DDEBDF</div></div>
+      </div>
+      <ul><li>Fonts: <b>Archivo 800</b> tight for headlines, <b>Archivo condensed (stretch 62%)</b> for scores and numbers, <b>DM Sans</b> for body (16 px minimum on phones), <b>Fraunces</b> for the wordmark and the commentator line only.</li><li>Logo: the court is the Q, the ball is the tail. Full mark from 28 px; the no-net version at 24 px and below. Never glow, rotate, stretch or make it blue. Courts are never blue anywhere.</li><li>Ball green only for live dots, scores, win bars and the main action. Coral is "act now": a filled chip with dark text for things a person should do something about (Tickets on sale, 4 spots left, Needs a look, Running behind, a launch blocker). Coral is never a team colour and never on a score or game/match point. Gold only for confirmed results.</li><li>Night and Day are both floodlit glass (see 2c). Day matches the live site: courtside crowd photo under a Court Green tint. TV is always Night. The player's theme choice wins.</li><li>Club co-branding: real club logo in a chalk tile, "Hosted by [Club]", RallyQ always visible. The player and the score are always biggest.</li></ul>
+
+      <h3>2b · Decisions locked in the ChatGPT review</h3>
+      <ul><li><b>Day mode</b> matches the live rallyq.in look: the courtside crowd photo under a Court Green gradient (rgba(43,110,75,.80) to rgba(24,68,45,.92)), with glass panels. The Receipt and Season Book stay printed on chalk paper in both modes.</li>
+      <li><b>Gold</b> never appears at a game end or on any provisional score. A game end holds a chalk ring for 2.5 s. Gold appears only on a referee-confirmed winner and a confirmed champion.</li>
+      <li><b>Offline truth</b>: an offline tap updates the pad only ("Offline · N queued"). Live, TV and the Desk freeze and say "Waiting for the court" until the server acknowledges; then every screen catches up at once.</li>
+      <li><b>Motion budget</b>: Count runs on every score. Wash and the serve Pulse run only on the featured scoreboard (Live arena, TV main, Match day), never on court lists or cards. No looping glows, no auto count-ups on Home.</li>
+      <li><b>Sample data</b> is always marked. Entries are requests until the club confirms place and payment.</li></ul>
+
+      <h3>2c · Arena System v2 (Claude + ChatGPT, approved)</h3>
+      <ul><li><b>Glass</b>: Night fill #081E13 at 60%, blur 16 px, edge #F1F4EA at 20%, top light #F1F4EA at 10%, shadow 0 16px 48px rgba(0,0,0,.28). Day fill #081E13 at 52%, edge white 25%, top light white 12%. Work glass (referee, desk) is 85% fill with 20 px blur. At most 3 blur layers on screen; never animate blur.</li>
+      <li><b>Teams</b>: Team A Sea Glass #76E0D0, Team B Tide Blue #7EAEF2. Ball green #D9F24A means "now" only (server, live, current run). Gold #E8C35A only after the referee confirms. Signal #BDCBC6 for stale and offline. Coral #FF655C for act-now alerts. Danger #AD2945 only for destructive actions.</li>
+      <li><b>The Q keeps score</b>: each rally draws one stroke around the RallyQ Q, outward in Sea for Team A, inward in Tide for Team B. The ball sits with the serving team. The gold rail draws only after confirmation.</li>
+      <li><b>Athlete Cover</b>: in Player Studio the full-bleed player photo <i>is</i> the panel, private and public. Name, DUPR and three stats sit on the photo. The public view shows only referee-scored results.</li>
+      <li><b>Two-Serve Turn card</b>: a 9:16 share card when the receiving side wins two rallies against Server 1 and Server 2 in a row, then scores a run.</li>
+      <li><b>Motion budget</b>: one hero, one echo, then silence.</li></ul>
+
+      <h3>3 · Motion (JJ's Motion Lab picks, exact)</h3>
+      <table><thead><tr><th>Moment</th><th>Pick</th><th>Spec</th><th>Where</th></tr></thead><tbody>
+        <tr><td>Score change</td><td><b>Count</b> (JJ)</td><td>New number enters from 35% below (above on Undo) at 40% opacity to rest, <b>110 ms ease-out</b>. A jump of more than one counts each step, 110 ms apart.</td><td>Every scoreboard: Home card, Live arena, other courts, TV, Desk courts, Rally Rewind, Results</td></tr>
+        <tr><td>Serve marker</td><td><b>Pulse</b> (JJ)</td><td>On side-out or second server, the dot pops: scale .2 → 1.3 (at 60%) → 1, opacity 0 → 1, <b>420 ms ease-out</b>, then sits still.</td><td>All scoreboards that know the server</td></tr>
+        <tr><td>Point won</td><td><b>Wash</b> (JJ)</td><td>Lime gradient (ball green at 70%, 200% wide) sweeps the scoring row: opacity 0 → .55 (at 30%) → 0, background-position 100% → −60%, <b>700 ms ease-out</b>.</td><td>All scoreboards</td></tr>
+        <tr><td>Live badge</td><td>Breathe</td><td>Dot fades 1 → .3 → 1, 1.8 s loop.</td><td>Live chips</td></tr>
+        <tr><td>Game won</td><td>Hold (chalk)</td><td>Chalk ring for <b>2.5 s</b>, then the next game. Gold is reserved for the confirmed final.</td><td>Scoreboards</td></tr>
+        <tr><td>Undo</td><td>Reverse</td><td>The count plays backwards (enters from above).</td><td>Everywhere the score shows</td></tr>
+        <tr><td>Reduced motion</td><td>Fade</td><td>Every style becomes a 150 ms fade. The referee pad has no motion at all.</td><td>Global</td></tr>
+        <tr><td>Side-out</td><td>Hand-off</td><td>Ball travels on an arc to the new serving team, <b>420 ms cubic-bezier(.45,0,.25,1)</b>, then Pulse.</td><td>Featured scoreboards</td></tr>
+        <tr><td>Second server</td><td>Server Flip</td><td>Server number flips 1 → 2, <b>260 ms</b>.</td><td>All scoreboards</td></tr>
+        <tr><td>Run of 3+</td><td>Run Meter</td><td>Run bar grows one step, <b>260 ms</b>.</td><td>Featured scoreboards</td></tr>
+        <tr><td>Scores level</td><td>Level</td><td>"Level" tag fades in, <b>520 ms</b>.</td><td>Featured scoreboards</td></tr>
+        <tr><td>Game / match point</td><td>Chalk edge</td><td>Chalk edge on the row, <b>280 / 320 ms</b>. Never coral, never gold.</td><td>All scoreboards</td></tr>
+        <tr><td>Confirmed result</td><td>Gold rail</td><td>Gold rail draws along the winner row, <b>950 ms</b>. Champion Reveal <b>1200 ms</b>.</td><td>Results, TV</td></tr>
+        <tr><td>Each rally</td><td>Q Stroke</td><td>One stroke draws around the Q, <b>240 ms</b>.</td><td>Living Q</td></tr>
+        <tr><td>Undo</td><td>Undo</td><td>Last stroke and count reverse, <b>180 ms</b>.</td><td>Everywhere</td></tr>
+        <tr><td>Data states</td><td>Stale / Offline / Sync</td><td><b>180 / 160 / 420 ms</b> fades. Calm, no flashing.</td><td>Chips, pad</td></tr>
+        <tr><td>Navigation</td><td>Page / Sheet / Tab</td><td><b>220 / 300 / 150 ms</b>.</td><td>Global</td></tr>
+        <tr><td>Work zone</td><td>Press / Bracket / Queue</td><td>Referee press <b>120 ms</b>, bracket trace <b>340 ms</b>, desk queue slide <b>340 ms</b>.</td><td>Referee, Desk</td></tr>
+        <tr><td>Studio</td><td>Athlete Emergence</td><td>Portrait <b>680 ms</b>, name <b>420 ms</b>, stats stagger <b>70 ms</b>. Once per visit.</td><td>Player Studio</td></tr>
+        <tr><td>Keepsakes</td><td>Sheet Rise / Receipt / Book / Signature</td><td><b>320 / 560 / 520 ms</b>, signature draws up to <b>900 ms</b>. TV idle <b>800 ms</b>.</td><td>Studio, TV</td></tr>
+      </tbody></table>
+      <p>Shared easing <code>cubic-bezier(.23,1,.32,1)</code>; press 120 ms, UI 240 ms, route 350 ms (as in <code>src/rallyq/tokens.css</code>). Animate only transform and opacity on phones.</p>
+
+      <h3>4 · Two zones</h3>
+      <table><thead><tr><th>Show zone (spectacular)</th><th>Work zone (calm, instant)</th></tr></thead><tbody><tr><td>Home, Event, Live, Results, Player Studio, Venue TV, share cards</td><td>Referee pad, Tournament Desk, Organiser overview, Admin</td></tr><tr><td>Floodlight states, Match DNA, Rally Rewind, gold reveal, broadcast breaks</td><td>Point Receipt with Undo, Saved / Syncing / Offline · queued, Decision Preview, Launch readiness. No dimming or celebrations near controls.</td></tr></tbody></table>
+
+      <h3>5 · Signature pieces and their data rules</h3>
+      <ul>
+        <li><b>Floodlight states</b>: off, warming up, live, match point (spotlight narrows), confirmed final (gold). Drive them from real match state only.</li>
+        <li><b>Match DNA</b>: one mark per rally from the referee's saved rallies, up for one team, down for the other; side-outs are short marks; the current run of 3+ is ball green. The Results sample shows one mark per point for game 3.</li>
+        <li><b>Rally Rewind</b>: drag the DNA or the slider and the score rebuilds itself; "Jump to the turning point" finds the longest run; "Share this moment" makes a club-branded 9:16 Match Memory.</li>
+        <li><b>Win chance</b>: always labelled an estimate. A "+12 pts" chip pulses only when it moves 10 points or more.</li>
+        <li><b>The Receipt</b> (Player Studio v3): auto-picks the most remarkable provable moment, the player can change it; club name first, a club-issued serial, Event DNA; private coach note on the back, never published. Every claim stores its proof (Evidence Contract). Say "you and Divya", never "you". No serve stats until the pad stores the server; no kitchen stats.</li>
+        <li><b>Season Book</b>: every Receipt becomes a numbered page; personal bests in the margin; partner spreads; Wrapped is the cover, as thick as the real season.</li>
+        <li><b>Club Record Book</b>: feats not rankings, one holder per record, consent per record, the club can post it to WhatsApp.</li>
+        <li><b>Two sources only</b>: Referee scored and Self-logged. Practice never touches DUPR or records. DUPR is the only rating.</li>
+      </ul>
+
+      <h3>5b · The one rally record (single source of truth)</h3>
+      <p>Every animation, story line, DNA mark, Match Signature stroke, Receipt claim and record is derived from one list. Never keep separate display counters.</p>
+      <p><code>{ match_id, game, n, winner_team, outcome: point | side_out | second_server, server_team, server_no, score_before "7–5–1", score_after "8–5–1", revision, synced_at }</code></p>
+      <p>Undo writes a new revision; every screen re-derives from the latest revision. Hover a DNA mark in this prototype to see one record.</p>
+
+      <h3>5c · Match Signature (ChatGPT's addition)</h3>
+      <p>At a confirmed result, the rally record is drawn around the RallyQ court-line Q: one stroke per point, outward for one team, inward for the other, short for side-outs, ball green for runs of 3+, the ball at the tail. It appears on Results (tap a stroke to rewind to it), the 9:16 Match Memory and the Receipt. Plain SVG from existing data: no video, no AI, no invented shots.</p>
+
+      <h3>5d · Component states every screen must ship</h3>
+      <table><thead><tr><th>State</th><th>Rule</th></tr></thead><tbody>
+      <tr><td>Loading</td><td>Skeleton in the final layout; never a spinner over a score.</td></tr>
+      <tr><td>Empty</td><td>Say what will appear and the next real action (e.g. "Your first Receipt: Sat 28 Nov").</td></tr>
+      <tr><td>Live</td><td>Ball-green breathing chip, "updated N s ago".</td></tr>
+      <tr><td>Stale (&gt;30 s)</td><td>Signal grey chip with ◷ "Last updated 90 s ago"; never says Live. It turns coral only when a person must act (admin "Needs a look").</td></tr>
+      <tr><td>Offline (pad)</td><td>"Offline · N queued"; public screens show "Waiting for the court".</td></tr>
+      <tr><td>Provisional</td><td>"Final · awaiting referee"; no gold, no share, no record.</td></tr>
+      <tr><td>Confirmed</td><td>Gold winner, Rewind, Signature, Memory and Receipt unlock.</td></tr>
+      <tr><td>Error</td><td>Plain sentence plus one retry; never lose a queued tap.</td></tr>
+      <tr><td>Reduced motion</td><td>Every effect becomes a 150 ms fade; nothing carries information only in motion.</td></tr>
+      </tbody></table>
+      <p>Phones: test at 320 and 390 px. One hero, one primary action per screen, 44 px targets, safe-area padding, sticky score and sheets never overlap the bottom tabs.</p>
+
+      <h3>6 · Screen map to the repo</h3>
+      <table><thead><tr><th>Prototype</th><th>Build into</th><th>Main change</th></tr></thead><tbody>
+        <tr><td>Home</td><td><code>rallyq/home/RallyHome.tsx</code></td><td>Floodlit hero, live glass score card with Count/Pulse/Wash, ticker, events, live courts, Studio and club sections</td></tr>
+        <tr><td>Event</td><td><code>rallyq/event/RallyEvent.tsx</code></td><td>One link with Before / During / After states, follow-a-team bracket path, gold only for confirmed champions</td></tr>
+        <tr><td>Live</td><td><code>rallyq/live/RallyLive.tsx</code></td><td>Living Arena card, floodlight states, DNA strip, win-chance pulse, sticky mini score bar, stale state</td></tr>
+        <tr><td>Results</td><td><code>ResultsDupr</code></td><td>Gold reveal, Rally Rewind, Match Memory share card</td></tr>
+        <tr><td>Venue TV</td><td><code>rallyq/tv/RallyTV.tsx</code>, <code>tv/motion.ts</code></td><td>Featured court + rail, DNA, broadcast breaks between matches</td></tr>
+        <tr><td>Referee pad</td><td><code>ScorePad.tsx</code></td><td>Point Receipt, honest sync states, confirm sheet. Keep <code>.score-tap</code> motion-free.</td></tr>
+        <tr><td>Tournament Desk</td><td><code>rallyq/desk/RallyDesk.tsx</code></td><td>Courts drawn as courts, the court that needs you lights up, Decision Preview, queue reorders</td></tr>
+        <tr><td>Organiser</td><td><code>rallyq/organiser/RallyOverview.tsx</code></td><td>Launch readiness with a floodlight that warms per item</td></tr>
+        <tr><td>Admin</td><td><code>rallyq/admin/RallyAdmin.tsx</code></td><td>Network pulse map, actionable cards</td></tr>
+        <tr><td>Player Studio</td><td><code>rallyq/studio/*</code>, <code>MyStudio</code></td><td>Four tabs (Home, Events, Practice, Club), the loop, Receipt, Season Book, Club Record Book</td></tr>
+      </tbody></table>
+
+      <h3>7 · How this file works</h3>
+      <ul><li>Top bar: jump between journeys, switch Night/Day, Desktop/Phone, and Calm (reduced motion). Layouts respond to the frame width with container queries, so Phone mode is the real phone layout.</li><li>One shared match engine (pickleball doubles, side-out scoring, best of 3 to 11, win by 2) drives Home, Live, TV and the Desk. Open the <b>Referee pad</b> and your taps become the live score everywhere; leave it and auto-play resumes.</li><li>Photos are the RallyQ photo set v2 (generated, approval pending), compressed and embedded.</li></ul>
+
+      <h3>8 · Not in this prototype</h3>
+      <ul><li>Sign-in, payments, real entry forms, the Social studio editor and video. Follow live means scores, not video, until video exists.</li><li>Counts like page views and players are sample numbers.</li></ul>
+      <p class="mut" style="margin-top:28px;font-size:13px" id="credits">Design by Claude, critique by ChatGPT (round 1: 7.6/10, fixes applied), decisions by Vineeth. RallyQ Final Prototype v1 · 20 Nov 2026.</p>
+    </div>
+  </section>
+
+  <!-- public bottom nav (phones) -->
+  <nav class="bnav" id="bnav" aria-label="Main"><a href="#home"><svg class="ic"><use href="#i-home"/></svg>Home</a><a href="#event"><svg class="ic"><use href="#i-cal"/></svg>Events</a><a href="#live"><svg class="ic"><use href="#i-live"/></svg>Live</a><a href="#results"><svg class="ic"><use href="#i-trophy"/></svg>Results</a><a href="#studio"><svg class="ic"><use href="#i-user"/></svg>Studio</a></nav>
+
+  <!-- sheets -->
+  <div class="sheet" id="entrySheet" role="dialog" aria-modal="true" aria-label="Enter tournament"><div class="in card" style="padding:22px;background:var(--c1)">
+    <span class="cap">Enter · Winter Smash · Mixed 3.5</span><h3 class="disp" style="font-size:32px;margin:8px 0 14px">Who's your partner?</h3>
+    <div style="display:grid;gap:8px" id="partners"><button class="rl on" style="grid-template-columns:44px 1fr auto"><span class="tile sm">DI</span><span><b>Divya Iyer</b><br><span class="mut" style="font-size:12px">DUPR 3.58 · played 14 events with you</span></span><svg class="ic acc"><use href="#i-check"/></svg></button><button class="rl" style="grid-template-columns:44px 1fr auto"><span class="tile sm">+</span><span><b>Invite someone</b><br><span class="mut" style="font-size:12px">They confirm with one tap</span></span><span></span></button></div>
+    <div class="row" style="margin-top:16px"><span class="mut" style="font-size:13px">₹1,200 per team · Loki's confirms payment</span><span class="sp"></span><button class="btn" data-close data-toast="Entry request sent. Loki's confirms your place and payment; Divya gets a tap to confirm.">Send entry request</button></div>
+    <button class="btn ghost sm" data-close style="margin-top:10px;width:100%">Cancel</button>
+  </div></div>
+  <div class="sheet" id="memSheet" role="dialog" aria-modal="true" aria-label="Share this moment"><div class="in">
+    <div class="mem"><div class="ph ph-result"></div>
+      <div class="row"><span class="tile sm" style="width:40px;height:40px">LPC</span><div style="font-size:12px;line-height:1.3"><span style="color:#BFD0C4">Hosted by</span><br><b>Loki's Pickleball Club</b></div><span class="sp"></span><svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><use href="#q"/></svg></div>
+      <svg class="sig" id="memSig" style="width:58%;margin:0 auto;color:#F1F4EA" aria-hidden="true"></svg>
+      <div><span class="cap" style="color:#D9F24A">Match Memory · Winter Smash · SF1</span><div class="disp" style="font-size:52px;margin:8px 0">The comeback.</div><p class="ser" style="font-size:19px" id="memLine">Down 4–9. Six in a row. Asha &amp; Lata take it 12–10.</p><div class="dna" id="memDna" style="height:44px;margin-top:14px"></div><p style="font-size:11px;color:#9FB4A6;margin-top:10px">Referee scored · confirmed · Run on RallyQ</p></div>
+    </div>
+    <div class="row" style="gap:8px;margin-top:12px"><button class="btn" style="flex:1" data-close data-toast="Opening WhatsApp with the image and link">Send to WhatsApp</button><button class="btn ghost" style="color:#F1F4EA" data-close data-toast="Saved as a 9:16 image">Save image</button></div>
+  </div></div>
+  <div class="sheet" id="pubSheet" role="dialog" aria-modal="true" aria-label="Publish your Receipt"><div class="in card" style="padding:22px;background:var(--c1)">
+    <span class="cap">Publish · a separate step</span><h3 class="disp" style="font-size:30px;margin:8px 0 14px">Where can this page go?</h3>
+    <div style="display:grid;gap:4px" id="pubOpts"></div>
+    <p class="mut" style="font-size:12px;margin-top:10px">The coach note on the back is never published, whatever these say.</p>
+    <div class="row" style="gap:8px;margin-top:14px"><button class="btn" style="flex:1" data-close data-toast="Published to your profile. Loki's can post it.">Publish</button><button class="btn ghost" data-close>Not now</button></div>
+  </div></div>
+  <div class="toast" id="toast" role="status"></div>
+  </div></div></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const app=$('#app'), device=$('#device');
+const EASE='cubic-bezier(.23,1,.32,1)';
+const sysRM=matchMedia('(prefers-reduced-motion: reduce)');
+const RM=()=>app.classList.contains('rm')||sysRM.matches;
+function A(el,kf,ms,easing='ease-out'){ if(!el||!el.animate) return null; return el.animate(kf,{duration:ms,easing}); }
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem('rqfp:'+k));localStorage.setItem('rqfp:'+k,JSON.stringify(v))}catch(e){return null}}
+
+/* ================= JJ's Motion Lab picks ================= */
+// Count: 110 ms, from 35% below, opacity .4 -> 1. Multi-step jumps count each step 110 ms apart. Undo reverses.
+function setN(el,n,dir){ el.textContent=n; if(RM()){A(el,[{opacity:0},{opacity:1}],150);return;} A(el,[{transform:`translateY(${35*dir}%)`,opacity:.4},{transform:'none',opacity:1}],110); }
+function countTo(el,from,to){
+  clearTimeout(el._t); if(from===to){el.textContent=to;return;}
+  const dir=to>from?1:-1;
+  if(!RM()&&dir>0&&to-from>1){let n=from;const step=()=>{n++;setN(el,n,1);if(n<to)el._t=setTimeout(step,110)};step();return;}
+  setN(el,to,dir);
+}
+// Pulse: scale .2 -> 1.3 (60%) -> 1, 420 ms.
+function pulse(el){ if(!el)return; if(RM())return A(el,[{opacity:0},{opacity:1}],150); A(el,[{transform:'scale(.2)',opacity:0},{transform:'scale(1.3)',opacity:1,offset:.6},{transform:'none',opacity:1}],420); }
+// Wash: lime sweep 700 ms.
+function wash(fx){ if(!fx)return; if(RM())return A(fx,[{opacity:0},{opacity:.35},{opacity:0}],300); A(fx,[{opacity:0,backgroundPosition:'100% 0'},{opacity:.55,offset:.3},{opacity:0,backgroundPosition:'-60% 0'}],700); }
+function countUp(el,to,ms=1400){ if(RM()){el.textContent=to.toLocaleString('en-IN');return;} const t0=performance.now(); const f=t=>{const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3);el.textContent=Math.round(to*e).toLocaleString('en-IN');if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f); }
+
+/* ================= Match Signature ================= */
+const QPATH="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62";
+const QPTS=(()=>{const P=[];const ln=(a,b,c,d)=>{for(let k=0;k<=20;k++)P.push([a+(c-a)*k/20,b+(d-b)*k/20]);};
+  const arc=(cx,cy,a0,a1)=>{for(let k=0;k<=16;k++){const a=(a0+(a1-a0)*k/16)*Math.PI/180;P.push([cx+18*Math.cos(a),cy+18*Math.sin(a)]);}};
+  ln(62,86,32,86);arc(32,68,90,180);ln(14,68,14,32);arc(32,32,180,270);ln(32,14,68,14);arc(68,32,270,360);ln(86,32,86,62);
+  const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));return{P,L,T:L[L.length-1]};})();
+function qAt(t){const {P,L}=QPTS;let i=1;while(i<L.length-1&&L[i]<t)i++;const k=(t-L[i-1])/((L[i]-L[i-1])||1);const x=P[i-1][0]+(P[i][0]-P[i-1][0])*k,y=P[i-1][1]+(P[i][1]-P[i-1][1])*k;
+  let dx=P[i][0]-P[i-1][0],dy=P[i][1]-P[i-1][1];const d=Math.hypot(dx,dy)||1;let nx=dy/d,ny=-dx/d;if((x-50)*nx+(y-50)*ny<0){nx=-nx;ny=-ny;}return{x,y,nx,ny};}
+function qSig(svg,seq,o={}){ // seq: [{w:0|1, pt:bool}] from the confirmed rally record
+  const run=new Array(seq.length).fill(false);let c=0;for(let i=0;i<seq.length;i++){c=(i&&seq[i].pt&&seq[i-1].pt&&seq[i].w===seq[i-1].w)?c+1:1;if(c>=3)for(let j=i-c+1;j<=i;j++)run[j]=true;}
+  const ink=o.ink||'currentColor',mut=o.mut||'#9FB4A6',ball=o.ball||'#D9F24A';
+  let h=`<path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" stroke="${ink}" stroke-opacity=".28" stroke-width="2.2"/>`;
+  seq.forEach((r,i)=>{const p=qAt((i+.5)/seq.length*QPTS.T);const out=r.w===0?1:-1,len=r.pt?10:4;const x2=p.x+p.nx*out*len,y2=p.y+p.ny*out*len;
+    h+=`<line data-i="${i}" x1="${p.x.toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${run[i]?ball:(r.w===0?ink:mut)}" stroke-width="2.4" style="cursor:${o.onPick?'pointer':'default'}"/>`;});
+  h+=`<line x1="72" y1="72" x2="28" y2="28" stroke="none"/><circle cx="83" cy="83" r="7" fill="${ball}"/>`;
+  svg.setAttribute('viewBox','-12 -12 124 124');svg.innerHTML=h;
+  if(o.onPick)svg.onclick=e=>{const l=e.target.closest('line[data-i]');if(l)o.onPick(+l.dataset.i);};
+  return {show(n){[...svg.querySelectorAll('line[data-i]')].forEach((l,i)=>{l.classList.toggle('dim',i>=n);l.classList.toggle('cur',i===n-1);});}};
+}
+
+/* ================= Match engine ================= */
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const gameOver=(a,b)=>(a>=11||b>=11)&&Math.abs(a-b)>=2;
+let offline=false,queued=0;
+const showOn=(m,f)=>m.on(e=>{if(m.o.court==='Court 2'&&offline&&e.type!=='reset')return;f(e);});
+class Match{
+  constructor(o){this.o=o;this.ls=[];this.rng=mulberry(o.seed||7);this.reset(o.pre||0);this.auto=true;this.speed=o.speed||1700;this.loop();}
+  reset(pre){this.s={pts:[0,0],games:[0,0],serving:0,server:2,game:1,rallies:[[]],over:false,winner:null,confirmed:false,hold:false};this.hist=[];
+    for(let i=0;i<pre;i++){this.rally(this.pick(),true); if(this.s.hold){this.s.hold=false;this.newGame(true);} }
+    this.emit({type:'reset'});}
+  pick(){const s=this.s;const bias=this.o.bias||0;const p=(s.serving===0?0.56:0.45)+bias;return this.rng()<p?0:1;}
+  snap(){const s=this.s;return{pts:[...s.pts],games:[...s.games],serving:s.serving,server:s.server,game:s.game};}
+  on(f){this.ls.push(f);}
+  emit(e){e.s=this.s;this.ls.forEach(f=>f(e));}
+  rally(w,silent){const s=this.s;if(s.over||s.hold)return;
+    this.hist.push(JSON.stringify(s)); if(this.hist.length>300)this.hist.shift();
+    const prev=this.snap();let ev;
+    if(w===s.serving){s.pts[w]++;ev='point';}
+    else if(s.server===1){s.server=2;ev='second';}
+    else{s.serving=w;s.server=1;ev='sideout';}
+    const g=s.rallies[s.game-1];g.push({n:g.length+1,w,pt:ev==='point',ev,server:prev.serving,serverNo:prev.server,before:`${prev.pts[prev.serving]}–${prev.pts[1-prev.serving]}–${prev.server}`,after:`${s.pts[s.serving]}–${s.pts[1-s.serving]}–${s.server}`,rev:0});
+    let done=null;
+    if(ev==='point'&&gameOver(s.pts[0],s.pts[1])){s.games[w]++;done=s.games[w]===2?'match':'game';s.hold=true;if(done==='match'){s.over=true;s.winner=w;}}
+    if(!silent){this.emit({type:ev,w,prev,done});
+      if(done==='game'){clearTimeout(this.ht);this.ht=setTimeout(()=>this.newGame(),2500);} // Gold hold 2.5 s
+      if(done==='match'){clearTimeout(this.ht);this.ht=setTimeout(()=>{this.s.hold=false;this.emit({type:'holdEnd'});},2500);}
+    }
+    return ev;}
+  newGame(silent){const s=this.s;const prev=this.snap();const w=s.rallies[s.game-1].slice(-1)[0].w;s.pts=[0,0];s.game++;s.serving=1-w;s.server=2;s.hold=false;s.rallies.push([]);if(!silent)this.emit({type:'newgame',prev});}
+  undo(){if(!this.hist.length)return;clearTimeout(this.ht);const prev=this.snap();this.s=JSON.parse(this.hist.pop());this.s.hold=false;this.emit({type:'undo',prev});}
+  confirm(){this.s.confirmed=true;this.emit({type:'confirm'});}
+  loop(){clearTimeout(this.lt);this.lt=setTimeout(()=>{
+      const s=this.s;
+      if(this.auto&&!s.hold){
+        if(s.over){ if(!s.confirmed){this.confirm(); this.nextAt=Date.now()+9000;} else if(Date.now()>this.nextAt){this.o.seed++;this.rng=mulberry(this.o.seed);this.reset(this.o.pre||0);} }
+        else this.rally(this.pick());
+      }
+      this.loop();},this.speed*(0.75+this.rng()*0.5));}
+  wp(){const s=this.s;if(s.over)return s.winner===0?1:0;const x=1.05*(s.games[0]-s.games[1])+0.2*(s.pts[0]-s.pts[1])+(s.serving===0?0.08:-0.08);return 1/(1+Math.exp(-x));}
+  chip(){const s=this.s;if(s.over||s.hold)return'';const t=s.serving;if(gameOver(s.pts[t]+1,s.pts[1-t]))return s.games[t]===1?'Match point':'Game point';return'';}
+  call(){const s=this.s;return `${s.pts[s.serving]}–${s.pts[1-s.serving]}–${s.server}`;}
+}
+
+/* ================= Scoreboard component ================= */
+function Board(host,m,opt={}){
+  const T=m.o.teams, living=!opt.quiet;
+  const row=t=>`<div class="tr2" data-t="${t}"><span class="srv"></span><span class="nm"><b>${T[t].n}</b><small>${T[t].c}</small><span class="tagl"><em class="sno"></em><span class="runm">${'<i></i>'.repeat(6)}</span><span class="tagt"></span></span></span><span class="gms"><i></i><i></i></span><span class="pts"><span class="v">0</span></span><span class="fx"></span><span class="grl"></span></div>`;
+  host.innerHTML=`<div class="sb${living?' living':''}"><div class="sbh"><span class="chip live"><i></i>Live</span><span class="meta"></span><span class="chip xchip hide"></span></div>
+  ${living?`<div class="sbg"><div class="rows">${row(0)}${row(1)}</div><div class="lq" role="img" aria-label="Living Q: one stroke per rally this game"><svg viewBox="-14 -14 128 128"></svg><div class="lqn"><div><b>0</b><span>rallies</span></div></div></div></div>`:row(0)+row(1)}
+  ${opt.call?'<div class="call"><span>Referee call</span><span class="n">0–0–2</span></div>':''}</div>`;
+  const sb=host.firstElementChild, rows=[...sb.querySelectorAll('.tr2')];
+  const q=(r,c)=>r.querySelector(c);
+  const v=rows.map(r=>q(r,'.v')), pts=rows.map(r=>q(r,'.pts')), srv=rows.map(r=>q(r,'.srv')), fx=rows.map(r=>q(r,'.fx')), sub=rows.map(r=>q(r,'small')), gms=rows.map(r=>[...r.querySelectorAll('.gms i')]);
+  const sno=rows.map(r=>q(r,'.sno')), runm=rows.map(r=>[...r.querySelectorAll('.runm i')]), tagt=rows.map(r=>q(r,'.tagt')), grl=rows.map(r=>q(r,'.grl'));
+  const live=sb.querySelector('.chip.live'), meta=sb.querySelector('.meta'), xc=sb.querySelector('.xchip'), call=sb.querySelector('.call .n'), lq=sb.querySelector('.lq svg'), lqn=sb.querySelector('.lqn b');
+  let qLen=-1;
+  const game=()=>m.s.rallies[m.s.game-1]||[];
+  function runOf(){const s=m.s,g=game();let r=0;for(let i=g.length-1;i>=0;i--){if(!g[i].pt||g[i].w!==s.serving)break;r++;}return r;}
+  function levelNow(w){const s=m.s;if(s.pts[0]!==s.pts[1])return false;let a=0,b=0,worst=0;for(const r of game()){if(r.pt){r.w===0?a++:b++;}const d=w===0?a-b:b-a;if(d<worst)worst=d;}return worst<=-3;}
+  function drawQ(){if(!lq)return;const s=m.s,g=game(),n=Math.max(g.length,32);
+    let h=`<path d="${QPATH}" fill="none" stroke="var(--ink)" stroke-opacity="${s.over&&s.confirmed?.9:.3}" stroke-width="3"/>`;
+    g.forEach((r,i)=>{const p=qAt((i+.5)/n*QPTS.T),o=r.w===0?1:-1,len=r.pt?10:4.5;h+=`<line x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${(p.x+p.nx*o*len).toFixed(1)}" y2="${(p.y+p.ny*o*len).toFixed(1)}" stroke="var(--${r.w===0?'sea':'tide'})" stroke-width="3.2" stroke-linecap="round"><title>Rally ${r.n} · ${r.ev==='point'?'point':r.ev==='sideout'?'side-out':'second server'} · ${r.before} → ${r.after}</title></line>`;});
+    h+='<circle cx="83" cy="83" r="6" fill="var(--ball)"/>';lq.innerHTML=h;lqn.textContent=g.length;
+    if(g.length===qLen+1&&!RM()){const ls=lq.querySelectorAll('line'),x=ls[ls.length-1];if(x){x.style.strokeDasharray=12;x.animate([{strokeDashoffset:12},{strokeDashoffset:0}],{duration:240,easing:EASE,fill:'forwards'});}}
+    qLen=g.length;}
+  function tags(e){if(!living)return;const s=m.s;
+    [0,1].forEach(t=>{sno[t].classList.toggle('on',t===s.serving&&!s.over&&!s.hold);sno[t].textContent=s.server;rows[t].classList.remove('gp','mp');});
+    const run=runOf();[0,1].forEach(t=>runm[t].forEach((x,k)=>x.classList.toggle('f',t===s.serving&&run>=3&&k<Math.min(6,run))));
+    let who=-1,txt='';
+    if(e){if(e.type==='sideout'){who=s.serving;txt='Side-out';}else if(e.type==='second'){who=s.serving;txt='Second server';}
+      else if(e.type==='point'){if(levelNow(e.w)){who=e.w;txt='Level';}else if(run>=3){who=e.w;txt=run+' in a row';}}}
+    const c=m.chip();if(c){rows[s.serving].classList.add(c==='Match point'?'mp':'gp');who=s.serving;txt=c;}
+    if(s.hold||s.over)txt='';
+    [0,1].forEach(t=>{const nt=t===who?txt:'';if(tagt[t].textContent!==nt){tagt[t].textContent=nt;if(nt&&!RM())A(tagt[t],[{opacity:0,transform:'translateY(-4px)'},{opacity:1,transform:'none'}],260,EASE);}});}
+  function handoff(t){const el=srv[t];if(!el)return;if(RM())return pulse(el);const dy=rows[1-t].getBoundingClientRect().top-rows[t].getBoundingClientRect().top;
+    el.animate([{transform:`translate(0,${dy}px)`,opacity:1},{transform:`translate(${Math.max(14,Math.abs(dy)*.35)}px,${dy/2}px) scale(1.5)`,offset:.5},{transform:'none'}],{duration:420,easing:'cubic-bezier(.45,0,.25,1)'});setTimeout(()=>pulse(el),420);}
+  function flip(t){const el=sno[t];if(!el||RM())return;el.animate([{transform:'rotateX(90deg)'},{transform:'none'}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'});}
+  function gold(on,w,anim){grl.forEach((g,t)=>{g.getAnimations().forEach(x=>x.cancel());g.style.transform=on&&t===w?'scaleX(1)':'scaleX(0)';});if(on&&anim&&!RM())grl[w].animate([{transform:'scaleX(0)'},{transform:'scaleX(1)'}],{duration:950,easing:EASE});}
+  function stat(){const s=m.s;
+    meta.textContent=`${m.o.court} · Game ${s.game}`+(opt.round?` · ${opt.round}`:'');
+    [0,1].forEach(t=>{gms[t].forEach((g,i)=>g.classList.toggle('w',i<s.games[t]));pts[t].classList.toggle('lead',s.pts[t]>s.pts[1-t]&&!s.hold);srv[t].classList.toggle('on',t===s.serving&&!s.over);});
+    const c=m.chip(); xc.textContent=c; xc.className='chip xchip'+(c?'':' hide');
+    if(s.over){live.className=s.confirmed?'chip gold':'chip';live.innerHTML=s.confirmed?'Final · confirmed':'Final · awaiting referee';}
+    else{live.className='chip live';live.innerHTML='<i></i>Live';}
+    if(call)call.textContent=m.call();
+  }
+  function full(){const s=m.s;[0,1].forEach(t=>{v[t].textContent=s.pts[t];sub[t].textContent=T[t].c;sub[t].className='';sub[t].style.color='';pts[t].classList.remove('gold')});sb.classList.remove('hold','final');qLen=-1;drawQ();tags();gold(s.over&&s.confirmed,s.winner,false);
+    if(s.over&&s.confirmed){pts[s.winner].classList.add('gold');sub[s.winner].textContent='Winner · confirmed';sub[s.winner].className='won';sub[s.winner].style.color='var(--gold)';}stat();}
+  showOn(m,e=>{const s=e.s;
+    if(e.type==='reset'){full();return;}
+    if(e.prev)[0,1].forEach(t=>countTo(v[t],e.prev.pts[t],s.pts[t]));
+    if(e.type==='point'&&living)wash(fx[e.w]);
+    if(e.type==='sideout'&&living)handoff(s.serving);
+    else if(e.prev&&(e.prev.serving!==s.serving||e.prev.server!==s.server||e.type==='newgame'))pulse(srv[s.serving]);
+    if(e.type==='second'&&living)flip(s.serving);
+    if(e.done){sb.classList.add('hold');sub[e.w].textContent=e.done==='match'?'Match · awaiting referee':'Game '+(s.game);sub[e.w].className='won';}
+    if(e.type==='newgame'||e.type==='undo'||e.type==='holdEnd'){sb.classList.remove('hold');[0,1].forEach(t=>{pts[t].classList.remove('gold');sub[t].style.color='';if(!(s.over&&t===s.winner)){sub[t].textContent=T[t].c;sub[t].className='';}});}
+    if(e.type==='undo'||e.type==='newgame')gold(false);
+    sb.classList.toggle('final',!!(s.over&&s.confirmed));if(s.over&&s.confirmed){pts[s.winner].classList.add('gold');sub[s.winner].textContent='Winner · confirmed';sub[s.winner].className='won';sub[s.winner].style.color='var(--gold)';}
+    if(e.type==='confirm')gold(true,s.winner,true);
+    if(e.type==='newgame')qLen=-1;
+    drawQ();tags(e);stat();
+  });
+  full();
+  return {sb};
+}
+/* DNA strip */
+function DNA(host,m,opt={}){
+  let lastLen=-1,lastGame=-1;
+  function draw(e){const s=m.s;const g=s.rallies[s.game-1]||[];
+    const rebuild=g.length<lastLen||s.game!==lastGame||!e||e.type==='reset'||e.type==='undo';
+    if(rebuild){host.innerHTML='';g.forEach(r=>host.appendChild(bar(r)));}
+    else if(g.length>lastLen){for(let i=lastLen;i<g.length;i++){const b=bar(g[i]);b.classList.add('new');host.appendChild(b);}}
+    lastLen=g.length;lastGame=s.game;
+    // run highlight: consecutive points by same team at the end (>=3)
+    const bars=[...host.children];bars.forEach(b=>b.classList.remove('run','now'));
+    let run=0,who=null;for(let i=g.length-1;i>=0;i--){if(!g[i].pt)continue;if(who===null)who=g[i].w;if(g[i].w!==who)break;run++;}
+    if(run>=3){let c=0;for(let i=g.length-1;i>=0&&c<run;i--){if(g[i].pt&&g[i].w===who){bars[i].classList.add('run');c++;}else if(g[i].pt)break;}}
+    if(bars.length)bars[bars.length-1].classList.add('now');
+  }
+  function bar(r){const i=document.createElement('i');i.className=(r.w===0?'a':'b')+(r.pt?'':' so');i.title=`Rally ${r.n} · ${r.ev==='point'?'point':r.ev==='sideout'?'side-out':'second server'} · ${r.before} → ${r.after}`;return i;}
+  showOn(m,draw);draw();
+}
+
+/* ================= Data ================= */
+const TEAMS={MD:{n:'Meera & Divya',c:"Loki's PC"},AL:{n:'Asha & Lata',c:"Loki's PC"},AI:{n:'Arav & Ishaan',c:'Banyan PC'},KN:{n:'Kiran & Neha',c:'Rally33'},RS:{n:'Rohan & Sameer',c:'TPC'},FT:{n:'Farhan & Tejas',c:'ElitePicklers'},PV:{n:'Priya & Varun',c:'The Pickle Yard'},SN:{n:'Sana & Nikhil',c:'Rally33'},DP:{n:'Das & Pillai',c:'TPC'}};
+const main=new Match({teams:[TEAMS.MD,TEAMS.AL],court:'Court 2',seed:11,pre:24,speed:1800,bias:.04});
+const others=[
+  new Match({teams:[TEAMS.FT,TEAMS.PV],court:'Court 1',seed:3,pre:30,speed:2600}),
+  new Match({teams:[TEAMS.SN,TEAMS.DP],court:'Court 3',seed:5,pre:12,speed:3000,bias:.03}),
+];
+
+/* ================= Router ================= */
+const PUBLIC=['home','event','live','results','studio','notes','overview','admin','desk'];
+const SHOWHDR=['home','event','live','results','studio','overview','admin','desk','notes'];
+let cur='';
+function go(){let v=(location.hash||'#matchday').slice(1);if(!document.querySelector(`[data-view="${v}"]`))v='matchday';
+  if(v===cur)return; const prevV=cur; cur=v;
+  $$('.view').forEach(x=>x.classList.toggle('on',x.dataset.view===v));
+  $('#pubHdr').classList.toggle('hide',!SHOWHDR.includes(v));
+  $('#bnav').classList.toggle('hide',!['home','event','live','results'].includes(v));
+  $$('#jr a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+v));
+  $$('.hnav a,.bnav a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+v));
+  const ja=$(`#jr a[href="#${v}"]`); if(ja)ja.scrollIntoView({block:'nearest',inline:'nearest'});
+  device.scrollTop=0;
+  // Referee takes over Court 2 while the pad is open
+  if(v==='referee'){main.auto=false;clearTimeout(main.resumeT);refRender();}
+  else if(prevV==='referee'||prevV==='matchday'){clearTimeout(main.resumeT);main.resumeT=setTimeout(()=>{main.auto=true},4000);}
+  if(v==='home')$$('[data-view="home"] [data-count]').forEach(el=>countUp(el,+el.dataset.count));
+  if(v==='overview')$$('[data-view="overview"] [data-count]').forEach(el=>countUp(el,+el.dataset.count));
+  if(v==='results')revealFinal();
+  if(v==='studio')emerge();
+}
+addEventListener('hashchange',go);
+
+/* ================= Director controls ================= */
+function setTheme(t){app.dataset.theme=t;$$('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===t)));store('theme',t);}
+function setDev(d){app.dataset.device=d;$$('[data-dev]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.dev===d)));store('dev',d);}
+$$('[data-theme-set]').forEach(b=>b.onclick=()=>setTheme(b.dataset.themeSet));
+$$('[data-dev]').forEach(b=>b.onclick=()=>setDev(b.dataset.dev));
+$('#rmBtn').onclick=()=>{app.classList.toggle('rm');$('#rmBtn').setAttribute('aria-pressed',String(app.classList.contains('rm')));};
+setTheme(store('theme')||'night'); setDev(store('dev')||(innerWidth<700?'phone':'desktop'));
+
+/* toasts + sheets */
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600);}
+document.addEventListener('click',e=>{
+  const o=e.target.closest('[data-open]'); if(o){$('#'+o.dataset.open).classList.add('on');}
+  const c=e.target.closest('[data-close]'); if(c){c.closest('.sheet').classList.remove('on');}
+  const tb=e.target.closest('[data-toast]'); if(tb)toast(tb.dataset.toast);
+  if(e.target.classList.contains('sheet'))e.target.classList.remove('on');
+  const tg=e.target.closest('.tagb button'); if(tg)tg.setAttribute('aria-pressed',String(tg.getAttribute('aria-pressed')!=='true'));
+  const pr=e.target.closest('#partners .rl'); if(pr)$$('#partners .rl').forEach(x=>x.classList.toggle('on',x===pr));
+});
+addEventListener('keydown',e=>{if(e.key==='Escape')$$('.sheet.on').forEach(s=>s.classList.remove('on'));});
+
+/* ================= HOME ================= */
+Board($('#heroBoard'),main,{quiet:true});
+main.on(()=>{$('#heroWp').textContent=Math.round(main.wp()*100)+'% Meera & Divya';$('#hdrLive').classList.toggle('hide',main.s.over&&main.s.confirmed);});
+$('#heroWp').textContent=Math.round(main.wp()*100)+'% Meera & Divya';
+const tick=["<b>FINAL</b> Asha & Lata 2–1 Arav & Ishaan · SF1","<b>LIVE</b> Court 2 · Meera & Divya v Asha & Lata","<b>RECORD</b> Longest run at Loki's: 9 rallies, Kiran & Neha","<b>ENTRIES</b> Rally33 Night Ladder · 6 spots left","<b>FINAL</b> Farhan & Tejas 2–0 Priya & Varun · QF2","<b>UP NEXT</b> Court 4 · Kiran & Neha v Rohan & Sameer"];
+$('#ticker').innerHTML=[...tick,...tick].map(x=>`<span>${x}</span>`).join('');
+const hc=$('#homeCourts');
+[main,...others].forEach(m=>{const a=document.createElement('a');a.className='ct';a.href='#live';hc.appendChild(a);Board(a,m,{quiet:true});});
+
+/* ================= LIVE ================= */
+Board($('#arenaBoard'),main,{call:true,round:'Semi-final 2'});
+DNA($('#liveDna'),main);
+const lc=$('#liveCourts');
+others.forEach(m=>{const a=document.createElement('a');a.className='ct';a.href='#live';lc.appendChild(a);Board(a,m,{quiet:true});});
+let lastWp=main.wp();
+function liveMeta(e){const s=main.s;const ar=$('#arena');
+  ar.dataset.light=s.over?(s.confirmed?'final':'live'):(main.chip()?'mp':(s.rallies[s.game-1].length<2&&s.game===1?'warm':'live'));
+  // story line
+  let msg='Every point matters.';
+  if(e&&e.type){const T=main.o.teams;
+    if(e.type==='point'){const g=s.rallies[s.game-1];let run=0;for(let i=g.length-1;i>=0;i--){if(!g[i].pt)continue;if(g[i].w!==e.w)break;run++;}msg=run>=3?`${T[e.w].n} · ${run}-point run`:`Point ${T[e.w].n}.`;}
+    if(e.type==='sideout')msg=`Side out. ${T[s.serving].n} to serve.`;
+    if(e.type==='second')msg=`Second server for ${T[s.serving].n}.`;
+    if(e.type==='undo')msg='The referee took the last rally back.';
+    if(e.type==='newgame')msg=`Game ${s.game}. Teams switch ends.`;
+    if(e.done==='game')msg=`${T[e.w].n} take game ${s.game}.`;
+    if(main.chip()==='Match point')msg='MATCH POINT. Everything on the line.';
+    if(s.over)msg=s.confirmed?`Final · ${T[s.winner].n} win ${s.games[s.winner]}–${s.games[1-s.winner]}`:'Final score in. Waiting for the referee to confirm.';
+    if(e.type!=='reset')$('#story').textContent=msg;
+  }
+  const w=main.wp(),d=Math.round((w-lastWp)*100);
+  $('#wpBar').style.width=Math.round(w*100)+'%';$('#wpN').textContent=Math.round(w*100)+'%';
+  if(Math.abs(d)>=10){const el=$('#wpDelta');el.textContent=(d>0?'+':'')+d+' pts win chance';el.classList.add('on');pulse(el);clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),2600);}
+  lastWp=w;
+  $('#miniScore').textContent=`${s.pts[0]}–${s.pts[1]}`;
+  freshAt=Date.now();
+}
+let freshAt=Date.now(),stale=false;
+showOn(main,liveMeta);liveMeta();
+setInterval(()=>{const sec=Math.round((Date.now()-freshAt)/1000);$('#fresh').textContent=stale?'90 s ago':(sec<3?'just now':sec+' s ago');},1000);
+$('#staleBtn').onclick=()=>{stale=!stale;$('#staleBtn').textContent=stale?'Back to live':'Preview stale';$$('#arenaBoard .chip.live').forEach(c=>{if(stale){c.className='chip stale';c.textContent='Last updated 90 s ago';}});if(!stale)main.emit({type:'tick'});$('#fresh').style.color=stale?'var(--signal)':'';};
+// sticky mini score bar
+new IntersectionObserver(es=>es.forEach(en=>{$('#mini').classList.toggle('on',!en.isIntersecting&&cur==='live')}),{root:device,threshold:0,rootMargin:'-64px 0px 0px 0px'}).observe($('#arena'));
+
+/* ================= TV ================= */
+Board($('#tvBoard'),main,{call:true,round:'Semi-final 2'});
+DNA($('#tvDna'),main);
+const rail=$('#tvRail');
+others.forEach(m=>{const d=document.createElement('div');d.className='tvc';rail.appendChild(d);Board(d,m,{quiet:true});});
+const upn=document.createElement('div');upn.className='tvc';upn.innerHTML='<span class="cap" style="font-size:1cqw">Court 4 · warming up</span><div style="font-size:1.5cqw;font-weight:700;margin-top:.5cqw">Kiran &amp; Neha v Rohan &amp; Sameer</div><div style="font-size:1.1cqw;color:#9FB4A6">Quarter-final 4 · starts in about 12 min</div>';rail.appendChild(upn);
+// last meeting DNA (sample)
+(function(){const d=$('#tvLastDna .dna');'AABABBBAAABABAAABBABA'.split('').forEach(c=>{const i=document.createElement('i');i.className=c==='A'?'a':'b';i.style.height='1.6cqw';i.style.maxWidth='1cqw';i.style.transform=c==='A'?'translateY(-.9cqw)':'translateY(.9cqw)';d.appendChild(i);});})();
+let brkT=null;
+function runBreak(manual){const b=$('#brk');const items=[...b.querySelectorAll('.bi')];let i=0;b.classList.add('on');items.forEach((x,k)=>x.classList.toggle('on',k===0));
+  clearInterval(brkT);brkT=setInterval(()=>{i++;if(i>=items.length){endBreak();return;}items.forEach((x,k)=>x.classList.toggle('on',k===i));},4200);}
+function endBreak(){clearInterval(brkT);$('#brk').classList.remove('on');}
+$('#brkBtn').onclick=()=>runBreak(true);
+main.on(e=>{ if(['point','sideout','second'].includes(e.type))endBreak(); if(e.type==='confirm'&&cur==='tv')setTimeout(()=>runBreak(),2600); });
+setInterval(()=>{const d=new Date();$('#tvClock').textContent=d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).replace(/\s?[ap]m/i,'');},10000);
+
+/* ================= REFEREE ================= */
+function refRender(e){const s=main.s,T=main.o.teams;
+  if(e&&e.prev){countTo($('#padA'),e.prev.pts[0],s.pts[0]);countTo($('#padB'),e.prev.pts[1],s.pts[1]);} // pad numbers change in <110 ms
+  else{$('#padA').textContent=s.pts[0];$('#padB').textContent=s.pts[1];}
+  $('#padCall').textContent=main.call();$('#padGame').textContent=' · Game '+s.game;
+  $('#padGA').innerHTML=[0,1].map(i=>`<i class="${i<s.games[0]?'w':''}"></i>`).join('');$('#padGB').innerHTML=[0,1].map(i=>`<i class="${i<s.games[1]?'w':''}"></i>`).join('');
+  $('#tapA').classList.toggle('srvside',s.serving===0);$('#tapB').classList.toggle('srvside',s.serving===1);
+  $('#tapAsub').textContent=s.serving===0?`Serving · server ${s.server}`:'Receiving';$('#tapBsub').textContent=s.serving===1?`Serving · server ${s.server}`:'Receiving';
+  $('#undoBtn').disabled=!main.hist.length;
+  $('#confirmBtn').disabled=!(s.over&&!s.confirmed);
+  $('#confirmBtn').textContent=s.confirmed?'Final confirmed':'Confirm final score';
+  [$('#tapA'),$('#tapB')].forEach(b=>b.disabled=s.over||s.hold);
+}
+main.on(e=>{if(cur==='referee')refRender(e);});
+function syncState(){syncOne($('#sync'));syncOne($('#mdSync'));}
+function syncOne(el){if(offline){el.className='sync off';el.querySelector('span').textContent=`Offline · ${queued} queued`;return;}el.className='sync syncing';el.querySelector('span').textContent='Syncing…';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='sync';el.querySelector('span').textContent='Saved';},450);}
+$('#sync').onclick=()=>{offline=!offline;if(!offline){queued=0;main.emit({type:'reset'});}else{$$('.sb').forEach(sb=>{const m=sb.querySelector('.meta');if(m&&m.textContent.startsWith('Court 2')){const c=sb.querySelector('.sbh .chip');c.className='chip stale';c.textContent='Waiting for the court';}});}syncState();toast(offline?'Offline. Taps are kept on this phone and sent later.':'Back online. Queued taps sent.');};
+function tap(w,ev){const ripple=document.createElement('span');ripple.className='rip';const b=ev.currentTarget,r=b.getBoundingClientRect();ripple.style.left=(ev.clientX-r.left||r.width/2)+'px';ripple.style.top=(ev.clientY-r.top||r.height/2)+'px';b.appendChild(ripple);
+  if(!RM())A(ripple,[{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:'translate(-50%,-50%) scale(18)',opacity:0}],420,EASE).onfinish=()=>ripple.remove();else ripple.remove();
+  if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
+  const evn=main.rally(w);if(offline)queued++;syncState();
+  const T=main.o.teams,s=main.s;
+  const label={point:`Point ${T[w].n}`,sideout:`Side out · ${T[s.serving].n} serve`,second:`Second server · ${T[s.serving].n}`}[evn]||'';
+  $('#prText').innerHTML=`<b>${label}</b> · ${main.call()}`+(main.s.over?' · <b class="gold">Match over</b>':'');$('#mdPr').innerHTML=$('#prText').innerHTML+(offline?' · <span class="mut">Saved on this phone. Live and TV wait for the sync.</span>':' · <span class="mut">Synced. Live and TV updated.</span>');
+}
+$('#tapA').onclick=e=>tap(0,e);$('#tapB').onclick=e=>tap(1,e);
+$('#undoBtn').onclick=()=>{main.undo();$('#prText').innerHTML='<b>Undone.</b> The last rally was taken back everywhere.';$('#mdPr').innerHTML=$('#prText').innerHTML;syncState();};
+$('#confirmBtn').onclick=()=>{main.confirm();toast('Final confirmed. Results, TV and Studio update now.');refRender();};
+
+/* ================= DESK ================= */
+const dc=$('#deskCourts');
+function courtSvg(){return '<svg class="cl" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="198" height="98" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="100" y1="1" x2="100" y2="99" stroke="currentColor" stroke-width="2.5"/><line x1="72" y1="1" x2="72" y2="99" stroke="currentColor"/><line x1="128" y1="1" x2="128" y2="99" stroke="currentColor"/><line x1="1" y1="50" x2="72" y2="50" stroke="currentColor"/><line x1="128" y1="50" x2="199" y2="50" stroke="currentColor"/></svg>';}
+[others[0],main,others[1]].forEach(m=>{const d=document.createElement('div');d.className='court';d.innerHTML=courtSvg()+'<div></div>';dc.appendChild(d);Board(d.lastElementChild,m,{quiet:true});});
+const c4=document.createElement('div');c4.className='court need';c4.id='c4';c4.innerHTML=courtSvg()+'<div class="row"><b>Court 4</b><span class="sp"></span><span class="chip" style="background:var(--ball);color:var(--on)">Needs you</span></div><p class="mut" style="font-size:13px">Empty for 6 min. The next eligible match is ready.</p>';dc.appendChild(c4);
+const Q=[['QF4','Kiran & Neha v Rohan & Sameer','ready'],['SF3','Winner QF2 v Winner QF4','after QF4'],['P7','Sana & Nikhil v Das & Pillai','rest 8 min'],['P8','Farhan & Tejas v Priya & Varun','rest 14 min']];
+function drawQ(anim){const q=$('#queue');const before=anim?[...q.children].map(c=>[c.dataset.k,c.getBoundingClientRect().top]):[];q.innerHTML='';
+  Q.forEach((x,i)=>{const d=document.createElement('div');d.className='qi'+(i===0?' nx':'');d.dataset.k=x[0];d.innerHTML=`<span class="n">${x[0]}</span><span>${x[1]}</span><span class="mut" style="font-size:12px">${x[2]}</span>`;q.appendChild(d);});
+  if(anim&&!RM()){[...q.children].forEach(c=>{const b=before.find(p=>p[0]===c.dataset.k);if(b){const dy=b[1]-c.getBoundingClientRect().top;if(dy)A(c,[{transform:`translateY(${dy}px)`},{transform:'none'}],240,EASE);}else A(c,[{opacity:0},{opacity:1}],240);});}}
+drawQ();
+$('#assignBtn').onclick=()=>{const b=$('#assignBtn');if(b.disabled)return;b.disabled=true;b.textContent='Assigned';
+  c4.classList.remove('need');c4.innerHTML=courtSvg()+'<div class="row"><b>Court 4</b><span class="sp"></span><span class="chip line">Warming up</span></div><p style="font-weight:700;font-size:14px">Kiran &amp; Neha v Rohan &amp; Sameer</p><p class="mut" style="font-size:13px">QF4 · referee: Sana K</p>';
+  Q.shift();Q.push(['QF5','Arav & Ishaan v Priya & Varun','rest 20 min']);Q[0][2]='ready next';drawQ(true);
+  $('#kOn').textContent='4';$('#kWait').textContent='5';$('#kLate').textContent='4 min';
+  $('#decision').querySelector('.cap').textContent='Decision made · Court 4';toast('Court 4 assigned. Players and the TV are told.');};
+
+/* ================= OVERVIEW: readiness ================= */
+const CH=[['Courts and referees set',1],['Entry list closed',1],['Pools and schedule published',1],['Every referee has opened the pad',0],['Venue TV linked',0],['Poster shared to WhatsApp',0]];
+function drawChecks(){const host=$('#checks');host.innerHTML='';let done=0;CH.forEach((c,i)=>{if(c[1])done++;const d=document.createElement('div');d.className='chk'+(c[1]?' done':'');d.innerHTML=`<button aria-label="${c[1]?'Mark not done':'Mark done'}: ${c[0]}" aria-pressed="${!!c[1]}">${c[1]?'<svg class="ic" style="width:16px;height:16px"><use href="#i-check"/></svg>':''}</button><span>${c[0]}</span>`;d.querySelector('button').onclick=()=>{c[1]=c[1]?0:1;drawChecks();};host.appendChild(d);});
+  $('#readyN').textContent=`${done}/${CH.length}`;const k=done/CH.length;$('#ready').style.setProperty('--lv',(0.1+k*0.9).toFixed(2));
+  $('#readyT').textContent=k===1?'Lights on. Ready for match day.':k>=.5?'Lights warming up':'Lights off';
+  if(k===1)toast('Every item done. Match day is ready.');}
+drawChecks();
+
+/* ================= ADMIN map ================= */
+(function(){const svg=$('#mapsvg');const clubs=[['Loki\'s','Gachibowli',260,250,1],['Rally33','Kondapur',300,170,1],['TPC','Jubilee Hills',450,230,0],['ElitePicklers','Madhapur',350,215,0],['The Pickle Yard','Kokapet',180,330,1],['Ace Arena','Banjara Hills',500,270,0]];
+  let h='<defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="currentColor" stroke-opacity=".07"/></pattern></defs><rect width="800" height="500" fill="url(#g)" style="color:var(--ink)"/>';
+  h+='<path d="M120 420 C 220 380, 300 300, 420 300 S 620 200, 720 120" fill="none" stroke="currentColor" stroke-opacity=".12" stroke-width="18" style="color:var(--ink)"/><path d="M90 160 C 200 220, 360 120, 520 160 S 700 330, 760 360" fill="none" stroke="currentColor" stroke-opacity=".08" stroke-width="10" style="color:var(--ink)"/><ellipse cx="560" cy="330" rx="46" ry="26" fill="currentColor" fill-opacity=".06" style="color:var(--ink)"/><text x="560" y="335" text-anchor="middle" font-size="11" fill="currentColor" fill-opacity=".45" style="color:var(--ink)">Hussain Sagar</text>';
+  clubs.forEach((c,i)=>{const on=c[4];h+=`<g class="pin" transform="translate(${c[2]} ${c[3]})">${on?`<circle class="ring" r="9" fill="none" stroke="#D9F24A" stroke-width="2" style="animation-delay:${i*0.7}s"/>`:''}<circle r="${on?7:5}" fill="${on?'#D9F24A':'#9FB4A6'}"/><text x="12" y="4" font-size="13" font-weight="700" fill="currentColor" style="color:var(--ink)">${c[0]}</text><text x="12" y="19" font-size="11" fill="currentColor" fill-opacity=".6" style="color:var(--ink)">${c[1]}${on?' · live':''}</text></g>`;});
+  svg.innerHTML=h;})();
+
+/* ================= RESULTS: final + Rally Rewind ================= */
+const RW=("ABAABAABAAABA"+"BBBBBB"+"A"+"BB").split(''); // game 3: A leads 9–4, B wins six straight, 10–10, B closes 12–10
+const rwD=$('#rwDna'),rwS=$('#rwScrub');rwS.max=RW.length;$('#rwT').textContent=RW.length;
+let best={len:0,end:0},cr=0;RW.forEach((w,i)=>{cr=(i&&RW[i-1]===w)?cr+1:1;if(cr>best.len)best={len:cr,end:i};});const rStart=best.end-best.len+1;
+RW.forEach((w,i)=>{const b=document.createElement('i');b.className=w==='A'?'a':'b';if(i>=rStart&&i<=best.end)b.dataset.run='1';rwD.appendChild(b);});
+const rwSig=qSig($('#rwSig'),RW.map(w=>({w:w==='A'?0:1,pt:true})),{onPick:i=>{rwStop();rwS.value=i+1;rw(i+1);}});
+let rwLast=[0,0];
+function rw(n){let a=0,b=0;for(let i=0;i<n;i++)RW[i]==='A'?a++:b++;
+  [...rwD.children].forEach((x,i)=>{x.style.opacity=i<n?1:.25;x.classList.toggle('run',i<n&&!!x.dataset.run);x.classList.toggle('now',i===n-1);});
+  countTo($('#rwA'),rwLast[0],a);countTo($('#rwB'),rwLast[1],b);rwLast=[a,b];
+  $('#rwA').style.color=a>b?'var(--ball)':'';$('#rwB').style.color=n===RW.length?'var(--gold)':(b>a?'var(--ball)':'');
+  rwSig.show(n);$('#rwN').textContent=n;let m='Drag along the Match DNA to rewind game 3.';
+  if(n>0){let run=0;for(let i=n-1;i>=0&&RW[i]===RW[n-1];i--)run++;const who=RW[n-1]==='A'?'Arav & Ishaan':'Asha & Lata';m=run>=3?`${who} · ${run}-point run`:`Point ${who}`;
+    if(n===13)m='Arav & Ishaan lead 9–4. Looks done.';if(n===best.end+1)m='The turning point: 9–4 becomes 9–10. Six unanswered points.';if(n===RW.length)m='Final · Asha & Lata win 12–10';}
+  $('#rwStory').textContent=m;}
+rwS.oninput=()=>{rwStop();rw(+rwS.value)};
+let drag=false;function fromP(e){const r=rwD.getBoundingClientRect();let n=Math.round((e.clientX-r.left)/r.width*RW.length);n=Math.max(0,Math.min(RW.length,n));rwS.value=n;rw(n);}
+rwD.addEventListener('pointerdown',e=>{drag=true;rwStop();rwD.setPointerCapture(e.pointerId);fromP(e)});rwD.addEventListener('pointermove',e=>{if(drag)fromP(e)});rwD.addEventListener('pointerup',()=>drag=false);
+let rwT=null;function rwStop(){clearInterval(rwT);rwT=null;}
+$('#rwPlay').onclick=()=>{rwStop();let n=0;rwS.value=0;rwLast=[0,0];rw(0);rwT=setInterval(()=>{n++;rwS.value=n;rw(n);if(n>=RW.length)rwStop();},380);};
+$('#rwJump').onclick=()=>{rwStop();rwS.value=best.end+1;rw(best.end+1);};
+$('#rwShare').onclick=()=>{rwStop();if(+rwS.value<best.end+1){rwS.value=best.end+1;rw(best.end+1);}
+  const md=$('#memDna');md.innerHTML='';RW.forEach((w,i)=>{const b=document.createElement('i');b.className=w==='A'?'a':'b';if(i>=rStart&&i<=best.end)b.classList.add('run');b.style.background=b.classList.contains('run')?'#D9F24A':(w==='A'?'#F1F4EA':'rgba(159,180,166,.55)');md.appendChild(b);});
+  qSig($('#memSig'),RW.map(w=>({w:w==='A'?0:1,pt:true})),{ink:'#F1F4EA'});
+  $('#memSheet').classList.add('on');};
+let revealed=false;function revealFinal(){if(revealed)return;revealed=true;const f=$('#final');rw(0);setTimeout(()=>{f.classList.add('revealed');rwS.value=RW.length;
+  // DNA unrolls left to right, score counts up
+  if(RM()){rw(RW.length);return;}let n=0;const t=setInterval(()=>{n++;rw(n);if(n>=RW.length)clearInterval(t);},45);},400);}
+const RES=[['SF1','Asha & Lata','Arav & Ishaan','2–1',true],['QF1','Arav & Ishaan','Das & Pillai','2–0'],['QF2','Farhan & Tejas','Priya & Varun','2–0'],['QF3','Meera & Divya','Sana & Nikhil','2–1'],['R16','Meera & Divya','Rohan & Sameer','2–0']];
+$('#reslist').innerHTML=RES.map(r=>`<button class="rl${r[4]?' on':''}"><span class="cap">${r[0]}</span><span><b>${r[1]}</b> <span class="mut">def.</span> ${r[2]}</span><span class="n">${r[3]}</span></button>`).join('');
+$('#reslist').onclick=e=>{const b=e.target.closest('.rl');if(!b)return;$$('#reslist .rl').forEach(x=>x.classList.toggle('on',x===b));if(!b.textContent.includes('SF1'))toast('Sample: only SF1 has its full DNA in this prototype');};
+
+/* ================= EVENT ================= */
+$('#evTabs').onclick=e=>{const b=e.target.closest('[data-ev]');if(!b)return;$$('#evTabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));$$('[data-evp]').forEach(p=>p.classList.toggle('hide',p.dataset.evp!==b.dataset.ev));
+  const c=$('#evStateChip');c.className='chip'+(b.dataset.ev==='during'?' live':b.dataset.ev==='after'?' gold':'');c.innerHTML=b.dataset.ev==='during'?'<i></i>Live now':b.dataset.ev==='after'?'Champions confirmed':'Entries open';};
+$('#entries').innerHTML=[['Kiran & Neha','Rally33','3.52','2 min ago'],['Sana & Nikhil','Rally33','3.47','1 h ago'],['Priya & Varun','The Pickle Yard','3.55','3 h ago'],['Meera & Divya',"Loki's PC",'3.60','yesterday'],['Farhan & Tejas','ElitePicklers','3.49','yesterday']].map(r=>`<div class="row" style="padding:12px 0;border-top:1px solid var(--line);font-size:14px"><span class="tile sm">${r[0].split(' & ').map(x=>x[0]).join('')}</span><span class="sp"><b>${r[0]}</b><br><span class="mut" style="font-size:12px">${r[1]}</span></span><span class="n" style="font-size:20px">${r[2]}</span><span class="mut" style="font-size:12px;width:72px;text-align:right">${r[3]}</span></div>`).join('');
+const BR=[[['AL','Asha & Lata',2],['DP','Das & Pillai',0]],[['AI','Arav & Ishaan',2],['FT','Farhan & Tejas',1]],[['MD','Meera & Divya',2],['SN','Sana & Nikhil',1]],[['KN','Kiran & Neha',null],['RS','Rohan & Sameer',null]]];
+function drawBracket(){const f=$('#follow').value;const col=(ms,live)=>`<div class="col">${ms.map((m,i)=>`<div class="bm${m.some(t=>t[0]===f)?' lit':''}${live&&live.includes(i)?' livem':''}">${m.map(t=>`<div class="t${t[2]===2?' w':''}${t[0]===f?' f':''}"><b>${t[1]}</b><span class="n">${t[2]??'–'}</span></div>`).join('')}</div>`).join('')}</div>`;
+  const sf=[[['AL','Asha & Lata',2],['AI','Arav & Ishaan',1]],[['MD','Meera & Divya',main.s.games[0]],['XX','Winner QF4',null]]];
+  sf[1][1]=['KN','Kiran & Neha or Rohan & Sameer',null];
+  const fi=[[['AL','Asha & Lata',null],['MD','Winner SF2',null]]];
+  $('#bracket').innerHTML=`<div><span class="cap">Quarter-finals</span>${col(BR,[3])}</div><div><span class="cap">Semi-finals</span>${col([[['AL','Asha & Lata',2],['AI','Arav & Ishaan',1]],[['MD','Meera & Divya',main.s.games[0]],['AL2','Asha & Lata (Court 2)',main.s.games[1]]]],[1])}</div><div><span class="cap">Final · 6 pm</span>${col(fi)}</div>`;
+  $$('#bracket > div').forEach(d=>{d.style.display='flex';d.style.flexDirection='column';d.style.gap='10px';});
+}
+$('#follow').onchange=drawBracket;drawBracket();
+
+/* ================= STUDIO ================= */
+let emerged=false;
+function emerge(){if(emerged||RM())return;emerged=true;const c=$('#acover');A($('.acph',c),[{clipPath:'inset(100% 0 0 0)',transform:'scale(1.06)'},{clipPath:'inset(0 0 0 0)',transform:'scale(1)'}],680,EASE);
+  $$('[data-em]',c).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:i===1?420:300,delay:380+i*70,easing:EASE,fill:'backwards'}));}
+function setPv(p){const st=$('[data-view="studio"]');st.classList.toggle('pub',p==='public');$$('[data-pv]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pv===p)));
+  $('#acKick').textContent=p==='public'?"Public profile · rallyq.in/meera":'My Player Studio · only you see this';$('#stWhere').textContent=p==='public'?'Public · what anyone sees':'Private · only you';}
+$$('[data-pv]').forEach(b=>b.onclick=()=>setPv(b.dataset.pv));
+function stGo(t){$$('[data-st]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.st===t)));$$('[data-stp]').forEach(p=>p.classList.toggle('hide',p.dataset.stp!==t));
+  const L={home:'after',events:'before',practice:'between',club:'back'}[t];$$('#loop [data-loop]').forEach(b=>b.classList.toggle('on',b.dataset.loop===L));}
+$$('[data-st]').forEach(b=>b.onclick=()=>stGo(b.dataset.st));
+document.addEventListener('click',e=>{const g=e.target.closest('[data-stgo]');if(g)stGo(g.dataset.stgo);});
+
+// Receipt (Player Studio v3 logic: worked out from stored rallies)
+const RM3=[{lbl:'QF',g:'UUTTTUTTTTUTTUUUUUUTUU'},{lbl:'R16',g:'UUTUUUUUUUUTU'},{lbl:'Pool',g:'UTTUUTUTUTTUTUUTTUTUTUUU'}];
+function rst(s){let u=0,t=0,worst=0,da=-1,best=0,c=0,be=0;for(let i=0;i<s.length;i++){if(s[i]==='U'){u++;c++;if(c>best){best=c;be=i;}}else{t++;c=0;}if(t-u>worst){worst=t-u;da=i;}}return{u,t,worst,da,best,bs:be-best+1,be};}
+const RS=RM3.map(m=>rst(m.g));const ds=$('#dnaS');
+RM3.forEach((m,k)=>{const r=document.createElement('div');r.className='dnaR';r.innerHTML=`<span>${m.lbl}</span><div class="d" data-k="${k}">${m.g.split('').map(c=>`<i class="${c==='U'?'us':'th'}"></i>`).join('')}</div>`;ds.appendChild(r);});
+function hl(k,a,b){$$('#dnaS .d').forEach(d=>[...d.children].forEach((x,i)=>x.classList.toggle('hot',+d.dataset.k===k&&i>=a&&i<=b&&x.classList.contains('us'))));}
+let cb=0;RS.forEach((s,i)=>{if(s.worst>RS[cb].worst)cb=i;});let rn=0;RS.forEach((s,i)=>{if(s.best>RS[rn].best)rn=i;});
+let ca=0,cbb=0;for(let i=0;i<=RS[cb].da;i++)RM3[cb].g[i]==='U'?ca++:cbb++;
+const VIEWS={comeback:{k:'The moment you stole it',h:`They led ${cbb}–${ca}.<br>You won ${RS[cb].u}–${RS[cb].t}.`,l:`Your biggest comeback this season. ${RM3[cb].lbl}, ${RS[cb].best} rallies in a row.`,hl:[cb,RS[cb].bs,RS[cb].be]},run:{k:'The run',h:`${RS[rn].best} rallies.<br>No reply.`,l:`Your longest run of the day, in the ${RM3[rn].lbl}.`,hl:[rn,RS[rn].bs,RS[rn].be]},close:{k:'The finish',h:`Won it<br>${RS[2].u}–${RS[2].t}.`,l:'Level late in the pool match. The last three rallies were yours.',hl:[2,RM3[2].g.length-3,RM3[2].g.length-1]}};
+function showM(v){const x=VIEWS[v];$('#rcKick').textContent=x.k;$('#rcHead').innerHTML=x.h;$('#rcLine').textContent=x.l;hl(...x.hl);$$('[data-m]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===v)));if(!RM())A($('#rcHead'),[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],240,EASE);}
+$$('[data-m]').forEach(b=>b.onclick=()=>{$('#receipt').classList.remove('flipped');showM(b.dataset.m)});
+$('#flip').onclick=()=>$('#receipt').classList.toggle('flipped');
+let lr=0;RM3.forEach(m=>{const r=m.g.match(/T{3,}/g);lr+=r?r.length:0;});$('#cFact').textContent=`You and Divya lost three or more rallies in a row ${lr} times that day, mostly in the quarter-final.`;
+qSig($('#rcSig'),RM3[0].g.split('').map(c=>({w:c==='U'?0:1,pt:true})),{ink:'#0B2418',mut:'rgba(11,36,24,.35)',ball:'#2B6E4B'});
+qSig($('#acSig'),RM3[0].g.split('').map(c=>({w:c==='U'?0:1,pt:true})),{ink:'#F1F4EA',mut:'rgba(126,174,242,.9)',ball:'#D9F24A'});
+showM('comeback');
+// DUPR steps
+(function(){const pts=[['Aug',3.42],['Sep',3.47],['Sep',3.45],['Oct',3.53],['Nov',3.58],['Nov',3.61]];const x=i=>14+i*58,y=v=>104-(v-3.38)/(.26)*88;let d=`M${x(0)} ${y(pts[0][1])}`;pts.forEach((p,i)=>{if(i){d+=` H${x(i)} V${y(p[1])}`;}});
+  $('#dupr').innerHTML=`<path d="${d} H306" fill="none" stroke="#D9F24A" stroke-width="3" stroke-linejoin="round"/>`+pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p[1])}" r="4" fill="#D9F24A"/><text x="${x(i)}" y="118" font-size="9" text-anchor="middle" fill="currentColor" fill-opacity=".6" style="color:var(--ink)">${p[0]}</text>`).join('');$('#dupr').style.color='var(--ink)';})();
+// prep checklist
+$('#prep').innerHTML=[['Partner confirmed: Divya',1],['Entry fee paid to Rally33',1],['Leave by 6:45 pm · 25 min drive',0],['Bring outdoor balls (Franklin X-40)',0]].map(c=>`<div class="chk${c[1]?' done':''}"><button aria-pressed="${!!c[1]}" aria-label="${c[0]}">${c[1]?'<svg class="ic" style="width:16px;height:16px"><use href="#i-check"/></svg>':''}</button><span>${c[0]}</span></div>`).join('');
+$('#prep').onclick=e=>{const b=e.target.closest('button');if(!b)return;const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);b.parentElement.classList.toggle('done',on);b.innerHTML=on?'<svg class="ic" style="width:16px;height:16px"><use href="#i-check"/></svg>':'';};
+// archive
+$('#archive').innerHTML=[['15 Nov','DUPR Night · Loki\'s','QF won 12–10','ref','Receipt 0042'],['11 Nov','Practice · Loki\'s','Won 11–7','self',''],['8 Nov','Rally33 Ladder','Lost 9–11, 11–8, 8–11','ref','Receipt 0037'],['4 Nov','Practice · TPC','Won 11–9','self',''],['1 Nov','Pickle Yard Social','Won 3 of 4','ref','Receipt 0031']].map(r=>`<div class="row" style="padding:12px 0;border-top:1px solid var(--line);font-size:14px;flex-wrap:wrap;gap:6px 12px"><span class="mut" style="width:52px">${r[0]}</span><span class="sp"><b>${r[1]}</b><br><span class="mut" style="font-size:12.5px">${r[2]}${r[4]?' · '+r[4]:''}</span></span><span class="src${r[3]==='ref'?' ref':''}">${r[3]==='ref'?'Referee scored':'Self-logged'}</span></div>`).join('');
+// season book
+$('#book').innerHTML=`<div class="page cover"><span class="cap" style="color:#D9F24A">Season Book · 2026</span><div class="disp" style="font-size:34px;margin-top:8px">Meera Rao</div><p class="ser" style="font-size:15px;color:#BFD0C4;margin-top:6px">6 events · 17 matches · partner of the season: Divya</p><div style="margin-top:auto;display:flex;gap:2px;height:30px;align-items:center">${'UUTUTTUUUTUUTTTUUUUUTUTUU'.split('').map(c=>`<i style="flex:1;height:10px;border-radius:2px;background:${c==='U'?'#D9F24A':'rgba(241,244,234,.3)'};transform:translateY(${c==='U'?-6:6}px)"></i>`).join('')}</div><p style="font-size:11px;color:#9FB4A6;margin-top:8px">The cover is made when the season closes</p></div>`+
+[['06','15 Nov','DUPR Night · Loki\'s','They led 9–4. You won 12–10.','Personal best set here: 8-rally run'],['05','8 Nov','Rally33 Ladder','Lost the decider 8–11.','Closest game of the season'],['04','1 Nov','Pickle Yard Social','3 wins from 4.',''],['03','18 Oct','TPC Open','Saved 2 match points.','Personal best: match points saved']].map(p=>`<div class="page"><span class="pn">${p[0]}</span><span style="font:700 10px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#4A5D50">${p[1]}</span><b style="font-size:15px">${p[2]}</b><div style="font-family:var(--display);font-stretch:70%;font-weight:900;font-size:26px;line-height:1;text-transform:uppercase;margin-top:6px">${p[3]}</div>${p[4]?`<div class="pb">${p[4]}</div>`:'<div class="pb" style="color:#4A5D50">Hosted by the club · Receipt page</div>'}</div>`).join('')+
+`<div class="page spread"><span style="font:700 10px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#4A5D50">Partner spread</span><div style="font-family:var(--display);font-stretch:70%;font-weight:900;font-size:30px;line-height:1;text-transform:uppercase;margin-top:8px">Meera &amp; Divya</div><p style="font-size:14px;margin-top:8px">14 events together · 3 comebacks · 71% of close games won</p><div class="pb">Shows publicly only if both of you publish</div></div>`;
+// records
+$('#records').innerHTML=[['Longest run','9','Kiran & Neha','Rally33 Ladder at Loki\'s · 12 Nov','You are 1 away'],['Biggest comeback','5','Meera & Divya','From 4–9 to 12–10 · 15 Nov','That is you'],['Match points saved','3','Asha & Lata','Winter Smash SF1 · 28 Nov',''],['Most club nights','22','Rohan Sharma','This season','']].map(r=>`<div class="rec"><span class="n acc">${r[1]}</span><b>${r[0]}</b><span class="mut" style="font-size:13px;grid-column:1">${r[2]} · ${r[3]}</span>${r[4]?`<span class="chip" style="grid-column:2;grid-row:1;justify-self:end;${r[4]==='That is you'?'background:var(--gold);color:#2A1D00':''}">${r[4]}</span>`:''}</div>`).join('')+`<button class="btn ghost sm" style="margin-top:10px" data-toast="Loki's can now post your record as a club story">Let Loki's post my record</button>`;
+// publish options
+$('#pubOpts').innerHTML=[['My public profile',true],['Loki\'s club story (WhatsApp)',true],['Share card to save or send',false]].map(o=>`<label class="row" style="min-height:52px;border-top:1px solid var(--line);gap:12px"><span class="sp">${o[0]}</span><input type="checkbox" ${o[1]?'checked':''} style="width:22px;height:22px;accent-color:var(--ball)"></label>`).join('');
+// practice steppers
+const PL={a:11,b:7};document.addEventListener('click',e=>{const b=e.target.closest('[data-stp-step]');if(!b)return;const [k,d]=b.dataset.stpStep.split(',');const from=PL[k];PL[k]=Math.max(0,Math.min(30,PL[k]+ +d));countTo($('#pl'+k.toUpperCase()),from,PL[k]);});
+// countdown
+(function(){const t=new Date('2026-12-03T19:30:00+05:30').getTime();const f=()=>{let d=Math.max(0,t-Date.now());$('#cdD').textContent=Math.floor(d/864e5);$('#cdH').textContent=String(Math.floor(d%864e5/36e5)).padStart(2,'0');};f();setInterval(f,60000);})();
+
+
+/* ================= MATCH DAY ================= */
+Board($('#mdBoard'),main,{call:false,round:'SF2'});DNA($('#mdDna'),main);
+Board($('#mdTvBoard'),main,{call:true,round:'Semi-final 2'});DNA($('#mdTvDna'),main);
+others.forEach(m=>{const d=document.createElement('div');d.className='tvc';$('#mdTvRail').appendChild(d);Board(d,m,{quiet:true});});
+function mdRender(e){const s=main.s,T=main.o.teams;
+  if(e&&e.prev){countTo($('#mdA'),e.prev.pts[0],s.pts[0]);countTo($('#mdB'),e.prev.pts[1],s.pts[1]);}else{$('#mdA').textContent=s.pts[0];$('#mdB').textContent=s.pts[1];}
+  $('#mdCall').textContent=main.call();$('#mdGame').textContent=`Game ${s.game} · games ${s.games[0]}–${s.games[1]}`;
+  $('#mdTapA').classList.toggle('srvside',s.serving===0);$('#mdTapB').classList.toggle('srvside',s.serving===1);
+  $('#mdSubA').textContent=s.serving===0?`Serving · server ${s.server}`:'Receiving';$('#mdSubB').textContent=s.serving===1?`Serving · server ${s.server}`:'Receiving';
+  $('#mdUndo').disabled=!main.hist.length;$('#mdConfirm').disabled=!(s.over&&!s.confirmed);$('#mdConfirm').textContent=s.confirmed?'Final confirmed':'Confirm final score';
+  [$('#mdTapA'),$('#mdTapB')].forEach(b=>b.disabled=s.over||s.hold);
+  $('#mdArena').dataset.light=$('#arena').dataset.light;$('#mdStory').textContent=$('#story').textContent;$('#mdWp').textContent=Math.round(main.wp()*100)+'% Meera & Divya';
+}
+main.on(e=>mdRender(e));mdRender();
+let mdIdle;function mdTake(){main.auto=false;clearTimeout(mdIdle);mdIdle=setTimeout(()=>{if(cur==='matchday'){main.auto=true;$('#mdPr').textContent='Auto-play is back on. Tap to take over.';}},12000);}
+$('#mdTapA').onclick=e=>{mdTake();tap(0,e);};$('#mdTapB').onclick=e=>{mdTake();tap(1,e);};
+$('#mdUndo').onclick=()=>{mdTake();$('#undoBtn').click();};
+$('#mdConfirm').onclick=()=>{$('#confirmBtn').disabled=false;$('#confirmBtn').click();};
+$('#mdSync').onclick=()=>$('#sync').click();
+
+/* refresh bracket live score now and then */
+main.on(e=>{if(e.type==='newgame'||e.type==='confirm'||e.type==='reset')drawBracket();});
+
+go();
+})();
+</script>
+</body>
+</html>
