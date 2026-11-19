@@ -84,4 +84,11 @@ describe('v1.2 shells',()=>{
   expect(clubMark('Rally33 at Crosscourts')).toBe('R33');expect(clubMark('The Pickleball Company')).toBe('TPC');expect(clubMark('Loki Pickleball')).toBe('LP');expect(clubMark('PQ Demo Friends Club')).toBe('PFC');
   expect(clubShort('Rally33 at Crosscourts')).toBe('Rally33');expect(clubShort('Ekam Pickleball')).toBe('Ekam Pickleball');
  });
+ it('organiser menu links carry their real address and leave Ctrl/Cmd-click to the browser (UX-06)',async()=>{
+  const go=vi.fn();render(<OrgShell go={go} active="entries" clubName="Rally33 at Crosscourts" clubId="c1" tournament={{id:'t1',name:'Rally33 Open',slug:'r33'}}><p>x</p></OrgShell>);await act(async()=>{});
+  const side=screen.getByRole('complementary',{name:'Organiser menu'});const ref=within(side).getByRole('link',{name:'Referees & results'});
+  expect(ref.getAttribute('href')).toBe('#/club-scorers/t1');
+  fireEvent.click(ref,{ctrlKey:true});fireEvent.click(ref,{metaKey:true});expect(go).not.toHaveBeenCalled();
+  fireEvent.click(ref);expect(go).toHaveBeenCalledWith('club-scorers','t1');
+ });
 });

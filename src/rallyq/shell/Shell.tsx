@@ -54,7 +54,7 @@ export type OrgTab='home'|'tournaments'|'results'|'club'|'social'|'entries'|'dra
 /** Organiser pages: host club on top of the side menu, event steps below, RallyQ sign-off last. */
 export function OrgShell({go,active,clubName='Your club',clubId,tournament,children}:{go:Go;active:OrgTab;clubName?:string;clubId?:string;tournament?:{id:string;name:string;slug?:string|null};children:ReactNode}){
  // Each menu link carries its real address, so copy-link / open-in-new-tab land on that page (UX-06).
- const item=(k:OrgTab,label:string,to:Parameters<Go>[0],id?:string)=><a key={k} className={k===active?'on':undefined} aria-current={k===active?'page':undefined} href={'#/'+to+(id?'/'+encodeURIComponent(id):'')} onClick={e=>{e.preventDefault();go(to,id)}}>{label}</a>;
+ const item=(k:OrgTab,label:string,to:Parameters<Go>[0],id?:string)=><a key={k} className={k===active?'on':undefined} aria-current={k===active?'page':undefined} href={'#/'+to+(id?'/'+encodeURIComponent(id):'')} onClick={e=>{if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||e.button!==0)return;e.preventDefault();go(to,id)}}>{label}</a>;
  const t=tournament;
  const[n,setN]=useState({mode:0,head:0});
  const reg=useCallback((k:'mode'|'head')=>{setN(c=>({...c,[k]:c[k]+1}));return()=>setN(c=>({...c,[k]:c[k]-1}));},[]);
