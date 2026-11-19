@@ -105,7 +105,7 @@ describe('Club mode', () => {
       expect(screen.getByText(/came back from 3–8/)).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Start game 2' }));
       for (let i = 0; i < 11; i++) await user.click(screen.getAllByRole('button', { name: /^Point to / })[0]);
-      await user.click(screen.getByRole('button', { name: 'Save result' }));
+      await user.click(screen.getByRole('button', { name: 'Confirm final score' }));
       await screen.findByRole('heading', { name: 'PQ Demo Open' });
     }
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Final' })).toBeInTheDocument());
@@ -246,22 +246,22 @@ describe('Club mode', () => {
     window.location.hash = `#/court/${link.token}`;
     const pin = await screen.findByLabelText('PIN');
     await user.type(pin, link.pin === '0000' ? '1111' : '0000');
-    await user.click(screen.getByRole('button', { name: 'Start scoring' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong PIN');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent("That PIN didn't work. Try again.");
     await user.clear(pin);
     await user.type(pin, link.pin);
-    await user.click(screen.getByRole('button', { name: 'Start scoring' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
     // The any-court link asks which court this referee is on.
-    if (!link.court) { await screen.findByRole('heading', { name: 'Which court are you on?' }); await user.click(screen.getByRole('button', { name: 'Court 1' })); }
+    if (!link.court) { await screen.findByRole('heading', { name: 'Choose your court' }); await user.click(screen.getByRole('button', { name: 'Court 1' })); await user.click(screen.getByRole('button', { name: 'Open court' })); }
     await screen.findByText('Up next');
     expect(screen.queryByText(/DUPR|@/)).not.toBeInTheDocument();
-    await user.click(screen.getAllByRole('button', { name: /^Score: / })[0]);
+    await user.click(screen.getAllByRole('button', { name: /^Score match: / })[0]);
     await user.click(await screen.findByRole('button', { name: 'Rally scoring' }));
     for (let g = 0; g < 2; g++) {
       for (let i = 0; i < 11; i++) await user.click(screen.getAllByRole('button', { name: /^Point to / })[0]);
       if (g === 0) await user.click(screen.getByRole('button', { name: 'Start game 2' }));
     }
-    await user.click(screen.getByRole('button', { name: 'Save result' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm final score' }));
     await screen.findByText('Finished');
     const [{ club }] = await demoBackend().myClubs();
     const done = (await demoBackend().clubBundle(club.id)).matches.filter((m) => m.stage === 'sf' && m.status === 'done');
@@ -279,7 +279,7 @@ describe('Club mode', () => {
     await screen.findByText('Court 1 link turned off');
     window.location.hash = `#/court/${c1.token}`;
     await user.type(await screen.findByLabelText('PIN'), c1.pin);
-    await user.click(screen.getByRole('button', { name: 'Start scoring' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/isn’t valid/);
   });
 

@@ -10,10 +10,10 @@ test.describe('Court scorer link (no account)', () => {
     const { token, pin } = box.links.court1;
     await page.goto(`#/court/${token}`);
     await page.getByLabel('PIN').fill(wrongPin(pin));
-    await page.getByRole('button', { name: 'Start scoring' }).click();
-    await expect(page.getByRole('alert')).toHaveText('Wrong PIN');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(page.getByRole('alert')).toHaveText("That PIN didn't work. Try again.");
     await page.getByLabel('PIN').fill(pin);
-    await page.getByRole('button', { name: 'Start scoring' }).click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Court 1' })).toBeVisible();
     await expect(page.getByRole('button', { name: /against/ })).toHaveCount(2);
     await expect(page.getByRole('button', { name: /Asha Test against Meera Test/ })).toBeVisible();
@@ -32,7 +32,7 @@ test.describe('Court scorer link (no account)', () => {
     await expect(page.getByText('Golden point · next point wins')).toBeVisible();
     await tap(page, 'Asha Test', 'Meera Test', 'B'); // 10–11
     await expect(page.getByText(/Meera Test came back from \d+–\d+/)).toBeVisible();
-    await page.getByRole('button', { name: 'Save result' }).click();
+    await page.getByRole('button', { name: 'Confirm final score' }).click();
     await expect(page.getByLabel('Finished')).toContainText('10–11');
     await expect(page.getByLabel('Finished').getByText('10–11')).toHaveCount(2);
     await expect(page.getByLabel('Finished')).toContainText('Meera Test');
@@ -52,7 +52,7 @@ test.describe('Court scorer link (no account)', () => {
     await expect(page.getByText('Saved', { exact: true })).toBeVisible();
     await context.setOffline(true);
     await tap(page, 'Asha Test', 'Kiran Test', 'ABA');
-    await expect(page.getByText('Not sent yet · retrying')).toBeVisible();
+    await expect(page.getByText('Saved on this device')).toBeVisible();
     await context.setOffline(false);
     await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 30_000 });
     const view = (await rpc('scorer_open', { p_token: token, p_pin: pin })).body as { matches: { id: string; status: string; games: { points: string }[] }[] };

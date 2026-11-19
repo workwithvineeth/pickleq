@@ -22,8 +22,8 @@ async function openCourt(page: Page) {
   await page.goto('#/court/robot-court');
   await page.reload();
   await page.getByLabel('PIN', { exact: true }).fill('4826');
-  await page.getByRole('button', { name: 'Start scoring' }).click();
-  await expect(page.getByRole('heading', { name: 'Court 1', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Court 1 · Match queue', exact: true })).toBeVisible();
 }
 
 async function fitsPhone(page: Page) {
@@ -35,23 +35,23 @@ async function fitsPhone(page: Page) {
 
 test('saving a referee result offers the next match on the court list', async ({ page }) => {
   await openCourt(page);
-  await page.getByRole('button', { name: /^Score:/ }).click();
+  await page.getByRole('button', { name: /^Score match:/ }).click();
   const point = page.getByRole('button', { name: /^Point to / }).first();
   for (let i = 0; i < 11; i++) await point.click();
-  await page.getByRole('button', { name: 'Save result', exact: true }).click();
-  await expect(page.getByText('Result saved', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Confirm final score', exact: true }).click();
+  await expect(page.getByText('Final score saved.', { exact: true })).toBeVisible();
   const next = page.getByRole('button', { name: /^Start next:/ });
   await expect(next).toBeVisible();
   expect(await next.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
   await fitsPhone(page);
   await next.click();
   await expect(page.getByRole('button', { name: /^Point to / }).first()).toBeVisible();
-  await expect(page.getByText('Result saved', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Final score saved.', { exact: true })).toHaveCount(0);
 });
 
 test('the referee sees an offline banner after losing signal, which clears on reconnect', async ({ page, context }) => {
   await openCourt(page);
-  await page.getByRole('button', { name: /^Score:/ }).click();
+  await page.getByRole('button', { name: /^Score match:/ }).click();
   const banner = page.getByRole('status', { name: 'Connection', exact: true });
   await expect(banner).toHaveCount(0);
   await context.setOffline(true);

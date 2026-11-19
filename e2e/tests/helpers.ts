@@ -53,8 +53,8 @@ export const wrongPin = (pin: string) => (pin === '0000' ? '1111' : '0000');
 export async function openCourt(page: Page, token: string, pin: string) {
   await page.goto(`#/court/${token}`);
   await page.getByLabel('PIN').fill(pin);
-  await page.getByRole('button', { name: 'Start scoring' }).click();
-  await expect(page.getByRole('heading', { name: /^Court \d$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /^Court \d · Match queue$/ })).toBeVisible();
 }
 
 /** Taps points: "A" for the left player, "B" for the right. Waits for each tap to register. */
