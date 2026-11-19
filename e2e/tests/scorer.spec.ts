@@ -15,7 +15,9 @@ test.describe('Court scorer link (no account)', () => {
     await page.getByLabel('PIN').fill(pin);
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Court 1' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /against/ })).toHaveCount(2);
+    // Matches to score (the finished match has its own "View result" button).
+    await expect(page.getByRole('button', { name: /^(?!View result:).*against/ })).toHaveCount(2);
+    await expect(page.getByRole('button', { name: /^View result: Asha Test against Ravi Test/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Asha Test against Meera Test/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Ravi Test against Kiran Test/ })).toHaveCount(0);
     await expect(page.getByLabel('Finished')).toContainText('10–11');
