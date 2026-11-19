@@ -38,3 +38,5 @@ Never change the database, scoring logic or user flows.
 - Codex · Fri 20 Nov · Task 1: added pure rally records, serving calls, current runs and level signals with tests, reusing existing replay/history helpers; pull, commit and push blocked by read-only .git metadata.
 - Codex · Fri 20 Nov · Task 2: added pure LivingQ and Dna components using the prototype geometry and rally records, with rendering tests for strokes, titles, current runs and undo; left in the working tree for Claude review.
 - Codex · Fri 20 Nov · Task 3 (Live only): wired current-game rallies, Living Q, DNA, serving calls and live run/Level tags into Live values; completed sample histories (Granite 3–1 keeps its BAA ending, longest run 2), added unit coverage, and left changes for Claude review without pull, commit or push.
+- Fri 05:00 · Codex tasks 2 (LivingQ/Dna) and 3 (Live wiring) reviewed and merged; Live board shows Q + DNA (sample and real).
+- Fri 05:05 · Robot (android, local build 69e2bac): 75 passed, 1 failed (same pre-existing CSP shell-matrix check). TV slots added; Codex task 4 = TV values.
