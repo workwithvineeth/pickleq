@@ -15,6 +15,12 @@ reference code: `QPATH`, `QPTS`, `qAt`, `qSig` (~line 1246) and `drawQ` / `tags`
 - Append one line per step to the "Log" section of `docs/RESKIN-LOG.md` (prefix `Codex ·`), commit and push it.
 - Never push to any other branch. Never force-push.
 
+## How we work (Vineeth's rule)
+We are developing an **existing, tested product**. Do not invent features, rename things, refactor, restyle,
+add dependencies or scaffold anything. Do **only the one task Claude names in the prompt**, in the files it
+names, then stop. Claude reviews every diff before the next task and reverts anything outside scope.
+If something in the task looks wrong or unclear, write the question in the log, commit, push and stop.
+
 ## Task 1 · Rally record (pure, tested)
 New file `src/rallyq/arena/rallies.ts` (+ `rallies.test.ts`).
 `ralliesOf(game, doubles): Rally[]` builds the spec's rally record from what a game already stores
