@@ -114,3 +114,13 @@
 @keyframes rqglow{from{opacity:0}to{opacity:1}}
 @keyframes rqrail{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @media (prefers-reduced-motion:reduce){.rq .champ::before,.rq .champ::after{animation:none}}
+
+/* ---- Venue TV (always Night): Match DNA strip and a small Living Q per court ---- */
+.rq .tv-arena{display:grid;grid-template-columns:minmax(0,1fr) clamp(52px,7vh,96px);gap:12px;align-items:center;width:100%;margin-top:6px}
+.rq .tv-dna .dna{height:clamp(36px,5vh,64px);margin-top:0}
+.rq .tv-dna .dna i{height:clamp(12px,1.8vh,24px)}
+.rq .tv-dna .dna i.a{transform:translateY(calc(clamp(12px,1.8vh,24px) * -.6))}
+.rq .tv-dna .dna i.b{transform:translateY(calc(clamp(12px,1.8vh,24px) * .6))}
+.rq .tv-dna .dna i.so{height:5px}
+.rq .tv-q{width:100%}
+.rq .tv-q .lqn b{font-size:clamp(12px,1.8vh,20px)}
