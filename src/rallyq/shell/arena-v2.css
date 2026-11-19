@@ -1,0 +1,67 @@
+/* RallyQ · Arena System v2 (20 Nov 2026) · visual layer only.
+   Loaded after rq.css / v12.css on every RallyQ screen, so removing this file brings back v1.2 exactly.
+   Spec: project files rallyq/final-prototype/rallyq-build-spec.md (sections 2-4).
+   Ball green = "now" only · Sea Glass = Team A · Tide Blue = Team B · Gold = confirmed results only ·
+   Coral = act now (never a team, never a score) · Signal grey = stale/offline. */
+
+/* ---- 2. Colour tokens ---- */
+.rq{--sea:#76E0D0;--tide:#7EAEF2;--signal:#BDCBC6;--danger:#AD2945;--soft:#BFD0C4;--gold:#E8C35A;--coral:#FF655C;
+  --c1:rgba(8,30,19,.6);--c2:rgba(19,48,34,.62);--c3:rgba(26,61,43,.62);
+  --line2:rgba(241,244,234,.18);--gblur:blur(16px) saturate(1.2);
+  --edge:inset 0 0 0 1px rgba(241,244,234,.2),inset 0 1px 0 rgba(241,244,234,.1),0 16px 48px rgba(0,0,0,.28);
+  --work:rgba(10,33,26,.85)}
+.rq.day{--sea:#8CEADB;--tide:#7EAEF2;--signal:#DDE6E2;--soft:#EAF3EC;--gold:#E8C35A;--coral:#FF655C;
+  --c1:rgba(8,30,19,.52);--c2:rgba(255,255,255,.09);--c3:rgba(6,24,15,.32);--line2:rgba(255,255,255,.34);
+  --edge:inset 0 0 0 1px rgba(255,255,255,.25),inset 0 1px 0 rgba(255,255,255,.12),0 16px 48px rgba(6,20,13,.22);
+  --work:rgba(8,30,19,.85)}
+
+/* ---- 3. Glass: floodlit court at Night, the crowd courtside by Day ---- */
+.rq{background:linear-gradient(180deg,rgba(6,20,13,.80) 0%,rgba(6,20,13,.90) 55%,rgba(6,20,13,.95) 100%),url(./court-night.jpg) center 30%/cover fixed,#06140D}
+.rq.day{background:linear-gradient(180deg,rgba(43,110,75,.80) 0%,rgba(36,95,64,.84) 45%,rgba(24,68,45,.92) 100%),url(./photos/desktop/event-crowd-courtside.jpg) center 35%/cover fixed,#2B6E4B!important}
+@media (max-width:760px){
+  /* Phones: fixed backgrounds jank on iOS, so the photo scrolls with the page. */
+  .rq{background-attachment:scroll;background-image:linear-gradient(180deg,rgba(6,20,13,.80) 0%,rgba(6,20,13,.90) 55%,rgba(6,20,13,.95) 100%),url(./court-night.jpg)}
+  .rq.day{background-attachment:scroll!important;background-image:linear-gradient(180deg,rgba(43,110,75,.80) 0%,rgba(36,95,64,.84) 45%,rgba(24,68,45,.92) 100%),url(./photos/mobile/event-crowd-courtside.jpg)!important}
+}
+.rq .card,.rq.day .card{background:var(--c1);box-shadow:var(--edge);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+.rq .card{border-radius:20px}
+.rq .m,.rq .opt,.rq .panel2{background:var(--c1);box-shadow:var(--edge)}
+.rq .card2{background:var(--c2)}
+.rq .tab{background:var(--c1);box-shadow:var(--edge)}
+.rq .tab.on{background:var(--ink);color:#06140D;box-shadow:none}
+.rq .hdr{background:rgba(6,20,13,.45);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.rq.day .hdr{background:rgba(6,24,15,.38)}
+.rq .mpanel{background:rgba(6,20,13,.82);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.rq .side{background:rgba(6,20,13,.55);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.rq .inp{background:var(--c2);box-shadow:inset 0 0 0 1px var(--line2)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .rq .card,.rq .m,.rq .opt,.rq .tab{background:#0D2218}
+  .rq .card2{background:#133022}
+  .rq.day .card,.rq.day .m,.rq.day .opt,.rq.day .tab{background:#1F5538}
+}
+
+/* ---- Atoms: buttons and chips ---- */
+.rq .btn.ghost{box-shadow:inset 0 0 0 1px var(--line2)}
+.rq .btn.chalk{background:var(--ink);color:#06140D!important}
+.rq .chip.live,.rq .st.live,.rq.day .chip.live,.rq.day .st.live{background:var(--ball);color:var(--on)}
+.rq .chip.live::before,.rq .st.live::before{background:var(--on);animation:rqbreathe 1.8s ease-in-out infinite}
+@keyframes rqbreathe{0%,100%{opacity:1}50%{opacity:.3}}
+.rq .chip.coral,.rq .st.coral{background:var(--coral);color:#1A0603}
+.rq .chip.stale,.rq .st.stale{background:var(--signal);color:#06140D}
+.rq .chip.stale::before,.rq .st.stale::before{content:"◷";font-size:12px;letter-spacing:0}
+.rq .chip.line{background:transparent;box-shadow:inset 0 0 0 1px var(--line2);color:var(--mut)}
+.rq .chip.danger,.rq .st.danger{background:var(--danger);color:#fff}
+.rq .chip.gold,.rq .st.champ{background:var(--gold);color:#2A1D00}
+.rq .needs{box-shadow:inset 0 0 0 1.5px var(--coral),var(--edge)!important}
+.rq :focus-visible{outline:2px solid var(--ball);outline-offset:2px}
+
+/* ---- Scoreboards: Team A rail in Sea Glass, Team B in Tide Blue (court lists stay quiet: no Wash, no Q) ---- */
+.rq .score{position:relative}
+.rq .score > .t:nth-child(1),.rq .score > .t:nth-child(3){padding-left:11px;position:relative}
+.rq .score > .t:nth-child(1)::before,.rq .score > .t:nth-child(3)::before{content:"";position:absolute;left:0;top:18%;bottom:18%;width:3px;border-radius:0 3px 3px 0;background:var(--sea)}
+.rq .score > .t:nth-child(3)::before{background:var(--tide)}
+.rq .m > div:first-child{box-shadow:inset 3px 0 0 var(--sea)}
+.rq .m > div:nth-child(2){box-shadow:inset 3px 0 0 var(--tide)}
+
+/* ---- Reduced motion: every effect becomes a short fade ---- */
+@media (prefers-reduced-motion:reduce){.rq .chip.live::before,.rq .st.live::before{animation:none}}

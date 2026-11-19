@@ -2,8 +2,10 @@ import {createElement,Fragment,isValidElement,useEffect,useMemo,useState,type CS
 import type {Go,RouteName} from '../navigation';
 import {chooseTheme,currentTheme,subscribeTheme} from '../theme';
 import sharedRaw from '../../public/rallyq/rq.css?raw';
+import arenaRaw from './shell/arena-v2.css?raw';
 /** rq.css is the final v1.2 stylesheet (a copy of shell/v12.css with ./ image paths, so it also works as a static file). */
-const shared=sharedRaw.replaceAll('url(./','url('+import.meta.env.BASE_URL+'rallyq/');
+/** Arena System v2 (20 Nov 2026) sits on top of v1.2; drop arenaRaw to go back. */
+const shared=(sharedRaw+'\n'+arenaRaw).replaceAll('url(./','url('+import.meta.env.BASE_URL+'rallyq/');
 import './rallyq.css';
 import {Watermark} from './shell/Watermark';
 import {accountLink,personalise,useHome} from './useHome';
