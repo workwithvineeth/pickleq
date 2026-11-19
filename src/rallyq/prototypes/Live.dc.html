@@ -43,9 +43,11 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
 <div class="photo ph-live" style="border-radius:24px;padding:28px;min-height:420px;display:flex;flex-direction:column;justify-content:space-between;gap:20px">
 <div class="between"><div class="row"><span class="{{sel.chip}}">{{sel.status}}</span><span class="cap" style="color:#DDE7DC">{{sel.court}} · {{venue}} · {{sel.stage}}</span></div><span class="cap" style="color:#DDE7DC">Game {{sel.game}} of 3 · to 11</span></div>
-<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;align-items:center">
-<div class="disp" style="font-size:clamp(28px,3.4vw,46px)"><span class="serve" style="width:12px;height:12px"></span>{{sel.a}}</div><div class="n acc" style="font-size:clamp(80px,10vw,150px)">{{sel.sa}}</div>
-<div class="disp" style="font-size:clamp(28px,3.4vw,46px);color:#C9D6CC">{{sel.b}}</div><div class="n" style="font-size:clamp(80px,10vw,150px)">{{sel.sb}}</div>
+<div class="sbg arena-board"><div class="rows">
+<div class="tr2" data-t="0"><span class="srv {{sel.servingA}}" aria-hidden="true"></span><div class="nm"><b class="disp" style="font-size:clamp(26px,3.2vw,44px)">{{sel.a}}</b><span class="tagl"><i class="sno {{sel.servingA}}">{{sel.serverNo}}</i><span class="tagt">{{sel.tagA}}</span></span></div><div class="n pts">{{sel.sa}}</div></div>
+<div class="tr2" data-t="1"><span class="srv {{sel.servingB}}" aria-hidden="true"></span><div class="nm"><b class="disp" style="font-size:clamp(26px,3.2vw,44px)">{{sel.b}}</b><span class="tagl"><i class="sno {{sel.servingB}}">{{sel.serverNo}}</i><span class="tagt">{{sel.tagB}}</span></span></div><div class="n pts">{{sel.sb}}</div></div>
+</div><sc-if value="{{sel.q}}" hint-placeholder-val="{{ false }}"><div class="lq" aria-label="The Q keeps score: one stroke per rally">{{sel.q}}<div class="lqn"><b>{{sel.rallyCount}}</b><span>rallies</span></div></div></sc-if></div>
+<sc-if value="{{sel.dna}}" hint-placeholder-val="{{ false }}"><div class="arena-dna"><div class="between"><span class="cap" style="color:#DDE7DC">Match DNA · one mark per rally</span><span class="cap" style="color:#DDE7DC">{{sel.call}}</span></div>{{sel.dna}}</div></sc-if>
 </div>
 <div class="between"><div class="row" style="gap:8px"><span class="cap" style="color:#DDE7DC">Games</span><sc-for list="{{sel.games}}" as="g" hint-placeholder-count="2"><span class="chip">{{g}}</span></sc-for></div><span class="mut" style="font-size:13px">Updated 4 s ago · scored by court referee</span></div>
 </div>

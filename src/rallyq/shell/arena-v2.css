@@ -65,3 +65,45 @@
 
 /* ---- Reduced motion: every effect becomes a short fade ---- */
 @media (prefers-reduced-motion:reduce){.rq .chip.live::before,.rq .st.live::before{animation:none}}
+
+/* ---- 6. Board (featured scoreboard on Live): team rails, server dot + number, tag line, Living Q, Match DNA ---- */
+.rq .sbg{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+.rq .sbg > .rows{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rq .tr2{--tc:var(--sea);position:relative;display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:12px;padding:14px 18px;border-radius:18px;background:rgba(19,48,34,.55);overflow:hidden;isolation:isolate;-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+.rq.day .tr2{background:var(--c2)}
+.rq .tr2[data-t="1"]{--tc:var(--tide)}
+.rq .tr2::before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:4px;border-radius:0 4px 4px 0;background:var(--tc)}
+.rq .tr2 .srv{width:12px;height:12px;border-radius:50%;background:var(--ball);opacity:0;justify-self:center;box-shadow:0 0 0 1.5px var(--on)}
+.rq .tr2 .srv.on{opacity:1;animation:rqpulse2 420ms var(--rq-ease,cubic-bezier(.23,1,.32,1))}
+@keyframes rqpulse2{0%{transform:scale(.2)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.rq .tr2 .nm{min-width:0;display:flex;flex-direction:column;line-height:1.05}
+.rq .tr2 .nm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rq .tr2 .pts{font-size:clamp(72px,10vw,150px);line-height:.9;text-align:right;min-width:1.1em}
+.rq .tagl{display:flex;align-items:center;gap:6px;margin-top:6px;min-height:18px}
+.rq .sno{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:5px;background:var(--ink);color:#06140D;font-style:normal;font-weight:800;font-size:12px;visibility:hidden}
+.rq .sno.on{visibility:visible}
+.rq .sno:empty{display:none}
+.rq .tagt{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+.rq .tagt:empty{display:none}
+.rq .lq{position:relative;width:clamp(96px,14vw,170px);display:grid;place-items:center}
+.rq .lq svg{width:100%;height:auto;overflow:visible;display:block}
+.rq .lq .lqs{stroke-dasharray:12;animation:rqqstroke 240ms var(--rq-ease,cubic-bezier(.23,1,.32,1)) both}
+@keyframes rqqstroke{from{stroke-dashoffset:12}to{stroke-dashoffset:0}}
+.rq .lqn{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.rq .lqn b{display:block;font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:900;font-size:clamp(20px,2.8vw,34px);line-height:1}
+.rq .lqn span{font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.rq .dna{display:flex;gap:3px;height:64px;align-items:center;margin-top:8px}
+.rq .dna i{flex:1;max-width:14px;border-radius:3px;background:var(--line2);height:26px}
+.rq .dna i.a{background:var(--sea);transform:translateY(-15px)}
+.rq .dna i.b{background:var(--tide);transform:translateY(15px)}
+.rq .dna i.so{height:8px;opacity:.55}
+.rq .dna i.run{height:34px;background:var(--ball)}
+.rq .dna i.now{outline:2px solid var(--ball);outline-offset:2px}
+@media (max-width:560px){
+  .rq .arena-board{grid-template-columns:minmax(0,1fr)}
+  .rq .arena-board .lq{position:absolute;top:-6px;right:-4px;width:46px}
+  .rq .arena-board .lqn span{display:none}
+  .rq .arena-board .lqn b{font-size:13px}
+  .rq .tr2{padding:12px 14px;gap:8px}
+}
+@media (prefers-reduced-motion:reduce){.rq .tr2 .srv.on,.rq .lq .lqs{animation:none}}
