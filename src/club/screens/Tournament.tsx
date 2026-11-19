@@ -13,6 +13,7 @@ import { ChampionHero, ResultsPosters, type ChampionInfo } from './ResultsPoster
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
 import { entryRating, formatFor, matchResult, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, tieBreakText, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor, rememberReturn } from '../index';
+import { KnockoutsWaiting } from './KnockoutsWaiting';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, poolsComplete, type NewDivisionInput } from '../plan';
 import { APPROVAL_NOTE, GO_LIVE_NOTE, isAdmin, isApproved, isStaff, ROUND_LABEL, STAGE_LABEL, type KnockoutStage, type ClubMatch, type ClubPlayer, type Division, type DivisionGender, type DivisionKind, type Entry, type EntryMode } from '../types';
 import { ListingCard } from './Inbox';
@@ -331,6 +332,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
       />
       {t.cancelledAt && <div role="status" className="warn">This tournament was cancelled{t.cancelReason ? `: ${t.cancelReason}` : ''}.</div>}
       {msg && <div role="status" className="note">{msg}</div>}
+      {staff && approved && t.status === 'live' && <KnockoutsWaiting divisions={d.divisions} matches={d.matches.filter((m) => m.status !== 'void')} who={(m) => `${names(m.sideA, pmap)} v ${names(m.sideB, pmap)}`} onOpen={() => go('club-desk', t.id)} openLabel="Open at the desk" />}
       {staff && !approved && (
         <nav className="row" style={{ flexWrap: 'wrap' }} aria-label="Set up the tournament">
           <button type="button" className={cls('entries')} onClick={() => go('club-entries', t.id)}>Entries</button>

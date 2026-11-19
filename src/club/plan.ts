@@ -380,3 +380,21 @@ export function nextMatchToCall(matches: ClubMatch[], exceptCourt?: number): Clu
 export function upNext(matches: ClubMatch[], limit = 8): ClubMatch[] {
   return matches.filter((m) => m.status === 'scheduled').sort(bySlot).slice(0, limit);
 }
+
+/**
+ * Pool matches still holding up each event's knockouts (audit 19 Nov): only events that will have knockouts, have none yet,
+ * and have started their pools. The desk lists these so a no-show can be marked as a walkover instead of the draw waiting.
+ */
+export function knockoutBlockers(divisions: Division[], matches: ClubMatch[]): { division: Division; waiting: ClubMatch[] }[] {
+  const out: { division: Division; waiting: ClubMatch[] }[] = [];
+  for (const div of divisions) {
+    if (div.advance === 0 || div.shape === 'ko') continue;
+    const dm = matches.filter((m) => m.divisionId === div.id);
+    if (dm.some((m) => m.stage !== 'pool' && m.status !== 'void')) continue;
+    const pool = dm.filter((m) => m.stage === 'pool');
+    if (!pool.some((m) => m.status === 'done')) continue;
+    const waiting = pool.filter((m) => m.status !== 'done' && m.status !== 'void');
+    if (waiting.length) out.push({ division: div, waiting });
+  }
+  return out;
+}

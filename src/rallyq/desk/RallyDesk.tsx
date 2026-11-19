@@ -3,7 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Go } from '../../navigation';
 import { useTournament } from '../../club/screens/Organiser';
 import { errorText, names, shareText, useLoad } from '../../club/screens/common';
-import { courtBoard, nextMatchToCall, upNext } from '../../club/plan';
+import { courtBoard, knockoutBlockers, nextMatchToCall, upNext } from '../../club/plan';
 import { matchResult, poolLetter, slotTime } from '../../club/domain/engine';
 import { checkFinalScore } from '../../club/domain/momentum';
 import { STAGE_LABEL, type ClubGame, type ClubMatch, type ClubPlayer } from '../../club/types';
@@ -11,6 +11,7 @@ import type { TournamentBundle } from '../../club/backend';
 import { formatRule } from '../../club/screens/ScorePad';
 import { DivisionBody } from '../../club/screens/Tournament';
 import { useDesk } from '../../club/screens/deskContext';
+import { KnockoutsWaiting } from '../../club/screens/KnockoutsWaiting';
 import { DemoBar, MatchdayShell, Say } from '../../club/screens/DeskFrame';
 import { ModeButton, PageHead } from '../shell/Shell';
 import DESK_CSS from './desk.css?raw';
@@ -146,6 +147,8 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
       </div>}
       {!desk && missingLinks > 0 && <div className="warn" role="note" aria-label="Needs you"><span className="grow">Referee links not made for {missingLinks} court{missingLinks > 1 ? 's' : ''}.</span><button type="button" className="tlink" onClick={() => go('club-scorers', t.id)}>Create referee links</button></div>}
 
+      <KnockoutsWaiting divisions={d.divisions} matches={active} who={who} onOpen={(m) => { setSel(m.id); document.getElementById('desk-tools')?.scrollIntoView({ block: 'start' }); }} />
+
       <div id="desk-tools" style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
         <section className="card" aria-label="Fix a match" style={{ flex: '999 1 520px', minWidth: 0, padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {selected
@@ -158,7 +161,7 @@ export function RallyDesk({ id, go, onBack }: { id: string; go: Go; onBack: () =
         <section className="card" aria-labelledby="queue-title" style={{ flex: '1 1 360px', minWidth: 0 }}>
           <div className="between" style={{ padding: '16px 18px 6px' }}><h2 id="queue-title" className="cap">Queue</h2><span className="mut" style={{ fontSize: 12 }}>Call 10 min early</span></div>
           <div className="list">
-            {queue.length === 0 && <div className="mut" style={{ fontSize: 14 }}>No matches waiting.{t.status === 'live' ? ' Knockouts are drawn automatically when the pools finish.' : ''}</div>}
+            {queue.length === 0 && <div className="mut" style={{ fontSize: 14 }}>No matches waiting.{t.status === 'live' && !knockoutBlockers(d.divisions, active).length ? ' Knockouts are drawn automatically when the pools finish.' : ''}</div>}
             {queue.map((m, i) => (
               <div key={m.id}>
                 <span className="n mut" style={{ fontSize: 20, width: 22 }}>{i + 1}</span>
