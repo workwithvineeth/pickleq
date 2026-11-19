@@ -36,3 +36,4 @@ Never change the database, scoring logic or user flows.
 - Fri 04:35 · Robot (android, local build): 75 passed, 1 failed (shell matrix CSP check; fails the same on 12f1cd0 locally, so not ours).
 - Fri 04:40 · Codex task 1 (src/rallyq/arena/rallies.ts) written, under review.
 - Codex · Fri 20 Nov · Task 1: added pure rally records, serving calls, current runs and level signals with tests, reusing existing replay/history helpers; pull, commit and push blocked by read-only .git metadata.
+- Codex · Fri 20 Nov · Task 2: added pure LivingQ and Dna components using the prototype geometry and rally records, with rendering tests for strokes, titles, current runs and undo; left in the working tree for Claude review.
