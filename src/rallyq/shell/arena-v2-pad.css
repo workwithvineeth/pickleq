@@ -1,0 +1,14 @@
+/* RallyQ · Arena System v2 · referee pad (work zone: calm, instant). Batch 3, kept in its own file so it can
+   ship or stay off on its own. Team A = Sea Glass, Team B = Tide Blue, dark ink on both; serving side gets a
+   chalk ring and a ball dot. Work glass (85%). No motion except the press. Logic is untouched. */
+.rq-referee{--c1:var(--work,rgba(10,33,26,.85))}
+.rq-referee .card.section,.rq-referee .card{-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.rq-referee .score-tap-a{background:var(--sea)!important;color:#06140D!important}
+.rq-referee .score-tap-b{background:var(--tide)!important;color:#06140D!important}
+.rq.day .rq-referee .score-tap-b{box-shadow:none}
+.rq-referee .score-tap-a,.rq-referee .score-tap-b{position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -24px 40px rgba(6,20,13,.12)!important}
+.rq-referee .score-tap-a :is(.big,.pq-referee-name,.small,.muted),.rq-referee .score-tap-b :is(.big,.pq-referee-name,.small,.muted){color:#06140D!important}
+.rq-referee .score-tap :is(.small,.muted){opacity:.72}
+.rq-referee .score-tap[data-serving]{box-shadow:inset 0 0 0 3px #F1F4EA,0 0 0 1px rgba(6,20,13,.4)!important}
+.rq-referee .score-tap[data-serving]::after{content:"";position:absolute;top:14px;right:14px;width:16px;height:16px;border-radius:50%;background:var(--ball);box-shadow:0 0 0 2px #06140D}
+.rq-referee .score-tap:disabled{opacity:.55}

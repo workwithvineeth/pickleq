@@ -3,12 +3,13 @@ import { scopedCSS } from '../../rallyq/PrototypeScreen';
 import { clubMark, ModeButton, QMark, Signoff, useDay } from '../../rallyq/shell/Shell';
 import raw from '../../rallyq/shell/v12.css?raw';
 import arenaRaw from '../../rallyq/shell/arena-v2.css?raw';
+import padRaw from '../../rallyq/shell/arena-v2-pad.css?raw';
 import type { Go } from '../../navigation';
 import { OrgShell, type OrgTab } from '../../rallyq/shell/Shell';
 import type { ClubBackend, TournamentBundle } from '../backend';
 import { useDesk } from './deskContext';
 
-const CSS = scopedCSS(raw + '\n' + arenaRaw.replaceAll('url(./', 'url(%BASE%rallyq/')).replaceAll('%BASE%', import.meta.env.BASE_URL);
+const CSS = scopedCSS(raw + '\n' + (arenaRaw + '\n' + padRaw).replaceAll('url(./', 'url(%BASE%rallyq/')).replaceAll('%BASE%', import.meta.env.BASE_URL);
 
 /**
  * The v1.2 look for pages opened without an account (the desk link): the club on top, RallyQ small and last,

@@ -239,13 +239,13 @@ export function ScorePad(p: ScorePadProps) {
         <>
           {so && !curOver && <p role="status" className="pq-serve-call" style={{ margin: 0, fontWeight: 800, fontSize: 22 }} aria-label={`Score call ${so.call}. ${so.serving === 'A' ? nameA : nameB} serving${doubles ? `, server ${so.server}` : ''}`}>{so.call} <span className="small muted" style={{ fontWeight: 600 }}>· {so.serving === 'A' ? nameA : nameB} serving{doubles ? ` · server ${so.server}` : ''}</span></p>}
           <div className="score-grid rq-ref-grid">
-            <button type="button" className="score-tap score-tap-a" aria-label={sideOut ? `Rally to ${nameA}` : `Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || frozen}>
+            <button type="button" className="score-tap score-tap-a" data-serving={so?.serving === 'A' && !curOver ? '' : undefined} aria-label={sideOut ? `Rally to ${nameA}` : `Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || frozen}>
               <span className="small pq-referee-name">{nameA}{so?.serving === 'A' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.a}</span>
               <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
             </button>
             {(golden || gp) && <div role="status" className="pq-gamepoint-strip">{golden ? "GOLDEN POINT" : "GAME POINT"}<small>{golden ? "Golden point · next point wins" : "Game point: " + (gp === "A" ? nameA : nameB)}</small></div>}
-            <button type="button" className="score-tap score-tap-b" aria-label={sideOut ? `Rally to ${nameB}` : `Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || frozen}>
+            <button type="button" className="score-tap score-tap-b" data-serving={so?.serving === 'B' && !curOver ? '' : undefined} aria-label={sideOut ? `Rally to ${nameB}` : `Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || frozen}>
               <span className="small pq-referee-name">{nameB}{so?.serving === 'B' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.b}</span>
               <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
