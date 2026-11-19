@@ -11,6 +11,9 @@ import raw from '../prototypes/TV.dc.html?raw';
 import {holes} from '../holes';
 import {friendlyDate} from '../../club/dates';
 import {useClubLogo,logoTile} from '../useClubLogo';
+import {ralliesOf} from '../arena/rallies';
+import {LivingQ} from '../arena/LivingQ';
+import {Dna} from '../arena/Dna';
 // TV sizes are in vh, read from across the room: scores, names, chips and the Up next line grow with the screen.
 const source=holes(raw,[
  ['width:1280px;height:720px','width:100vw;height:100vh;min-height:560px'],
@@ -40,7 +43,7 @@ const source=holes(raw,[
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 /** Static placeholder courts while the first scores load (no shimmer: TV browsers repaint slowly). */
 const BLANK=' '.repeat(14);
-const SKELETON=Array.from({length:4},()=>({chip:'chip',status:'',name:' '.repeat(8),stage:'',a:BLANK,b:BLANK,sa:'  ',sb:'  ',fs:'clamp(72px,11vh,160px)',aca:'',acb:'',ka:'',kb:'',pk:'',point:'',wa:'',wb:'',sva:'',svb:'',cls:'rqm-skel',win:'',tap:()=>undefined}));
+const SKELETON=Array.from({length:4},()=>({chip:'chip',status:'',name:' '.repeat(8),stage:'',a:BLANK,b:BLANK,sa:'  ',sb:'  ',fs:'clamp(72px,11vh,160px)',aca:'',acb:'',ka:'',kb:'',pk:'',point:'',wa:'',wb:'',sva:'',svb:'',cls:'rqm-skel',win:'',q:undefined,dna:undefined,rallyCount:0,tap:()=>undefined}));
 const hm=(t:Date|number)=>new Date(t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
 /** Venue TV board: every court of one event, live from the public scores. Open it full screen on the venue TV. */
 export function RallyTV({slug,go}:{slug:string;go:Go}){
@@ -69,6 +72,7 @@ export function RallyTV({slug,go}:{slug:string;go:Go}){
  const courts=useMemo(()=>d?courtMatches(d).map(({court,match:onCourt},_,all)=>{
   const match=(held[court]&&d.matches.find(m=>m.id===held[court]))||onCourt;const hold=match!==onCourt;
   const v=matchView(d,match);const live=match.status==='live';
+  const r=ralliesOf(v.current,v.division?.kind!=='singles');
   const show=shown[match.id]??{a:v.pointsA,b:v.pointsB};
   const sa=match.status==='scheduled'?'':show.a,sb=match.status==='scheduled'?'':show.b;
   const over=!v.current||gameOver(v.pointsA,v.pointsB,v.format.pointsTo,!!v.format.golden);
@@ -83,7 +87,8 @@ export function RallyTV({slug,go}:{slug:string;go:Go}){
    ka:flipOnChange(seen,id+':a',String(sa),['rqm-t0','rqm-t1']),kb:flipOnChange(seen,id+':b',String(sb),['rqm-t0','rqm-t1']),
    pk:(point==='Golden point'?'gold ':'')+flipOnChange(seen,id+':p',point,['rqm-p0','rqm-p1']),
    wa:hold&&match.winner==='A'?'Winners':'',wb:hold&&match.winner==='B'?'Winners':'',cls:(hold?'rqm-hold ':'')+fade,
-   sva:serve?.side==='A'?'on':'',svb:serve?.side==='B'?'on':'',point,win:liveWinBar(d,match),tap:()=>undefined};}):[],[d,shown,seen,held,stale]);
+   sva:serve?.side==='A'?'on':'',svb:serve?.side==='B'?'on':'',point,win:liveWinBar(d,match),
+   q:r.length?<LivingQ rallies={r} confirmed={match.status==='done'}/>:undefined,dna:r.length?<Dna rallies={r}/>:undefined,rallyCount:r.length,tap:()=>undefined};}):[],[d,shown,seen,held,stale]);
  const next=d?d.matches.filter(m=>m.status==='scheduled').sort((a,b)=>(a.slot??0)-(b.slot??0)).slice(0,3).map(m=>{const v=matchView(d,m);return v.a+' vs '+v.b;}).join(' · '):'';
  const loading=!d&&scores.loading;const board=loading?SKELETON:courts;
  return <PrototypeScreen name="TV" go={go} source={source} values={{logoUrl:logoUrl??'',noLogo:!logoUrl,courts:board,gridCols:'grid-template-columns:repeat('+(board.length<=4?2:board.length<=6?3:4)+',minmax(0,1fr))',clubName:d?.club??'',clubMark:d?mark(d.club):'',
