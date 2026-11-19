@@ -25,7 +25,8 @@ test('a run-on-RallyQ event keeps contact links disabled while entries are close
 });
 
 test('a listed-only event says Enter with the organiser, with WhatsApp and Call, and no empty entry bar', async ({ page }) => {
-  await page.route('https://*.supabase.co/**', route => route.fulfill({ json: [] }));
+  // The server knows no such event (null), so the page reads the demo's listed event.
+  await page.route('https://*.supabase.co/**', route => route.fulfill({ json: /\/rpc\/public_event$/.test(new URL(route.request().url()).pathname) ? null : [] }));
   await page.goto('#/demo');
   await page.getByLabel('Your name in the demo').fill('Alex');
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
