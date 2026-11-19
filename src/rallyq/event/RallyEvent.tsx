@@ -90,7 +90,8 @@ export function eventValues(e:PublicEvent,d:PublicTournament|undefined,logoUrl:s
  return {
   hasStatus:!d&&!listed,showFill:!listed,hasCap:cap>0,messageLabel:reach?'Call the organiser':'Message the club',
   eventName:e.name,clubName:e.club,clubMark:mark(e.club),logoUrl:logoUrl??'',noLogo:!logoUrl,
-  hostLine:hostLine(e.club,e.venue),
+  // "Hosted by" names the club; the venue is already in the date line above (audit 19 Nov).
+  hostLine:e.club,
   statusLabel:live?'Live now':e.registrationOpen?'Entries open':e.status==='done'?'Results':listed?'Enter with the organiser':'Entries closed',statusChip:live?'chip live':e.registrationOpen||listed?'chip ball':'chip',
   whenWhere:[friendlyDate(e.startDate),friendlyTime(e.startTime),e.venue].filter(Boolean).join(' · '),
   cats:e.divisions.map(x=>x.name),

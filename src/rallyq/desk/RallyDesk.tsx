@@ -247,6 +247,8 @@ function MatchTools({ m, d, pmap, board, busy, onResult, onWalkover, onMove, onS
     const games: ClubGame[] = [];
     for (const [i, r] of rows.entries()) {
       if (!r.a && !r.b) continue;
+      // One empty box is not a 0 (audit 19 Nov): ask for both scores instead of saving 0.
+      if (!r.a || !r.b) return setProblem(`Game ${i + 1}: enter both scores (type 0 if a side scored none)`);
       const e = checkFinalScore(Number(r.a), Number(r.b), m.format.pointsTo, !!m.format.golden);
       if (e) return setProblem(`Game ${i + 1}: ${e}`);
       games.push({ points: '', a: Number(r.a), b: Number(r.b) });

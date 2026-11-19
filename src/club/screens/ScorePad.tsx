@@ -304,6 +304,8 @@ export function ManualScores({ format, nameA, nameB, onSave, onCancel, busy }: {
     const games: ClubGame[] = [];
     for (const [i, r] of rows.entries()) {
       if (!r.a && !r.b) continue;
+      // One empty box is not a 0 (audit 19 Nov): ask for both scores instead of saving 0.
+      if (!r.a || !r.b) return setMsg(`Game ${i + 1}: enter both scores (type 0 if a side scored none)`);
       const e = checkFinalScore(Number(r.a), Number(r.b), format.pointsTo, !!format.golden);
       if (e) return setMsg(`Game ${i + 1}: ${e}`);
       games.push({ points: '', a: Number(r.a), b: Number(r.b) });

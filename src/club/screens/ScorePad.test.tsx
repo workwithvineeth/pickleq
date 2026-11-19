@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClubError, type ScorePatch } from '../backend';
 import { blockUnsent, countUnsent, flushLinkUnsent, readBlocked, readUnsent, writeUnsent } from '../matchdaySafety';
-import { ScorePad } from './ScorePad';
+import { ManualScores, ScorePad } from './ScorePad';
 
 const fmt = { bestOf: 1, pointsTo: 11, golden: false, scoring: 'rally' } as const;
 const sideoutFmt = { ...fmt, scoring: 'sideout' } as const;
@@ -263,5 +263,17 @@ describe('offline banner', () => {
     fail = false;
     await act(async () => { window.dispatchEvent(new Event('online')); vi.advanceTimersByTime(3_000); });
     await waitFor(() => expect(screen.queryByRole('status', { name: 'Connection' })).toBeNull());
+  });
+});
+
+describe('final scores only (audit 19 Nov)', () => {
+  it('warns when one box of a game is empty instead of saving 0', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    render(<ManualScores format={{ bestOf: 1, pointsTo: 11 } as unknown as Parameters<typeof ManualScores>[0]['format']} nameA="Asha" nameB="Gita" onSave={onSave} onCancel={() => undefined} busy={false} />);
+    await user.type(screen.getByLabelText('Game 1 Asha'), '11');
+    await user.click(screen.getByRole('button', { name: 'Save result' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Game 1: enter both scores');
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

@@ -72,6 +72,10 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
  const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};const ev=events[pick.v];const scores=usePublicScores(ev?.slug??'');
  const[now,setNow]=useState(()=>Date.now());
  useEffect(()=>{const t=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(t);},[]);
+ // A link to one event that isn't live right now opens that event's results page, never the sample courts (audit 19 Nov).
+ const notLive=!!slug&&!!directory.data&&want<0;
+ useEffect(()=>{if(notLive&&slug)go('results',slug,{replace:true});},[notLive,slug,go]);
+ if(notLive)return <ShellState name="Live" source={LOADING} go={go} loading/>;
  // Real scores are on their way: show the skeleton, never the sample.
  if((directory.loading&&!directory.data)||(ev&&scores.loading&&!scores.data))return <ShellState name="Live" source={LOADING} go={go} loading/>;
  let venues:Venue[]=SAMPLE;
