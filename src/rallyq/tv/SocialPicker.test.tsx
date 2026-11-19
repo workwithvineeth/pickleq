@@ -38,3 +38,15 @@ it('UX-06: Copy link says Link copied, or plainly that it could not copy', async
   Object.defineProperty(navigator, 'clipboard', { value: { writeText: vi.fn(async () => { throw new Error('denied'); }) }, configurable: true });
   expect(await copyLink('https://example.test/#/court/abc')).toEqual({ ok: false, text: "Couldn't copy the link. Try again." });
 });
+
+it('follows Day mode instead of staying dark (QA checkpoint 2)', async () => {
+  const { chooseTheme } = await import('../../theme');
+  chooseTheme('light');
+  events.mockResolvedValue([]);
+  const { container } = render(<SocialPicker go={vi.fn()} />);
+  await screen.findByText('No tournaments yet');
+  const main = container.querySelector('main')!;
+  expect(main.hasAttribute('data-day')).toBe(true);
+  expect(main.style.background).toBe('rgb(43, 110, 75)');
+  chooseTheme('dark');
+});
