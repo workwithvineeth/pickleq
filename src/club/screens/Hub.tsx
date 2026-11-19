@@ -283,37 +283,38 @@ export function DemoStart({ go, onBack }: { go: Go; onBack: () => void }) {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // Court Green page frame (19 Nov 2026): same steps and labels as before, in the v1.2 public shell.
+  const frame = (body: ReactNode) => (
+    <PublicShell go={go} active={null}>
+      <PageHead cap="For RallyQ admins" title={<span id="demo-title">Demo club</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <section className="card" aria-label="Demo club" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 560 }}>{body}</section>
+    </PublicShell>
+  );
   if (allowed.data === false) {
-    return (
-      <main className="screen" aria-labelledby="demo-title">
-        <Header id="demo-title" title="Demo club" onBack={onBack} />
-        <section className="card section" aria-label="Demo club">
-          <p style={{ margin: 0 }}>The demo club is for RallyQ admins.</p>
-          <p className="small muted" style={{ margin: 0 }}>Running a tournament? Sign in and create your club; RallyQ will help you set up your first event.</p>
-          <button type="button" className="btn btn-primary" onClick={() => go('club-signin')}>Sign in</button>
-          <button type="button" className="btn btn-outline" onClick={() => go('events')}>See events</button>
-        </section>
-      </main>
-    );
+    return frame(<>
+      <p style={{ margin: 0 }}>The demo club is for RallyQ admins.</p>
+      <p className="mut" style={{ margin: 0, fontSize: 14 }}>Running a tournament? Sign in and create your club; RallyQ will help you set up your first event.</p>
+      <div className="row" style={{ flexWrap: 'wrap', gap: 10 }}>
+        <button type="button" className="btn" onClick={() => go('club-signin')}>Sign in</button>
+        <button type="button" className="btn ghost" onClick={() => go('events')}>See events</button>
+      </div>
+    </>);
   }
-  if (!allowed.data) return <main className="screen" aria-labelledby="demo-title"><Header id="demo-title" title="Demo club" onBack={onBack} /><Status error={allowed.error} loading /></main>;
+  if (!allowed.data) return frame(<Status error={allowed.error} loading />);
   async function start() {
     setBusy(true);
     try { const id = await demoBackend().start(name || 'You'); setClubMode('demo'); go('club-view', id); }
     catch (e) { setMsg(errorText(e)); } finally { setBusy(false); }
   }
-  return (
-    <main className="screen" aria-labelledby="demo-title">
-      <Header id="demo-title" title="Demo club" onBack={onBack} />
-      <section className="card section" aria-label="Demo club">
-        <p className="small muted" style={{ margin: 0 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone, for showing RallyQ to clubs and for practice. Close it from My club when you’re done.</p>
-        <label className="label" htmlFor="demo-name">Your name in the demo</label>
-        <input id="demo-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="You" maxLength={40} />
-        {msg && <div role="alert" className="msg msg-bad">{msg}</div>}
-        <button type="button" className="btn btn-primary" disabled={busy} onClick={start}>Open PQ Demo Club</button>
-      </section>
-    </main>
-  );
+  return frame(<>
+    <p className="mut" style={{ margin: 0, fontSize: 14 }}>PQ Demo Club: 56 made-up players and a tournament with 20 singles players and 24 doubles teams. It stays on this phone, for showing RallyQ to clubs and for practice. Close it from My club when you’re done.</p>
+    <div className="fld">
+      <label htmlFor="demo-name">Your name in the demo</label>
+      <input id="demo-name" className="inp" value={name} onChange={(e) => setName(e.target.value)} placeholder="You" maxLength={40} />
+    </div>
+    {msg && <div role="alert" className="warn">{msg}</div>}
+    <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy} onClick={start}>Open PQ Demo Club</button>
+  </>);
 }
 
 /** Paste an invite link (or its code) to join a club. */
