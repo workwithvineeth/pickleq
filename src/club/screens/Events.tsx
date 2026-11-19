@@ -13,6 +13,7 @@ import { DemoNote, errorText, Header, shareLink, Skeleton, Status, useLoad } fro
 import { OrganiserCard, PosterImage } from './Poster';
 import { friendlyDate, friendlyTime } from '../dates';
 import { entryStatus } from '../../rallyq/studio/myTournamentItems';
+import { contactHref } from '../../rallyq/event/contact';
 
 // ---------- Helpers ----------
 
@@ -76,7 +77,7 @@ function hostLine(clubs: number): string {
 function EventStatus({ e }: { e: PublicEvent }) {
   if (e.status === 'live') return <span className="chip live">Live</span>;
   if (e.registrationOpen) return <span className="st ok">Entries open</span>;
-  if (e.listing === 'listed') return <span className="st off">Contact the organiser</span>;
+  if (e.listing === 'listed') return <ContactOrganiser e={e} className="st ok" />;
   return <span className="st off">{e.drawn ? 'Draw made' : 'Entries closed'}</span>;
 }
 
@@ -90,12 +91,19 @@ async function findEvent(slug: string): Promise<{ src: ClubBackend; event: Publi
   return null;
 }
 
+/** Listed-only events: a real WhatsApp link to the organiser when the event gives a number or link (audit 19 Nov). */
+function ContactOrganiser({ e, className }: { e: PublicEvent; className: string }) {
+  const href = e.status !== 'done' ? contactHref(e.contact) : null;
+  if (!href) return <span className={className}>Enter with the organiser</span>;
+  return <a className={className} href={href} target="_blank" rel="noreferrer" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center' }} aria-label={`Contact the organiser of ${e.name}`}>Contact the organiser</a>;
+}
+
 function EventBadges({ e }: { e: PublicEvent }) {
   return (
     <span className="meta" style={{ gap: 6 }}>
       {e.status === 'live' && <span className="pill pill-warn">Live now</span>}
       {e.registrationOpen && <span className="pill pill-ok">Entries open</span>}
-      {e.listing === 'listed' && <span className="pill">Contact the organiser</span>}
+      {e.listing === 'listed' && <ContactOrganiser e={e} className="pill" />}
       {e.listing === 'run' && !e.registrationOpen && e.status !== 'live' && <span className="pill">{e.drawn ? 'Draw made' : 'Entries closed'}</span>}
     </span>
   );
@@ -643,38 +651,40 @@ export function PostEvent({ go, onBack }: { go: Go; onBack: () => void }) {
   }, [b]);
   const clubs = state.data;
   return (
-    <main className="screen pq-matchday pq-proto" aria-labelledby="post-title">
-      <Header id="post-title" title="Post a tournament" onBack={onBack} />
-      <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
+    <PublicShell go={go} active="clubs">
+      <PageHead cap="For clubs" title={<span id="post-title">Post a tournament</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
+      <section className="card" aria-labelledby="post-title" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 640 }}>
+      <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
         <li><b>List it</b> (free): it shows on the board, and players contact you to enter.</li>
         <li><b>Run it on RallyQ</b>: players enter in the app, you accept entries and make the draw, then score every court live. Your first event is free.</li>
       </ul>
-      <p className="small muted" style={{ margin: 0 }}>Your first listing is checked by RallyQ before it appears. After that, your club’s listings go up straight away.</p>
+      <p className="mut" style={{ margin: 0, fontSize: 14 }}>Your first listing is checked by RallyQ before it appears. After that, your club’s listings go up straight away.</p>
       <Status error={state.error} loading={state.loading && clubs === null} />
       {!state.loading && clubs === null && (
         b.kind === 'server'
-          ? <button type="button" className="btn btn-primary" onClick={() => { rememberReturn('#/events-post'); go('club-signin'); }}>Sign in to post</button>
-          : <button type="button" className="btn btn-primary" onClick={() => go('club')}>Open the demo club first</button>
+          ? <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => { rememberReturn('#/events-post'); go('club-signin'); }}>Sign in to post</button>
+          : <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('club')}>Open the demo club first</button>
       )}
       {clubs && clubs.length === 0 && (
         <>
-          <p className="muted">Tournaments are posted by a club. Create yours first; you’ll be its owner.</p>
-          <button type="button" className="btn btn-primary" onClick={() => go('club-new')}>Create a club</button>
+          <p className="mut" style={{ margin: 0 }}>Tournaments are posted by a club. Create yours first; you’ll be its owner.</p>
+          <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-new')}>Create a club</button>
         </>
       )}
       {clubs && clubs.length > 0 && (
-        <section className="section" aria-label="Post as">
-          <div className="label">Post as</div>
+        <section aria-label="Post as" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span className="cap">Post as</span>
           {clubs.map(({ club }) => (
-            <button key={club.id} type="button" className="match-row" onClick={() => go(canHost(club) ? 'club-tournament-new' : 'club-view', club.id)}>
-              <span style={{ flex: 1 }}><b>{club.name}</b>{club.city ? <span className="small muted"> · {club.city}</span> : null}
-                {!canHost(club) && <span className="small muted" style={{ display: 'block' }}>{club.hosting === 'rejected' ? 'Not approved by RallyQ yet: open the club to see why' : 'Waiting for RallyQ to approve this club'}</span>}</span>
+            <button key={club.id} type="button" className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, padding: '12px 18px', border: 0, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer', background: 'var(--c2)' }} onClick={() => go(canHost(club) ? 'club-tournament-new' : 'club-view', club.id)}>
+              <span style={{ flex: 1 }}><b>{club.name}</b>{club.city ? <span className="mut" style={{ fontSize: 13 }}> · {club.city}</span> : null}
+                {!canHost(club) && <span className="mut" style={{ display: 'block', fontSize: 13 }}>{club.hosting === 'rejected' ? 'Not approved by RallyQ yet: open the club to see why' : 'Waiting for RallyQ to approve this club'}</span>}</span>
               <span aria-hidden="true">›</span>
             </button>
           ))}
         </section>
       )}
-    </main>
+      </section>
+    </PublicShell>
   );
 }
 

@@ -20,7 +20,7 @@ test('match day keeps tournament tabs, desk and point scoring usable on a phone'
  await expect(a).toBeVisible();expect(await a.evaluate(el=>parseFloat(getComputedStyle(el.querySelector('.big')!).fontSize))).toBeGreaterThanOrEqual(88);
  expect((await b.boundingBox())!.y).toBeGreaterThan((await a.boundingBox())!.y);
  const before=Number(await a.locator('.big').textContent());await a.click();await expect(a.locator('.big')).toHaveText(String(before+1));
- await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(a.locator('.big')).toHaveText(String(before));
+ await page.getByRole('button',{name:'Undo last point',exact:true}).click();await expect(a.locator('.big')).toHaveText(String(before));
  await a.focus();await page.keyboard.press("Tab");await expect(b).toBeFocused();expect(await b.evaluate(el=>getComputedStyle(el).outlineStyle)).not.toBe("none");await assertContrast(b,"outline");await page.keyboard.press("Shift+Tab");await expect(a).toBeFocused();await assertContrast(a,"outline");
  await page.waitForTimeout(600);
  const limit=await page.evaluate(()=>{const d=JSON.parse(localStorage.getItem("pq-club-demo-v1")!),id=location.hash.split("/").at(-1);return d.matches.find((m:{id:string})=>m.id===id).format.pointsTo-1;});

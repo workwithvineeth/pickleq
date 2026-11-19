@@ -8,6 +8,9 @@ test('normal dashboard and Results tab lead to the organiser results page', asyn
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
   await page.goto('#/club');
   await page.getByRole('button', { name: 'Admin dashboard', exact: true }).click();
+  // UX-05 (19 Nov): the button opens the new #/admin dashboard; its "More admin tools" link opens the classic sections.
+  await expect(page).toHaveURL(/#\/admin$/);
+  await page.getByRole('link', { name: 'More admin tools →' }).click();
   await page.getByRole('group', { name: 'Admin sections' }).getByRole('button', { name: 'Results & DUPR', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tournament results & DUPR', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Add / edit DUPR', exact: true }).first().click();

@@ -33,3 +33,4 @@ import '../court-skin.css';
 
 import '../club/live-view.css';
 import '../rallyq/tokens.css';
+import '../rallyq/legacy-court.css';

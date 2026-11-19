@@ -98,6 +98,11 @@ export async function shareText(text: string): Promise<string> {
   try { await navigator.clipboard.writeText(text); return 'Message copied: paste it in the players’ group'; } catch { return text; }
 }
 
+/** UX-06 copy: copies only (no share sheet), and says plainly when the browser refuses. */
+export async function copyLink(url: string): Promise<{ ok: boolean; text: string }> {
+  try { await navigator.clipboard.writeText(url); return { ok: true, text: 'Link copied' }; } catch { return { ok: false, text: "Couldn't copy the link. Try again." }; }
+}
+
 export async function shareLink(title: string, url: string): Promise<string> {
   try {
     if (navigator.share) { await navigator.share({ title, url }); return 'Shared'; }

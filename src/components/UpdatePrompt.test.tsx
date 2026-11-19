@@ -45,3 +45,23 @@ describe('UpdatePrompt', () => {
     expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
   });
 });
+
+import { safeToReload } from './UpdatePrompt';
+describe('match-day auto update (audit 19 Nov)', () => {
+  const store = (v: string | null) => ({ getItem: () => v });
+  afterEach(() => { window.location.hash = ''; document.body.innerHTML = ''; });
+  it('reloads on match-day screens only when no pad is open, nobody is typing and nothing is waiting to send', () => {
+    window.location.hash = '#/club-desk/t1';
+    expect(safeToReload(document, store(null))).toBe(true);
+    expect(safeToReload(document, store('{"m1":{}}'))).toBe(false);
+    document.body.innerHTML = '<button class="score-tap">0</button>';
+    expect(safeToReload(document, store(null))).toBe(false);
+    document.body.innerHTML = '<input id="x">';
+    (document.getElementById('x') as HTMLInputElement).focus();
+    expect(safeToReload(document, store(null))).toBe(false);
+  });
+  it('never on other screens', () => {
+    window.location.hash = '#/club';
+    expect(safeToReload(document, store(null))).toBe(false);
+  });
+});

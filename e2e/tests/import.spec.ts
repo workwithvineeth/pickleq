@@ -20,6 +20,8 @@ test.describe('PaddleQ app', () => {
     await page.getByRole('link', { name: 'Sign in' }).locator('visible=true').first().click();
     await expect(page).toHaveURL(/#\/club(-signin)?$/);
     await page.goto('#/club');
+    // Signed out, #/club settles on the sign-in page; open the menu only after that, or the redirect closes it again.
+    await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
     // v1.2: the public shell's menu (no personal-app tabs anywhere).
     // On a phone the menu sits behind the Menu button.
     const menuBtn = page.getByRole('button', { name: 'Menu' });

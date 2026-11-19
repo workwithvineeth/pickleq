@@ -196,7 +196,8 @@ export function ScorePad(p: ScorePadProps) {
   const gp = !curOver && !golden && (cur.a >= fmt.pointsTo - 1 && cur.a > cur.b ? 'A' : cur.b >= fmt.pointsTo - 1 && cur.b > cur.a ? 'B' : null);
   const done = games.map((g, i) => ({ g, i, an: g.points ? analyseGame(g.points, fmt.pointsTo, p.thresholds, !!fmt.golden) : null }))
     .filter((x) => gameOver(x.g.a, x.g.b, fmt.pointsTo, !!fmt.golden));
-  const status = sync === 'saving' ? 'Saving…' : sync === 'unsent' ? 'Not sent yet · retrying' : 'Saved';
+  // UX-04 copy: points kept on the phone are "Saved on this device"; while they go out, "Syncing points…".
+  const status = sync === 'saving' ? 'Syncing points…' : sync === 'unsent' ? 'Saved on this device' : 'Saved';
 
   return (
     <>
@@ -254,11 +255,11 @@ export function ScorePad(p: ScorePadProps) {
             {!gp && !golden && Math.abs(lead) >= thr ? `${lead > 0 ? nameA : nameB} lead by ${Math.abs(lead)}` : ''}
           </p>
           {curOver && !matchOver && <div role="status" className="rq-ref-banner rq-ref-game"><b>Game {games.length} won · match goes on</b><span>{cur.a > cur.b ? nameA : nameB} take game {games.length} · games {result.gamesA}–{result.gamesB}</span></div>}
-          {matchOver && <div role="status" className="rq-ref-banner rq-ref-match"><b>Match finished</b><span>{result.winner === 'A' ? nameA : nameB} win {result.gamesA}–{result.gamesB} in games. Check the score, then save to lock the result.</span></div>}
+          {matchOver && <div role="status" className="rq-ref-banner rq-ref-match"><b>Confirm final score</b><span>Check the score before saving the result.</span><span>{result.winner === 'A' ? nameA : nameB} win {result.gamesA}–{result.gamesB} in games · {games.map((g) => `${g.a}–${g.b}`).join(', ')}</span></div>}
           <div className="sticky-actions" style={{ position: 'static' }}>
-            <button type="button" className="btn btn-outline" onClick={undo} disabled={frozen || !canUndo}>Undo</button>
+            <button type="button" className="btn btn-outline" onClick={undo} disabled={frozen || !canUndo}>{matchOver ? 'Back to scoring' : 'Undo last point'}</button>
             {curOver && !matchOver && <button type="button" className="btn btn-primary" onClick={() => update([...games, sideOut ? sideOutGame('', undefined, doubles) : { points: '', a: 0, b: 0 }])}>Start game {games.length + 1}</button>}
-            {matchOver && <button type="button" className="btn btn-primary" disabled={frozen} onClick={() => finish(games)}>Save result</button>}
+            {matchOver && <button type="button" className="btn btn-primary" disabled={frozen} onClick={() => finish(games)}>Confirm final score</button>}
           </div>
         </>
       )}
@@ -274,7 +275,7 @@ export function ScorePad(p: ScorePadProps) {
       )}
       {!manual && p.canScore && needServe && (
         <div className="sticky-actions" style={{ position: 'static' }}>
-          <button type="button" className="btn btn-outline" onClick={undo} disabled={frozen || !canUndo}>Undo</button>
+          <button type="button" className="btn btn-outline" onClick={undo} disabled={frozen || !canUndo}>Undo last point</button>
         </div>
       )}
       {manual && p.canScore && <ManualScores format={fmt} nameA={nameA} nameB={nameB} onSave={finish} onCancel={() => setManual(false)} busy={frozen} />}
@@ -303,6 +304,8 @@ export function ManualScores({ format, nameA, nameB, onSave, onCancel, busy }: {
     const games: ClubGame[] = [];
     for (const [i, r] of rows.entries()) {
       if (!r.a && !r.b) continue;
+      // One empty box is not a 0 (audit 19 Nov): ask for both scores instead of saving 0.
+      if (!r.a || !r.b) return setMsg(`Game ${i + 1}: enter both scores (type 0 if a side scored none)`);
       const e = checkFinalScore(Number(r.a), Number(r.b), format.pointsTo, !!format.golden);
       if (e) return setMsg(`Game ${i + 1}: ${e}`);
       games.push({ points: '', a: Number(r.a), b: Number(r.b) });

@@ -1,7 +1,8 @@
 import { ThemeControls } from '../components/ThemeSwitch';
 import { useEffect, useState } from 'react';
 import { Icon, type IconName } from '../components/Icon';
-import { TvPicker } from '../rallyq/tv/TvPicker';
+import { SocialPicker, TvPicker } from '../rallyq/tv/TvPicker';
+import { PlayerStudio } from '../club/screens/studio/Studio';
 import { UpdatePrompt } from '../components/UpdatePrompt';
 import ClubRoutes from '../club/screens/ClubRoutes';
 import { BrandMark } from '../club/screens/Brand';
@@ -28,7 +29,7 @@ const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
 
 /** Screens without an account (referee court, desk PIN, public results and event pages): no account strip there. */
 /** v1.2 screens bring their own shell (PublicShell / OrgShell): the frame adds nothing around them. */
-const BARE: RouteName[] = ['club', 'club-tournaments', 'club-results', 'club-claim', 'club-join', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-scorers', 'club-results-dupr', 'club-dupr'];
+const BARE: RouteName[] = ['club', 'club-tournaments', 'club-results', 'club-claim', 'club-join', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-scorers', 'club-results-dupr', 'club-dupr', 'demo', 'events-post', 'club-player', 'club-score'];
 const NO_ACCOUNT: RouteName[] = ['court', 'desk', 'helper', 'results', 'event', 'club-signin', 'admin-login', 'demo'];
 
 /** "Signed in as … · Sign out" on every signed-in screen, so sign-out is never more than one tap away. */
@@ -97,10 +98,13 @@ export default function ClubApp() {
   if (route.name === 'public-player') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><PublicProfile playerId={route.id} go={go} /></>;
   if (route.name === 'club-social' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallySocial slug={route.id} go={go} /></>;
   if (route.name === 'club-tv' && !route.id) return <TvPicker go={go} />;
+  if (route.name === 'club-social' && !route.id) return <><StagingStrip /><SocialPicker go={go} /></>;
   if (route.name === 'club-tv' && route.id) return <><UpdatePrompt offlineNotice={false} inline /><RallyTV slug={route.id} go={go} /></>;
   if (route.name === 'event' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyEvent slug={route.id} go={go} /></>;
   // My Player Studio has its own header and feature tabs (prototype), so no old Studio side menu.
-  if (route.name === 'club-player-studio' && route.id !== 'profile' && !(route.id ?? '').startsWith('profile')) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
+  if (route.name === 'club-player-studio' && ((route.id ?? '').includes('privacy') || (route.id !== 'profile' && !(route.id ?? '').startsWith('profile')))) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
+  // The Player Studio profile page (DUPR connect, Not me, download my data) has its own Studio header: no app bars on top of it (UX-08).
+  if (route.name === 'club-player-studio') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><div className="app pq-brand pq-studio-wrap"><PlayerStudio section={route.id ?? 'profile'} go={clubGo} /></div></>;
   // v1.2 screens render bare: their own shell is the header, menu and footer. A support session still says so on top.
   if (BARE.includes(name)) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><SupportBanner route={name} /><ClubRoutes route={{ ...route, name }} go={clubGo} back={back} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).

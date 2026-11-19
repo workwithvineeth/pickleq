@@ -17,8 +17,15 @@ const LIVE_SOURCE=liveRaw.replace('scored by court referee</span></div>','scored
  .replace('<span class="chip live">Live · {{today}}</span>','<span class="{{topChip}}">{{topLabel}}</span>')
  .replace('font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1>','font-size:clamp(40px,5vw,64px);margin-top:12px">Live scores</h1><sc-if value="{{isSample}}" hint-placeholder-val="{{ false }}"><p class="mut" style="margin:8px 0 0;font-size:14px;max-width:560px">Nothing is live right now. These are sample scores to show how it looks; real matches appear here as referees score them.</p></sc-if>')
  // How fresh the scores are (was a fixed 'Updated 4 s ago'); coral when the last refresh failed.
- .replace('<span class="mut" style="font-size:13px">Updated 4 s ago · ','<span class="mut" style="font-size:13px;{{updStyle}}">{{updated}} · ');
+ .replace('<span class="mut" style="font-size:13px">Updated 4 s ago · ','<span class="mut" style="font-size:13px;{{updStyle}}">{{updated}} · ')
+ // The match's real format (QA-12: a best-of-one match said "Game 1 of 3").
+ .replace('>Game {{sel.game}} of 3 · to 11</span>','>{{sel.gameLabel}}</span>');
+if(!LIVE_SOURCE.includes('{{sel.gameLabel}}')||!LIVE_SOURCE.includes('{{topLabel}}'))throw new Error('Live prototype changed: a RallyLive replacement no longer matches');
 const LOADING=shellSource(liveRaw);
+/** "Game 2 of 3 · to 11", or "One game · to 15" for best of one. */
+export function gameLabel(game:number,bestOf=3,pointsTo=11){return (bestOf>1?'Game '+game+' of '+bestOf:'One game')+' · to '+pointsTo;}
+/** Chip text for a court's match. Only a confirmed result is Final; a match not started yet is Up next (QA-10). */
+export function courtStatus(status:string){return status==='live'?'Live':status==='done'?'Final':'Up next';}
 /** "Updated 12s ago" for the first minute, then the clock time of the last good load. */
 export function updatedLabel(at:number|null,now:number,error:boolean,sample:boolean){
  if(error)return 'Can’t reach live scores · retrying';
@@ -38,7 +45,7 @@ export function liveChipLabel(o:{lost:boolean;sample:boolean;directoryError:bool
 /** Sample win chance for the labelled sample (made-up ratings), so the sample shows what the bar looks like. */
 const sampleWin=(a:string,b:string,sa:number,sb:number,gA:number,gB:number,rA:number[],rB:number[])=>winBarFrom(winEstimate({ratingsA:rA,ratingsB:rB,ralliesA:sa+gA*11,ralliesB:sb+gB*11,gamesA:gA,gamesB:gB,pointsA:sa,pointsB:sb,pointsTo:11,bestOf:3}),a,b);
 
-interface Court {court:string;stage:string;a:string;b:string;sa:number;sb:number;game:number;games:string[];status:string;run:number;next:string;pts:string;win?:WinBar}
+interface Court {court:string;stage:string;a:string;b:string;sa:number;sb:number;game:number;games:string[];status:string;run:number;next:string;pts:string;win?:WinBar;bestOf?:number;pointsTo?:number}
 interface Venue {name:string;club:string;mark:string;courts:Court[];slug?:string}
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 /** Prototype sample, shown (and labelled) only when no event is live. */
@@ -57,7 +64,7 @@ export const SAMPLE:Venue[]=[
 function longestRun(pts:string){let best=0,cur=0,prev='';for(const p of pts){cur=p===prev?cur+1:1;prev=p;best=Math.max(best,cur);}return best;}
 export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?:number})=>void){
  const venue=venues[v]??venues[0];const courts=venue?.courts??[];const ci=Math.min(c,Math.max(0,courts.length-1));
- const mk=(x:Court)=>({...x,win:x.status==='Live'?x.win??NO_WIN_BAR:NO_WIN_BAR,chip:x.status==='Live'?'chip live':'chip'});
+ const mk=(x:Court)=>({...x,win:x.status==='Live'?x.win??NO_WIN_BAR:NO_WIN_BAR,chip:x.status==='Live'?'chip live':'chip',gameLabel:gameLabel(x.game,x.bestOf,x.pointsTo)});
  const s=courts[ci]?mk(courts[ci]):mk({court:'Court 1',stage:'',a:'No matches live right now',b:'Check back soon',sa:0,sb:0,game:1,games:[],status:'Waiting',run:0,next:'',pts:''});
  const first=(n:string)=>n.split(' / ')[0];
  return {venue:venue?.name??'',clubName:venue?.club??'',clubMark:venue?.mark??'',
@@ -69,16 +76,21 @@ export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?
 export function RallyLive({go,slug}:{go:Go;slug?:string}){
  const[chosen,setPick]=useState<{v:number|null;c:number}>({v:null,c:0});
  const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents()).filter(e=>inLaunchCity(e.city)&&e.status==='live'&&e.results):[]},[]);
- const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};const ev=events[pick.v];const scores=usePublicScores(ev?.slug??'');
+ const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};// A link to one event never shows another event's scores (QA-11).
+ const ev=slug&&want<0?undefined:events[pick.v];const scores=usePublicScores(ev?.slug??'');
  const[now,setNow]=useState(()=>Date.now());
  useEffect(()=>{const t=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(t);},[]);
+ // A link to one event that isn't live right now opens that event's results page, never the sample courts (audit 19 Nov).
+ const notLive=!!slug&&!!directory.data&&want<0;
+ useEffect(()=>{if(notLive&&slug)go('results',slug,{replace:true});},[notLive,slug,go]);
+ if(notLive)return <ShellState name="Live" source={LOADING} go={go} loading/>;
  // Real scores are on their way: show the skeleton, never the sample.
  if((directory.loading&&!directory.data)||(ev&&scores.loading&&!scores.data))return <ShellState name="Live" source={LOADING} go={go} loading/>;
  let venues:Venue[]=SAMPLE;
  if(events.length){
   venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
    const courts:Court[]=d?courtMatches(d).map(({court,match})=>{const view=matchView(d,match);const cur=match.games.at(-1);const ok=cur?scoredPoints(cur,view.division?.kind!=='singles'):'';
-    return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:match.status==='live'?'Live':'Final',run:0,next:'',pts:ok,win:liveWinBar(d,match)};}):[];
+    return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:courtStatus(match.status),run:0,next:'',pts:match.status==='scheduled'?'':ok,win:liveWinBar(d,match),bestOf:view.format.bestOf,pointsTo:view.format.pointsTo};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
  const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=!isSample&&connectionLost(scores.failures,scores.updatedAt,now,finished);

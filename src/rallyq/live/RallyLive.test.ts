@@ -34,3 +34,25 @@ it('keeps final results final after polling stops', () => {
   expect(connectionLost(0, 1_000, 1_000_000, true)).toBe(false);
   expect(liveChipLabel({lost:false,sample:false,directoryError:false,today:'Sun 15 Nov',finished:true})).toBe('Final results · Sun 15 Nov');
 });
+
+it('labels a court by its match: only a saved result is Final, a match not started is Up next (QA-10)', async () => {
+  const {courtStatus}=await import('./RallyLive');
+  expect(courtStatus('live')).toBe('Live');
+  expect(courtStatus('done')).toBe('Final');
+  expect(courtStatus('scheduled')).toBe('Up next');
+});
+
+it('names the real match format, not always best of 3 (QA-12)', async () => {
+  const {gameLabel}=await import('./RallyLive');
+  expect(gameLabel(1,1,11)).toBe('One game · to 11');
+  expect(gameLabel(2,3,11)).toBe('Game 2 of 3 · to 11');
+  expect(gameLabel(1,1,15)).toBe('One game · to 15');
+});
+
+it('puts the format label on the selected court', async () => {
+  const {liveValues}=await import('./RallyLive');
+  const v=liveValues([{name:'Test',club:'Test Club',mark:'TC',courts:[{court:'Court 1',stage:'Pool A',a:'Alex / Sam',b:'Robin / Taylor',sa:0,sb:0,game:1,games:[],status:'Up next',run:0,next:'',pts:'',bestOf:1,pointsTo:11}]}],0,0,()=>{});
+  expect(v.sel.gameLabel).toBe('One game · to 11');
+  expect(v.sel.status).toBe('Up next');
+  expect(v.sel.chip).toBe('chip');
+});

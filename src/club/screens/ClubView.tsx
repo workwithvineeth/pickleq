@@ -318,19 +318,20 @@ export function PlayerView({ playerId, go, onBack }: { playerId: string; go: Go;
   const recent = d ? playerMatches(playerId, d.matches).slice(0, 8) : [];
   const pct = (v: number | null) => (v === null ? '–' : `${v}%`);
   return (
-    <main className="screen" aria-labelledby="player-title">
-      <Header id="player-title" title={p?.name ?? 'Player'} onBack={onBack} />
+    <OrgShell go={go} active="club" clubName={d?.club.name} clubId={d?.club.id}>
+    <div className="screen pq-orgplayer" aria-labelledby="player-title" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 0 }}>
+      <PageHead cap={d?.club.name ?? 'Player'} title={<span id="player-title">{p?.name ?? 'Player'}</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />
       <Status error={state.error} loading={state.loading && !d} />
       {p && stats && (
         <>
           <p className="small muted" style={{ margin: 0 }}>DUPR singles {fmtRating(p.duprSingles)} · doubles {fmtRating(p.duprDoubles)} · {d?.club.name}</p>
-          <div className="kpis">
-            <div className="kpi"><div className="small muted">Club record</div><div className="v">{stats.record.wins}–{stats.record.losses}</div><div className="small muted">{pct(winRate(stats.record))} won</div></div>
-            <div className="kpi"><div className="small muted">Close games (≤3)</div><div className="v">{stats.close.wins}–{stats.close.losses}</div></div>
-            {full && <div className="kpi"><div className="small muted">Came back</div><div className="v">{stats.comebacks.length}</div></div>}
-            {full && <div className="kpi"><div className="small muted">Lost a lead</div><div className="v">{stats.lostLeads.length}</div></div>}
-            {full && <div className="kpi"><div className="small muted">Won after game point</div><div className="v">{stats.gamePoints.won}/{stats.gamePoints.had}</div></div>}
-            {full && <div className="kpi"><div className="small muted">Saved opponent’s game point</div><div className="v">{stats.facedGamePoints.saved}/{stats.facedGamePoints.faced}</div></div>}
+          <div className="pq-orgstats" role="list" aria-label="Club stats">
+            <Stat label="Club record" value={`${stats.record.wins}–${stats.record.losses}`} note={`${pct(winRate(stats.record))} won`} accent />
+            <Stat label="Close games (≤3)" value={`${stats.close.wins}–${stats.close.losses}`} />
+            {full && <Stat label="Came back" value={String(stats.comebacks.length)} />}
+            {full && <Stat label="Lost a lead" value={String(stats.lostLeads.length)} />}
+            {full && <Stat label="Won after game point" value={`${stats.gamePoints.won}/${stats.gamePoints.had}`} />}
+            {full && <Stat label="Saved opponent’s game point" value={`${stats.facedGamePoints.saved}/${stats.facedGamePoints.faced}`} />}
           </div>
           {full && (
             <section className="card section" aria-label="Notes for the coach">
@@ -357,18 +358,20 @@ export function PlayerView({ playerId, go, onBack }: { playerId: string; go: Go;
             </section>
           )}
           {summary && <SharedSummaryCard data={summary.data} updatedAt={summary.updatedAt} />}
-          <section className="section" aria-label="Recent club matches">
-            <h2 style={{ fontSize: 18 }}>Recent club matches</h2>
+          <section className="card pq-orgmatches" aria-label="Recent club matches">
+            <h2 className="cap" style={{ margin: 0 }}>Recent club matches</h2>
+            {recent.length === 0 && <p className="mut" style={{ margin: 0, fontSize: 14 }}>No club matches yet.</p>}
             {recent.map((m) => {
               const side = sideOf(m, playerId);
               const won = m.winner === side;
               return (
-                <div key={m.id} className="match-row">
-                  <span className={`result ${won ? 'result-w' : 'result-l'}`}>{won ? 'W' : 'L'}</span>
+                <div key={m.id} className="pq-orgmatch">
+                  <span className={won ? 'chip ball' : 'chip'} aria-label={won ? 'Won' : 'Lost'}>{won ? 'W' : 'L'}</span>
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block' }}>vs {names(side === 'A' ? m.sideB : m.sideA, map)}</span>
-                    <span className="small muted">{friendlyDate(m.playedOn)} · {STAGE_LABEL[m.stage]} · {scoreLine({ outcome: 'played', games: m.games.map((g) => ({ you: side === 'A' ? g.a : g.b, them: side === 'A' ? g.b : g.a, momentum: 'neither' })) })}</span>
+                    <b style={{ display: 'block' }}>vs {names(side === 'A' ? m.sideB : m.sideA, map)}</b>
+                    <span className="mut" style={{ fontSize: 13 }}>{friendlyDate(m.playedOn)} · {STAGE_LABEL[m.stage]}</span>
                   </span>
+                  <span className="n" style={{ fontSize: 20 }}>{scoreLine({ outcome: 'played', games: m.games.map((g) => ({ you: side === 'A' ? g.a : g.b, them: side === 'A' ? g.b : g.a, momentum: 'neither' })) })}</span>
                 </div>
               );
             })}
@@ -376,8 +379,14 @@ export function PlayerView({ playerId, go, onBack }: { playerId: string; go: Go;
           {d?.myPlayerId === playerId && !isClubApp() && <button type="button" className="btn btn-outline" onClick={() => go('club-sharing', playerId)}>What this club can see about me</button>}
         </>
       )}
-    </main>
+    </div>
+    </OrgShell>
   );
+}
+
+/** A v1.2 stat tile (Overview prototype): small caps label over a big condensed number. */
+function Stat({ label, value, note, accent }: { label: string; value: string; note?: string; accent?: boolean }) {
+  return <div role="listitem" className="card stat" style={{ padding: 18 }}><div className="cap">{label}</div><div className={accent ? 'n acc' : 'n'} style={{ fontSize: 40, marginTop: 8 }}>{value}</div>{note && <div className="mut" style={{ fontSize: 13, marginTop: 4 }}>{note}</div>}</div>;
 }
 
 function SwingList({ title, swings }: { title: string; swings: Swing[] }) {

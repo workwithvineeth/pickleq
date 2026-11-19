@@ -1,8 +1,7 @@
 import { flushLinkUnsent } from '../matchdaySafety';
 import { useFlushUnsent } from '../useFlushUnsent';
 import { OfflineBanner } from './OfflineBanner';
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Field, Segmented } from '../../components/Controls';
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
 import type { ClubBackend } from '../backend';
@@ -11,10 +10,10 @@ import { duprCheck, duprCsv } from '../dupr';
 import { publicSources } from '../index';
 import { enteredPlayers, knockoutMatchesToAdd, planLateEntry, planReplacePlayer, planWithdraw } from '../plan';
 import { isStaff, STAGE_LABEL, type ClubPlayer, type Entry, type ScorerLink, type ScorerView } from '../types';
-import { appLink, DemoNote, errorText, fmtRating, Header, names, shareLink, Status, useLoad } from './common';
+import { appLink, copyLink, DemoNote, errorText, fmtRating, Header, names, Status, useLoad } from './common';
 import { formatRule, ScorePad } from './ScorePad';
 import { AccessCards } from './Access';
-import { MatchdayShell, RefTabs } from './DeskFrame';
+import { DeskFrame, MatchdayShell, RefTabs, Seg } from './DeskFrame';
 import { Legacy } from './InboxLegacy';
 import { PageHead } from '../../rallyq/shell/Shell';
 import { useClubBackend, useDesk } from './deskContext';
@@ -125,7 +124,7 @@ export function ScorerLinks({ id, go, onBack }: { id: string; go?: Go; onBack: (
             <div className="row" style={{ flexWrap: 'wrap', marginTop: 'auto', gap: 8 }}>
               {!l.revoked && <>
                 <a className={firstToSend?.id === l.id ? 'btn sm' : 'btn ghost sm'} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer">Send on WhatsApp</a>
-                <button type="button" className="btn ghost sm" onClick={async () => setMsg({ ok: true, text: await shareLink(`${t.name}: score ${courtName(l.court)}`, url(l)) })}>Share link</button>
+                <button type="button" className="btn ghost sm" onClick={async () => setMsg(await copyLink(url(l)))}>Copy link</button>
                 <button type="button" className="tlink mut" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { revoked: true }), `${courtName(l.court)} link turned off`)}>Turn off</button>
               </>}
               {l.revoked && <button type="button" className="btn ghost sm" disabled={busy} onClick={() => run(() => b.updateScorerLink(l.id, { revoked: false }), `${courtName(l.court)} link is back on`)}>Turn back on</button>}
@@ -138,6 +137,8 @@ export function ScorerLinks({ id, go, onBack }: { id: string; go?: Go; onBack: (
   );
 }
 
+/** The server says "Wrong PIN"; referees see the UX-04 wording. Lockouts and other errors pass through. */
+const pinError = (m: string) => (/^Wrong PIN$/.test(m.trim()) ? "That PIN didn't work. Try again." : m);
 function pinKey(token: string) { return `pq-court-pin-${token}`; }
 /** Opens a scorer link on the club server, or in the demo on this phone if the server doesn't know it. */
 async function openLink(token: string, pin: string): Promise<{ src: ClubBackend; view: ScorerView }> {
@@ -165,6 +166,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   const [tick, setTick] = useState(0);
   // After a result is saved, the list says so and offers the next match.
   const [justSaved, setJustSaved] = useState(false);
+  const [chosen, setChosen] = useState<number | null>(null);
   // One shared link for every referee: each picks their court once on this phone.
   const pickKey = `pq-court-pick:${token}`;
   const [pick, setPickState] = useState<number | null>(() => { try { const v = Number(localStorage.getItem(pickKey)); return v > 0 ? v : null; } catch { return null; } });
@@ -187,7 +189,7 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
         const m = errorText(e);
         // A wrong or changed PIN: ask again. A connection problem: keep showing what we had.
         if (/PIN|isn’t valid|finished/i.test(m)) { setPin(''); setView(null); }
-        setErr(m);
+        setErr(pinError(m));
       },
     );
     return () => { alive = false; };
@@ -205,25 +207,35 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   useFlushUnsent(!!pin && !!src && !!view && !open, (active) => flushLinkUnsent(token, (id, patch) => src!.scorerSave(token, pin, id, patch), active), () => setTick((x) => x + 1));
 
   async function enter() {
-    if (!/^\d{4,6}$/.test(typed)) return setErr('Enter the PIN the organiser gave you');
+    if (!/^\d{4,6}$/.test(typed)) return setErr('Enter the PIN given by the organiser.');
     setBusy(true); setErr(null);
     try { const r = await openLink(token, typed); setSrc(r.src); setView(r.view); setPin(typed); setTyped(''); }
-    catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
+    catch (e) { setErr(pinError(errorText(e))); } finally { setBusy(false); }
   }
 
   const title = view ? (view.court ? `Court ${view.court}` : 'Scoring') : 'Referee';
+  // Court Green referee journey (UX-04): same scoring, saving and offline recovery; only the frame and words changed.
+  const back = (f: () => void) => <button type="button" className="btn ghost sm" aria-label="Back" style={{ alignSelf: 'flex-start' }} onClick={f}>← Back</button>;
+  const head = (cap: string, h: string, sub?: ReactNode) => <div className="pg-h"><span className="cap">{cap}</span><h1 id="court-title" className="disp">{h}</h1>{sub && <span className="mut">{sub}</span>}</div>;
   if (!pin || !view || !src) {
     return (
-      <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
-        <Header id="court-title" title={title} onBack={onBack} />
-        <p className="small muted" style={{ margin: 0 }}>Referee: type the referee PIN the organiser gave you to score this court’s matches. No account needed.</p>
-        <Field label="PIN">
-          <input className="input" inputMode="numeric" autoComplete="off" aria-label="PIN" maxLength={6} value={typed} onChange={(e) => setTyped(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') void enter(); }} />
-        </Field>
-        {err && <div role="alert" className="msg msg-bad">{err}</div>}
-        <button type="button" className="btn btn-primary" disabled={busy || typed.length < 4} onClick={enter}>Start scoring</button>
-        {pin && !view && !err && <p className="small muted" role="status">Loading…</p>}
-      </main>
+      <DeskFrame kind="referee" clubName={view?.club}>
+        <div className="pq-referee rq-referee" aria-labelledby="court-title" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {back(onBack)}
+          {head(title, 'Referee sign in')}
+          <section className="card glass" aria-label="Referee sign in" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 520 }}>
+            <p className="mut" style={{ margin: 0, fontSize: 14 }}>Enter the PIN given by the organiser.</p>
+            <div className="fld">
+              <label htmlFor="court-pin">PIN</label>
+              <input id="court-pin" className="inp n" inputMode="numeric" autoComplete="off" maxLength={6} value={typed} style={{ fontSize: 24, letterSpacing: '.2em', maxWidth: 240 }}
+                onChange={(e) => setTyped(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') void enter(); }} />
+            </div>
+            {err && <div role="alert" className="warn">{err}</div>}
+            <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy || typed.length < 4} onClick={enter}>{busy ? 'Opening…' : 'Continue'}</button>
+            {pin && !view && !err && <p className="mut" role="status" style={{ margin: 0 }}>Loading…</p>}
+          </section>
+        </div>
+      </DeskFrame>
     );
   }
 
@@ -232,9 +244,10 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   if (current) {
     const a = current.namesA.join(' / '), bn = current.namesB.join(' / ');
     return (
-      <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
-        <Header id="court-title" title={`${current.division ?? ''} ${current.stage === 'pool' ? `Pool ${poolLetter(current.pool)}` : STAGE_LABEL[current.stage]}`.trim()} onBack={() => { setOpen(null); setTick((x) => x + 1); }} />
-        {current.court && <p className="small" style={{ margin: 0, fontWeight: 600 }}>Court {current.court}</p>}
+      <DeskFrame kind="referee" clubName={view.club}>
+      <div className="pq-matchday pq-referee rq-referee" aria-labelledby="court-title" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {back(() => { setOpen(null); setTick((x) => x + 1); })}
+        {head(current.court ? `Court ${current.court} · LIVE` : 'LIVE', `${current.division ?? ''} ${current.stage === 'pool' ? `Pool ${poolLetter(current.pool)}` : STAGE_LABEL[current.stage]}`.trim())}
         <ScorePad
           key={current.id}
           matchKey={`link:${token}:${current.id}`}
@@ -248,7 +261,8 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
           onFinished={() => { setOpen(null); setJustSaved(true); setTick((x) => x + 1); }}
           canScore={current.status !== 'done' && current.status !== 'void'}
         />
-      </main>
+      </div>
+      </DeskFrame>
     );
   }
 
@@ -271,60 +285,73 @@ export function CourtScorer({ token, onBack }: { token: string; onBack: () => vo
   const done = mine.filter((m) => m.status === 'done').reverse();
   if (anyCourt && !pick) {
     return (
-      <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
-        <Header id="court-title" title="Which court are you on?" onBack={onBack} />
-        <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}</p>
-        <section className="section" aria-label="Choose your court">
-          {courts.map((c) => <button key={c} type="button" className="btn btn-primary pq-big" onClick={() => setPick(c)}>Court {c}</button>)}
-        </section>
-      </main>
+      <DeskFrame kind="referee" clubName={view.club}>
+        <div className="pq-referee rq-referee" aria-labelledby="court-title" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {back(onBack)}
+          {head(t.name, 'Choose your court', 'Pick once. This phone remembers it.')}
+          {!view.matches.some((m) => m.court) && <p className="mut" style={{ margin: 0 }}>No courts assigned yet</p>}
+          <section className="rq-court-pick" aria-label="Choose your court">
+            {courts.map((c) => {
+              const left = view.matches.filter((m) => m.court === c && m.status !== 'done' && m.status !== 'void');
+              const next = left.find((m) => m.status === 'live') ?? left[0];
+              return <button key={c} type="button" className="card glass rq-court-btn" aria-label={`Court ${c}`} aria-pressed={chosen === c} style={chosen === c ? { boxShadow: 'inset 0 0 0 3px var(--ball, #D9F24A)' } : undefined} onClick={() => setChosen(c)}>
+                <span className="disp">Court {c}</span>
+                {next && <span>{next.namesA.join(' / ')} vs {next.namesB.join(' / ')}</span>}
+                <span className="mut">{next?.status === 'live' ? 'Playing now' : left.length ? `${left.length} to play` : 'No matches waiting'}</span>
+              </button>;
+            })}
+          </section>
+          <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} disabled={!chosen} onClick={() => chosen && setPick(chosen)}>Open court</button>
+        </div>
+      </DeskFrame>
     );
   }
   const row = (m: ScorerView['matches'][number], cta: string) => (
-    <button key={m.id} type="button" className="match-row" aria-label={`${cta}: ${m.namesA.join(' / ')} against ${m.namesB.join(' / ')}`} onClick={() => { setJustSaved(false); setOpen(m.id); }}>
+    <button key={m.id} type="button" className={`rq-qrow${m.status === 'live' ? ' live' : ''}`} aria-label={`${cta}: ${m.namesA.join(' / ')} against ${m.namesB.join(' / ')}`} onClick={() => { setJustSaved(false); setOpen(m.id); }}>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block' }}>{m.namesA.join(' / ')}</span>
         <span style={{ display: 'block' }}>{m.namesB.join(' / ')}</span>
-        <span className="small muted">{[m.slot !== undefined ? slotTime(t.startTime, m.slot, t.slotMinutes) : '', !view.court && (!pick || grpNow) && m.court ? `Court ${m.court}` : '', m.division, m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].filter(Boolean).join(' · ')}</span>
+        <span className="mut" style={{ fontSize: 13 }}>{[m.slot !== undefined ? slotTime(t.startTime, m.slot, t.slotMinutes) : '', !view.court && (!pick || grpNow) && m.court ? `Court ${m.court}` : '', m.division, m.stage === 'pool' ? `Pool ${poolLetter(m.pool)}` : STAGE_LABEL[m.stage]].filter(Boolean).join(' · ')}</span>
       </span>
-      <span className="small pq-score" style={{ textAlign: 'right' }}>{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : ''} <span className={m.status === 'live' ? 'pill pill-warn' : 'pill'}>{cta}</span></span>
+      <span className="rq-qend"><span className="n">{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : ''}</span> <span className={cta === 'Later' ? 'chip' : 'chip ball'}>{cta}</span></span>
     </button>
   );
   return (
-    <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="court-title">
-      <Header id="court-title" title={anyCourt && pick ? `Court ${pick}` : title} onBack={onBack} />
-      <p className="small muted" style={{ margin: 0 }}>{view.club} · {t.name}{t.status === 'draft' ? ' · not started yet' : ''}</p>
-      {anyCourt && pick && <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setPick(null)}>Change court</button>}
-      {events.length > 1 && <Segmented label="Which event are you refereeing?" value={evNow} options={[{ value: '', label: 'All' }, ...events.map((x) => ({ value: x, label: /double/i.test(x) ? 'Doubles' : /single/i.test(x) ? 'Singles' : x }))]} onChange={(v) => { setEv(v); setGrp(''); }} />}
-      {grpOptions.length > 1 && <Segmented label="Which group?" value={grpNow} options={grpOptions.map((g) => ({ value: g, label: g === 'ko' ? 'Knockouts' : `Group ${poolLetter(Number(g))}` }))} onChange={setGrp} />}
-      {err && <div role="status" className="msg msg-bad">{err}</div>}
+    <DeskFrame kind="referee" clubName={view.club}>
+    <div className="pq-matchday pq-referee rq-referee" aria-labelledby="court-title" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {back(onBack)}
+      {head(t.status === 'draft' ? `${t.name} · not started yet` : t.name, `${anyCourt && pick ? `Court ${pick}` : title} · Match queue`, <>{view.club}{anyCourt && pick && <> · <button type="button" className="tlink" onClick={() => setPick(null)}>Change court</button></>}</>)}
+      {events.length > 1 && <Seg label="Which event are you refereeing?" value={evNow} options={[{ value: '', label: 'All' }, ...events.map((x) => ({ value: x, label: /double/i.test(x) ? 'Doubles' : /single/i.test(x) ? 'Singles' : x }))]} onChange={(v) => { setEv(v); setGrp(''); }} />}
+      {grpOptions.length > 1 && <Seg label="Which group?" value={grpNow} options={grpOptions.map((g) => ({ value: g, label: g === 'ko' ? 'Knockouts' : `Group ${poolLetter(Number(g))}` }))} onChange={setGrp} />}
+      {err && <div role="status" className="warn">{err}</div>}
       <OfflineBanner />
       {justSaved && (
-        <div role="status" className="msg pq-saved-note">
-          <b>Result saved</b>
-          {waiting[0] && <> · <button type="button" className="link-btn" aria-label={`Start next: ${waiting[0].namesA.join(' / ')} vs ${waiting[0].namesB.join(' / ')}`} onClick={() => { setJustSaved(false); setOpen(waiting[0].id); }}>Start next: {waiting[0].namesA.join(' / ')} vs {waiting[0].namesB.join(' / ')}</button></>}
+        <div role="status" className="note pq-saved-note">
+          <b>Final score saved.</b>
+          {waiting[0] && <> · <button type="button" className="tlink" style={{ minHeight: 44 }} aria-label={`Start next: ${waiting[0].namesA.join(' / ')} vs ${waiting[0].namesB.join(' / ')}`} onClick={() => { setJustSaved(false); setOpen(waiting[0].id); }}>Start next: {waiting[0].namesA.join(' / ')} vs {waiting[0].namesB.join(' / ')}</button></>}
         </div>
       )}
-      {live.length > 0 && <section className="section" aria-label="Playing now"><div className="label">Playing now</div>{live.map((m) => row(m, 'Continue'))}</section>}
-      <section className="section" aria-label="Up next">
-        <div className="label">Up next</div>
-        {waiting.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nothing waiting on this court. New matches appear here when the organiser sends them.</p>}
-        {waiting.map((m, i) => row(m, i === 0 && !live.length ? 'Score' : 'Later'))}
+      {live.length > 0 && <section className="card rq-queue" aria-label="Playing now"><span className="cap">Playing now</span>{live.map((m) => row(m, 'Continue'))}</section>}
+      <section className="card rq-queue" aria-label="Up next">
+        <span className="cap">Up next</span>
+        {waiting.length === 0 && <p className="mut" style={{ margin: 0, padding: '4px 0 8px' }}>No matches waiting on this court.</p>}
+        {waiting.map((m, i) => row(m, i === 0 && !live.length ? 'Score match' : 'Later'))}
       </section>
       {done.length > 0 && (
-        <section className="section" aria-label="Finished">
-          <div className="label">Finished</div>
+        <section className="card rq-queue" aria-label="Finished">
+          <span className="cap">Finished</span>
           {done.map((m) => (
-            <div key={m.id} className="match-row">
-              <span style={{ flex: 1 }}><span style={{ display: 'block', fontWeight: m.winner === 'A' ? 600 : 400 }}>{m.namesA.join(' / ')}</span><span style={{ display: 'block', fontWeight: m.winner === 'B' ? 600 : 400 }}>{m.namesB.join(' / ')}</span></span>
-              <span className="small pq-score">{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : 'Walkover'}</span>
-            </div>
+            <button key={m.id} type="button" className="rq-qrow done" aria-label={`View result: ${m.namesA.join(' / ')} against ${m.namesB.join(' / ')}`} onClick={() => { setJustSaved(false); setOpen(m.id); }}>
+              <span style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontWeight: m.winner === 'A' ? 700 : 400 }}>{m.namesA.join(' / ')}</span><span style={{ display: 'block', fontWeight: m.winner === 'B' ? 700 : 400 }}>{m.namesB.join(' / ')}</span></span>
+              <span className="rq-qend"><span className="n">{m.games.length ? m.games.map((g) => `${g.a}–${g.b}`).join(', ') : 'Walkover'}</span> <span className="chip">View result</span></span>
+            </button>
           ))}
         </section>
       )}
-      <p className="small muted" style={{ margin: 0 }}>Updates every 15 seconds. Scores are kept on this phone if the signal drops, and sent when it’s back.</p>
-      <button type="button" className="link-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { setPin(''); setView(null); }}>Stop scoring on this phone</button>
-    </main>
+      <p className="mut" style={{ margin: 0, fontSize: 13 }}>Updates every 15 seconds. Scores are kept on this phone if the signal drops, and sent when it’s back.</p>
+      <button type="button" className="tlink" style={{ alignSelf: 'flex-start', minHeight: 44 }} onClick={() => { setPin(''); setView(null); }}>Stop scoring on this phone</button>
+    </div>
+    </DeskFrame>
   );
 }
 

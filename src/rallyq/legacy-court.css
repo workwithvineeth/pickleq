@@ -1,0 +1,28 @@
+/*
+ * Court Green pass for the screens still drawn with the old app frame (19 Nov 2026, P0 "every page in the new design").
+ * The old screens already use the Court Green colours (data-skin="court"); what made them look old was the lime title
+ * bar, chalk-white main buttons and plain fields. These rules give them the v1.2 page heading, lime primary buttons,
+ * ghost secondary buttons and Court Green fields. Layout and behaviour are unchanged.
+ */
+:root[data-skin="court"] .app.pq-brand .screen > .header:first-child{background:transparent!important;margin:0 0 6px!important;padding:8px 0 0!important;border-radius:0!important;box-shadow:none!important;min-height:0!important;gap:12px}
+:root[data-skin="court"] .app.pq-brand .screen > .header:first-child .screen-title{color:var(--pq-ink)!important;font-family:'Archivo','Arial Narrow',sans-serif!important;font-weight:800!important;letter-spacing:-.045em!important;font-size:clamp(32px,6vw,56px)!important;line-height:.95!important;text-transform:none!important}
+:root[data-skin="court"] .app.pq-brand .screen > .header:first-child .icon-btn{background:transparent!important;color:var(--pq-ink)!important;box-shadow:inset 0 0 0 1px rgba(var(--pq-chalk-rgb),.3)!important;border-radius:999px!important;min-width:44px;min-height:44px}
+:root[data-skin="court"] :is(.app.pq-brand,.rallyq-prototype) .btn-primary{background:#D9F24A!important;color:#0B2418!important;border-color:#D9F24A!important;box-shadow:none!important;border-radius:999px!important;font-weight:700}
+:root[data-skin="court"] :is(.app.pq-brand,.rallyq-prototype) .btn-primary:disabled{opacity:.45}
+:root[data-skin="court"] :is(.app.pq-brand,.rallyq-prototype) .btn-outline{background:transparent!important;color:var(--pq-ink)!important;border-color:transparent!important;box-shadow:inset 0 0 0 1px rgba(var(--pq-chalk-rgb),.3)!important;border-radius:999px!important}
+:root[data-skin="court"] :is(.app.pq-brand,.rallyq-prototype) :is(input.input,select.input,textarea.input,.input){background:var(--pq-surface-raised)!important;color:var(--pq-ink)!important;border:0!important;border-radius:14px!important;box-shadow:inset 0 0 0 1px var(--pq-line)!important;min-height:48px}
+:root[data-skin="court"] :is(.app.pq-brand,.rallyq-prototype) :is(input.input,select.input,textarea.input,.input):focus{outline:2px solid #D9F24A!important;outline-offset:1px}
+:root[data-skin="court"] .app.pq-brand .screen .card{border-radius:18px!important}
+:root[data-skin="court"] .app.pq-brand .screen .label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--pq-muted)}
+/* Old controls inside the new v1.2 frame (Entries, Inbox, setup, Results & DUPR, admin sections, claim, My clubs). */
+:root[data-skin="court"] .rallyq-prototype :is(.card.section,.section.card){background:var(--c1,#0D2218)!important;border-radius:18px!important;box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)!important;border:0!important;color:#F1F4EA}
+:root[data-skin="court"] .rallyq-prototype .msg{border-radius:14px;padding:12px 14px;box-shadow:inset 0 0 0 1px rgba(241,244,234,.3);background:transparent}
+:root[data-skin="court"] .rallyq-prototype .msg-bad{box-shadow:inset 0 0 0 1px #FF655C}
+:root[data-skin="court"] .rallyq-prototype .msg-ok{box-shadow:inset 0 0 0 1px rgba(217,242,74,.45);background:rgba(217,242,74,.08)}
+:root[data-skin="court"] .rallyq-prototype .seg button{min-height:44px;border-radius:999px;border:0;font-weight:700;background:#0D2218;color:#9FB4A6;box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)}
+:root[data-skin="court"] .rallyq-prototype .seg button[aria-pressed=true]{background:#D9F24A;color:#0B2418}
+:root[data-skin="court"] .rallyq-prototype .link-btn{color:#F1F4EA;font-weight:700;min-height:44px}
+:root[data-skin="court"] .rallyq-prototype .pq-orgplayer :is(.card,.section){padding:16px 18px!important;border-radius:18px}
+:root[data-skin="court"] .rallyq-prototype .pq-orgstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+:root[data-skin="court"] .rallyq-prototype .pq-orgmatches{display:grid;gap:8px}
+:root[data-skin="court"] .rallyq-prototype .pq-orgmatch{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 14px;border-radius:14px;background:var(--c2)}

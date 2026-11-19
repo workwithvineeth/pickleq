@@ -72,7 +72,7 @@ const t = (x?: string): [RouteName, string?] | null => (x ? ['club-tournament', 
 function groups(kind: WorkspaceKind, c: { clubId?: string; tournamentId?: string; tournaments?: ClubTournament[] }): { title: string; area: string; groups: Group[] } {
   if (kind === 'admin') return {
     title: 'Platform Admin', area: 'Platform governance', groups: [
-      { label: 'Workspace', items: [{ key: 'overview', label: 'Overview', glyph: '◫', to: ['admin', 'overview'] }] },
+      { label: 'Workspace', items: [{ key: 'overview', label: 'Overview', glyph: '◫', to: ['admin'] }] },
       { label: 'Governance', items: [
         { key: 'approvals', label: 'Approvals', glyph: '✓', to: ['admin', 'approvals'] },
         { key: 'clubs', label: 'Clubs', glyph: '♧', to: ['admin', 'clubs'] },
@@ -194,7 +194,7 @@ export function WorkspaceNav({ kind, route, go, admin }: { kind: WorkspaceKind; 
         ))}
         <div className="pq-ws-foot" role="group" aria-label="Switch">
           <div className="pq-ws-glabel">Switch club</div>
-          {kind !== 'admin' && admin && <button type="button" className="pq-ws-item" aria-label="Platform admin" title="Platform admin" onClick={() => go('admin', 'overview')}><span className="pq-ws-glyph" aria-hidden="true">◫</span><span className="pq-ws-label">Platform admin</span></button>}
+          {kind !== 'admin' && admin && <button type="button" className="pq-ws-item" aria-label="Platform admin" title="Platform admin" onClick={() => go('admin')}><span className="pq-ws-glyph" aria-hidden="true">◫</span><span className="pq-ws-label">Platform admin</span></button>}
           {kind !== 'club' && <button type="button" className="pq-ws-item" aria-label={admin ? 'All clubs' : 'My clubs'} title={admin ? 'All clubs' : 'My clubs'} onClick={() => go('club')}><span className="pq-ws-glyph" aria-hidden="true">♧</span><span className="pq-ws-label">{admin ? 'All clubs' : 'My clubs'}</span></button>}
           {kind !== 'studio' && <button type="button" className="pq-ws-item" aria-label="Player Studio" title="Player Studio" onClick={() => go('club-player-studio')}><span className="pq-ws-glyph" aria-hidden="true">♙</span><span className="pq-ws-label">Player Studio</span></button>}
           <button type="button" className="pq-ws-item" aria-label="Events board" title="Events board" onClick={() => go('events')}><span className="pq-ws-glyph" aria-hidden="true">◈</span><span className="pq-ws-label">Events board</span></button>

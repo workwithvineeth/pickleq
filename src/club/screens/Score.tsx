@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
+import { OrgShell, PageHead } from '../../rallyq/shell/Shell';
+import { DeskFrame } from './DeskFrame';
 import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
 import type { ClubBackend, ScorePatch } from '../backend';
 import { knockoutMatchesToAdd } from '../plan';
 import { isStaff, STAGE_LABEL } from '../types';
-import { DemoNote, Header, names, Status, useLoad } from './common';
+import { DemoNote, names, Status, useLoad } from './common';
 import { useClubBackend, useDesk } from './deskContext';
 import { readUnsent, ScorePad, writeUnsent } from './ScorePad';
 
@@ -21,13 +23,18 @@ export async function flushUnsentScores(b: ClubBackend): Promise<number> {
 }
 
 /** Scoring a match as a signed-in organiser, or at the desk (desk link and desk PIN). */
-export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBack: () => void }) {
+export function ScoreMatch({ matchId, go, onBack }: { matchId: string; go?: Go; onBack: () => void }) {
   const b = useClubBackend();
   const desk = useDesk();
   const state = useLoad(async () => { if (!b) throw new Error('Open Club mode first'); return b.matchBundle(matchId); }, [b, matchId]);
   const d = state.data;
   const players = useMemo(() => new Map((d?.players ?? []).map((p) => [p.id, p])), [d]);
-  if (!d || !b) return <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="score-title"><Header id="score-title" title="Score" onBack={onBack} /><Status error={state.error} loading={state.loading} /></main>;
+  // Court Green v1.2 frame: the organiser's own shell, or the desk frame at the desk. Scoring is unchanged.
+  const frame = (body: ReactNode) => (desk || !go
+    ? <DeskFrame clubName={d?.club.name}>{body}</DeskFrame>
+    : <OrgShell go={go} active="desk" clubName={d?.club.name} clubId={d?.club.id} tournament={d?.tournament ? { id: d.tournament.id, name: d.tournament.name, slug: d.tournament.publicSlug } : undefined}>{body}</OrgShell>);
+  const head = (title: string) => <PageHead cap={capOf(d?.match)} title={<span id="score-title">{title}</span>} actions={<button type="button" className="btn ghost sm" onClick={onBack}>Back</button>} />;
+  if (!d || !b) return frame(<div className="pq-matchday pq-referee rq-referee" aria-labelledby="score-title" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{head('Score')}<Status error={state.error} loading={state.loading} /></div>);
   const m = d.match;
   const title = m.stage === 'friendly' ? 'Club match' : `${d.divisionName ?? ''} ${STAGE_LABEL[m.stage]}`.trim();
   const send = (patch: ScorePatch) => b.saveScore(matchId, patch);
@@ -41,10 +48,9 @@ export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBa
     onBack();
   }
   return (
-    <main className="screen pq-matchday pq-proto pq-referee" aria-labelledby="score-title">
-      <Header id="score-title" title={title || 'Score'} onBack={onBack} />
+    frame(<div className="pq-matchday pq-referee rq-referee" aria-labelledby="score-title" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {head(title || 'Score')}
       <DemoNote b={b} />
-      {m.court && <p className="small" style={{ margin: 0, fontWeight: 600 }}>Court {m.court}</p>}
       {!isStaff(d.role) && <div role="alert" className="msg msg-bad">Only the club’s organisers and the desk can score matches.</div>}
       <ScorePad
         key={m.id}
@@ -60,6 +66,9 @@ export function ScoreMatch({ matchId, onBack }: { matchId: string; go?: Go; onBa
         onFinished={finished}
         canScore={isStaff(d.role) && m.status !== 'done' && m.status !== 'void'}
       />
-    </main>
+    </div>)
   );
 }
+
+/** Court and state: LIVE while scoring, Final only once the result is saved. */
+const capOf = (m?: { court?: number; status: string }) => [m?.court ? `Court ${m.court}` : '', m?.status === 'done' ? 'Final' : m?.status === 'void' ? 'Cancelled' : 'LIVE'].filter(Boolean).join(' · ');

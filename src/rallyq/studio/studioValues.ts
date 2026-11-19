@@ -55,7 +55,7 @@ export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)
   is,feats:F.map(([k,n])=>({name:n,cls:pill(ui.f===k),pick:()=>set({f:k,saved:false,error:''})})),
   scopes:(['All','Tournament','Practice'] as Scope[]).map(n=>({name:n,cls:pill(ui.scope===n),pick:()=>set({scope:n})})),
   scopeLabel:ui.scope==='All'?'all matches':ui.scope.toLowerCase(),
-  playerName:d.name,playerLine:d.club,duprLabel:d.dupr?'DUPR '+d.dupr.toFixed(2):'DUPR not linked',rankLabel:venues+' venues',
+  playerName:d.name,playerLine:d.club,duprLabel:d.dupr?'DUPR '+d.dupr.toFixed(2):'Unrated',rankLabel:venues+' venues',
   matchLabel:sel?(sel.division??'')+' · '+sel.tournament:'No tournament matches yet',
   games:(sel?.games??[{a:0,b:0}]).map((_x,i)=>({label:i+1===gi?'Game '+(i+1):String(i+1),cls:pill(i+1===gi),w:i+1===gi?'min-width:96px':'min-width:40px',pick:()=>set({g:i+1})})),
   g:{srv:gm[0],ret:gm[1],run:rr.best,so:rr.changes,runs:dots.map(([x,y],i)=>({style:`position:absolute;left:${x}%;top:${y}%;width:${12+i*2}px;height:${12+i*2}px;border-radius:50%;background:${i%3===2?'#FF655C':'#D9F24A'};box-shadow:0 0 0 3px rgba(11,36,24,.35);transform:translate(-50%,-50%)`}))},

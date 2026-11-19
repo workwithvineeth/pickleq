@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClubError, type ScorePatch } from '../backend';
 import { blockUnsent, countUnsent, flushLinkUnsent, readBlocked, readUnsent, writeUnsent } from '../matchdaySafety';
-import { ScorePad } from './ScorePad';
+import { ManualScores, ScorePad } from './ScorePad';
 
 const fmt = { bestOf: 1, pointsTo: 11, golden: false, scoring: 'rally' } as const;
 const sideoutFmt = { ...fmt, scoring: 'sideout' } as const;
@@ -41,7 +41,7 @@ describe('referee scoring choice', () => {
     const last = send.mock.calls.at(-1)![0];
     expect(last.games[0]).toMatchObject({ a: 1, b: 0, points: 'A', rallies: 'ABA', mode: 'sideout', serve: 'A' });
     // Undo drops the last rally only.
-    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await user.click(screen.getByRole('button', { name: 'Undo last point' }));
     expect(screen.getByLabelText(/Score call 0-1-1/)).toBeInTheDocument();
   });
 
@@ -95,8 +95,10 @@ describe('referee scoring choice', () => {
     for (let i = 0; i < 10; i++) await user.click(screen.getByRole('button', { name: 'Rally to Asha / Lata' }));
     for (let i = 0; i < 11; i++) await user.click(screen.getByRole('button', { name: 'Rally to Gita / Rekha' }));
     await user.click(screen.getByRole('button', { name: 'Rally to Gita / Rekha' }));
-    expect(screen.getByText('Match finished')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save result' })).toBeInTheDocument();
+    expect(screen.getByText('Confirm final score', { selector: 'b' })).toBeInTheDocument();
+    expect(screen.getByText('Check the score before saving the result.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm final score' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to scoring' })).toBeEnabled();
   });
 });
 
@@ -157,7 +159,7 @@ describe('point tap feedback', () => {
     await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
     await user.click(screen.getByRole('button', { name: 'Point to Gita / Rekha' }));
     expect(vibrate.mock.calls).toEqual([[10], [10]]);
-    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await user.click(screen.getByRole('button', { name: 'Undo last point' }));
     expect(vibrate).toHaveBeenCalledTimes(2);
   });
 
@@ -212,7 +214,7 @@ describe('a score the server refuses for good', () => {
     const send = vi.fn(async (_p: ScorePatch) => { if (fail) throw new ClubError('No connection to the club server. Check your internet and try again.'); return undefined; });
     pad(send);
     await user.click(screen.getByRole('button', { name: 'Point to Asha / Lata' }));
-    await waitFor(() => expect(screen.getByText('Not sent yet · retrying')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Saved on this device')).toBeInTheDocument());
     expect(screen.queryByText(/Show this screen to the desk/)).toBeNull();
     fail = false;
     await act(async () => { vi.advanceTimersByTime(10_000); });
@@ -261,5 +263,17 @@ describe('offline banner', () => {
     fail = false;
     await act(async () => { window.dispatchEvent(new Event('online')); vi.advanceTimersByTime(3_000); });
     await waitFor(() => expect(screen.queryByRole('status', { name: 'Connection' })).toBeNull());
+  });
+});
+
+describe('final scores only (audit 19 Nov)', () => {
+  it('warns when one box of a game is empty instead of saving 0', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    render(<ManualScores format={{ bestOf: 1, pointsTo: 11 } as unknown as Parameters<typeof ManualScores>[0]['format']} nameA="Asha" nameB="Gita" onSave={onSave} onCancel={() => undefined} busy={false} />);
+    await user.type(screen.getByLabelText('Game 1 Asha'), '11');
+    await user.click(screen.getByRole('button', { name: 'Save result' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Game 1: enter both scores');
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

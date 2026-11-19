@@ -3,7 +3,7 @@ import type { Go } from '../navigation';
 import type { ClubTournament } from '../club/types';
 import { backend, eventsBackend } from '../club/index';
 import { DemoNote, RoleBadge, Status, useLoad } from '../club/screens/common';
-import { clubMark, OrgShell, PageHead, type OrgTab } from '../rallyq/shell/Shell';
+import { clubMark, OrgShell, PageHead, PublicShell, type OrgTab } from '../rallyq/shell/Shell';
 import { friendlyDate, friendlyTime } from '../club/dates';
 
 const STATUS_TEXT: Record<ClubTournament['status'], string> = { draft: 'Not started', live: 'Live', done: 'Finished' };
@@ -11,7 +11,9 @@ const STATUS_TEXT: Record<ClubTournament['status'], string> = { draft: 'Not star
 const STATUS_CLASS: Record<ClubTournament['status'], string> = { draft: 'st wait', live: 'st live', done: 'st off' };
 
 /** Organiser pages wear the v1.2 shell: the club on top of the side menu, RallyQ header, same tokens as Hub and the club page. */
-function OrgPage({ go, active, clubName, clubId, children }: { go: Go; active: OrgTab; clubName?: string; clubId?: string; children: ReactNode }) {
+function OrgPage({ go, active, clubName, clubId, signedIn, children }: { go: Go; active: OrgTab; clubName?: string; clubId?: string; signedIn: boolean; children: ReactNode }) {
+  // Visitors (and the moment before we know) get the public shell: no club avatar or Sign out for someone who isn't signed in (audit 19 Nov).
+  if (!signedIn) return <PublicShell go={go}>{children}</PublicShell>;
   return <OrgShell go={go} active={active} clubName={clubName} clubId={clubId}>{children}</OrgShell>;
 }
 
@@ -28,7 +30,7 @@ export function ClubTournamentsTab({ go }: { go: Go }) {
   const d = state.data;
   const first = d?.[0]?.club;
   return (
-    <OrgPage go={go} active="tournaments" clubName={first?.name} clubId={first?.id}>
+    <OrgPage go={go} active="tournaments" clubName={first?.name} clubId={first?.id} signedIn={!!d}>
       <PageHead cap={d && d.length > 1 ? `${d.length} clubs` : first?.name ?? 'Your clubs'} title={<span id="ct-title">Tournaments</span>} />
       <main aria-labelledby="ct-title" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         <Status error={state.error} loading={state.loading && !d} />
@@ -119,7 +121,7 @@ export function ClubResultsTab({ go }: { go: Go }) {
     </button>
   );
   return (
-    <OrgPage go={go} active="results" clubName={mine?.club?.name} clubId={mine?.club?.id}>
+    <OrgPage go={go} active="results" clubName={mine?.club?.name} clubId={mine?.club?.id} signedIn={!!mine}>
       <PageHead cap="After the event" title={<span id="cr-title">Results</span>} />
       <main aria-labelledby="cr-title" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         <Status error={organised.error} loading={organised.loading && !organised.data} />
