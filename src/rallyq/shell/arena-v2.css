@@ -101,9 +101,7 @@
 .rq .dna i.now{outline:2px solid var(--ball);outline-offset:2px}
 @media (max-width:560px){
   .rq .arena-board{grid-template-columns:minmax(0,1fr)}
-  .rq .arena-board .lq{position:absolute;top:-6px;right:-4px;width:46px}
-  .rq .arena-board .lqn span{display:none}
-  .rq .arena-board .lqn b{font-size:13px}
+  .rq .arena-board .lq{justify-self:center;width:120px;margin-top:4px}
   .rq .tr2{padding:12px 14px;gap:8px}
 }
 @media (prefers-reduced-motion:reduce){.rq .tr2 .srv.on,.rq .lq .lqs{animation:none}}
