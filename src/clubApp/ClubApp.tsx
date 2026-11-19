@@ -2,6 +2,7 @@ import { ThemeControls } from '../components/ThemeSwitch';
 import { useEffect, useState } from 'react';
 import { Icon, type IconName } from '../components/Icon';
 import { SocialPicker, TvPicker } from '../rallyq/tv/TvPicker';
+import { PlayerStudio } from '../club/screens/studio/Studio';
 import { UpdatePrompt } from '../components/UpdatePrompt';
 import ClubRoutes from '../club/screens/ClubRoutes';
 import { BrandMark } from '../club/screens/Brand';
@@ -102,6 +103,8 @@ export default function ClubApp() {
   if (route.name === 'event' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyEvent slug={route.id} go={go} /></>;
   // My Player Studio has its own header and feature tabs (prototype), so no old Studio side menu.
   if (route.name === 'club-player-studio' && ((route.id ?? '').includes('privacy') || (route.id !== 'profile' && !(route.id ?? '').startsWith('profile')))) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
+  // The Player Studio profile page (DUPR connect, Not me, download my data) has its own Studio header: no app bars on top of it (UX-08).
+  if (route.name === 'club-player-studio') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><div className="app pq-brand pq-studio-wrap"><PlayerStudio section={route.id ?? 'profile'} go={clubGo} /></div></>;
   // v1.2 screens render bare: their own shell is the header, menu and footer. A support session still says so on top.
   if (BARE.includes(name)) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><SupportBanner route={name} /><ClubRoutes route={{ ...route, name }} go={clubGo} back={back} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
