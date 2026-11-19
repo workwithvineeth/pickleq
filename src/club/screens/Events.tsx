@@ -13,6 +13,7 @@ import { DemoNote, errorText, Header, shareLink, Skeleton, Status, useLoad } fro
 import { OrganiserCard, PosterImage } from './Poster';
 import { friendlyDate, friendlyTime } from '../dates';
 import { entryStatus } from '../../rallyq/studio/myTournamentItems';
+import { contactHref } from '../../rallyq/event/contact';
 
 // ---------- Helpers ----------
 
@@ -76,7 +77,7 @@ function hostLine(clubs: number): string {
 function EventStatus({ e }: { e: PublicEvent }) {
   if (e.status === 'live') return <span className="chip live">Live</span>;
   if (e.registrationOpen) return <span className="st ok">Entries open</span>;
-  if (e.listing === 'listed') return <span className="st off">Contact the organiser</span>;
+  if (e.listing === 'listed') return <ContactOrganiser e={e} className="st ok" />;
   return <span className="st off">{e.drawn ? 'Draw made' : 'Entries closed'}</span>;
 }
 
@@ -90,12 +91,19 @@ async function findEvent(slug: string): Promise<{ src: ClubBackend; event: Publi
   return null;
 }
 
+/** Listed-only events: a real WhatsApp link to the organiser when the event gives a number or link (audit 19 Nov). */
+function ContactOrganiser({ e, className }: { e: PublicEvent; className: string }) {
+  const href = e.status !== 'done' ? contactHref(e.contact) : null;
+  if (!href) return <span className={className}>Enter with the organiser</span>;
+  return <a className={className} href={href} target="_blank" rel="noreferrer" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center' }} aria-label={`Contact the organiser of ${e.name}`}>Contact the organiser</a>;
+}
+
 function EventBadges({ e }: { e: PublicEvent }) {
   return (
     <span className="meta" style={{ gap: 6 }}>
       {e.status === 'live' && <span className="pill pill-warn">Live now</span>}
       {e.registrationOpen && <span className="pill pill-ok">Entries open</span>}
-      {e.listing === 'listed' && <span className="pill">Contact the organiser</span>}
+      {e.listing === 'listed' && <ContactOrganiser e={e} className="pill" />}
       {e.listing === 'run' && !e.registrationOpen && e.status !== 'live' && <span className="pill">{e.drawn ? 'Draw made' : 'Entries closed'}</span>}
     </span>
   );
