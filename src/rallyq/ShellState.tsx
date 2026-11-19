@@ -9,9 +9,9 @@ export function shellSource(raw:string){
 }
 const BLOCKS=[180,72,72,72];
 /** Loading skeleton, or a short message with one way out, inside the normal public header. */
-export function ShellState({name,source,go,loading,message,linkLabel='See all events'}:{name:PrototypeName;source:string;go:Go;loading:boolean;message?:string;linkLabel?:string}){
+export function ShellState({name,source,go,loading,title,message,linkLabel='See all events'}:{name:PrototypeName;source:string;go:Go;loading:boolean;title?:string;message?:string;linkLabel?:string}){
  const body=loading
   ?<div aria-busy="true" aria-label="Loading" style={{display:'flex',flexDirection:'column',gap:14}}>{BLOCKS.map((h,i)=><div key={i} className="card" style={{height:h,opacity:.45}}/>)}</div>
-  :<div className="card" role="status" style={{padding:24,display:'flex',flexDirection:'column',gap:10}}><p style={{margin:0,fontWeight:700,fontSize:18}}>{message}</p><a className="tlink" href="#/events" onClick={e=>{e.preventDefault();go('events');}} style={{alignSelf:'flex-start',minHeight:44,display:'inline-flex',alignItems:'center'}}>{linkLabel}</a></div>;
+  :<div className="card" role="status" style={{padding:24,display:'flex',flexDirection:'column',gap:10}}>{title&&<h1 className="disp" style={{margin:0,fontSize:32}}>{title}</h1>}<p style={{margin:0,fontWeight:title?400:700,fontSize:18}}>{message}</p><a className="tlink" href="#/events" onClick={e=>{e.preventDefault();go('events');}} style={{alignSelf:'flex-start',minHeight:44,display:'inline-flex',alignItems:'center'}}>{linkLabel}</a></div>;
  return <PrototypeScreen name={name} go={go} source={source} values={{body}}/>;
 }

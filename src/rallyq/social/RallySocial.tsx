@@ -27,7 +27,7 @@ export function templates(d:PublicTournament|null){
  return {
   'Entries open':{kicker:date,head:name+'. Entries open.',big:d?d.entries.length+' teams':'',foot:'Enter on RallyQ · link in bio',chip:'Entries open',chipCls:'chip ball',ph:'ph-entries'},
   'Live now':{kicker:live?'Court '+live.court:'Live',head:live?v(live.match)!.a+' vs '+v(live.match)!.b:'Courts go live soon',big:live?v(live.match)!.pointsA+' – '+v(live.match)!.pointsB:'',foot:'See live scores on RallyQ',chip:'Live',chipCls:'chip live',ph:'ph-livenow'},
-  'Result':{kicker:last?(v(last)?.division?.name??'Result'):'Result',head:last?wn(last)+' win.':'Results appear after each match.',big:last?score(last):'',foot:date,chip:'Result',chipCls:'chip',ph:'ph-result'},
+  'Result':{kicker:last?(v(last)?.division?.name??'Result'):'Result',head:last?wn(last)+' win.':'No results to share yet',big:last?score(last):'',foot:date,chip:'Result',chipCls:'chip',ph:'ph-result'},
   'Champion':{kicker:name+(fin?' · '+(v(fin)?.division?.name??''):''),head:fin?'Champions. '+wn(fin)+'.':'Champions crowned at the final.',big:fin?score(fin):'',foot:date,chip:'Champions',chipCls:'chip gold',ph:'ph-champions'}
  } as Record<T,{kicker:string;head:string;big:string;foot:string;chip:string;chipCls:string;ph:string}>;
 }

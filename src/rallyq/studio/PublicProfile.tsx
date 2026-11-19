@@ -9,7 +9,7 @@ import {loadPublicPlayer,samplePublicPlayer,type PublicRallyPlayer} from '../pri
 import {posterPng,sharePoster} from '../social/posterExport';
 import {ShellState,shellSource} from '../ShellState';
 const source=holes(raw,[
- ['<span class="chip">Signed in · Arjun</span>','<sc-if value="{{isSample}}" hint-placeholder-val="{{ false }}"><span class="chip">Sample profile</span></sc-if>'],
+ ['<span class="chip">Signed in · Arjun</span>','<sc-if value="{{isSample}}" hint-placeholder-val="{{ false }}"><span class="chip">Demo profile</span><span class="mut" style="font-size:13px">Sample data for preview only.</span></sc-if>'],
  ['DUPR 4.21 ▲ 0.06','{{duprLabel}}'],['font-size:clamp(56px,6vw,88px)">Arjun Rao</h1>','font-size:clamp(56px,6vw,88px)">{{name}}</h1>'],
  ['Right side · Banyan Pickleball Club · Hyderabad','{{clubLine}}'],
  ['<span class="chip">Men’s doubles</span><span class="chip">Mixed</span><span class="chip gold">QF · Banyan DUPR Night</span>','<sc-for list="{{cats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for><sc-if value="{{bestLine}}" hint-placeholder-val="{{ false }}"><span class="chip gold">{{bestLine}}</span></sc-if>'],
@@ -33,7 +33,7 @@ export function profileValues(p:PublicRallyPlayer,tab:string,setTab:(t:string)=>
  const score=(o:OfficialMatch)=>o.games.map(g=>mine(o,g).join('–')).join(' · ');
  const kinds=[...new Set(off.map(o=>o.division).filter(Boolean))] as string[];
  return {
-  name:p.name,duprLabel:p.duprDoubles?'DUPR '+p.duprDoubles.toFixed(2):'DUPR not linked',clubLine:[p.club,p.city].filter(Boolean).join(' · '),
+  name:p.name,duprLabel:p.duprDoubles?'DUPR '+p.duprDoubles.toFixed(2):'Unrated',clubLine:[p.club,p.city].filter(Boolean).join(' · '),
   cats:kinds.slice(0,2),bestLine:best?STAGE[best.stage]+' · '+best.tournament:'',
   played:off.length,winRate:(off.length?Math.round(wins/off.length*100):0)+'%',bestRun:run,venueCount:byClub.size,
   form:off.slice(0,10).reverse().map(o=>({r:won(o)?'W':'L',cls:won(o)?'chip ball':'chip'})),
@@ -41,7 +41,7 @@ export function profileValues(p:PublicRallyPlayer,tab:string,setTab:(t:string)=>
   isMatches:tab==='Matches',isVenues:tab==='Venues',isShare:tab==='Share card',
   matches:off.slice(0,12).map(o=>{const side=o.mySide==='A'?o.sideA:o.sideB,them=o.mySide==='A'?o.sideB:o.sideA;return{d:new Date(o.playedOn+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}),e:o.tournament,w:first(side.filter(x=>x.id!==o.me),go)||'—',v:first(them,go),s:score(o),r:won(o)?'W':'L',cls:won(o)?'chip ball':'chip'};}),
   venues:[...byClub.entries()].map(([n,v])=>({n,w:v.w,p:Math.round(v.w/v.n*100)+'%'})),
-  lastEvent:last?.tournament??'No matches yet',lastScore:last?score(last):'',lastClub:last?.club??p.club,lastResult:last?(won(last)?'Win':'Result'):'',lastChip:last&&won(last)?'chip ball':'chip',
+  lastEvent:last?.tournament??'No tournament results yet',lastScore:last?score(last):'',lastClub:last?.club??p.club,lastResult:last?(won(last)?'Win':'Result'):'',lastChip:last&&won(last)?'chip ball':'chip',
   share:onShare,shareLabel
  };
 }
@@ -55,9 +55,11 @@ export async function exportShareCard(p:PublicRallyPlayer){
 export function PublicProfile({playerId,go}:{playerId?:string;go:Go}){
  const[tab,setTab]=useState('Matches'),[shareLabel,setShareLabel]=useState('Save for Instagram');
  const state=useLoad(async()=>playerId?loadPublicPlayer(playerId):samplePublicPlayer(),[playerId]);
- if(!state.data)return <ShellState name="Studio" source={SHELL} go={go} loading={state.loading} message="This profile is private or the link is wrong." linkLabel="Find events →"/>;
+ if(!state.data)return <ShellState name="Studio" source={SHELL} go={go} loading={state.loading} title="Player not found" message="This profile isn't available." linkLabel="Find players"/>;
  const p=state.data;
  const share=async()=>{if(shareLabel==='Making image…')return;setShareLabel('Making image…');
   try{setShareLabel(await exportShareCard(p));}catch(e){setShareLabel(e instanceof Error&&e.name==='AbortError'?'Save for Instagram':'Couldn’t save · try again');}};
- return <PrototypeScreen name="Studio" go={go} source={source} values={{...profileValues(p,tab,setTab,shareLabel,()=>{void share();},go),isSample:!playerId}}/>;
+ return <PrototypeScreen name="Studio" go={go} source={source} values={{...profileValues(p,tab,setTab,shareLabel,()=>{void share();},go),isSample:!playerId}}>
+  {!p.official.length&&<section className="card" aria-label="Tournament results" style={{margin:'0 max(16px,2.4vw) 32px',padding:22}}><h2 style={{margin:0}}>No tournament results yet</h2><p className="mut" style={{margin:'6px 0 0'}}>Referee-scored tournament matches will appear here when results are saved.</p></section>}
+ </PrototypeScreen>;
 }
