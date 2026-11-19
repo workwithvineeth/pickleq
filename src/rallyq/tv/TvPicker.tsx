@@ -23,8 +23,8 @@ export function TvPicker({go,target='club-tv'}:{go:Go;target?:'club-tv'|'club-so
   {list.error&&<p role="alert">Can’t reach the events right now. Check the connection and reload.</p>}
   {!list.loading&&!list.error&&!events.length&&<p role="status">No events are live or coming up yet.</p>}
   <div style={{display:'grid',gap:10,maxWidth:560}}>
-   {events.map(e=><button key={e.slug} type="button" className="btn" style={{justifyContent:'space-between',minHeight:56}} onClick={()=>go(target,e.slug)} aria-label={(tv?'Open the TV board for ':'Open Social Studio for ')+e.name}>
-    <span>{e.name}</span><span style={{opacity:.8}}>{e.status==='live'?'Live now':'Starts '+e.startDate}</span></button>)}
+   {events.map(e=><button key={e.slug} type="button" style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,minHeight:64,padding:'12px 18px',borderRadius:18,border:0,background:'#0D2218',color:'#F1F4EA',boxShadow:'inset 0 0 0 1px rgba(241,244,234,.12)',font:'inherit',fontWeight:700,fontSize:16,cursor:'pointer',textAlign:'left'}} onClick={()=>go(target,e.slug)} aria-label={(tv?'Open the TV board for ':'Open Social Studio for ')+e.name}>
+    <span>{e.name}</span><span style={e.status==='live'?{background:'#FF655C',color:'#1A0603',borderRadius:999,padding:'4px 10px',fontSize:12,fontWeight:800,letterSpacing:'.06em',textTransform:'uppercase'}:{color:'#9FB4A6',fontWeight:500,fontSize:14}}>{e.status==='live'?'Live now':'Starts '+e.startDate}</span></button>)}
   </div>
  </main>;
 }

@@ -101,7 +101,7 @@ export default function ClubApp() {
   if (route.name === 'club-tv' && route.id) return <><UpdatePrompt offlineNotice={false} inline /><RallyTV slug={route.id} go={go} /></>;
   if (route.name === 'event' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyEvent slug={route.id} go={go} /></>;
   // My Player Studio has its own header and feature tabs (prototype), so no old Studio side menu.
-  if (route.name === 'club-player-studio' && route.id !== 'profile' && !(route.id ?? '').startsWith('profile')) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
+  if (route.name === 'club-player-studio' && ((route.id ?? '').includes('privacy') || (route.id !== 'profile' && !(route.id ?? '').startsWith('profile')))) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><MyStudio key={route.id} section={route.id} go={clubGo} /></>;
   // v1.2 screens render bare: their own shell is the header, menu and footer. A support session still says so on top.
   if (BARE.includes(name)) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><SupportBanner route={name} /><ClubRoutes route={{ ...route, name }} go={clubGo} back={back} /></>;
   // Admin, club and Player Studio screens get their own workspace menu (Phase 3 prototypes 01–03).
