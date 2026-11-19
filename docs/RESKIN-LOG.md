@@ -30,3 +30,4 @@ Never change the database, scoring logic or user flows.
 
 ## Log (newest last, times IST)
 - Fri 04:00 · Branch created from rallyq-live 12f1cd0. Log started.
+- Codex · Fri 20 Nov · Task 1: added pure rally records, serving calls, current runs and level signals with tests, reusing existing replay/history helpers; pull, commit and push blocked by read-only .git metadata.
