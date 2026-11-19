@@ -10,6 +10,7 @@ import { matchResult } from '../domain/engine';
 import { analyseGame, checkFinalScore, gameOver, isGoldenPoint, leadThreshold, tally } from '../domain/momentum';
 import type { ClubGame, ScoringMode, Thresholds } from '../types';
 import { replaySideOut, type Side } from '../domain/sideout';
+import { PAD5 } from '../../rallyq/shell/pad';
 
 export { readUnsent, writeUnsent };
 
@@ -242,12 +243,14 @@ export function ScorePad(p: ScorePadProps) {
             <button type="button" className="score-tap score-tap-a" data-serving={so?.serving === 'A' && !curOver ? '' : undefined} aria-label={sideOut ? `Rally to ${nameA}` : `Point to ${nameA}`} onClick={() => point('A')} disabled={curOver || matchOver || frozen}>
               <span className="small pq-referee-name">{nameA}{so?.serving === 'A' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.a}</span>
+              {PAD5 && doubles && so?.serving === 'A' && !curOver && <span key={`A${so.server}`} className="pq-bigno" aria-hidden="true">{so.server}</span>}
               <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
             </button>
             {(golden || gp) && <div role="status" className="pq-gamepoint-strip">{golden ? "GOLDEN POINT" : "GAME POINT"}<small>{golden ? "Golden point · next point wins" : "Game point: " + (gp === "A" ? nameA : nameB)}</small></div>}
             <button type="button" className="score-tap score-tap-b" data-serving={so?.serving === 'B' && !curOver ? '' : undefined} aria-label={sideOut ? `Rally to ${nameB}` : `Point to ${nameB}`} onClick={() => point('B')} disabled={curOver || matchOver || frozen}>
               <span className="small pq-referee-name">{nameB}{so?.serving === 'B' && !curOver ? ' · serving' : ''}</span>
               <span className="big">{cur.b}</span>
+              {PAD5 && doubles && so?.serving === 'B' && !curOver && <span key={`B${so.server}`} className="pq-bigno" aria-hidden="true">{so.server}</span>}
               <span className="small muted">{sideOut ? 'Tap when this team wins the rally' : 'Tap when this team wins the point'}</span>
             </button>
           </div>

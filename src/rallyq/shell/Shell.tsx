@@ -6,7 +6,7 @@ import {accountLink,useHome} from '../useHome';
 import {scopedCSS} from '../PrototypeScreen';
 import raw from './v12.css?raw';
 import arenaRaw from './arena-v2.css?raw';
-import padRaw from './arena-v2-pad.css?raw';
+import { padCSS as padRaw } from './pad';
 import {Q_PATH,Watermark} from './Watermark';
 
 /** RallyQ v1.2 shell: the final prototype's styles (docs/final-prototype/*.dc.html) around real screens.

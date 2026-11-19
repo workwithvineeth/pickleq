@@ -1,0 +1,31 @@
+/* RallyQ · Arena System v2 · referee pad "Pad 5 · Ball on Night". Its own file so Saturday can fall back:
+   set PAD5 = false in ./pad.ts and the pad goes back to the current v1.2 look. Visual only: the buttons,
+   labels, scoring, offline and undo are the same elements as before.
+   Teams never move (A on top). Both halves are dark cards with a Sea (A) / Tide (B) rail. The serving half
+   floods ball green, sliding in across the net in 0.4 s, with a big outline server number. */
+.rq-referee{--c1:var(--work,rgba(10,33,26,.85))}
+.rq-referee .card.section,.rq-referee .card{-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.rq-referee .rq-ref-grid{grid-template-columns:1fr!important;gap:10px!important}
+.rq-referee .rq-ref-grid .score-tap{position:relative;overflow:hidden;isolation:isolate;border:0!important;border-radius:24px!important;background:#133022!important;color:#F1F4EA!important;min-height:clamp(150px,26vh,220px)!important;padding:16px 16px 16px 24px!important;box-shadow:inset 0 1px 0 rgba(241,244,234,.06),0 8px 24px rgba(0,0,0,.28)!important;transition:color .2s}
+.rq-referee .rq-ref-grid .score-tap::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--sea,#76E0D0);z-index:2}
+.rq-referee .rq-ref-grid .score-tap-b::before{background:var(--tide,#7EAEF2)}
+.rq-referee .rq-ref-grid .score-tap > *{position:relative;z-index:1}
+.rq-referee .rq-ref-grid .score-tap :is(.big,.pq-referee-name,.small,.muted){color:#F1F4EA!important}
+.rq-referee .rq-ref-grid .score-tap :is(.small,.muted){opacity:.72}
+.rq-referee .rq-ref-grid .score-tap .big{font-variant-numeric:tabular-nums}
+/* the flood: ball green under the serving half, arriving from the net side */
+.rq-referee .rq-ref-grid .score-tap[data-serving]::after{content:"";position:absolute;inset:0;background:var(--ball,#D9F24A);z-index:0;animation:rqflood-a .4s cubic-bezier(.45,0,.25,1) both}
+.rq-referee .rq-ref-grid .score-tap-b[data-serving]::after{animation-name:rqflood-b}
+@keyframes rqflood-a{from{transform:translateY(100%)}to{transform:none}}
+@keyframes rqflood-b{from{transform:translateY(-100%)}to{transform:none}}
+.rq-referee .rq-ref-grid .score-tap[data-serving],.rq-referee .rq-ref-grid .score-tap[data-serving] :is(.big,.pq-referee-name,.small,.muted){color:#06140D!important}
+.rq-referee .rq-ref-grid .score-tap[data-serving] :is(.small,.muted){opacity:.78}
+/* ball marker: ink dot with a ball ring before the serving team's name */
+.rq-referee .rq-ref-grid .score-tap[data-serving] .pq-referee-name::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#06140D;box-shadow:0 0 0 2px var(--ball,#D9F24A),0 0 0 3px #06140D;margin-right:8px;vertical-align:-1px}
+/* big outline server number (doubles) */
+.rq-referee .pq-bigno{position:absolute!important;right:68px;top:50%;margin-top:-46px;font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:84px;line-height:92px;color:transparent!important;-webkit-text-stroke:2px rgba(6,20,13,.45);pointer-events:none;animation:rqbigno .26s cubic-bezier(.45,0,.25,1) both}
+@keyframes rqbigno{from{transform:rotateX(90deg);opacity:0}to{transform:none;opacity:1}}
+@media (max-width:360px){.rq-referee .pq-bigno{right:20px;font-size:64px;line-height:72px;margin-top:-36px}}
+.rq-referee .rq-ref-grid .score-tap:disabled{opacity:.55}
+.rq-referee .rq-ref-grid .score-tap:focus-visible{outline:3px solid #F1F4EA;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.rq-referee .rq-ref-grid .score-tap[data-serving]::after,.rq-referee .pq-bigno{animation:none}}

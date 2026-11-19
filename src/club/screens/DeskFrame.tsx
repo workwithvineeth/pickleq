@@ -3,7 +3,7 @@ import { scopedCSS } from '../../rallyq/PrototypeScreen';
 import { clubMark, ModeButton, QMark, Signoff, useDay } from '../../rallyq/shell/Shell';
 import raw from '../../rallyq/shell/v12.css?raw';
 import arenaRaw from '../../rallyq/shell/arena-v2.css?raw';
-import padRaw from '../../rallyq/shell/arena-v2-pad.css?raw';
+import { padCSS as padRaw } from '../../rallyq/shell/pad';
 import type { Go } from '../../navigation';
 import { OrgShell, type OrgTab } from '../../rallyq/shell/Shell';
 import type { ClubBackend, TournamentBundle } from '../backend';
