@@ -7,7 +7,7 @@ import type { Go } from '../../navigation';
 import type { ClubBackend, TournamentDetails } from '../backend';
 import { backend } from '../index';
 import { blankPerson, drawProblem, entryProblem, inboxCounts, planDraw, rulesLine, type DrawChoice } from '../registration';
-import { isAdmin, isApproved, isStaff, PAYMENT_LABEL, REG_STATUS_LABEL, type ClubTournament, type Division, type EntryPerson, type Listing, type Payment, type Registration, type RegistrationStatus } from '../types';
+import { isAdmin, isApproved, isStaff, PAYMENT_LABEL, REG_STATUS_LABEL, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type Payment, type Registration, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Status, useLoad } from './common';
 import { eventShareLink, PersonFields } from './Events';
 import { PosterPicker } from './Poster';
@@ -40,6 +40,12 @@ const CARDS_CSS = `@media (max-width:639px){
 .rq-entry-cards .tbl td.rq-act .btn{min-height:44px}
 }`;
 const STATUS_CLS: Record<RegistrationStatus, string> = { pending: 'st wait', accepted: 'st ok', waitlist: 'st wait', rejected: 'st no', withdrawn: 'st off' };
+
+/** Entries in the draw with no registration behind them (added or imported by the organiser), not withdrawn. */
+export function directEntries(regs: Pick<Registration, 'entryId'>[], entries: Pick<Entry, 'id' | 'divisionId' | 'status'>[], divisionId: string): number {
+  const linked = new Set(regs.map((r) => r.entryId).filter(Boolean));
+  return entries.filter((e) => e.divisionId === divisionId && e.status !== 'withdrawn' && !linked.has(e.id)).length;
+}
 
 /** The organiser's entries inbox: accept or turn down entries, match UPI payments, add offline entries, close entries and make the draw. */
 export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: () => void }) {
@@ -77,7 +83,10 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
   const who = (r: Registration) => r.players.map((p) => p.name).join(' / ');
   const setStatus = (r: Registration, status: RegistrationStatus, note?: string) => run(() => b.updateRegistration(r.id, { status, ...(note !== undefined ? { note } : {}) }), `${who(r)}: ${REG_STATUS_LABEL[status].toLowerCase()}`);
   const setPaid = (r: Registration, payment: Payment) => run(() => b.updateRegistration(r.id, { payment }), `${who(r)}: ${PAYMENT_LABEL[payment].toLowerCase()}`);
-  const drawn = !!t.drawnAt;
+  // A draw made elsewhere (roster events, the tournament page) has matches but may have no drawnAt: it still counts as drawn (audit 19 Nov).
+  const drawn = !!t.drawnAt || d.t.matches.some((m) => m.status !== 'void');
+  // Entries the organiser added or imported straight into the draw have no registration: count them as accepted too.
+  const direct = directEntries(regs, d.t.entries, div.id);
   const toggle = (r: Registration, panel: 'pay' | 'more' | 'edit' | 'reject') => { setTicked(null); setOpen((o) => (o?.id === r.id && o.panel === panel ? null : { id: r.id, panel })); };
 
   /** The one action a row asks for next (the first one on the screen gets the yellow button). */
@@ -107,7 +116,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
       )}
       <section className="grid g4" aria-label={`${div.name} entries`}>
         <div className="card stat" style={{ padding: 18 }}><div className="cap">Payments to check</div><div className={`n${nCheck ? ' acc' : ''}`}>{nCheck}</div><div className="mut" style={{ fontSize: 13 }}>players say they paid by UPI</div></div>
-        <div className="card stat" style={{ padding: 18 }}><div className="cap">Accepted</div><div className="n">{counts.accepted}</div><div className="mut" style={{ fontSize: 13 }}>{cap !== undefined ? `of ${cap} ${div.kind === 'doubles' ? 'team' : 'player'} spots` : div.kind === 'doubles' ? 'teams in' : 'players in'}{fee > 0 && counts.unpaidAccepted ? ` · ${counts.unpaidAccepted} ${counts.unpaidAccepted === 1 ? 'payment' : 'payments'} not confirmed yet` : ''}</div></div>
+        <div className="card stat" style={{ padding: 18 }}><div className="cap">Accepted</div><div className="n">{counts.accepted + direct}</div><div className="mut" style={{ fontSize: 13 }}>{cap !== undefined ? `of ${cap} ${div.kind === 'doubles' ? 'team' : 'player'} spots` : div.kind === 'doubles' ? 'teams in' : 'players in'}{direct ? ` · ${direct} added by you` : ''}{fee > 0 && counts.unpaidAccepted ? ` · ${counts.unpaidAccepted} ${counts.unpaidAccepted === 1 ? 'payment' : 'payments'} not confirmed yet` : ''}</div></div>
         <div className="card stat" style={{ padding: 18 }}><div className="cap">To decide</div><div className="n">{counts.pending}</div><div className="mut" style={{ fontSize: 13 }}>new entries waiting for you</div></div>
         <div className="card stat" style={{ padding: 18 }}><div className="cap">Waitlist</div><div className="n">{counts.waitlist}</div><div className="mut" style={{ fontSize: 13 }}>move up when a spot frees</div></div>
       </section>
@@ -184,7 +193,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
         {shown.length === 0 && <div className="empty">{needle ? 'No team or UPI reference matches that.' : f === 'check' ? 'No payments to check. You’re all caught up.' : 'No entries here.'}</div>}
       </div>
       {fee > 0 && <div className="note">Check the UPI reference in your bank app, then tap Confirm paid.</div>}
-      <Draw b={b} t={t} divisions={d.t.divisions} regs={d.regs} primary={!firstAct} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
+      <Draw b={b} t={t} drawn={drawn} divisions={d.t.divisions} regs={d.regs} primary={!firstAct} onDrawn={() => { state.reload(); setMsg({ ok: true, text: 'Draw made. Pools and the schedule are ready.' }); }} go={go} />
     </OrgShell>
   );
 }
@@ -229,7 +238,7 @@ function EntryForm({ b, t, divisions, divisionId, start, busy, offline, onSave, 
 }
 
 /** Making the draw: choose the format for each event, see when the day finishes, then create entries, matches, courts and times in one go. */
-function Draw({ b, t, divisions, regs, onDrawn, go, primary = true }: { b: ClubBackend; t: ClubTournament; divisions: Division[]; regs: Registration[]; onDrawn: () => void; go: Go; primary?: boolean }) {
+function Draw({ b, t, drawn, divisions, regs, onDrawn, go, primary = true }: { b: ClubBackend; t: ClubTournament; drawn: boolean; divisions: Division[]; regs: Registration[]; onDrawn: () => void; go: Go; primary?: boolean }) {
   const withEntries = divisions.map((d) => ({ d, n: regs.filter((r) => r.divisionId === d.id && r.status === 'accepted').length })).filter((x) => x.n > 0);
   const [drafts, setDrafts] = useState<Record<string, FormatDraft>>({});
   const [courts, setCourts] = useState(t.courts);
@@ -243,7 +252,7 @@ function Draw({ b, t, divisions, regs, onDrawn, go, primary = true }: { b: ClubB
   const draft = (d: Division, n: number): FormatDraft => drafts[d.id] ?? { ...divisionToDraft(d), ...(n > 8 ? { shape: 'ko' as const } : { shape: 'rr' as const }) };
   const choice = (d: Division, n: number): DrawChoice => ({ divisionId: d.id, ...draftToDivision(draft(d, n)) });
   const problems = useMemo(() => withEntries.map(({ d, n }) => drawProblem(d, n, choice(d, n))).filter(Boolean) as string[], [withEntries, drafts]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (t.drawnAt) {
+  if (drawn) {
     return (
       <section className="card" aria-label="Draw" style={{ padding: 22 }}><Legacy className="section">
         <h2 className="disp" style={{ fontSize: 24 }}>Draw made</h2>
