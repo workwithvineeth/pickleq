@@ -1,3 +1,4 @@
+import {overviewNotes} from './overviewNotes';
 import {useEffect,useState} from 'react';
 import type {Go} from '../../navigation';
 import type {ClubBundle} from '../../club/backend';
@@ -33,8 +34,7 @@ export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
  const tick=(i:number)=>{const next={...manual,[i]:!manual[i]};setManual(next);if(focus)try{localStorage.setItem(ticksKey(focus.id),JSON.stringify(next));}catch{/* private mode: ticks last this visit */}};
  const regs=useLoad(async()=>b&&staff&&focus?b.registrations(focus.id):[],[b,staff,focus?.id]);
  const links=useLoad(async()=>b&&staff&&focus?b.scorerLinks(focus.id):[],[b,staff,focus?.id]);
- const r=(regs.data??[]).filter(x=>!['withdrawn','rejected'].includes(x.status));
- const pending=r.filter(x=>x.status==='pending').length,claims=r.filter(x=>x.payment==='claimed').length;
+ const notes=overviewNotes(regs.data??[]);const{pending,claims}=notes;
  const fm=focus?d.matches.filter(m=>m.tournamentId===focus.id&&m.status!=='void'):[];
  const courtsCovered=focus?Array.from({length:focus.courts},(_,i)=>i+1).filter(c=>(links.data??[]).some(l=>!l.revoked&&(!l.court||l.court===c))).length:0;
  const days=focus?Math.round((Date.parse(focus.startDate)-Date.parse(today))/864e5):0;
@@ -49,8 +49,8 @@ export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
   today:new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'}),
   headline:!focus?'No event booked yet.':focus.status==='live'?focus.name+' is live.':days<=0?focus.name+' is today.':days===1?'Tomorrow: '+focus.name+'.':days+' days to '+focus.name+'.',
   publicHref:eventsBoardHref(focus),deskHref:focus?'#/club-desk/'+encodeURIComponent(focus.id):'#/club-tournament-new/'+encodeURIComponent(d.club.id),deskLabel:focus?'Open tournament desk':'Create tournament',socialHref:'#/club-social/'+encodeURIComponent(slug),
-  entered:r.length,enteredNote:pending?pending+' waiting for you':'all confirmed',courts:focus?.courts??0,courtNote:focus?courtsCovered+' with a scorer link':'',
-  matches:fm.length,matchNote:fm.length?fm.filter(m=>m.status==='done').length+' played':'draw not made yet',needs:pending+claims,needsNote:claims?claims+' payments to confirm':'nothing waiting',
+  entered:notes.entered,enteredNote:notes.enteredNote,courts:focus?.courts??0,courtNote:focus?courtsCovered+' with a scorer link':'',
+  matches:fm.length,matchNote:fm.length?fm.filter(m=>m.status==='done').length+' played':'draw not made yet',needs:notes.needs,needsNote:notes.needsNote,
   tasks:tasks.map((t,i)=>({...t,isNext:i===nx,cls:i===nx?'next':'',box:t.done?'width:22px;height:22px;border-radius:7px;background:#D9F24A;flex:none':'width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 2px #9FB4A6;flex:none',txt:t.done?'color:#9FB4A6;text-decoration:line-through':'font-weight:600'})),
   done,total:tasks.length,pct:Math.round(done/tasks.length*100)+'%',
   coming:upcoming.slice(0,3).map((t,i)=>({name:t.name,date:day(t.startDate),style:i?'color:#9FB4A6':'font-weight:600'})),noComing:!upcoming.length

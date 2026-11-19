@@ -68,7 +68,7 @@ export function ClubHub({ go, onBack }: { go: Go; onBack: () => void }) {
     <PublicShell go={go} active="clubs">
       <PageHead cap={b?.kind === 'demo' ? 'Demo mode' : `Signed in as ${signedIn.user.email}`} title={<span id="club-title">{signedIn.admin ? 'Clubs' : 'My clubs'}</span>}
         actions={<>
-          {signedIn.admin && <button type="button" className="btn ghost sm" onClick={() => go('admin', 'overview')}>Admin dashboard</button>}
+          {signedIn.admin && <button type="button" className="btn ghost sm" onClick={() => go('admin')}>Admin dashboard</button>}
           <button type="button" className="btn ghost sm" onClick={() => signedIn.admin ? go('admin', 'results') : go('club-results')}>Results &amp; DUPR</button>
           {b?.kind === 'server' && <button type="button" className="btn ghost sm" onClick={() => go('club-player-studio')}>Player Studio</button>}
         </>} />

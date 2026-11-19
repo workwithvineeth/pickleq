@@ -1,7 +1,7 @@
 import { ThemeControls } from '../components/ThemeSwitch';
 import { useEffect, useState } from 'react';
 import { Icon, type IconName } from '../components/Icon';
-import { TvPicker } from '../rallyq/tv/TvPicker';
+import { SocialPicker, TvPicker } from '../rallyq/tv/TvPicker';
 import { UpdatePrompt } from '../components/UpdatePrompt';
 import ClubRoutes from '../club/screens/ClubRoutes';
 import { BrandMark } from '../club/screens/Brand';
@@ -97,6 +97,7 @@ export default function ClubApp() {
   if (route.name === 'public-player') return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><PublicProfile playerId={route.id} go={go} /></>;
   if (route.name === 'club-social' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallySocial slug={route.id} go={go} /></>;
   if (route.name === 'club-tv' && !route.id) return <TvPicker go={go} />;
+  if (route.name === 'club-social' && !route.id) return <><StagingStrip /><SocialPicker go={go} /></>;
   if (route.name === 'club-tv' && route.id) return <><UpdatePrompt offlineNotice={false} inline /><RallyTV slug={route.id} go={go} /></>;
   if (route.name === 'event' && route.id) return <><StagingStrip /><UpdatePrompt offlineNotice={false} inline /><RallyEvent slug={route.id} go={go} /></>;
   // My Player Studio has its own header and feature tabs (prototype), so no old Studio side menu.
