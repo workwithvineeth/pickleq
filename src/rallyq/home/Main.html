@@ -17,6 +17,13 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 @media(min-width:761px){.slides .s0{background-image:url(/_blob/p-hero-d);background-position:70% 30%}.slides .s1{background-image:url(/_blob/p-champ-d);background-position:70% 30%}.slides .s2{background-image:url(/_blob/p-comp-d);background-position:75% 20%}}
 .over{position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(6,20,13,.96) 0%,rgba(6,20,13,.8) 34%,rgba(6,20,13,.12) 62%,rgba(6,20,13,.35) 100%)}
 @media(min-width:761px){.over{background:linear-gradient(90deg,rgba(6,20,13,.9) 0%,rgba(6,20,13,.62) 34%,rgba(6,20,13,0) 68%),linear-gradient(0deg,rgba(6,20,13,.75) 0%,transparent 30%)}}
+/* Day mode (final prototype): the hero photo melts into the green page instead of ending on a dark edge.
+   The hero goes see-through, its photo and court-green shade fade out at the bottom, so the page's own day background carries on below. */
+.rq.day .hero{background:transparent}
+.rq.day .slides,.rq.day .over{-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 55%,transparent 100%)}
+.rq.day .over{background:linear-gradient(0deg,rgba(36,95,64,.9) 0%,rgba(36,95,64,.72) 34%,rgba(43,110,75,.12) 62%,rgba(24,68,45,.4) 100%)}
+@media(min-width:761px){.rq.day .over{background:linear-gradient(90deg,rgba(43,110,75,.93) 0%,rgba(43,110,75,.7) 30%,rgba(43,110,75,.12) 70%),linear-gradient(180deg,rgba(24,68,45,.45),transparent 18%)}}
+.rq.day .hill .tag{background:rgba(24,68,45,.72)}
 .hnav a{color:#DDE7DC!important}.hnav a:hover,.hnav a.on{color:#D9F24A!important}
 .hnav a.on{box-shadow:0 2px 0 #D9F24A}
 .mpanel a.on{color:#D9F24A}
