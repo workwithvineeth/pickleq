@@ -13,7 +13,7 @@ const CSS = scopedCSS(raw).replaceAll('%BASE%', import.meta.env.BASE_URL);
  * The v1.2 look for pages opened without an account (the desk link): the club on top, RallyQ small and last,
  * and no organiser side menu. Same styles as the shell (src/rallyq/shell).
  */
-export function DeskFrame({ clubName, children }: { clubName?: string; children: ReactNode }) {
+export function DeskFrame({ clubName, kind = 'desk', children }: { clubName?: string; kind?: 'desk' | 'referee'; children: ReactNode }) {
   const day = useDay();
   const style = useMemo(() => <style>{CSS}</style>, []);
   return (
@@ -25,7 +25,7 @@ export function DeskFrame({ clubName, children }: { clubName?: string; children:
           <div className="wrap">
             {clubName
               ? <span className="host"><span className="tile">{clubMark(clubName)}</span><span><span className="cap">Hosted by</span><b>{clubName}</b></span></span>
-              : <span className="host"><span><span className="cap">Tournament desk</span></span></span>}
+              : <span className="host"><span><span className="cap">{kind === 'referee' ? 'Referee' : 'Tournament desk'}</span></span></span>}
             <div className="right" style={{ display: 'flex' }}><ModeButton /></div>
           </div>
         </header>
