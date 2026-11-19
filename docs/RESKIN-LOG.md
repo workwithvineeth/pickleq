@@ -9,7 +9,8 @@ Never change the database, scoring logic or user flows.
 
 ## Branches and deploys
 - Work branch: `claude/project-thread-hdj0m3` in workwithvineeth/pickleq, started from `rallyq-live` @ 12f1cd0.
-- Codex works on `codex/reskin-wiring` (branched from the work branch) and pushes small commits often.
+- Codex works in C:\Users\vinee\Downloads\rallyq-codex on `codex/reskin-wiring`. Its sandbox cannot write .git,
+  so Claude reviews each task's diff and commits + pushes it from the laptop. Task prompts: Downloads\rallyq-codex-taskN.txt, logs: rallyq-codex-taskN.log.
 - Staging: workwithvineeth/rallyq-staging, file `staging-ref` = branch to show. Push main to deploy.
   https://workwithvineeth.github.io/rallyq-staging/ (paddleq-staging DB, made-up data only).
 - Live: workwithvineeth/pqclub, file `club-ref` = exact pickleq commit. Today's live build: **12f1cd0**.
@@ -30,3 +31,7 @@ Never change the database, scoring logic or user flows.
 
 ## Log (newest last, times IST)
 - Fri 04:00 · Branch created from rallyq-live 12f1cd0. Log started.
+- Fri 04:10 · Batch 1 (arena-v2.css: tokens, glass, photos, chips, team rails) pushed; staging deployed (51857e8).
+- Fri 04:25 · Live board template (rails, server slot, tags, Living Q + DNA slots) and ref pad stylesheet (arena-v2-pad.css) pushed.
+- Fri 04:35 · Robot (android, local build): 75 passed, 1 failed (shell matrix CSP check; fails the same on 12f1cd0 locally, so not ours).
+- Fri 04:40 · Codex task 1 (src/rallyq/arena/rallies.ts) written, under review.

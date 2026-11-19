@@ -9,6 +9,7 @@ The approved target is `docs/arena-v2/prototype-no-images.html` (images stripped
 reference code: `QPATH`, `QPTS`, `qAt`, `qSig` (~line 1246) and `drawQ` / `tags` / `runOf` (~line 1320).
 
 ## Save your work constantly (usage limits can stop you at any time)
+- Update: your sandbox cannot write .git. Leave changes in the working tree; Claude reviews, commits and pushes them.
 - Work on branch `codex/reskin-wiring`. After **every** small step that passes `npm run check`:
   `git add -A && git commit -m "<what>" && git push -u origin codex/reskin-wiring`.
 - Commit author: `Vineeth <349021697+workwithvineeth@users.noreply.github.com>`.
