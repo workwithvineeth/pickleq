@@ -98,7 +98,7 @@ describe('Match DNA', () => {
     const dna = container.querySelector('.dna');
     const bars = container.querySelectorAll('i');
     expect(dna?.children).toHaveLength(4);
-    expect([...bars].map(b => b.className)).toEqual(['a', 'b so', 'a so', 'b now']);
+    expect([...bars].map(b => b.className)).toEqual(['a', 'b so', 'a so', 'b turn now']);
     expect([...bars].map(b => b.title)).toEqual(titles);
   });
 
@@ -107,7 +107,8 @@ describe('Match DNA', () => {
     const bars = container.querySelectorAll('i');
     expect(container.querySelectorAll('.run')).toHaveLength(3);
     for (let i = 0; i < bars.length; i++) expect(bars[i].classList.contains('run')).toBe(i >= bars.length - 3);
-    expect(bars[bars.length - 1]).toHaveClass('run', 'now');
+    expect(bars[bars.length - 1]).toHaveClass('run', 'turn', 'now');
+    expect(container.querySelectorAll('.turn')).toHaveLength(3);
     rerender(<Dna rallies={points(winners.slice(0, -1))} />);
     expect(container.querySelectorAll('.run')).toHaveLength(0);
     expect(container.querySelectorAll('.now')).toHaveLength(1);
@@ -118,6 +119,7 @@ describe('Match DNA', () => {
     const interruption: Rally = { ...mixed[1], n: 4, outcome };
     const { container, rerender } = render(<Dna rallies={[...run, interruption]} />);
     expect(container.querySelectorAll('.run')).toHaveLength(0);
+    expect(container.querySelectorAll('.turn')).toHaveLength(0);
     expect(container.querySelector('.now')).toHaveClass('so');
     rerender(<Dna rallies={[...run, interruption, { ...mixed[0], n: 5 }, { ...mixed[0], n: 6 }]} />);
     expect(container.querySelectorAll('.run')).toHaveLength(0);
