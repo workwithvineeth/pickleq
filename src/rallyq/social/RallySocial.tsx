@@ -10,7 +10,7 @@ import {holes} from '../holes';
 import {useClubLogo,logoTile} from '../useClubLogo';
 import {posterPng,savePoster,sharePoster,type PosterContent} from './posterExport';
 // The prototype's organiser menu has no tournament ids (its Desk link was dead), so it goes, as on RallyOverview and RallyAdmin.
-const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace('onClick="{{save}}">Send to WhatsApp','onClick="{{share}}">Send to WhatsApp'),[['>CC</div>','><span style="display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border-radius:inherit">'+logoTile('{{clubMark}}')+'</span></div>'],['font-size:17px;font-weight:800">Cedar</div>','font-size:17px;font-weight:800">{{clubName}}</div>'],['padding:6px 12px">Cedar · Maple Courts','padding:6px 12px">{{clubName}}']]);
+const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace('onClick="{{save}}">Send to WhatsApp','onClick="{{share}}">Send to WhatsApp'),[['>CC</div>','><span style="display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border-radius:inherit">'+logoTile('{{clubMark}}')+'</span></div>'],['font-size:17px;font-weight:800">Cedar</div>','font-size:17px;font-weight:800">{{clubName}}</div>']]);
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 type T='Entries open'|'Live now'|'Result'|'Champion';
 const ST={Night:{bg:'#06140D',ink:'#F1F4EA',acc:'#D9F24A',photo:true},Day:{bg:'#2B6E4B',ink:'#FFFFFF',acc:'#D9F24A',photo:false},Ball:{bg:'#D9F24A',ink:'#0B2418',acc:'#0B2418',photo:false},Chalk:{bg:'#F1F4EA',ink:'#0B2418',acc:'#2B6E4B',photo:false}} as const;
