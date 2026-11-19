@@ -1,4 +1,5 @@
-import {overviewNotes} from './overviewNotes';
+import {entryPanels,overviewNotes} from './overviewNotes';
+import {PAYMENT_LABEL,type Payment} from '../../club/types';
 import {useEffect,useState} from 'react';
 import type {Go} from '../../navigation';
 import type {ClubBundle} from '../../club/backend';
@@ -17,7 +18,7 @@ const source=holes(raw.replace(/<aside[\s\S]*?<\/aside>/,'').replace(coming,'<di
  ['Teams entered</div><div class="n acc">24</div><div class="mut" style="font-size:13px">of 32 · 2 waitlist','Teams entered</div><div class="n acc">{{entered}}</div><div class="mut" style="font-size:13px">{{enteredNote}}'],
  ['Courts</div><div class="n">4</div><div class="mut" style="font-size:13px">all with a referee','Courts</div><div class="n">{{courts}}</div><div class="mut" style="font-size:13px">{{courtNote}}'],
  ['Matches planned</div><div class="n">46</div><div class="mut" style="font-size:13px">5:00 to 9:30 pm','Matches planned</div><div class="n">{{matches}}</div><div class="mut" style="font-size:13px">{{matchNote}}'],
- ['Page views</div><div class="n">1,240</div><div class="mut" style="font-size:13px">this week','Need you</div><div class="n">{{needs}}</div><div class="mut" style="font-size:13px">{{needsNote}}'],
+ ['Page views</div><div class="n">1,240</div><div class="mut" style="font-size:13px">this week','Needs your decision</div><div class="n">{{needs}}</div><div class="mut" style="font-size:13px">{{needsNote}}'],
  ['href="Social.dc.html" style="align-self:flex-start">Make poster →','href="{{socialHref}}" style="align-self:flex-start">Make poster →']]);
 const ticksKey=(id:string)=>'rq-overview-ticks:'+id;
 const readTicks=(id?:string):Record<number,boolean>=>{if(!id)return {};try{return JSON.parse(localStorage.getItem(ticksKey(id))??'{}') as Record<number,boolean>;}catch{return {};}};
@@ -55,6 +56,12 @@ export function RallyOverview({d,go}:{d:ClubBundle;go:Go}){
   done,total:tasks.length,pct:Math.round(done/tasks.length*100)+'%',
   coming:upcoming.slice(0,3).map((t,i)=>({name:t.name,date:day(t.startDate),style:i?'color:#9FB4A6':'font-weight:600'})),noComing:!upcoming.length
  };
- if(live.length)return <><section aria-label="Club tools" style={{padding:'16px max(16px,2.4vw) 0'}}><ClubHome d={d} go={go}/></section><PrototypeScreen name="Overview" go={go} source={source} values={values}/></>;
- return <PrototypeScreen name="Overview" go={go} source={source} values={values}><section aria-label="Club tools" style={{padding:'0 max(16px,2.4vw) 32px'}}><ClubHome d={d} go={go}/></section></PrototypeScreen>;
+ const panels=focus&&staff&&regs.data?entryPanels(regs.data,focus,p=>PAYMENT_LABEL[p as Payment]??''):[];
+ const entries=panels.length?<section aria-label="Entries" style={{padding:'0 max(16px,2.4vw) 16px',display:'grid',gap:12}}>{panels.map(p=><div key={p.title} className="card">
+  <h2>{p.title}</h2><p className="small">{p.note}</p>
+  {p.items.length>0&&<ul style={{listStyle:'none',padding:0,margin:'8px 0',display:'grid',gap:6}}>{p.items.map(i=><li key={i.id}><b>{i.name}</b>{i.payment&&<span className="small"> · {i.payment}</span>}</li>)}</ul>}
+  {p.cta&&focus&&<button type="button" className="btn btn-primary" onClick={()=>p.cta!.to==='event-enter'?go('event-enter',focus.publicSlug):go('club-inbox',focus.id)}>{p.cta.label}</button>}
+ </div>)}</section>:null;
+ if(live.length)return <><section aria-label="Club tools" style={{padding:'16px max(16px,2.4vw) 0'}}><ClubHome d={d} go={go}/></section><PrototypeScreen name="Overview" go={go} source={source} values={values}>{entries}</PrototypeScreen></>;
+ return <PrototypeScreen name="Overview" go={go} source={source} values={values}>{entries}<section aria-label="Club tools" style={{padding:'0 max(16px,2.4vw) 32px'}}><ClubHome d={d} go={go}/></section></PrototypeScreen>;
 }
