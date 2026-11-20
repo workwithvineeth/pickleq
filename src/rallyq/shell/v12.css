@@ -347,6 +347,8 @@ figcaption{flex-wrap:wrap;gap:8px}
 .ph-aerial{background-image:url(%BASE%rallyq/photos/desktop/day-court-aerial.jpg)!important;background-position:center}
 .ph-crowd{background-image:url(%BASE%rallyq/photos/desktop/event-crowd-courtside.jpg)!important;background-position:center 40%}
 .ph-competitor{background-image:url(%BASE%rallyq/photos/desktop/player-competitor.jpg)!important;background-position:center 25%}
+/* A real player's public profile: an empty court at night until they add their own photo. Never a stranger's face. */
+.ph-court{background-color:#0B2418;background-image:linear-gradient(180deg,rgba(6,20,13,.2) 0%,rgba(6,20,13,.45) 50%,rgba(6,20,13,.92) 100%),url(%BASE%rallyq/court-night.jpg)!important;background-size:cover;background-position:center}
 .ph-tracker{background-image:url(%BASE%rallyq/photos/desktop/player-tracker.jpg)!important;background-position:center 30%}
 .ph-stills{background-image:url(%BASE%rallyq/photos/desktop/entries-still-life.jpg)!important;background-position:center}
 .ph-champions{background-image:url(%BASE%rallyq/photos/desktop/social-champions.jpg)!important;background-position:center 30%}

@@ -12,14 +12,16 @@ const source=holes(raw,[
  ['<span class="chip">Signed in · Arjun</span>','<sc-if value="{{isSample}}" hint-placeholder-val="{{ false }}"><span class="chip">Demo profile</span><span class="mut" style="font-size:13px">Sample data for preview only.</span></sc-if>'],
  ['DUPR 4.21 ▲ 0.06','{{duprLabel}}'],['font-size:clamp(56px,6vw,88px)">Arjun Rao</h1>','font-size:clamp(56px,6vw,88px)">{{name}}</h1>'],
  ['Right side · Banyan Pickleball Club · Hyderabad','{{clubLine}}'],
- ['<span class="chip">Men’s doubles</span><span class="chip">Mixed</span><span class="chip">Best: QF · Banyan DUPR Night</span>','<sc-for list="{{cats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for><sc-if value="{{bestLine}}" hint-placeholder-val="{{ false }}"><span class="chip gold">Best: {{bestLine}}</span></sc-if>'],
+ ['<span class="chip">Men’s doubles</span><span class="chip">Mixed</span><span class="chip">Best: QF · Banyan DUPR Night</span>','<sc-for list="{{cats}}" as="c" hint-placeholder-count="2"><span class="chip">{{c}}</span></sc-for><sc-if value="{{bestLine}}" hint-placeholder-val="{{ false }}"><span class="chip gold">{{bestLine}}</span></sc-if>'],
  ['<div class="cap">Matches</div><div class="n">38</div>','<div class="cap">Matches</div><div class="n">{{played}}</div>'],
  ['<div class="n acc">68%</div>','<div class="n acc">{{winRate}}</div>'],
  ['<div class="cap">Best run</div><div class="n">9</div>','<div class="cap">Best run</div><div class="n">{{bestRun}}</div>'],
  ['<div class="cap">Venues</div><div class="n">5</div>','<div class="cap">Venues</div><div class="n">{{venueCount}}</div>'],
  ['<span class="chip ball">Win</span>','<span class="{{lastChip}}">{{lastResult}}</span>'],
  ['<div class="cap" style="color:#DDE7DC">Banyan DUPR Night</div><div class="disp" style="font-size:34px;margin-top:4px">Arjun Rao</div><div class="n acc" style="font-size:40px;margin-top:6px">11–8 · 11–7</div>','<div class="cap" style="color:#DDE7DC">{{lastEvent}}</div><div class="disp" style="font-size:34px;margin-top:4px">{{name}}</div><div class="n acc" style="font-size:40px;margin-top:6px">{{lastScore}}</div>'],
- ['Hosted by Banyan Pickleball Club · RallyQ','Hosted by {{lastClub}} · RallyQ']]);
+ ['Hosted by Banyan Pickleball Club · RallyQ','Hosted by {{lastClub}} · RallyQ'],
+ // Real players never get a stranger's face: a court picture until they add their own photo (audit 21 Nov, B3).
+ ['class="photo ph-competitor"','class="photo {{heroPhoto}}"']]);
 // Built from the filled-in source, so the not-found page never shows the prototype's sample "Signed in" chip.
 const SHELL=shellSource(source);
 const STAGE:Record<string,string>={final:'Final',sf:'SF',qf:'QF',r16:'R16',r32:'R32',pool:'Pools',friendly:''};
@@ -27,7 +29,8 @@ const mine=(o:OfficialMatch,g:{a:number;b:number})=>o.mySide==='A'?[g.a,g.b]:[g.
 const won=(o:OfficialMatch)=>o.winner===o.mySide;
 const first=(ps:{id:string;name:string}[],go?:Go)=>!ps.length?'':go?<span>{ps.map((p,i)=><span key={p.id}>{i?' / ':''}<a href={'#/public-player/'+encodeURIComponent(p.id)} aria-label={p.name} onClick={e=>{e.preventDefault();go('public-player',p.id)}}>{p.name.split(' ').slice(-1)[0]}</a></span>)}</span>:ps.map(p=>p.name.split(' ').slice(-1)[0]).join(' / ');
 export function profileValues(p:PublicRallyPlayer,tab:string,setTab:(t:string)=>void,shareLabel:string,onShare:()=>void,go?:Go){
- const off=[...p.official].sort((a,b)=>b.playedOn.localeCompare(a.playedOn));const wins=off.filter(won).length;
+ const RANK:Record<string,number>={final:5,sf:4,qf:3,r16:2,r32:1,pool:0};
+ const off=[...p.official].sort((a,b)=>b.playedOn.localeCompare(a.playedOn)||(RANK[b.stage]??0)-(RANK[a.stage]??0));const wins=off.filter(won).length;
  let run=0,cur=0;for(const o of [...off].reverse()){cur=won(o)?cur+1:0;run=Math.max(run,cur);}
  const byClub=new Map<string,{w:number;n:number}>();for(const o of off){const v=byClub.get(o.club)??{w:0,n:0};v.n++;if(won(o))v.w++;byClub.set(o.club,v);}
  const last=off[0];const best=off.find(o=>o.stage==='final')??off.find(o=>o.stage==='sf')??off.find(o=>o.stage==='qf');
@@ -35,7 +38,7 @@ export function profileValues(p:PublicRallyPlayer,tab:string,setTab:(t:string)=>
  const kinds=[...new Set(off.map(o=>o.division).filter(Boolean))] as string[];
  return {
   name:p.name,duprLabel:p.duprDoubles?'DUPR '+p.duprDoubles.toFixed(2):'Unrated',clubLine:[p.club,p.city].filter(Boolean).join(' · '),
-  cats:kinds.slice(0,2),bestLine:best?STAGE[best.stage]+' · '+best.tournament:'',
+  cats:kinds.slice(0,2),bestLine:best?(best.stage==='final'&&won(best)?'Champion · ':'Best: '+STAGE[best.stage]+' · ')+best.tournament:'',
   played:off.length,winRate:(off.length?Math.round(wins/off.length*100):0)+'%',bestRun:run,venueCount:byClub.size,
   form:off.slice(0,10).reverse().map(o=>({r:won(o)?'W':'L',cls:won(o)?'chip ball':'chip'})),
   tabs:['Matches','Venues','Share card'].map(n=>({name:n,cls:n===tab?'tab on':'tab',pick:()=>setTab(n)})),
@@ -60,7 +63,7 @@ export function PublicProfile({playerId,go}:{playerId?:string;go:Go}){
  const p=state.data;
  const share=async()=>{if(shareLabel==='Making image…')return;setShareLabel('Making image…');
   try{setShareLabel(await exportShareCard(p));}catch(e){setShareLabel(e instanceof Error&&e.name==='AbortError'?'Save for Instagram':'Couldn’t save · try again');}};
- return <PrototypeScreen name="Studio" go={go} source={source} values={{...profileValues(p,tab,setTab,shareLabel,()=>{void share();},go),isSample:!playerId}}>
+ return <PrototypeScreen name="Studio" go={go} source={source} values={{...profileValues(p,tab,setTab,shareLabel,()=>{void share();},go),isSample:!playerId,heroPhoto:playerId?'ph-court':'ph-competitor'}}>
   {!p.official.length&&<section className="card" aria-label="Tournament results" style={{margin:'0 max(16px,2.4vw) 32px',padding:22}}><h2 style={{margin:0}}>No tournament results yet</h2><p className="mut" style={{margin:'6px 0 0'}}>Referee-scored tournament matches will appear here when results are saved.</p></section>}
  </PrototypeScreen>;
 }
