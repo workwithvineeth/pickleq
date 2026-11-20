@@ -1,0 +1,30 @@
+<section class="view" data-view="results" aria-label="Results">
+    <div class="wrap" style="padding-top:26px">
+      <span class="cap">Hyderabad Winter Smash · Mixed 3.5 · Hosted by Loki's</span>
+      <h1 class="disp" style="font-size:clamp(44px,7cqw,88px);margin:10px 0 22px">The final becomes <span class="acc">history.</span></h1>
+      <div class="livegrid" style="grid-template-columns:minmax(0,1fr) 340px">
+        <div class="final" id="final">
+          <div class="glow"></div>
+          <div class="row" style="flex-wrap:wrap;gap:8px"><span class="chip gold" id="finChip">Final · confirmed</span><span class="chip line">Semi-final 1 · Court 2</span><span class="sp"></span><span class="mut" style="font-size:12px">Referee: Sana K · confirmed 4:42 pm</span></div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;margin-top:18px">
+            <div><b style="font-size:18px">Arav &amp; Ishaan</b><br><span class="mut" style="font-size:13px">Banyan PC</span></div>
+            <div class="rwscore n"><span id="rwA">0</span><span class="mut" style="font-size:.5em">–</span><span id="rwB">0</span></div>
+            <div style="text-align:right"><b style="font-size:18px" class="gold">Asha &amp; Lata</b><br><span class="mut" style="font-size:13px">Loki's</span></div>
+          </div>
+          <div class="gscore n" style="justify-content:center;margin-top:6px"><span>11–8</span><span class="w">7–11</span><span class="w">10–12</span></div>
+          <p class="story" id="rwStory">Drag along the Match DNA to rewind game 3.</p>
+          <div class="rw"><div class="dna" id="rwDna" role="img" aria-label="Match DNA for game 3, one mark per point, up for Arav and Ishaan, down for Asha and Lata"></div>
+          <label class="cap" for="rwScrub" style="display:block;margin-top:12px">Rally Rewind · point <span id="rwN">0</span> of <span id="rwT">0</span></label>
+          <input type="range" id="rwScrub" min="0" value="0"></div>
+          <div class="sigrow"><svg class="sig" id="rwSig" role="img" aria-label="Match Signature for game 3: one stroke per point around the RallyQ court line. Outward for Arav and Ishaan, inward for Asha and Lata, ball green for the six-point run."></svg><div><span class="cap acc">Match Signature · game 3</span><p class="ser" style="font-size:19px;margin-top:6px">Every match leaves a mark.</p><p class="mut" style="font-size:13px;margin-top:4px">One stroke per point around the court line, drawn only from the confirmed rally record. Tap a stroke to see that moment.</p></div></div>
+          <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="rwPlay">Play game 3</button><button class="btn ghost" id="rwJump">Jump to the turning point</button><button class="btn ghost" id="rwShare"><svg class="ic"><use href="#i-share"/></svg>Share this moment</button></div>
+        </div>
+        <aside>
+          <span class="cap">All results · confirmed only</span>
+          <div><div class="find"><input id="findRes" list="players" type="search" placeholder="Find a player" aria-label="Find a player"></div><div class="findmsg mut" aria-live="polite" style="font-size:12px;margin:-6px 0 10px 6px"></div></div><div class="reslist" id="reslist" style="margin-top:12px"></div>
+          <button class="btn ghost sm" style="margin-top:12px" data-toast="DUPR export ready for the organiser">Export for DUPR</button>
+        </aside>
+      </div>
+    </div>
+    <div style="height:60px"></div>
+  </section>

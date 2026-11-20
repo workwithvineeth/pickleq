@@ -1,0 +1,57 @@
+<section class="view" data-view="event" aria-label="Event">
+    <div class="evhero photo"><div class="ph ph-crowd"></div>
+      <div class="wrap" style="display:flex;flex-direction:column;gap:14px">
+        <div class="host"><span class="tile">LPC</span><div><span class="cap" style="color:#BFD0C4">Hosted by</span><div style="font-weight:700;color:#F1F4EA">Loki's Pickleball Club · at Gachibowli Courts</div></div></div>
+        <h1 class="disp" style="font-size:clamp(48px,8cqw,104px);color:#F1F4EA">Hyderabad<br><span class="acc">Winter Smash</span></h1>
+        <div class="row" style="flex-wrap:wrap;gap:8px"><span class="chip" id="evStateChip">Entries open</span><span class="chip line" style="color:#DCE6DE">Sat 28 Nov · 8:00 am</span><span class="chip line" style="color:#DCE6DE">Mixed 3.5 · DUPR rated</span><span class="chip line" style="color:#DCE6DE">₹1,200 per team</span></div>
+      </div>
+    </div>
+    <div class="wrap" style="padding-top:22px">
+      <div class="tabs" role="tablist" id="evTabs"><button role="tab" data-ev="before" aria-selected="true">Before · entries</button><button role="tab" data-ev="during" aria-selected="false">During · live</button><button role="tab" data-ev="after" aria-selected="false">After · champions</button></div>
+      <p class="mut" style="font-size:13px;margin-top:10px">One link that changes with the event. Switch the stage to see all three.</p>
+
+      <div data-evp="before" class="sec" style="padding-top:28px">
+        <div class="split">
+          <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px">
+            <span class="cap">Spots</span>
+            <div class="row"><span class="n" style="font-size:64px">28</span><span class="mut" style="font-size:18px">of 32 teams</span><span class="sp"></span><span class="chip coral">4 spots left</span></div>
+            <div class="meter"><i style="width:87.5%"></i></div>
+            <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:14px">
+              <div><span class="cap">Format</span><p style="margin-top:4px">Pools, then knockouts</p></div>
+              <div><span class="cap">Games</span><p style="margin-top:4px">Best of 3 to 11</p></div>
+              <div><span class="cap">Closes</span><p style="margin-top:4px">Thu 26 Nov, 9 pm</p></div>
+            </div>
+            <div class="row" style="gap:10px;flex-wrap:wrap"><button class="btn" data-open="entrySheet">Enter tournament</button><button class="btn ghost" data-toast="Message sent to Loki's. They usually reply within an hour.">Message the club</button></div>
+          </div>
+          <div class="card" style="padding:8px 20px">
+            <span class="cap" style="display:block;padding:14px 0 4px">Teams entered · latest</span>
+            <div id="entries"></div>
+          </div>
+        </div>
+      </div>
+
+      <div data-evp="during" class="sec hide" style="padding-top:28px">
+        <div class="sech"><div><span class="cap">Road to the final</span><h2 class="disp" style="font-size:40px;margin-top:8px">Follow a team.<br><span class="acc">Watch the path light up.</span></h2></div>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700" class="cap">Follow
+            <select id="follow" style="min-height:44px;border-radius:12px;background:var(--c2);border:0;box-shadow:var(--edge);padding:0 12px;color:var(--ink);font-size:14px;text-transform:none;letter-spacing:0">
+              <option value="">Nobody</option><option value="AL" selected>Asha &amp; Lata</option><option value="MD">Meera &amp; Divya</option><option value="KN">Kiran &amp; Neha</option>
+            </select></label></div>
+        <div class="bk" id="bracket"></div>
+        <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" data-toast="Fit to screen">Fit to screen</button><button class="btn ghost sm" data-toast="Jumped to the semi-finals">Jump to semi-finals</button><a class="btn sm" href="#live">Open live arena</a></div>
+      </div>
+
+      <div data-evp="after" class="sec hide" style="padding-top:28px">
+        <div class="champ photo"><div class="ph ph-champ"></div>
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:560px;color:#F1F4EA">
+            <span class="chip gold" style="align-self:flex-start">Champions · confirmed</span>
+            <h2 class="disp" style="font-size:clamp(44px,7cqw,84px)">Asha &amp; Lata</h2>
+            <p style="font-size:18px;color:#DCE6DE">Won the Winter Smash Mixed 3.5 final 11–7, 9–11, 11–8 over Meera &amp; Divya. Hosted by Loki's Pickleball Club.</p>
+            <div class="row" style="gap:10px;flex-wrap:wrap"><a class="btn" href="#results">See every result</a><button class="btn ghost" style="color:#F1F4EA" data-toast="Club story ready for WhatsApp">Share the champions</button></div>
+            <p style="font-size:12px;color:#BFD0C4">Gold appears only once the referee confirms the final. Sample photo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sticky-cta glass"><div style="flex:1"><b>₹1,200 per team</b><br><span class="mut" style="font-size:12px">4 spots left</span></div><button class="btn" data-open="entrySheet">Enter</button></div>
+    <div style="height:60px"></div>
+  </section>
