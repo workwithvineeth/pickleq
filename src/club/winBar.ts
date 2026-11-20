@@ -11,7 +11,7 @@ export const NO_WIN_BAR: WinBar = { show: false, label: '', a: '', b: '', wa: '5
 
 const first = (side: string) => side.split(' / ').map((n) => n.split(/\s+/)[0]).join(' & ');
 
-/** Turns an estimate into the bar's words. The leader is ball-yellow, the other muted; it is always an estimate. */
+/** Turns an estimate into the bar's words. The leader is chalk and bold, the other muted; the bar is Sea (A) and Tide (B); it is always an estimate. */
 export function winBarFrom(e: WinEstimate | null, nameA: string, nameB: string): WinBar {
   if (!e) return NO_WIN_BAR;
   const lead = e.a >= e.b;
@@ -24,8 +24,8 @@ export function winBarFrom(e: WinEstimate | null, nameA: string, nameB: string):
     note: e.basis === 'dupr' ? 'Before the match: from DUPR' : e.basis === 'rallies' ? 'Based on the match score so far' : 'Based on DUPR ratings and the match score so far',
     clsA: lead ? 'wp-lead' : 'wp-other',
     clsB: lead ? 'wp-other' : 'wp-lead',
-    // A's share on the left, B's on the right; the leader's part is ball-yellow, the other muted.
-    bar: `background:linear-gradient(90deg,${lead ? '#D9F24A' : 'rgba(159,180,166,.55)'} 0 ${e.a}%,${lead ? 'rgba(159,180,166,.35)' : '#D9F24A'} ${e.a}% 100%)`,
+    // A's share on the left in Sea Glass, B's on the right in Tide Blue (20/10: score surfaces are calm, teams own the bar).
+    bar: `background:linear-gradient(90deg,#76E0D0 0 ${e.a}%,#7EAEF2 ${e.a}% 100%)`,
   };
 }
 

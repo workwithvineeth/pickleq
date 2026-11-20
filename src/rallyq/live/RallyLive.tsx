@@ -78,7 +78,7 @@ export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?
  return {venue:venue?.name??'',clubName:venue?.club??'',clubMark:venue?.mark??'',
   venues:venues.map((x,i)=>({name:x.name,cls:i===v?'tab on':'tab',pick:()=>set({v:i,c:0})})),
   courts:courts.map((x,i)=>({...mk(x),ring:i===ci?'box-shadow:inset 0 0 0 2px #D9F24A':'box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)',pick:()=>set({c:i})})),
-  sel:{...s,pts:[...s.pts.slice(-6)].map(ch=>({who:ch==='A'?first(s.a):first(s.b),cls:ch==='A'?'chip ball':'chip'})),run:s.run||longestRun(s.pts),
+  sel:{...s,pts:[...s.pts.slice(-6)].map(ch=>({who:ch==='A'?first(s.a):first(s.b),cls:ch==='A'?'chip rq-team-a':'chip rq-team-b'})),run:s.run||longestRun(s.pts),
    q:r.length>0?<LivingQ rallies={r} confirmed={s.status==='Final'}/>:undefined,dna:r.length>0?<Dna rallies={r}/>:undefined,rallyCount:r.length,
    servingA:serving?.team==='A'?'on':'',servingB:serving?.team==='B'?'on':'',serverNo:serving?.call.split('-').length===3?serving.no:'',call:serving?.call??'',tagA:tag('A'),tagB:tag('B')}};
 }

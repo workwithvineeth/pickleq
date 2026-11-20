@@ -98,7 +98,7 @@
 /* Win predictor bar (live score cards on Home, Live, Event, TV): an estimate, leader ball-yellow, the other muted */
 .rallyq-prototype .wp{display:flex;flex-direction:column;gap:6px;width:100%}
 .rallyq-prototype .wp-bar{height:6px;border-radius:999px;overflow:hidden}
-.rallyq-prototype .wp-lead{color:#D9F24A}
+.rallyq-prototype .wp-lead{color:#F1F4EA;font-weight:800}
 .rallyq-prototype .wp-other{color:#9FB4A6;font-weight:600}
 
 /* Page transitions (navigation.ts): quick cross-fade, off with reduced motion. */
@@ -124,3 +124,5 @@
 :is(.rallyq-screen-live,.rallyq-screen-tv) .rq .chip.live,.rq:has(.pq-live-view) .chip.live{background:transparent!important;color:#F1F4EA!important;box-shadow:inset 0 0 0 1.5px rgba(241,244,234,.72)!important}
 :is(.rallyq-screen-live,.rallyq-screen-tv) .rq .chip.live::before,.rq:has(.pq-live-view) .chip.live::before{background:var(--ball,#D9F24A)!important}
 :is(.rallyq-screen-live,.rallyq-screen-tv) .rq :is(.n.acc,.rqm-acc,.acc.n),.rq .pq-live-view .pq-flash-score{color:#F1F4EA!important}
+.rallyq-prototype .rq .chip.rq-team-a{background:#76E0D0!important;color:#06140D!important}
+.rallyq-prototype .rq .chip.rq-team-b{background:#7EAEF2!important;color:#06140D!important}
