@@ -39,3 +39,7 @@ test('RallyQ home: the phone hero shows the player, with photo buttons and no au
  await page.getByRole('button',{name:'Show photo 2 of 3'}).click();
  expect(await page.locator('.hero .slides .on').evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('photos/mobile/social-champions.jpg');
 });
+test('RallyQ logo always leads back to Home from public pages',async({page})=>{
+ await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));await page.setViewportSize({width:390,height:844});
+ for(const r of ['#/events','#/live','#/club-signin']){await page.goto(r);await page.getByRole('link',{name:/RallyQ/}).locator('visible=true').first().click();await expect(page).toHaveURL(/#\/home$/);await expect(page.getByRole('heading',{level:1,name:'Your court. The main event.'})).toBeVisible();}
+});

@@ -100,6 +100,8 @@ test('phone menu and Day/Night settings work with the keyboard at 320px', async 
   await page.keyboard.press('Enter');
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
   await page.keyboard.press('Tab');
+  await expect(page.getByRole('navigation', { name: 'Menu', exact: true }).getByRole('link', { name: 'Home' })).toBeFocused();
+  await page.keyboard.press('Tab');
   const live = page.getByRole('navigation', { name: 'Menu', exact: true }).getByRole('link', { name: 'Live scores' });
   await expect(live).toBeFocused();
   await page.keyboard.press('Enter');

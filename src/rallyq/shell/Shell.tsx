@@ -38,6 +38,8 @@ function Frame({children,watermark=true}:{children:ReactNode;watermark?:boolean}
  return <div className="rallyq-prototype rq-v12">{style}<div className={day?'rq day':'rq'} style={{minHeight:'100vh'}}>{watermark&&<Watermark/>}{children}</div></div>;
 }
 export type PublicTab='live'|'events'|'entries'|'studio'|'clubs'|null;
+/** The public Home (#/home). Set on the hash directly: inside club screens `go('home')` means the club dashboard. */
+export const toHome=()=>{if(location.hash!=='#/home')location.hash='#/home';else scrollTo({top:0});};
 /** Sign out from any v1.2 page, then open the sign-in page. */
 export async function signOutTo(go:Go){await eventsBackend().signOut().catch(()=>undefined);go('club-signin',undefined,{replace:true});}
 /** Public pages: club leads in the header, RallyQ signs off small and last. */
@@ -47,9 +49,9 @@ export function PublicShell({go,active=null,host,right,children,footNote}:{go:Go
  // Signed out: the four public links. Signed in: My entries instead of "For clubs" (the header's account link is already My clubs or My Studio), so nothing shows twice.
  const links:[PublicTab,string,()=>void][]=signedIn?[['live','Live scores',()=>go('live')],['events','Events',()=>go('events')],['entries','My entries',()=>go('my-entries')],['studio','Player Studio',()=>go('club-player-studio')]]:[['live','Live scores',()=>go('live')],['events','Events',()=>go('events')],['studio','Player Studio',()=>go('club-player-studio')],['clubs','For clubs',()=>go('club-signin')]];
  const nav=(cls:string)=>links.map(([k,label,f])=><a key={k} className={cls&&k===active?'on':undefined} href="#/" aria-current={k===active?'page':undefined} onClick={e=>{e.preventDefault();setMenu(false);f()}}>{label}</a>);
- return <Frame><header className="hdr"><div className="wrap"><div className="lead"><a className="brand" href="#/" aria-label="RallyQ home" onClick={e=>{e.preventDefault();go(home.route)}}><QMark/><span className="word">RallyQ</span></a>{host&&<HostBlock host={host} onClick={()=>go('events')}/>}</div><nav className="nav" aria-label="Main">{nav('x')}</nav>
+ return <Frame><header className="hdr"><div className="wrap"><div className="lead"><a className="brand" href="#/home" aria-label="RallyQ home" onClick={e=>{e.preventDefault();toHome()}}><QMark/><span className="word">RallyQ</span></a>{host&&<HostBlock host={host} onClick={()=>go('events')}/>}</div><nav className="nav" aria-label="Main">{nav('x')}</nav>
   <div className="right">{right??<a className="tlink" href="#/" onClick={e=>{e.preventDefault();go(acct.route)}}>{acct.label}</a>}<ModeButton/><button type="button" className="menu" aria-label="Menu" aria-expanded={menu} onClick={()=>setMenu(!menu)}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><Signoff/></div></div></header>
-  {menu&&<nav className="mpanel" aria-label="Menu">{nav('')}{!right&&(!signedIn||home.staff)&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);go(acct.route)}}>{acct.label}</a>}{signedIn&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);void signOutTo(go)}}>Sign out</a>}</nav>}
+  {menu&&<nav className="mpanel" aria-label="Menu"><a href="#/home" onClick={e=>{e.preventDefault();setMenu(false);toHome()}}>Home</a>{nav('')}{!right&&(!signedIn||home.staff)&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);go(acct.route)}}>{acct.label}</a>}{signedIn&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);void signOutTo(go)}}>Sign out</a>}</nav>}
   <main className="wrap" style={{paddingBlock:'28px 40px',display:'flex',flexDirection:'column',gap:28}}>{children}</main>
   <div className="wrap pfoot"><span>{footNote??''}</span><Signoff/></div></Frame>;
 }

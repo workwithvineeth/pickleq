@@ -27,18 +27,18 @@ describe('v1.2 shells',()=>{
  });
  it('public shell: the RallyQ logo leads every page and goes home when signed out',async()=>{
   const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
-  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenCalledWith('home');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(location.hash).toBe('#/home');
  });
  it('public shell: a signed-in player gets My Studio, and the logo opens their Player Studio',async()=>{
   user.mockResolvedValue({email:'a@example.test'});const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
   fireEvent.click(screen.getByRole('link',{name:'My Studio'}));expect(go).toHaveBeenLastCalledWith('club-player-studio');
-  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenLastCalledWith('club-player-studio');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(location.hash).toBe('#/home');
   expect(screen.queryByRole('link',{name:'My club'})).toBeNull();
  });
- it('public shell: someone who runs a club gets My clubs, and the logo opens My clubs',async()=>{
+ it('public shell: someone who runs a club gets My clubs, and the logo always opens Home',async()=>{
   user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
   fireEvent.click(screen.getByRole('link',{name:'My clubs'}));expect(go).toHaveBeenLastCalledWith('club');
-  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenLastCalledWith('club');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(location.hash).toBe('#/home');
  });
  it('public shell: signed in, the menu offers My entries, never "For clubs", and nothing twice',async()=>{
   user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
@@ -58,7 +58,7 @@ describe('v1.2 shells',()=>{
   localStorage.setItem('rq-landing-choice','club-player-studio');
   user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
   fireEvent.click(screen.getByRole('link',{name:'My clubs'}));expect(go).toHaveBeenLastCalledWith('club');
-  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(go).toHaveBeenLastCalledWith('club-player-studio');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(location.hash).toBe('#/home');
  });
  it('mode button toggles Night/Day and remembers it',async()=>{
   render(<PublicShell go={vi.fn()}><p>x</p></PublicShell>);await act(async()=>{});

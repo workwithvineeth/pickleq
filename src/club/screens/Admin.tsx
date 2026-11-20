@@ -126,6 +126,7 @@ function Clubs({ go }: { go: Go }) {
   return (
     <>
       <p className="small muted" style={{ margin: 0 }}>Make a club trusted and its tournaments skip approval (its waiting ones are approved too). You can remove trust at any time; tournaments already approved stay approved.</p>
+      <button type="button" className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={() => go('club-new')}>+ Create club</button>
       <input className="input" type="search" aria-label="Find a club" placeholder="Club, city or owner email" value={q} onChange={(e) => setQ(e.target.value)} />
       <label className="check-row small" style={{ borderTop: 'none' }}><input type="checkbox" checked={tests} onChange={(e) => setTests(e.target.checked)} /> Show the robot’s test club</label>
       <Status error={state.error} loading={state.loading && !state.data} />
