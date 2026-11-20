@@ -137,4 +137,19 @@ test.describe('Organiser screens (demo club)', () => {
     await page.getByRole('button', { name: 'Add to the event' }).click();
     await expect(page.getByText('Knockouts have started, so new entries can’t join')).toBeVisible();
   });
+
+  test('+ Add team asks for every player detail, like online entry (audit 21 Nov, K1)', async ({ page }) => {
+    await openDemoEvent(page);
+    await page.getByRole('button', { name: 'Entries', exact: true }).click();
+    await page.getByRole('button', { name: 'Open Doubles' }).click();
+    await page.getByRole('button', { name: '+ Add team' }).click();
+    const form = page.getByRole('region', { name: 'Add a team' });
+    for (const f of ['name', 'phone', 'email', 'DUPR rating', 'DUPR ID', 'age']) await expect(form.getByLabel(`Player 1 ${f}`)).toBeVisible();
+    await expect(form.getByLabel('Team or player name')).toHaveCount(0);
+    await form.getByLabel('Player 1 name').fill('Robot Late One');
+    await form.getByRole('button', { name: 'Add team' }).click();
+    // The same entry rules as online entry: the next missing detail is named.
+    await expect(page.getByRole('alert')).toContainText(/choose a gender|enter their age|needs two players|Player 2/);
+  });
 });
+

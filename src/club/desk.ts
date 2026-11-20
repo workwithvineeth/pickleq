@@ -22,6 +22,7 @@ export function deskBackend(src: ClubBackend, token: string, pin: string): ClubB
     patchMatches: (changes) => src.deskPatchMatches(token, pin, changes),
     addMatches: (rows) => src.deskAddMatches(token, pin, rows),
     addLatePoolEntry: (entry, matches) => src.deskAddLatePoolEntry(token, pin, entry, matches),
+    addLateTeam: (people, payment, entry, matches) => src.deskAddLateTeam(token, pin, people, payment, entry, matches),
     addEntry: (e) => src.deskAddEntry(token, pin, e),
     updateEntry: (id, patch) => src.deskUpdateEntry(token, pin, id, patch),
     addPlayer: (_clubId, p) => src.deskAddPlayer(token, pin, { name: p.name, dupr: p.duprSingles ?? p.duprDoubles }),

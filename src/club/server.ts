@@ -2,7 +2,7 @@ import { cleanLog, cleanSession, logProblem, ratingProblem, sessionProblem, type
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
-import { ClubError, type ClaimEmailOutcome, type ClaimEmailStatus, type ClaimStatus, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type ClaimEmailOutcome, type ClaimEmailStatus, type ClaimStatus, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type LatePerson, type LatePayment, type TournamentBundle, type TournamentDetails } from './backend';
 import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { cleanEmail, type DrawPlan } from './registration';
@@ -705,6 +705,22 @@ export class ServerBackend implements ClubBackend {
       const res = check(await this.sb.from('club_matches').update(row).eq('id', id).select('id')) as Row[];
       if (!res.length) throw new ClubError('You can’t change this match');
     }
+  }
+
+  async addLateTeam(people: LatePerson[], payment: LatePayment, e: Entry, matches: NewMatchRow[]) {
+    check(await this.sb.rpc('add_late_team', {
+      p_people: people.map((p) => ({ id: p.id, ...fromPerson(p) })), p_payment: payment,
+      p_entry: { id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed, pool: e.pool, status: e.status },
+      p_matches: matches.map(fromMatch),
+    }));
+  }
+
+  async deskAddLateTeam(token: string, pin: string, people: LatePerson[], payment: LatePayment, e: Entry, matches: NewMatchRow[]) {
+    answer(check(await this.sb.rpc('desk_add_late_team', {
+      p_token: token, p_pin: pin, p_people: people.map((p) => ({ id: p.id, ...fromPerson(p) })), p_payment: payment,
+      p_entry: { id: e.id, division_id: e.divisionId, club_id: e.clubId, player_ids: e.playerIds, seed: e.seed, pool: e.pool, status: e.status },
+      p_matches: matches.map(fromMatch),
+    })));
   }
 
   async addLatePoolEntry(e: Entry, matches: NewMatchRow[]) {

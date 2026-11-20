@@ -1,7 +1,7 @@
 import { matchResult } from './domain/engine';
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
-import { ClubError, type AuditRow, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
+import { ClubError, type AuditRow, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type LatePerson, type LatePayment, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
 import { pinProblem, randomPin as randomPinOf } from './pins';
@@ -399,7 +399,28 @@ export class DemoBackend implements ClubBackend {
     this.saveLatePoolEntry(entry, matches);
   }
 
-  private saveLatePoolEntry(entry: Entry, matches: NewMatchRow[]) {
+  async addLateTeam(people: LatePerson[], payment: LatePayment, entry: Entry, matches: NewMatchRow[]) {
+    this.need(entry.clubId, isStaff, 'Only club staff can add entries');
+    this.saveLateTeam(people, payment, entry, matches);
+  }
+
+  /** Same rules as the server's late_team_internal: check the people like any entry, then roster rows, the registration and the entry. */
+  private saveLateTeam(people: LatePerson[], payment: LatePayment, entry: Entry, matches: NewMatchRow[]) {
+    const division = this.s.divisions.find((d) => d.id === entry.divisionId && d.clubId === entry.clubId);
+    if (!division) throw new ClubError('Event not found');
+    if (!['paid', 'venue', 'unpaid'].includes(payment)) throw new ClubError('Choose a payment status');
+    const problem = entryProblem(division.kind, division.rules, people, false);
+    if (problem) throw new ClubError(problem);
+    if (people.some((p, i) => p.id !== entry.playerIds[i] || this.s.players.some((x) => x.id === p.id))) throw new ClubError('The draw changed. Reload and try again.');
+    const added = people.map((p): ClubPlayer => ({ id: p.id, clubId: entry.clubId, name: p.name.trim(), duprSingles: division.kind === 'singles' ? p.dupr : undefined, duprDoubles: division.kind === 'doubles' ? p.dupr : undefined, duprId: p.duprId?.trim().toUpperCase() || undefined, ...(cleanEmail(p.email) ? { email: cleanEmail(p.email) } : {}), share: {} }));
+    this.s.players.push(...added);
+    try { this.saveLatePoolEntry(entry, matches, true); } catch (e) { this.s.players = this.s.players.filter((x) => !added.includes(x)); throw e; }
+    const t = this.s.tournaments.find((x) => x.id === division.tournamentId)!;
+    this.regs().push({ id: newId(), tournamentId: t.id, divisionId: division.id, clubId: division.clubId, source: 'offline', players: people.map(({ id: _id, ...p }) => ({ ...p, name: p.name.trim(), email: cleanEmail(p.email) })), status: 'accepted', payment, entryId: entry.id, createdAt: new Date().toISOString() });
+    this.save();
+  }
+
+  private saveLatePoolEntry(entry: Entry, matches: NewMatchRow[], verified = false) {
     const division = this.s.divisions.find((d) => d.id === entry.divisionId && d.clubId === entry.clubId);
     const tournament = this.s.tournaments.find((t) => t.id === division?.tournamentId);
     if (!division || !tournament || tournament.status === 'done' || !isApproved(tournament)) throw new ClubError('This tournament cannot accept entries');
@@ -408,7 +429,7 @@ export class DemoBackend implements ClubBackend {
     const active = this.s.entries.filter((e) => e.divisionId === division.id && e.status !== 'withdrawn');
     if (active.some((e) => e.playerIds.some((p) => entry.playerIds.includes(p)))) throw new ClubError('A player is already entered in this event');
     if (division.rules?.cap && active.length >= division.rules.cap) throw new ClubError('This event is full');
-    if (division.rules?.fee || division.rules?.minAge || (division.rules?.gender && division.rules.gender !== 'open')) throw new ClubError('Use the registration workflow for eligibility and payment verification');
+    if (!verified && (division.rules?.fee || division.rules?.minAge || (division.rules?.gender && division.rules.gender !== 'open'))) throw new ClubError('This event needs each player’s details. Use “New team” in late entry.');
     const players = entry.playerIds.map((id) => this.s.players.find((p) => p.id === id && p.clubId === entry.clubId));
     if (players.some((p) => !p) || new Set(entry.playerIds).size !== (division.kind === 'doubles' ? 2 : 1)) throw new ClubError('Choose eligible players from this club');
     const ratings = players.map((p) => division.kind === 'doubles' ? p?.duprDoubles : p?.duprSingles);
@@ -632,6 +653,12 @@ export class DemoBackend implements ClubBackend {
       if (winner !== undefined) m.winner = winner ?? undefined;
     }
     this.save();
+  }
+
+  async deskAddLateTeam(token: string, pin: string, people: LatePerson[], payment: LatePayment, entry: Entry, matches: NewMatchRow[]) {
+    const t = this.checkDesk(token, pin);
+    if (!this.s.divisions.some((d) => d.id === entry.divisionId && d.tournamentId === t.id)) throw new ClubError('That event isn’t in your tournament');
+    this.saveLateTeam(people, payment, entry, matches);
   }
 
   async deskAddLatePoolEntry(token: string, pin: string, entry: Entry, matches: NewMatchRow[]) {
