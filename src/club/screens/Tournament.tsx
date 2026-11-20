@@ -1,4 +1,3 @@
-import { matchesForPlayer } from './findPlayer';
 import { LiveCourts } from './LiveCourts';
 import { usePublicScores } from './usePublicScores';
 import { TournamentEntrySummary } from './MatchdayHeader';
@@ -840,7 +839,6 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
   const [div, setDiv] = useState<string | null>(null);
   const [view, setView] = useState<View>('pools');
   const [msg, setMsg] = useState<string | null>(null);
-  const [playerQuery, setPlayerQuery] = useState('');
   // The club's own logo, where it has uploaded one (the shell header shows its initials).
   const logo = useLoad(async () => {
     for (const src of await publicSourcesFor(publicSlug)) {
@@ -849,9 +847,6 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
     return null;
   }, [publicSlug]);
   const d = state.data;
-  const playerNames = new Map(d?.entries.map((entry) => [entry.id, entry.names.join(' / ')]));
-  const foundMatches = matchesForPlayer(d?.matches ?? [], playerQuery, (id) => playerNames.get(id) ?? '');
-  const searching = playerQuery.trim().length > 0;
   const division = d?.divisions.find((x) => x.id === div) ?? d?.divisions[0];
   const champion = useMemo(() => (d && division ? publicChampion(d, division.id) : null), [d, division]);
   const link = appLink(`#/results/${publicSlug}`);
@@ -897,9 +892,8 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
           )}
           {champion && d.status === 'done' && <ResultsPosters c={champion} event={d.name} club={d.club} date={friendlyDate(d.startDate)} link={link} />}
           <MyMatches d={d} go={go} />
-          <label className="res20-find"><span className="cap">Find a player</span><input type="search" aria-label="Find a player" placeholder="Find a player" value={playerQuery} onChange={(event) => setPlayerQuery(event.target.value)} /></label>
           <Tabs<View> label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
-          {searching ? <div className="res20-found" aria-live="polite">{foundMatches.some((match) => match.divisionId === division.id && match.status !== 'void') ? <GroupedMatches d={{ ...d, matches: foundMatches }} divisionId={division.id} /> : <p className="card res20-empty">No match for “{playerQuery.trim()}”.</p>}</div> : view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody d={body} divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')} />}
+          {view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody d={body} divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')} />}
           <p className="mut" style={{ margin: 0, fontSize: 13 }}>Live scores by <a aria-label={d.status === 'live' ? 'RallyQ: live scores. Run your club’s tournament at rallyq.in' : undefined} href="https://rallyq.in/" className="acc" style={{ fontWeight: 700 }}>RallyQ</a> · run your club’s tournament at rallyq.in</p>
         </>
       )}

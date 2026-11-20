@@ -42,3 +42,10 @@ Never change the database, scoring logic or user flows.
 - Fri 05:05 · Robot (android, local build 69e2bac): 75 passed, 1 failed (same pre-existing CSP shell-matrix check). TV slots added; Codex task 4 = TV values.
 - 05:20 IST Fri 20 Nov: Pad 5 (arena-v2-pad5.css, switch in src/rallyq/shell/pad.ts), serving-row fill on Live/TV, chalk DNA with `.turn`, Codex task 4 (TV values) merged. Local robot 75/1/30 (same known CSP fail). LIVE: pqclub club-ref = 6b48d65 (pqclub b61e8dd), deploy green. Rollback: club-ref 12f1cd0. Out: Results winner points gold. Live robot was already red before (sandbox reset FK error on club_players).
 - 05:40 IST Fri 20 Nov: Player Studio sample cover → photos/mobile/player-tracker.jpg (Vineeth rejected meera.jpg and the empty court). Commit e6a4f64, on staging; live needs Vineeth's "ship the cover". Cover upload built (CoverEditor.tsx, coverCrop.ts: crop 4:5, on-phone enhance, Keep original, low-res note), OFF via COVER_UPLOAD in MyStudio.tsx and photo:null in private/backend.ts load(). To turn on: apply supabase/migrations/20261120060000_player_photos.sql (private bucket, owner-only), run supabase/tests/player_photo_check.sql, set COVER_UPLOAD=true and photo:await this.photoUrl(ownerId), add a robot test.
+
+## 20 Nov: 20/10 build (Home, Live, Results, Event, TV, Desk)
+- Home: event-led hero (before/during/after), Match Centre with the Q, ticker, On court today, Live now courts, Player Studio cover (player-tracker photo), real pilot totals. `HOME20=false` in RallyHome.tsx falls back.
+- Live: Q board tiles (Sea/Tide rails, lime serving ring, chalk scores), last-rally line, find a player, Sample labels; partners stack one per line.
+- Results and Event (Codex, reviewed): glass cards, chalk scores, gold only on confirmed results. Results keeps "My matches" as the one search box.
+- Venue TV stacks one court per row on phones. Desk court cards show a tiny Q with the rally count.
+- Checked at 320 and 390 px, Night and Day. Robot: all pass except the pre-existing shell matrix check.
