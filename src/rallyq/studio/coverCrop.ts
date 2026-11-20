@@ -18,35 +18,50 @@ export function cropRect(w: number, h: number, c: Crop, aspect = COVER_W / COVER
 }
 
 /**
- * On-phone enhance (no AI, no upload of the original): auto levels, slight warmth, a subtle Court Green grade in the
- * shadows, a soft vignette, and gentle sharpening. Works in place on RGBA pixels.
+ * On-phone enhance (no AI, nothing reshaped or smoothed), the same recipe as the founder's "Court 4" cover:
+ * gentle auto levels, a soft S-curve, highlight roll-off, slight warmth, Court Green in the shadows only,
+ * calmer harsh blues, a soft vignette, then light sharpening (unsharp mask .55 with a small threshold).
+ * Works in place on RGBA pixels.
  */
 export function enhance(px: Uint8ClampedArray, w: number, h: number) {
-  // auto levels from the 1st and 99th luminance percentiles (never stretch more than 1.6×)
-  const hist = new Uint32Array(256); const n = w * h;
-  for (let i = 0; i < px.length; i += 4) hist[(px[i] * 77 + px[i + 1] * 150 + px[i + 2] * 29) >> 8]++;
-  let lo = 0, hi = 255, acc = 0;
-  for (; lo < 255; lo++) { acc += hist[lo]; if (acc > n * 0.01) break; }
-  acc = 0; for (; hi > 0; hi--) { acc += hist[hi]; if (acc > n * 0.01) break; }
-  if (hi - lo < 160) { const mid = (hi + lo) / 2; lo = Math.max(0, mid - 80); hi = Math.min(255, mid + 80); }
-  const k = 255 / Math.max(1, hi - lo);
-  // sharpen from a copy (3×3 unsharp mask, amount .35)
-  const src = new Uint8ClampedArray(px);
-  const cx = w / 2, cy = h / 2, maxD = Math.hypot(cx, cy);
+  const n = w * h; const f = new Float32Array(n * 3);
+  for (let p = 0, i = 0; p < n; p++, i += 4) { f[p * 3] = px[i] / 255; f[p * 3 + 1] = px[i + 1] / 255; f[p * 3 + 2] = px[i + 2] / 255; }
+  // luminance percentiles 0.4 % and 99.6 %
+  const hist = new Uint32Array(256);
+  for (let p = 0; p < n; p++) hist[Math.min(255, Math.round((0.2126 * f[p * 3] + 0.7152 * f[p * 3 + 1] + 0.0722 * f[p * 3 + 2]) * 255))]++;
+  let acc = 0, lo = 0, hi = 255;
+  for (; lo < 255; lo++) { acc += hist[lo]; if (acc > n * 0.004) break; }
+  acc = 0; for (; hi > 0; hi--) { acc += hist[hi]; if (acc > n * 0.004) break; }
+  const L0 = lo / 255, span = Math.max(1 / 255, (hi - lo) / 255);
+  const cx = w / 2, cy = h * 0.45, green = [0.04, 0.14, 0.09];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const i = (y * w + x) * 4;
-    const d = Math.hypot(x - cx, y - cy) / maxD; const vig = 1 - 0.22 * Math.max(0, d - 0.55) / 0.45;
+    const p = (y * w + x) * 3; const a = [f[p], f[p + 1], f[p + 2]];
     for (let c = 0; c < 3; c++) {
-      let v = src[i + c];
+      let v = Math.min(1, Math.max(0, (a[c] - L0) / span)) * 0.6 + a[c] * 0.4; // gentle levels
+      v = Math.min(1, Math.max(0, v)); v = v * 0.8 + v * v * (3 - 2 * v) * 0.2;     // soft S-curve
+      if (v > 0.85) v = 0.85 + (v - 0.85) * 0.75;                                  // highlight roll-off
+      a[c] = v;
+    }
+    a[0] *= 1.03; a[2] *= 0.965;                                                    // warmth
+    const L = 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    const sh = Math.pow(Math.min(1, Math.max(0, 1 - L / 0.45)), 1.5) * 0.18;         // Court Green, shadows only
+    for (let c = 0; c < 3; c++) a[c] = a[c] * (1 - sh) + green[c] * sh;
+    const g = (a[0] + a[1] + a[2]) / 3, bl = Math.min(1, Math.max(0, (a[2] - a[0]) * 3)); // calmer harsh blues
+    for (let c = 0; c < 3; c++) a[c] = g + (a[c] - g) * (1 - 0.25 * bl);
+    const r = Math.hypot((x - cx) / (w / 2), (y - cy) / (h * 0.6));
+    const vig = 1 - 0.22 * Math.pow(Math.min(1, Math.max(0, (r - 0.55) / 0.75)), 1.6); // soft vignette
+    f[p] = a[0] * vig; f[p + 1] = a[1] * vig; f[p + 2] = a[2] * vig;
+  }
+  // light sharpening: 3×3 unsharp mask, amount .55, threshold 3/255 (leaves skin and flat areas alone)
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const p = (y * w + x) * 3, i = (y * w + x) * 4;
+    for (let c = 0; c < 3; c++) {
+      let v = f[p + c];
       if (x > 0 && y > 0 && x < w - 1 && y < h - 1) {
-        const blur = (src[i + c - 4] + src[i + c + 4] + src[i + c - w * 4] + src[i + c + w * 4] + 4 * v) / 8;
-        v = v + 0.35 * (v - blur);
+        const blur = (f[p + c - 3] + f[p + c + 3] + f[p + c - w * 3] + f[p + c + w * 3] + 4 * v) / 8;
+        const d = v - blur; if (Math.abs(d) * 255 > 3) v += 0.55 * d;
       }
-      v = (v - lo) * k;
-      if (c === 0) v *= 1.03; else if (c === 2) v *= 0.96; // warmth
-      const shadow = Math.max(0, 1 - v / 128) * 0.08; // Court Green #0B2418 into the shadows
-      v = v * (1 - shadow) + [11, 36, 24][c] * shadow;
-      px[i + c] = v * vig;
+      px[i + c] = Math.round(Math.min(1, Math.max(0, v)) * 255);
     }
   }
 }

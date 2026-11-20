@@ -108,3 +108,29 @@ test('Player Studio fits phone and desktop widths, with readable inputs and usab
     }
   }
 });
+
+test('Player Studio cover: add a private photo, crop it, enhanced or original, and save', async ({ page }) => {
+  const uploads: string[] = [];
+  await stubbedStudio(page);
+  await page.route('**/storage/v1/object/player-photos/**', route => { uploads.push(route.request().url()); return route.fulfill({ json: { Key: 'player-photos/x/cover.jpg' } }); });
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('#/club-player-studio');
+  const add = page.getByLabel('Add my photo');
+  await expect(add).toBeAttached();
+  const tiny = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+  await add.setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: tiny });
+  const crop = page.getByRole('group', { name: 'Crop your photo' });
+  await expect(crop).toBeVisible();
+  await expect(crop.getByText('This photo is small')).toBeVisible();
+  await expect(crop.getByRole('button', { name: 'Enhanced' })).toHaveAttribute('aria-pressed', 'true');
+  await crop.getByRole('button', { name: 'Keep original' }).click();
+  await expect(crop.getByRole('button', { name: 'Keep original' })).toHaveAttribute('aria-pressed', 'true');
+  await crop.getByRole('button', { name: 'Enhanced' }).click();
+  for (const name of ['Zoom', 'Left–right', 'Up–down']) await expect(crop.getByLabel(name)).toBeVisible();
+  for (const b of await crop.getByRole('button').all()) expect(await b.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await crop.getByRole('button', { name: 'Save photo' }).click();
+  await expect(page.getByText('Photo saved ✓')).toBeVisible();
+  expect(uploads.length).toBe(1);
+  expect(uploads[0]).toContain('/cover.jpg');
+});

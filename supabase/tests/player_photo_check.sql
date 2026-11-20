@@ -1,4 +1,4 @@
--- Player Studio photo rules. Rolls back. Rows say FAIL on a problem.
+-- Player Studio photo rules. Rolls back (the runner wraps it; ends with rollback). Passed on the real server 20 Nov 2026. Rows say FAIL on a problem.
 begin;
 create temp table out (step int, result text) on commit drop;
 grant all on out to authenticated, anon;
@@ -27,3 +27,4 @@ end $$;
 reset role;
 select case when public from storage.buckets where id = 'player-photos' then 'FAIL bucket is public' else 'bucket is private' end;
 select step, result from out order by step;
+rollback;

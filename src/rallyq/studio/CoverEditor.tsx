@@ -28,7 +28,7 @@ export function CoverEditor({store,hasPhoto,onSaved}:{store:Store;hasPhoto:boole
  return <div className="rq-cover-edit" style={{display:'flex',flexDirection:'column',gap:8,marginTop:10}}>
   {!bitmap&&<div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
    <label style={{...ball,display:'inline-flex',alignItems:'center'}}>{hasPhoto?'Change my photo':'Add my photo'}
-    <input type="file" accept="image/*" aria-label={hasPhoto?'Change my photo':'Add my photo'} onChange={e=>{void pick(e.target.files?.[0]);e.target.value='';}} style={{position:'absolute',width:1,height:1,opacity:0,overflow:'hidden'}}/></label>
+    <input type="file" accept="image/*" aria-label={hasPhoto?'Change my photo':'Add my photo'} onChange={e=>{void pick(e.target.files?.[0]);e.target.value='';}} style={{position:'absolute',width:1,height:1,opacity:0,overflow:'hidden',fontSize:16}}/></label>
    {hasPhoto&&<button type="button" style={ghost} disabled={busy} onClick={()=>{void remove();}}>Remove photo</button>}
   </div>}
   {bitmap&&<div role="group" aria-label="Crop your photo" style={{background:'rgba(6,20,13,.82)',borderRadius:18,padding:12,display:'flex',flexDirection:'column',gap:4,maxWidth:360}}>

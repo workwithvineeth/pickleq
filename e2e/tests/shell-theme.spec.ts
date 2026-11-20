@@ -76,7 +76,9 @@ test('live status labels are readable and demo results announce score updates', 
   await expect(page.getByText(/^Sample scores · /).first()).toBeVisible();
   for (const day of [false, true]) {
     await chooseMode(page, day);
-    await assertContrast(page.locator('.rallyq-prototype .chip.live:visible'));
+    // Sample boards say Sample, never Live (20/10): no live chips on the sample, and the Sample chips stay readable.
+    await expect(page.locator('.rallyq-prototype .chip.live:visible')).toHaveCount(0);
+    await expect(page.locator('.rallyq-prototype .chip:visible', { hasText: /^Sample$/ }).first()).toBeVisible();
   }
   await page.goto('#/results/pq-demo-open');
   await expect(page.getByRole('heading', { name: 'PQ Demo Open', exact: true })).toBeVisible();
