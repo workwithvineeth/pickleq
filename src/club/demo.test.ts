@@ -200,3 +200,51 @@ describe('Demo: accepting stays within the category limit (same rule as the serv
     }
   });
 });
+
+describe('Late team with player details (same rules as the server, late_team_check.sql)', () => {
+  async function setup() {
+    const storage = memoryStorage();
+    const first = new DemoBackend(storage);
+    const clubId = await first.start('Robot');
+    const { planLateEntry } = await import('./plan');
+    // A demo event that can still take a late entry (drawn, knockouts not started).
+    let pick: { tid: string; did: string } | null = null;
+    for (const t0 of (await first.clubBundle(clubId)).tournaments) {
+      const tb = await first.tournamentBundle(t0.id);
+      for (const d0 of tb.divisions) {
+        const need = d0.kind === 'doubles' ? 2 : 1;
+        if (tb.entries.some((e) => e.divisionId === d0.id) && typeof planLateEntry(tb.tournament, d0, Array.from({ length: need }, (_, i) => `probe-${i}`), tb.entries, tb.matches, () => 'probe') !== 'string') { pick = { tid: t0.id, did: d0.id }; break; }
+      }
+      if (pick) break;
+    }
+    if (!pick) throw new Error('no demo event open for late entries');
+    // Give that event an entry fee and a women-only rule: the old late entry refused these outright.
+    const saved = JSON.parse(storage.getItem('pq-club-demo-v1')!);
+    const div = saved.divisions.find((d: { id: string }) => d.id === pick!.did);
+    div.rules = { ...(div.rules ?? {}), fee: 500, gender: 'women' };
+    storage.setItem('pq-club-demo-v1', JSON.stringify(saved));
+    const b = new DemoBackend(storage);
+    const bundle = await b.tournamentBundle(pick.tid);
+    const d = bundle.divisions.find((x) => x.id === pick!.did)!;
+    return { b, t: bundle.tournament, d, bundle };
+  }
+  const person = (name: string, gender: 'm' | 'f', age: number, email = '') => ({ name, phone: '', email, duprId: '', dupr: 3.2, gender, age });
+
+  it('refuses the roster late entry for a paid event, then adds a team with details, payment and email', async () => {
+    const { b, t, d, bundle } = await setup();
+    const { planLateEntry } = await import('./plan');
+    const need = d.kind === 'doubles' ? 2 : 1;
+    const ids = Array.from({ length: need }, (_, i) => `late-${i}`);
+    const plan = planLateEntry(t, d, ids, bundle.entries, bundle.matches, (() => { let n = 0; return () => `x-${n++}`; })());
+    if (typeof plan === 'string') throw new Error(plan);
+    const men = ids.map((id, i) => ({ ...person(`Sample Man ${i}`, 'm', 30), id }));
+    await expect(b.addLateTeam(men, 'paid', plan.entry, plan.matches)).rejects.toThrow(need === 2 ? /for women/ : /for women/);
+    const women = ids.map((id, i) => ({ ...person(`Sample Woman ${i}`, 'f', 29, i === 0 ? 'sample.woman@example.test' : ''), id }));
+    await b.addLateTeam(women, 'venue', plan.entry, plan.matches);
+    const after = await b.tournamentBundle(t.id);
+    expect(after.entries.some((e) => e.id === plan.entry.id)).toBe(true);
+    expect(after.players.find((p) => p.id === 'late-0')?.name).toBe('Sample Woman 0');
+    const regs = await b.registrations(t.id);
+    expect(regs.find((r) => r.entryId === plan.entry.id)).toMatchObject({ source: 'offline', status: 'accepted', payment: 'venue' });
+  });
+});

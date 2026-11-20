@@ -4,12 +4,15 @@ import { OfflineBanner } from './OfflineBanner';
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { newId } from '../../db/ids';
 import type { Go } from '../../navigation';
-import type { ClubBackend } from '../backend';
+import type { ClubBackend, LatePayment, LatePerson } from '../backend';
+import { blankPerson, entryProblem } from '../registration';
+import { PersonFields } from './Events';
+import { Segmented } from '../../components/Controls';
 import { poolLetter, slotTime } from '../domain/engine';
 import { duprCheck, duprCsv } from '../dupr';
 import { publicSources } from '../index';
 import { enteredPlayers, knockoutMatchesToAdd, planLateEntry, planReplacePlayer, planWithdraw } from '../plan';
-import { isStaff, STAGE_LABEL, type ClubPlayer, type Entry, type ScorerLink, type ScorerView } from '../types';
+import { isStaff, STAGE_LABEL, type ClubPlayer, type Entry, type EntryPerson, type ScorerLink, type ScorerView } from '../types';
 import { appLink, copyLink, DemoNote, errorText, fmtRating, Header, names, Status, useLoad } from './common';
 import { formatRule, ScorePad } from './ScorePad';
 import { AccessCards } from './Access';
@@ -399,24 +402,21 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
       if (plan.matchSides.length) await b!.patchMatches(plan.matchSides.map((m) => ({ id: m.id, patch: { sideA: m.sideA, sideB: m.sideB } })));
     }, `${pmap.get(newPlayer)?.name ?? 'New player'} is in for ${pmap.get(oldId)?.name ?? 'the player'}. Played results keep the original names.`);
   }
-  // The simple way in: just a name and an event. The team joins the pool with the fewest teams. A doubles team made from a
-  // team name alone gets a placeholder partner ("<name> (partner)"), which every screen hides.
-  async function addTeam(name: string) {
-    const clean = name.trim();
-    if (!clean) return setMsg({ ok: false, text: 'Enter the team or player name' });
-    // Check the event can take a new entry before creating anything on the roster.
+  // A new team after the draw: each player's details (name, phone, email, DUPR rating and ID, age, gender) and whether
+  // they've paid, checked with the same rules as any entry. The team joins the pool with the fewest teams.
+  async function addTeam(people: EntryPerson[], payment: LatePayment) {
     const need = div.kind === 'doubles' ? 2 : 1;
-    const dry = planLateEntry(t, div, Array.from({ length: need }, (_, i) => `new-${i}`), d!.entries, d!.matches, newId);
-    if (typeof dry === 'string') return setMsg({ ok: false, text: dry });
+    const list = people.slice(0, need);
+    const problem = entryProblem(div.kind, div.rules, list, false);
+    if (problem) return setMsg({ ok: false, text: problem });
+    const withIds: LatePerson[] = list.map((p) => ({ ...p, id: newId() }));
+    const plan = planLateEntry(t, div, withIds.map((p) => p.id), d!.entries, d!.matches, newId);
+    if (typeof plan === 'string') return setMsg({ ok: false, text: plan });
     setBusy(true); setMsg(null);
     try {
-      const first = await b!.addPlayer(t.clubId, { name: clean });
-      const ids = [first.id];
-      if (need === 2) ids.push((await b!.addPlayer(t.clubId, { name: `${clean} (partner)` })).id);
-      const plan = planLateEntry(t, div, ids, d!.entries, d!.matches, newId);
-      if (typeof plan === 'string') throw new Error(plan);
-      await b!.addLatePoolEntry(plan.entry, plan.matches);
-      setMsg({ ok: true, text: `${clean} added to ${div.name}, Pool ${poolLetter(plan.entry.pool)}, with ${plan.matches.length} new match${plan.matches.length === 1 ? '' : 'es'}.` });
+      await b!.addLateTeam(withIds, payment, plan.entry, plan.matches);
+      const label = withIds.map((p) => p.name.trim()).join(' / ');
+      setMsg({ ok: true, text: `${label} added to ${div.name}, Pool ${poolLetter(plan.entry.pool)}, with ${plan.matches.length} new match${plan.matches.length === 1 ? '' : 'es'}.` });
       setAdding(false); state.reload();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
   }
@@ -427,6 +427,7 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
       `${names(playerIds, pmap)} added to Pool ${poolLetter(plan.entry.pool)} with ${plan.matches.length} new match${plan.matches.length === 1 ? '' : 'es'}`);
   }
 
+  const needsDetails = !!(div.rules?.fee || div.rules?.minAge || (div.rules?.gender && div.rules.gender !== 'open'));
   return (
     <MatchdayShell go={go ?? (() => undefined)} active="entries" d={d}>
       <PageHead cap={`${t.name} · ${formatRule(div.format)}`} title={<span id="entries-title">Entries</span>}
@@ -438,7 +439,7 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
       {d.divisions.length > 1 && <div className="tabs" role="group" aria-label="Event">{d.divisions.map((x) => <button key={x.id} type="button" className={x.id === div.id ? 'tab on' : 'tab'} aria-pressed={x.id === div.id} onClick={() => { setDivId(x.id); setOpenEntry(null); }}>{x.name}</button>)}</div>}
       <p className="mut" style={{ margin: 0, fontSize: 14 }}>{entries.filter((e) => e.status !== 'withdrawn').length} active {div.kind === 'doubles' ? 'teams' : 'players'} in the draw. Withdraw, swap a player or add a late entry here.</p>
       {msg && <div role={msg.ok ? 'status' : 'alert'} className={msg.ok ? 'note' : 'warn'}>{msg.text}</div>}
-      {adding && <AddTeam divisions={d.divisions} divId={div.id} onDiv={(x) => { setDivId(x); setOpenEntry(null); }} busy={busy} onAdd={addTeam} onClose={() => setAdding(false)} />}
+      {adding && <AddTeam key={div.id} divisions={d.divisions} divId={div.id} onDiv={(x) => { setDivId(x); setOpenEntry(null); }} kind={div.kind} fee={div.rules?.fee ?? 0} busy={busy} onAdd={addTeam} onClose={() => setAdding(false)} />}
       <div className="card"><div className="scroll"><table className="tbl" aria-label="Entries"><thead><tr><th>#</th><th>Team</th><th>Pool</th><th>Status</th><th><span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Actions</span></th></tr></thead><tbody>
       {entries.map((e, i) => {
         const out = e.status === 'withdrawn';
@@ -458,13 +459,15 @@ export function Entries({ id, go, onBack }: { id: string; go?: Go; onBack: () =>
         );
       })}
       </tbody></table></div></div>
-      <Legacy>
+      {needsDetails ? (
+        <p className="mut" style={{ margin: 0, fontSize: 14 }}>This event has an entry fee or an age or gender rule, so late entries need each player’s details: use <b>+ Add team</b> above.</p>
+      ) : <Legacy>
         <AddPanel modes={[{ value: 'late', label: 'Late entry' }, { value: 'walkin', label: 'New player' }]}>
           {(mode, { setMode }) => mode === 'late'
             ? <LateEntry kind={div.kind} free={free} busy={busy} onAdd={late} />
             : <WalkIn b={b} clubId={t.clubId} busy={busy} onAdded={(p) => { setMsg({ ok: true, text: `${p.name} added to the club. Now choose them as a late entry.` }); setMode('late'); state.reload(); }} />}
         </AddPanel>
-      </Legacy>
+      </Legacy>}
     </MatchdayShell>
   );
 }
@@ -495,21 +498,24 @@ function EntryActions({ e, pmap, free, busy, onWithdraw, onReplace }: { e: Entry
   );
 }
 
-/** Simple add: a name and an event. The team joins the pool with the fewest teams. */
-function AddTeam({ divisions, divId, onDiv, busy, onAdd, onClose }: { divisions: { id: string; name: string }[]; divId: string; onDiv: (id: string) => void; busy: boolean; onAdd: (name: string) => void; onClose: () => void }) {
-  const [name, setName] = useState('');
+/** A new team after the draw, with the same player details as online entry, and the payment. */
+function AddTeam({ divisions, divId, onDiv, kind, fee, busy, onAdd, onClose }: { divisions: { id: string; name: string }[]; divId: string; onDiv: (id: string) => void; kind: 'singles' | 'doubles'; fee: number; busy: boolean; onAdd: (people: EntryPerson[], payment: LatePayment) => void; onClose: () => void }) {
+  const [people, setPeople] = useState<EntryPerson[]>(() => [blankPerson(), blankPerson()]);
+  const [payment, setPayment] = useState<LatePayment>('unpaid');
+  const need = kind === 'doubles' ? 2 : 1;
   return (
     <section className="card section" aria-label="Add a team">
       <h3 style={{ fontSize: 16 }}>Add a team</h3>
-      <input className="input" style={{ fontSize: 16 }} aria-label="Team or player name" placeholder="Team or player name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
       {divisions.length > 1 && (
         <select className="input" style={{ fontSize: 16 }} aria-label="Event" value={divId} onChange={(e) => onDiv(e.target.value)}>
           {divisions.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
         </select>
       )}
-      <p className="small muted" style={{ margin: 0 }}>Joins the pool with the fewest teams and plays everyone in it. Not possible once the knockouts start.</p>
+      {people.slice(0, need).map((p, i) => <PersonFields key={i} label={need === 2 ? `Player ${i + 1}` : 'Player'} p={p} onChange={(np) => setPeople((ps) => { const a = [...ps]; a[i] = np; return a; })} />)}
+      {fee > 0 && <Segmented label="Payment" value={payment} options={[{ value: 'unpaid', label: 'Not paid' }, { value: 'venue', label: 'At the venue' }, { value: 'paid', label: 'Paid' }]} onChange={setPayment} />}
+      <p className="small muted" style={{ margin: 0 }}>Name, age and gender are needed for everyone; phone and email are optional. With an email, the player can claim these results in their Player Studio. Joins the pool with the fewest teams and plays everyone in it. Not possible once the knockouts start.</p>
       <div className="meta">
-        <button type="button" className="btn btn-primary" disabled={busy || !name.trim()} onClick={() => { onAdd(name); setName(''); }}>Add</button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onAdd(people, payment)}>Add team</button>
         <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
       </div>
     </section>

@@ -2,6 +2,10 @@ import type { NewMatchRow, NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
 import type { Approval, Club, ClubMatch, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
+/** A late-entry player: the entry form's details plus the new roster id they get. */
+export type LatePerson = EntryPerson & { id: string };
+export type LatePayment = 'paid' | 'venue' | 'unpaid';
+
 export interface ClubUser { id: string; email: string }
 export interface SupportSession { clubId: string; club: string; until: string }
 export interface AuditRow { at: string; action: string; detail: string; clubId?: string; tournamentId?: string }
@@ -102,6 +106,7 @@ export interface ClubBackend extends EventsBackend {
   deskSaveScore(token: string, pin: string, matchId: string, patch: ScorePatch): Promise<void>;
   deskPatchMatches(token: string, pin: string, changes: { id: string; patch: MatchPatch }[]): Promise<void>;
   deskAddLatePoolEntry(token: string, pin: string, entry: Entry, matches: NewMatchRow[]): Promise<void>;
+  deskAddLateTeam(token: string, pin: string, people: LatePerson[], payment: LatePayment, entry: Entry, matches: NewMatchRow[]): Promise<void>;
   deskAddEntry(token: string, pin: string, entry: Entry): Promise<void>;
   deskUpdateEntry(token: string, pin: string, id: string, patch: EntryPatch): Promise<void>;
   deskAddMatches(token: string, pin: string, rows: NewMatchRow[]): Promise<void>;
@@ -140,6 +145,8 @@ export interface ClubBackend extends EventsBackend {
   /** Organiser edits to matches (coaches and admins). */
   patchMatches(changes: { id: string; patch: MatchPatch }[]): Promise<void>;
   addLatePoolEntry(entry: Entry, matches: NewMatchRow[]): Promise<void>;
+  /** A new team after the draw, with each player's details (checked like any entry) and the payment. */
+  addLateTeam(people: LatePerson[], payment: LatePayment, entry: Entry, matches: NewMatchRow[]): Promise<void>;
   addEntry(entry: Entry): Promise<void>;
   updateEntry(id: string, patch: EntryPatch): Promise<void>;
   /** Scorer links for an event (coaches and admins only). */
