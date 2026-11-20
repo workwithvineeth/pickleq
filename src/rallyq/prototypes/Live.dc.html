@@ -34,7 +34,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="cap">Courts · tap to follow</div>
 <sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
 <button onClick="{{c.pick}}" class="card" style="{{c.ring}};text-align:left;border:0;cursor:pointer;font:inherit;color:inherit;padding:16px;display:flex;flex-direction:column;gap:10px">
-<div class="between" style="width:100%"><span class="cap">{{c.court}} · {{c.stage}}</span><span class="{{c.chip}}">{{c.status}}</span></div>
+<div class="between" style="width:100%"><span class="cap">{{c.court}} · {{c.stage}}</span><span class="{{c.chip}}">{{c.label}}</span></div>
 <div class="score" style="width:100%"><span class="t">{{c.a}}</span><span class="n p">{{c.sa}}</span><span class="t mut">{{c.b}}</span><span class="n p mut">{{c.sb}}</span></div>
 </button>
 </sc-for>
@@ -42,7 +42,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 <div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
 <div class="photo ph-live" style="border-radius:24px;padding:28px;min-height:420px;display:flex;flex-direction:column;justify-content:space-between;gap:20px">
-<div class="between"><div class="row"><span class="{{sel.chip}}">{{sel.status}}</span><span class="cap" style="color:#DDE7DC">{{sel.court}} · {{venue}} · {{sel.stage}}</span></div><span class="cap" style="color:#DDE7DC">Game {{sel.game}} of 3 · to 11</span></div>
+<div class="between"><div class="row"><span class="{{sel.chip}}">{{sel.label}}</span><span class="cap" style="color:#DDE7DC">{{sel.court}} · {{venue}} · {{sel.stage}}</span></div><span class="cap" style="color:#DDE7DC">Game {{sel.game}} of 3 · to 11</span></div>
 <div class="sbg arena-board"><div class="rows">
 <div class="tr2" data-t="0"><span class="srv {{sel.servingA}}" aria-hidden="true"></span><div class="nm"><b class="disp" style="font-size:clamp(26px,3.2vw,44px)">{{sel.a}}</b><span class="tagl"><i class="sno {{sel.servingA}}">{{sel.serverNo}}</i><span class="tagt">{{sel.tagA}}</span></span></div><div class="n pts">{{sel.sa}}</div></div>
 <div class="tr2" data-t="1"><span class="srv {{sel.servingB}}" aria-hidden="true"></span><div class="nm"><b class="disp" style="font-size:clamp(26px,3.2vw,44px)">{{sel.b}}</b><span class="tagl"><i class="sno {{sel.servingB}}">{{sel.serverNo}}</i><span class="tagt">{{sel.tagB}}</span></span></div><div class="n pts">{{sel.sb}}</div></div>

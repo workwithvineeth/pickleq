@@ -62,6 +62,7 @@ it('puts the format label on the selected court', async () => {
 
 it('adds Living Q, DNA and the full rally count to the selected sample court', () => {
   const {sel}=liveValues(SAMPLE,0,0,()=>{});
+  expect(sel.label).toBe('Sample');expect(sel.chip).toBe('chip');
   expect(sel.q?.type).toBe(LivingQ);
   expect(sel.q?.props).toEqual({rallies:SAMPLE[0].courts[0].rallies,confirmed:false});
   expect(sel.dna?.type).toBe(Dna);

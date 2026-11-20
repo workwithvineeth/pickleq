@@ -76,11 +76,7 @@
 .rq .tr2 .srv{width:12px;height:12px;border-radius:50%;background:var(--ball);opacity:0;justify-self:center;box-shadow:0 0 0 1.5px var(--on)}
 .rq .tr2 .srv.on{opacity:1;animation:rqpulse2 420ms var(--rq-ease,cubic-bezier(.23,1,.32,1))}
 @keyframes rqpulse2{0%{transform:scale(.2)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
-.rq .tr2::after{content:"";position:absolute;inset:0;background:var(--ball);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.45,0,.25,1);z-index:-1}
-.rq .tr2:has(.srv.on)::after{transform:scaleX(1)}
-.rq .tr2:has(.srv.on),.rq .tr2:has(.srv.on) :is(.nm b,.pts,.tagt){color:#06140D!important}
-.rq .tr2:has(.srv.on) .srv{border-radius:5px;background:#06140D;box-shadow:0 0 0 2px var(--ball)}
-.rq .tr2:has(.srv.on) .sno{color:#06140D}
+.rq .tr2:has(.srv.on){box-shadow:inset 0 0 0 2px var(--ball)}
 .rq .tr2 .nm{min-width:0;display:flex;flex-direction:column;line-height:1.05}
 .rq .tr2 .nm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rq .tr2 .pts{font-size:clamp(72px,10vw,150px);line-height:.9;text-align:right;min-width:1.1em}
@@ -99,14 +95,11 @@
 .rq .lqn span{font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
 .rq .dna{display:flex;gap:3px;height:64px;align-items:center;margin-top:8px}
 .rq .dna i{flex:1;max-width:14px;border-radius:3px;background:var(--line2);height:26px}
-.rq .dna i.a{background:rgba(241,244,234,.72);transform:translateY(-15px)}
-.rq .dna i.b{background:rgba(241,244,234,.72);transform:translateY(15px)}
-.rq .dna i.so{background:rgba(241,244,234,.3)}
-.rq.day .dna i.a,.rq.day .dna i.b{background:rgba(6,20,13,.62)}.rq.day .dna i.so{background:rgba(6,20,13,.25)}
+.rq .dna i.a{background:var(--sea);transform:translateY(-15px)}
+.rq .dna i.b{background:var(--tide);transform:translateY(15px)}
+.rq .dna i.so{opacity:.55}
 .rq .dna i.so{height:8px}
-.rq .dna i.run{height:34px}
-.rq .dna i.turn{background:var(--ball)}
-.rq.day .dna i.turn{background:#6F8A00}
+.rq .dna i.run{height:34px;background:var(--ball)}
 .rq .dna i.now{outline:2px solid var(--ball);outline-offset:2px}
 @media (max-width:560px){
   .rq .arena-board{grid-template-columns:minmax(0,1fr)}
@@ -133,8 +126,8 @@
 .rq .tv-dna .dna i.so{height:5px}
 .rq .tv-q{width:100%}
 .rq .tv-q .lqn b{font-size:clamp(12px,1.8vh,20px)}
-/* TV (Pad 5 board): the serving team's name and score fill ball green; ink text; no layout shift */
-.rq .mini span:has(> .rqm-srv.on),.rq .mini span:has(> .rqm-srv.on) + .n{background:var(--ball);color:#06140D!important;border-radius:10px;box-shadow:0 0 0 6px var(--ball);transition:background .4s cubic-bezier(.45,0,.25,1),box-shadow .4s cubic-bezier(.45,0,.25,1)}
-.rq .mini span:has(> .rqm-srv.on) .rqm-srv{background:#06140D;border-radius:3px}
+/* TV: the serving team's name gets a lime ring (20/10: ring, not fill); names wrap to two lines, never cut */
+.rq .mini span[style*="ellipsis"]{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15}
+.rq .mini span:has(> .rqm-srv.on){border-radius:10px;box-shadow:0 0 0 2px var(--ball);outline:4px solid transparent}
 /* Player Studio cover: a player photo from the site (sample) until the player adds their own */
 .rq .ph-studio{background-color:#0B2418;background-image:linear-gradient(180deg,rgba(6,20,13,.15) 0%,rgba(6,20,13,.35) 45%,rgba(6,20,13,.9) 100%),url(./photos/mobile/player-tracker.jpg)!important;background-size:cover;background-position:center 25%}

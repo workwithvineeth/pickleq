@@ -67,7 +67,9 @@ export const SAMPLE:Venue[]=[
 function longestRun(pts:string){let best=0,cur=0,prev='';for(const p of pts){cur=p===prev?cur+1:1;prev=p;best=Math.max(best,cur);}return best;}
 export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?:number})=>void){
  const venue=venues[v]??venues[0];const courts=venue?.courts??[];const ci=Math.min(c,Math.max(0,courts.length-1));
- const mk=(x:Court)=>({...x,win:x.status==='Live'?x.win??NO_WIN_BAR:NO_WIN_BAR,chip:x.status==='Live'?'chip live':'chip',gameLabel:gameLabel(x.game,x.bestOf,x.pointsTo)});
+ // Sample boards say Sample, never Live (20/10 build notes).
+ const sample=venues===SAMPLE;
+ const mk=(x:Court)=>({...x,win:x.status==='Live'?x.win??NO_WIN_BAR:NO_WIN_BAR,chip:x.status==='Live'&&!sample?'chip live':'chip',label:sample&&x.status==='Live'?'Sample':x.status,gameLabel:gameLabel(x.game,x.bestOf,x.pointsTo)});
  const s=courts[ci]?mk(courts[ci]):mk({court:'Court 1',stage:'',a:'No matches live right now',b:'Check back soon',sa:0,sb:0,game:1,games:[],status:'Waiting',run:0,next:'',pts:''});
  const r=s.rallies??[];const serving=s.serving;const run=currentRun(r);
  const levelTeam=level(r)?r.filter(x=>x.outcome==='point').at(-1)?.winner:undefined;
