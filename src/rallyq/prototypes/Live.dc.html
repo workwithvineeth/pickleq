@@ -34,7 +34,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <label class="findp"><span class="sr-only">Find a player</span><input type="search" placeholder="Find a player" aria-label="Find a player" value="{{find}}" onChange="{{setFind}}"></label><sc-if value="{{findNone}}" hint-placeholder-val="{{ false }}"><p class="mut" style="margin:0;font-size:14px">No player on court matches “{{find}}”.</p></sc-if>
 <div class="cap">Courts · tap to follow</div>
 <sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
-<button onClick="{{c.pick}}" class="card" style="{{c.ring}};text-align:left;border:0;cursor:pointer;font:inherit;color:inherit;padding:16px;display:flex;flex-direction:column;gap:10px">
+<button onClick="{{c.pick}}" class="card {{c.flash}}" style="{{c.ring}};text-align:left;border:0;cursor:pointer;font:inherit;color:inherit;padding:16px;display:flex;flex-direction:column;gap:10px">
 <div class="between" style="width:100%"><span class="cap">{{c.court}} · {{c.stage}}</span><span class="{{c.chip}}">{{c.label}}</span></div>
 <div class="score" style="width:100%"><span class="t">{{c.a}}</span><span class="n p">{{c.sa}}</span><span class="t mut">{{c.b}}</span><span class="n p mut">{{c.sb}}</span></div>
 </button>
@@ -44,12 +44,13 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
 <div class="photo ph-live" style="border-radius:24px;padding:28px;min-height:420px;display:flex;flex-direction:column;justify-content:space-between;gap:20px">
 <div class="between"><div class="row"><span class="{{sel.chip}}">{{sel.label}}</span><span class="cap" style="color:#DDE7DC">{{sel.court}} · {{venue}} · {{sel.stage}}</span></div><span class="cap" style="color:#DDE7DC">Game {{sel.game}} of 3 · to 11</span></div>
-<div class="qboard20">
+<div class="qboard20">{{sel.banner}}
 <sc-if value="{{sel.q}}" hint-placeholder-val="{{ false }}"><div class="qz" role="img" aria-label="{{sel.qLabel}}"><div class="lq">{{sel.q}}<div class="lqn"><b>{{sel.rallyCount}}</b><span>rallies</span></div></div></div></sc-if>
 <div class="qtiles">
-<div class="{{sel.tileA}}" data-t="0"><span class="srv" aria-hidden="true"></span><b class="nm" aria-label="{{sel.a}}">{{sel.nmA}}</b><span class="n pts">{{sel.sa}}</span><span class="qs"><span class="tagt">{{sel.tagA}}</span><span class="sv">{{sel.srvA}}</span></span></div>
-<div class="{{sel.tileB}}" data-t="1"><span class="srv" aria-hidden="true"></span><b class="nm" aria-label="{{sel.b}}">{{sel.nmB}}</b><span class="n pts">{{sel.sb}}</span><span class="qs"><span class="tagt">{{sel.tagB}}</span><span class="sv">{{sel.srvB}}</span></span></div>
+<div class="{{sel.tileA}}" data-t="0"><span class="srv" aria-hidden="true"></span><b class="nm" aria-label="{{sel.a}}">{{sel.nmA}}</b><span class="n pts"><span class="{{sel.rA}}">{{sel.sa}}</span></span><span class="qs"><span class="tagt">{{sel.tagA}}</span><span class="sv">{{sel.srvA}}</span></span></div>
+<div class="{{sel.tileB}}" data-t="1"><span class="srv" aria-hidden="true"></span><b class="nm" aria-label="{{sel.b}}">{{sel.nmB}}</b><span class="n pts"><span class="{{sel.rB}}">{{sel.sb}}</span></span><span class="qs"><span class="tagt">{{sel.tagB}}</span><span class="sv">{{sel.srvB}}</span></span></div>
 </div>
+<sc-if value="{{sel.dna}}" hint-placeholder-val="{{ false }}"><div class="mdna"><span class="cap">Match DNA · one mark per rally</span><div class="mdna-g">{{sel.dna}}</div></div></sc-if>
 <sc-if value="{{sel.call}}" hint-placeholder-val="{{ false }}"><p class="qcall"><b class="n">{{sel.call}}</b> <span>{{sel.callLine}}</span></p></sc-if>
 <sc-if value="{{sel.q}}" hint-placeholder-val="{{ false }}"><p class="qhow"><b>How to read the Q:</b> each stroke is one rally. Long = point, short = side-out. Sea strokes point out for {{sel.a}}, Tide strokes point in for {{sel.b}}. The numbers are the score.</p></sc-if>
 </div>

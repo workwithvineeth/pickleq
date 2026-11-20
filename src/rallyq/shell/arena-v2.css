@@ -164,3 +164,40 @@
 /* Venue TV opened on a phone: one court per row, natural height, nothing clipped. */
 @media(max-width:760px){.rq div:has(> .chip.live){flex-wrap:wrap}.rq div[style*="repeat(2"]:has(> .mini){grid-template-columns:minmax(0,1fr)!important;flex:none!important}.rq .mini{min-height:0!important;height:auto!important;overflow:visible!important}.rq:has(.mini),.rq:has(.mini) > *{height:auto!important;max-height:none!important;overflow:visible!important}}
 .rq div[style*="width: 64px"][style*="height: 64px"],.rq div[style*="width:64px"][style*="height:64px"]{flex:none}
+/* Match DNA strip (Live board, court page, Results): one mark per rally, wraps instead of shrinking to slivers. */
+.rq .mdna{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:100%}
+.rq .mdna .cap{font-size:11px}
+.rq .mdna-g{display:flex;align-items:center;gap:8px;min-width:0}
+.rq .mdna-n{font-size:11px;font-weight:700;color:#BFD0C4;flex:none}
+.rq .mdna .dna{flex-wrap:wrap;row-gap:30px;height:auto;min-height:56px;padding-block:15px;margin-top:0;flex:1;min-width:0}
+.rq .mdna .dna i{flex:0 0 9px;max-width:9px;height:18px}
+.rq .mdna .dna i.a{transform:translateY(-10px)}.rq .mdna .dna i.b{transform:translateY(10px)}
+.rq .mdna .dna i.so{height:7px}.rq .mdna .dna i.run{height:24px}
+.rq .res20 .mdna{padding:0 2px}
+
+/* Motion board picks (Live, Home, Studio): display only, reduced motion = short fades. */
+@keyframes rqRoll0{from{transform:translateY(40%);opacity:0}to{transform:none;opacity:1}}
+@keyframes rqRoll1{from{transform:translateY(40%);opacity:0}to{transform:none;opacity:1}}
+.rq .rqr0{display:inline-block;animation:rqRoll0 .22s cubic-bezier(.2,.8,.2,1)}
+.rq .rqr1{display:inline-block;animation:rqRoll1 .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes rqRing0{0%{box-shadow:inset 0 0 0 3px var(--ball,#D9F24A)}100%{box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)}}
+@keyframes rqRing1{0%{box-shadow:inset 0 0 0 3px var(--ball,#D9F24A)}100%{box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)}}
+.rq .rqf0{animation:rqRing0 .9s ease-out}
+.rq .rqf1{animation:rqRing1 .9s ease-out}
+@keyframes rqBan{0%{transform:translateY(8px) scale(.96);opacity:0}12%{transform:none;opacity:1}80%{opacity:1}100%{opacity:0}}
+.rq .qban{position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:3;padding:10px 22px;border-radius:999px;background:#F1F4EA;color:#06140D;font-weight:800;font-size:clamp(18px,4vw,28px);letter-spacing:.02em;white-space:nowrap;pointer-events:none;animation:rqBan 1.6s ease-out forwards;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.rq .qban.match{background:#E8C35A;color:#2A1D00}
+@keyframes rqRise{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.rq .rqrise{animation:rqRise .5s cubic-bezier(.2,.8,.2,1) both}
+.rq .qt .srv{transition:opacity .2s ease,transform .2s cubic-bezier(.2,.8,.2,1);transform:scale(.4)}
+.rq .qt.srv .srv{transform:none}
+.rq .qt{transition:box-shadow .2s ease}
+@media (prefers-reduced-motion:reduce){
+.rq .rqr0,.rq .rqr1,.rq .rqf0,.rq .rqf1,.rq .rqrise{animation:rqFadeIn .15s ease-out}
+.rq .qban{animation:rqBanR 1.6s linear forwards}
+.rq .qt,.rq .qt .srv{transition:none}}
+@keyframes rqFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes rqBanR{0%,85%{opacity:1}100%{opacity:0}}
+.rq .qboard20{position:relative}
+/* Motion board: the Home Match Centre card grows into the Live court board (view transition between pages). */
+.rq .qboard20{view-transition-name:rq-court}

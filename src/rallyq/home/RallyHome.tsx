@@ -8,6 +8,9 @@ import {PrototypeScreen} from '../PrototypeScreen';
 import {INITIAL_MAIN,PILOT,SECTIONS,activeSection,mainValues,nextEventLine,type MainState,type SectionId} from './values';
 import {featured,heroChip,heroCta,heroEvent,liveCourts,schedule,tickerLines,type FeaturedMatch} from './home20';
 import {LivingQ} from '../arena/LivingQ';
+import {flip,type Seen} from '../motion/motion';
+import {CountUp} from '../motion/CountUp';
+const SEEN:Seen=new Map();
 import source from './Main.html?raw';
 import source20 from './Home20.html?raw';
 
@@ -15,7 +18,7 @@ import source20 from './Home20.html?raw';
 export const HOME20=true;
 
 function MatchCentre({f}:{f:FeaturedMatch}){
- const row=(t:'a'|'b')=>{const srv=f.serving===(t==='a'?'A':'B');return <div className={'mrow '+t+(srv?' srv':'')}><span className="dot" aria-hidden="true"/><b>{t==='a'?f.a:f.b}</b><span className="p">{t==='a'?f.sa:f.sb}</span></div>;};
+ const row=(t:'a'|'b')=>{const srv=f.serving===(t==='a'?'A':'B');return <div className={'mrow '+t+(srv?' srv':'')}><span className="dot" aria-hidden="true"/><b>{t==='a'?f.a:f.b}</b><span className="p"><span className={flip(SEEN,t+f.court+(t==='a'?f.a:f.b),String(t==='a'?f.sa:f.sb),'rqr')}>{t==='a'?f.sa:f.sb}</span></span></div>;};
  return <a className="mc" href="#/live" aria-label={`Match Centre: ${f.court} live, ${f.a} ${f.sa}, ${f.b} ${f.sb}. Open live scores.`}>
   <div className="mch"><i aria-hidden="true"/><span>{f.court} · {f.stage}</span></div>
   {row('a')}{row('b')}
@@ -48,8 +51,8 @@ export function RallyHome({go}:{go:Go}){
   ticker:tick.length?<div className="ticker" aria-hidden="true"><div className="tr">{[...tick,...tick].map((t,i)=><span key={i}>{t.live?<b>LIVE </b>:null}{t.text}</span>)}</div></div>:undefined,
   hasToday:today.length>0,today,todayCap:hero&&d?`${d.name} · ${d.club}`:'',
   events:evs,
-  hasCourts:courts.length>0,courts:courts.map(c=>({...c,ra:'r'+(c.servingA?' srv':'')+(c.leadB?' lose':''),rb:'r b'+(c.servingB?' srv':'')+(c.leadA?' lose':'')})),
-  pilot3:[{n:String(PILOT.matches),l:'matches scored'},{n:PILOT.points.toLocaleString('en-IN'),l:'points recorded live'},{n:String(PILOT.players),l:'players'}],
+  hasCourts:courts.length>0,courts:courts.map(c=>({...c,fl:flip(SEEN,'lc'+c.court+c.a,c.sa+'-'+c.sb,'rqf'),ra:'r'+(c.servingA?' srv':'')+(c.leadB?' lose':''),rb:'r b'+(c.servingB?' srv':'')+(c.leadA?' lose':'')})),
+  pilot3:[{n:<CountUp text={String(PILOT.matches)}/>,l:'matches scored'},{n:<CountUp text={PILOT.points.toLocaleString('en-IN')}/>,l:'points recorded live'},{n:<CountUp text={String(PILOT.players)}/>,l:'players'}],
  };
  return <PrototypeScreen name="Main" go={go} source={source20} hrefs={{HeroCta:cta.href}} values={{...values,...v20}}/>;
 }

@@ -1,3 +1,4 @@
+import {CountUp} from '../motion/CountUp';
 import {useState} from 'react';
 import type {Go} from '../../navigation';
 import {useLoad} from '../../club/screens/common';
@@ -76,5 +77,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  const photo=COVER_UPLOAD?data.photo??null:null;
  Object.assign(values,{coverChip:photo?'Your photo':'Sample photo',coverStyle:photo?`background-image:linear-gradient(180deg,rgba(6,20,13,.1) 0%,rgba(6,20,13,.3) 45%,rgba(6,20,13,.9) 100%),url("${photo}")!important;background-size:cover;background-position:center`:'',coverEdit:COVER_UPLOAD&&<CoverEditor store={store} hasPhoto={!!photo} onSaved={state.reload}/>});
  Object.assign(values,{shareProfile:()=>{void shareProfile();},shareProfileLabel:shared||'Share my profile',hasProfile:!!me,myTournaments:<MyTournaments go={go}/>,signOut:()=>{void signOutTo(go);}});
- return <PrototypeScreen name="MyStudio" go={go} source={source} values={values} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
+ // Motion board: the Studio numbers count up once when the page opens.
+ const counted={...values,practiceCount:<CountUp text={String(values.practiceCount)}/>,hours:<CountUp text={String(values.hours)}/>,serve:<CountUp text={String(values.serve)}/>};
+ return <PrototypeScreen name="MyStudio" go={go} source={source} values={counted} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
 }

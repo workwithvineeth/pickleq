@@ -1,4 +1,5 @@
 import { LiveCourts } from './LiveCourts';
+import { MatchDna } from '../../rallyq/arena/MatchDna';
 import { usePublicScores } from './usePublicScores';
 import { TournamentEntrySummary } from './MatchdayHeader';
 import { PublicScoreAnnouncement } from './PublicScoreAnnouncement';
@@ -919,6 +920,7 @@ function GroupedMatches({ d, divisionId }: { d: PublicTournament; divisionId: st
           <span className={w === 'A' ? 'res20-team res20-a res20-winner' : 'res20-team res20-a'} style={{ display: 'block', fontWeight: w === 'A' ? 700 : 500 }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
           <span className={w === 'B' ? 'res20-team res20-b res20-winner' : 'res20-team res20-b'} style={{ display: 'block', fontWeight: w === 'B' ? 700 : 500 }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
           {m.court ? <span className="mut" style={{ fontSize: 13 }}>Court {m.court}</span> : null}
+          <MatchDna d={d} m={m} all />
         </span>
         {m.status === 'live' ? <span className="row" style={{ gap: 8 }}><span className="chip live">Live</span><span className="n" style={{ fontSize: 18 }}>{score}</span></span> : m.status === 'done' ? (score ? <span className="n" style={{ fontSize: 18 }}>{score}</span> : <span className="st off">Walkover</span>) : <span className="st wait">To play</span>}
       </div>

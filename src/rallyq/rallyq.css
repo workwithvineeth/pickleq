@@ -126,3 +126,11 @@
 :is(.rallyq-screen-live,.rallyq-screen-tv) .rq :is(.n.acc,.rqm-acc,.acc.n),.rq .pq-live-view .pq-flash-score{color:#F1F4EA!important}
 .rallyq-prototype .rq .chip.rq-team-a{background:#76E0D0!important;color:#06140D!important}
 .rallyq-prototype .rq .chip.rq-team-b{background:#7EAEF2!important;color:#06140D!important}
+/* Motion board: Player Studio reveal, cards rise in one after another (reduced motion: no movement). */
+@media (prefers-reduced-motion:no-preference){
+.rallyq-screen-mystudio .rq :is(.card,.cglass,section){animation:rqStudioRise .5s cubic-bezier(.2,.8,.2,1) both}
+.rallyq-screen-mystudio .rq :is(.card,.cglass,section):nth-of-type(2){animation-delay:.06s}
+.rallyq-screen-mystudio .rq :is(.card,.cglass,section):nth-of-type(3){animation-delay:.12s}
+.rallyq-screen-mystudio .rq :is(.card,.cglass,section):nth-of-type(4){animation-delay:.18s}
+.rallyq-screen-mystudio .rq :is(.card,.cglass,section):nth-of-type(n+5){animation-delay:.24s}}
+@keyframes rqStudioRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}

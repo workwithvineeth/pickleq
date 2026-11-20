@@ -14,6 +14,8 @@ import {ShellState,shellSource} from '../ShellState';
 import {currentRun,level,ralliesOf,servingNow,type Rally} from '../arena/rallies';
 import {LivingQ} from '../arena/LivingQ';
 import {Dna} from '../arena/Dna';
+import {flip,moment,type Seen} from '../motion/motion';
+const SEEN:Seen=new Map();
 /** The Live board with the win chance under the big score. */
 const LIVE_SOURCE=liveRaw.replace('scored by court referee</span></div>','scored by court referee</span></div>'+winBarHtml('sel.win'))
  // When nothing is live the page shows the prototype sample: say so plainly, so nobody reads it as real scores.
@@ -70,6 +72,13 @@ export function lastRallyLine(r:readonly Rally[],a:string,b:string){const x=r.at
  return x.outcome==='point'?`Point ${who(x.winner)}. A long stroke on the Q.`:x.outcome==='side_out'?`Side-out to ${who(x.winner)}. A short stroke on the Q.`:`Second server for ${who(x.serverTeam??x.winner)}. A short stroke on the Q.`;}
 /** One partner per line on the Q board tiles, so long names never break mid-word on a phone. */
 const names=(side:string)=><>{side.split(' / ').map((n,i)=><span key={i} className="nmp">{n}</span>)}</>;
+/** Motion board: Side out, Game and Match banners, shown briefly when they happen (never on first load). */
+function bannerOf(s:Court,r:readonly {outcome:string}[]){
+ const games=(s.games??[]).length,last=r.at(-1);
+ const text=s.status==='Final'?'Match':r.length===0&&games>0?'Game':last?.outcome==='side_out'?'Side out':'';
+ const b=s.status==='Live'||s.status==='Final'?moment('b:'+s.court+s.a,s.status+'|'+games+'|'+r.length,text):null;
+ return b?<span key={b.at} role="status" className={'qban'+(b.text==='Match'?' match':'')}>{b.text}</span>:undefined;
+}
 export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?:number})=>void,find=''){
  const venue=venues[v]??venues[0];const q=find.trim().toLowerCase();const all=venue?.courts??[];const courts=q?all.filter(x=>(x.a+' '+x.b).toLowerCase().includes(q)):all;const ci=Math.min(c,Math.max(0,courts.length-1));
  // Sample boards say Sample, never Live (20/10 build notes).
@@ -83,12 +92,14 @@ export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?
  return {venue:venue?.name??'',clubName:venue?.club??'',clubMark:venue?.mark??'',
   venues:venues.map((x,i)=>({name:x.name,cls:i===v?'tab on':'tab',pick:()=>set({v:i,c:0})})),
   find,findNone:!!q&&!courts.length,
-  courts:courts.map((x,i)=>({...mk(x),ring:i===ci?'box-shadow:inset 0 0 0 2px #D9F24A':'box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)',pick:()=>set({c:i})})),
+  courts:courts.map((x,i)=>({...mk(x),flash:flip(SEEN,'c:'+x.court+x.a,x.sa+'-'+x.sb,'rqf'),ring:i===ci?'box-shadow:inset 0 0 0 2px #D9F24A':'box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)',pick:()=>set({c:i})})),
   sel:{...s,pts:[...s.pts.slice(-6)].map(ch=>({who:ch==='A'?first(s.a):first(s.b),cls:ch==='A'?'chip rq-team-a':'chip rq-team-b'})),run:s.run||longestRun(s.pts),
    q:r.length>0?<LivingQ rallies={r} confirmed={s.status==='Final'}/>:undefined,dna:r.length>0?<Dna rallies={r}/>:undefined,rallyCount:r.length,
    servingA:serving?.team==='A'?'on':'',servingB:serving?.team==='B'?'on':'',serverNo:serving?.call.split('-').length===3?serving.no:'',call:serving?.call??'',tagA:tag('A'),tagB:tag('B'),
    // 20/10 Q board: two score tiles (A left, B right); the serving tile gets a lime ring and says who serves.
    nmA:names(s.a),nmB:names(s.b),
+   rA:flip(SEEN,'ta:'+s.court+s.a,String(s.sa),'rqr'),rB:flip(SEEN,'tb:'+s.court+s.b,String(s.sb),'rqr'),
+   banner:bannerOf(s,r),
    tileA:'qt'+(serving?.team==='A'?' srv':''),tileB:'qt'+(serving?.team==='B'?' srv':''),
    srvA:serving?.team==='A'?(serving.call.split('-').length===3?'Server '+serving.no:'Serving'):'',srvB:serving?.team==='B'?(serving.call.split('-').length===3?'Server '+serving.no:'Serving'):'',
    callLine:lastRallyLine(r,s.a,s.b),hasPts:s.pts.length>0,qLabel:`The Q keeps score: ${r.length} ${r.length===1?'rally':'rallies'} so far. ${s.a} ${s.sa}, ${s.b} ${s.sb}.`}};

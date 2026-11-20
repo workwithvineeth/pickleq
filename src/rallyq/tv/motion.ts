@@ -24,8 +24,10 @@ export const MOTION_CSS = `
 .rqm-p1{animation:rqSlide1 .25s cubic-bezier(.23,1,.32,1)}
 @keyframes rqFade0{from{opacity:0}to{opacity:1}}
 @keyframes rqFade1{from{opacity:0}to{opacity:1}}
-.rqm-f0{animation:rqFade0 .4s ease-out}
-.rqm-f1{animation:rqFade1 .4s ease-out}
+@keyframes rqRiseF0{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes rqRiseF1{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.rqm-f0{animation:rqRiseF0 .45s cubic-bezier(.2,.8,.2,1)}
+.rqm-f1{animation:rqRiseF1 .45s cubic-bezier(.2,.8,.2,1)}
 .rqm-hold{box-shadow:inset 0 0 0 4px var(--gold,#E8C35A)!important}
 .rqm-win{margin-right:.6em;color:var(--gold,#E8C35A);font-size:.7em;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .rqm-win:empty{display:none}
