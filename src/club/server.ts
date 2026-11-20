@@ -787,7 +787,7 @@ export class ServerBackend implements ClubBackend {
     return {
       name: String(r.name), startDate: String(r.start_date), startTime: String(r.start_time ?? '08:00').slice(0, 5), slotMinutes: Number(r.slot_minutes ?? 20), status: r.status as PublicTournament['status'], club: String(r.club),
       divisions: (r.divisions as Row[]).map((d) => ({ id: String(d.id), name: String(d.name), kind: d.kind as Division['kind'], pools: Number(d.pools), advance: Number(d.advance), ...formats(d.format) })),
-      entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), names: teamNames((e.names as string[]) ?? []), duprs: ((e.duprs as (number | string | null)[] | null) ?? []).map((x) => (x === null || x === undefined || x === '' ? undefined : Number(x))) })),
+      entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), ...(e.status === 'withdrawn' ? { status: 'withdrawn' as const } : {}), names: teamNames((e.names as string[]) ?? []), duprs: ((e.duprs as (number | string | null)[] | null) ?? []).map((x) => (x === null || x === undefined || x === '' ? undefined : Number(x))) })),
       matches: (r.matches as Row[]).map((m) => ({
         id: String(m.id), divisionId: s(m.division_id), stage: m.stage as ClubMatch['stage'], pool: n(m.pool), round: n(m.round), bracketPos: n(m.bracket_pos),
         slot: n(m.slot), court: n(m.court), entryA: s(m.entry_a), entryB: s(m.entry_b), games: ((m.games as Row[]) ?? []).map((g) => ({ points: '', a: Number(g.a), b: Number(g.b), ...rallyKeys(g) })),

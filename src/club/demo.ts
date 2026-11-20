@@ -822,7 +822,7 @@ export class DemoBackend implements ClubBackend {
     return {
       name: t.name, startDate: t.startDate, startTime: t.startTime, slotMinutes: t.slotMinutes, status: t.status, club: this.club(t.clubId).name,
       divisions: divs.map(({ id, name, kind, pools, advance, format, koFormat, shape, extra, stageFormats }) => ({ id, name, kind, pools, advance, format, koFormat, shape, extra, stageFormats })),
-      entries: this.s.entries.filter((e) => divs.some((d) => d.id === e.divisionId)).map((e) => ({ id: e.id, divisionId: e.divisionId, seed: e.seed, pool: e.pool, names: e.playerIds.map((p) => names.get(p) ?? ''), duprs: e.playerIds.map((p) => (kindOf.get(e.divisionId) === 'singles' ? byId.get(p)?.duprSingles : byId.get(p)?.duprDoubles)) })),
+      entries: this.s.entries.filter((e) => divs.some((d) => d.id === e.divisionId)).map((e) => ({ id: e.id, divisionId: e.divisionId, seed: e.seed, pool: e.pool, ...(e.status === 'withdrawn' ? { status: 'withdrawn' as const } : {}), names: e.playerIds.map((p) => names.get(p) ?? ''), duprs: e.playerIds.map((p) => (kindOf.get(e.divisionId) === 'singles' ? byId.get(p)?.duprSingles : byId.get(p)?.duprDoubles)) })),
       matches: this.s.matches.filter((m) => m.tournamentId === t.id).map((m) => ({
         id: m.id, divisionId: m.divisionId, stage: m.stage, pool: m.pool, round: m.round, bracketPos: m.bracketPos, slot: m.slot, court: m.court,
         entryA: m.entryA, entryB: m.entryB, games: m.games.map((g) => ({ points: '', a: g.a, b: g.b, ...(g.rallies ? { rallies: g.rallies } : {}), ...(g.mode ? { mode: g.mode } : {}), ...(g.serve ? { serve: g.serve } : {}) })), status: m.status, winner: m.winner,

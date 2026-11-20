@@ -555,8 +555,11 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyD
     return (
       <section aria-label="Pools" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {pools.map((p) => {
-          const ids = entries.filter((e) => (e.pool ?? 1) === p).map((e) => e.id);
-          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99)} through={(r) => poolDone(p) && r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={name} dupr={pmap ? dupr : undefined} matches={poolMatches} />;
+          // Withdrawn teams never rank: they sit at the bottom, unranked and labelled (audit 21 Nov, B5).
+          const inPool = entries.filter((e) => (e.pool ?? 1) === p);
+          const ids = inPool.filter((e) => e.status !== 'withdrawn').map((e) => e.id);
+          const out = inPool.filter((e) => e.status === 'withdrawn').map((e): StandingRow => ({ entryId: e.id, played: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, diff: 0, rank: 0 }));
+          return <PoolTable key={p} title={`Pool ${poolLetter(p)}`} rows={[...standings(ids, poolMatches, (id) => emap.get(id)?.seed ?? 99), ...out]} through={(r) => poolDone(p) && r.rank <= division.advance} best={(r) => bestIds.has(r.entryId)} label={name} dupr={pmap ? dupr : undefined} matches={poolMatches} />;
         })}
         {q && q.runnersUp.length > 0 && (
           <div className="card" style={cardPad}>
@@ -632,14 +635,15 @@ function PoolTable({ title, rows, through, best, label, dupr, bare, matches }: {
         <thead><tr><th>#</th><th>{dupr ? 'Team and DUPR' : 'Team'}</th><th>P</th><th>W</th><th>L</th><th>Pts won</th><th>Pts lost</th><th>Diff</th><th aria-label="Qualified" /></tr></thead>
         <tbody>
           {rows.map((r) => {
-            const pill = through(r) ? 'Through' : best?.(r) ? 'Best runner-up' : null;
+            const out = r.rank === 0;
+            const pill = out ? null : through(r) ? 'Through' : best?.(r) ? 'Best runner-up' : null;
             const line = dupr?.(r.entryId);
             return (
               <Fragment key={r.entryId}><tr>
-                <td className="n" style={{ fontSize: 22 }}>{r.rank}</td>
+                <td className="n" style={{ fontSize: 22 }}>{out ? '–' : r.rank}</td>
                 <td style={{ minWidth: 180 }}>{matches ? <button type="button" className="tlink" style={{ textAlign: 'left', overflowWrap: 'anywhere' }} aria-expanded={expanded === r.entryId} onClick={() => setExpanded(expanded === r.entryId ? undefined : r.entryId)}>{label(r.entryId)}</button> : <b>{label(r.entryId)}</b>}{line && <div className="mut" style={{ fontSize: 12 }}>{line}</div>}</td>
                 <td className="n" style={num}>{r.played}</td><td className="n acc" style={{ fontSize: 20 }}>{r.wins}</td><td className="n" style={num}>{r.losses}</td><td className="n" style={num}>{r.pointsFor}</td><td className="n" style={num}>{r.pointsAgainst}</td><td className="n" style={num}>{r.diff > 0 ? `+${r.diff}` : r.diff < 0 ? `−${-r.diff}` : 0}</td>
-                <td>{pill && <span className="st ok">{pill}</span>}</td>
+                <td>{pill && <span className="st ok">{pill}</span>}{out && <span className="st off">Withdrawn</span>}</td>
               </tr>
               {expanded === r.entryId && matches && <tr className="expand"><td colSpan={9}>
                 <strong>Pool matches</strong>
