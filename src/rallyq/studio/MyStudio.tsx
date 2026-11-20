@@ -9,11 +9,15 @@ import {RallyStudioStore,PRIVATE_SHARING,type SharingOptions} from '../private/b
 import {INITIAL_UI,studioValues,type StudioUI} from './studioValues';
 import {EMPTY_LOG,buildPractice} from './logSession';
 import {MyTournaments} from './MyTournaments';
+import {CoverEditor} from './CoverEditor';
+export const COVER_UPLOAD=false;
 import {signOutTo} from '../shell/Shell';
 import {appLink,shareLink} from '../../club/screens/common';
 const source=holes(raw,[
  // Cover: a neutral night-court photo from the site until players can add their own (no sample person).
- ['<section class="photo ph-woman"','<section class="photo ph-studio"'],['background:rgba(6,20,13,.7)">Illustration</span>','background:rgba(6,20,13,.7)">Sample photo</span>'],
+ ['<section class="photo ph-woman" style="','<section class="photo ph-studio" style="{{coverStyle}}'],['background:rgba(6,20,13,.7)">Illustration</span>','background:rgba(6,20,13,.7)">{{coverChip}}</span>'],
+ // Athlete Cover: the player's own private photo (choose, crop, save) under the chips.
+ ['Hyderabad #14</span></div></div>','Hyderabad #14</span></div>{{coverEdit}}</div>'],
  // No public profile until the player is linked to one: never open the sample profile as if it were theirs.
  ['<a class="btn" href="Studio.dc.html" style="background:#0B2418;color:#D9F24A!important">See my public profile</a>','<sc-if value="{{hasProfile}}" hint-placeholder-val="{{ true }}"><a class="btn" href="Studio.dc.html" style="background:#0B2418;color:#D9F24A!important">See my public profile</a></sc-if>'],
  // Overview: share the public profile link (native share sheet, else copied).
@@ -68,6 +72,9 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  const goalStep=async()=>{if(!g0)return;try{await store.saveGoal({title:g0.title,target:g0.target,progress:Math.min(g0.target,g0.progress+1),due:g0.due},g0.id);state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not update the goal.'});}};
  Object.assign(values,{goalNew:goal.title,goalNewTarget:goal.target,goalMsg:goal.msg,hasGoal:!!g0,setGoalNew:(e:{target:{value:string}})=>setGoal({...goal,title:e.target.value,msg:''}),setGoalNewTarget:(e:{target:{value:string}})=>setGoal({...goal,target:e.target.value.replace(/[^0-9.]/g,''),msg:''}),addGoal:()=>{void addGoal();},goalStep:()=>{void goalStep();}});
  const shareProfile=async()=>{if(!me)return;const r=await shareLink(me.name+' on RallyQ',appLink('#/public-player/'+encodeURIComponent(me.playerId)));setShared(r==='Shared'?'Shared ✓':r==='Link copied'?'Link copied ✓':'');};
+ // Photo upload turns on once the private player-photos storage is on the server (migration 20261120060000).
+ const photo=COVER_UPLOAD?data.photo??null:null;
+ Object.assign(values,{coverChip:photo?'Your photo':'Sample photo',coverStyle:photo?`background-image:linear-gradient(180deg,rgba(6,20,13,.1) 0%,rgba(6,20,13,.3) 45%,rgba(6,20,13,.9) 100%),url("${photo}")!important;background-size:cover;background-position:center`:'',coverEdit:COVER_UPLOAD&&<CoverEditor store={store} hasPhoto={!!photo} onSaved={state.reload}/>});
  Object.assign(values,{shareProfile:()=>{void shareProfile();},shareProfileLabel:shared||'Share my profile',hasProfile:!!me,myTournaments:<MyTournaments go={go}/>,signOut:()=>{void signOutTo(go);}});
  return <PrototypeScreen name="MyStudio" go={go} source={source} values={values} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
 }
