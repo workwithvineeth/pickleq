@@ -45,7 +45,7 @@ const R:[string,string][]=[
  ['<th>Status</th>','<sc-if value="{{hasStatus}}" hint-placeholder-val="{{ true }}"><th>Status</th></sc-if>'],
  ['<td><span class="{{e.cls}}">{{e.st}}</span></td>','<sc-if value="{{hasStatus}}" hint-placeholder-val="{{ true }}"><td><span class="{{e.cls}}">{{e.st}}</span></td></sc-if>']];
 const SHELL=shellSource(raw);
-// Semi-final cards: the status chip comes from the match (coral only while live) and live ones carry the win chance.
+// Semi-final cards keep their existing status and live win chance in the glass layout.
 const SF_CARD='<span class="chip live">Live</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for>';
 const source=holes(raw,R).replace(SF_CARD,'<span class="{{m.chip}}">{{m.st}}</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div>'+winBarHtml('m.win')+'</div></sc-for>');
 
@@ -120,7 +120,7 @@ export function RallyEvent({slug,go}:{slug:string;go:Go}){
   else if(isListedUpcoming(e)&&LISTED_CONTACT_ENABLED){const wa=contactHref(e.contact);if(wa)window.open(wa,'_blank','noopener');}
   else if(MESSAGE_CLUB_ENABLED&&contactHref(e.contact))setMsg(true);};
  const primary=primaryAction(e);
- return <PrototypeScreen name="Event" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,act)}>
+ return <PrototypeScreen name="Event" className="event20" go={go} source={source} values={eventValues(e,scores.data??undefined,logo.data?.logoUrl,tab,setTab,act)}>
   <StickyEnter label={primary.label} disabled={!primary.to} onClick={()=>{if(primary.to)act(primary.to);}}/>
   {MESSAGE_CLUB_ENABLED&&msg&&<MessageSheet eventName={e.name} club={e.club} href={contactHref(e.contact)!} onClose={()=>setMsg(false)}/>}
  </PrototypeScreen>;

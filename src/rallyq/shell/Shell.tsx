@@ -6,12 +6,13 @@ import {accountLink,useHome} from '../useHome';
 import {scopedCSS} from '../PrototypeScreen';
 import raw from './v12.css?raw';
 import arenaRaw from './arena-v2.css?raw';
+import resultsRaw from './results-2010.css?raw';
 import { padCSS as padRaw } from './pad';
 import {Q_PATH,Watermark} from './Watermark';
 
 /** RallyQ v1.2 shell: the final prototype's styles (docs/final-prototype/*.dc.html) around real screens.
  * Inside a shell, write markup with the prototype's classes: card, list, tbl, btn, st ok, tabs, fld, inp, opt, cglass… */
-const CSS=scopedCSS(raw+'\n'+(arenaRaw+'\n'+padRaw).replaceAll('url(./','url(%BASE%rallyq/')).replaceAll('%BASE%',import.meta.env.BASE_URL);
+const CSS=scopedCSS(raw+'\n'+(arenaRaw+'\n'+padRaw+'\n'+resultsRaw).replaceAll('url(./','url(%BASE%rallyq/')).replaceAll('%BASE%',import.meta.env.BASE_URL);
 const Q=Q_PATH;
 export function QMark({ink='#F1F4EA',accent='#D9F24A',className,size}:{ink?:string;accent?:string;className?:string;size?:number}){
  return <svg className={className} width={size} height={size} viewBox="0 0 100 100" aria-hidden="true"><path d={Q} fill="none" stroke={ink} strokeWidth="10" strokeLinecap="butt"/><line x1="28" y1="50" x2="72" y2="50" stroke={accent} strokeWidth="3"/><circle cx="83" cy="83" r="11" fill={accent}/></svg>;
