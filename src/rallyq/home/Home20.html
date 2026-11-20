@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>RallyQ Home</title></head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+.rq .hero{position:relative;z-index:30;min-height:min(820px,100vh);min-height:min(820px,100svh);display:flex;flex-direction:column;isolation:isolate;overflow:hidden;color:#F1F4EA;background:#06140D}
+.slides{position:absolute;inset:0;z-index:-3}
+.slides div{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;opacity:0;transition:opacity .45s ease}
+.slides div.on{opacity:1}
+.slides .s0{background-image:url(/_blob/p-hero-m);background-position:50% 18%}
+.slides .s1{background-image:url(/_blob/p-champ-m);background-position:50% 30%}
+.slides .s2{background-image:url(/_blob/p-comp-m);background-position:50% 15%}
+@media(min-width:761px){.slides .s0{background-image:url(/_blob/p-hero-d);background-position:70% 30%}.slides .s1{background-image:url(/_blob/p-champ-d);background-position:70% 30%}.slides .s2{background-image:url(/_blob/p-tracker-d);background-position:75% 20%}}
+.over{position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(6,20,13,.96) 0%,rgba(6,20,13,.8) 34%,rgba(6,20,13,.12) 62%,rgba(6,20,13,.35) 100%)}
+@media(min-width:761px){.over{background:linear-gradient(90deg,rgba(6,20,13,.9) 0%,rgba(6,20,13,.62) 34%,rgba(6,20,13,0) 68%),linear-gradient(0deg,rgba(6,20,13,.75) 0%,transparent 30%)}}
+/* Day mode (final prototype): the hero photo melts into the green page instead of ending on a dark edge.
+   The hero goes see-through, its photo and court-green shade fade out at the bottom, so the page's own day background carries on below. */
+.rq.day .hero{background:transparent}
+.rq.day .slides,.rq.day .over{-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 55%,transparent 100%)}
+.rq.day .over{background:linear-gradient(0deg,rgba(36,95,64,.9) 0%,rgba(36,95,64,.72) 34%,rgba(43,110,75,.12) 62%,rgba(24,68,45,.4) 100%)}
+@media(min-width:761px){.rq.day .over{background:linear-gradient(90deg,rgba(43,110,75,.93) 0%,rgba(43,110,75,.7) 30%,rgba(43,110,75,.12) 70%),linear-gradient(180deg,rgba(24,68,45,.45),transparent 18%)}}
+.rq.day .hill .tag{background:rgba(24,68,45,.72)}
+.hnav a{color:#DDE7DC!important}.hnav a:hover,.hnav a.on{color:#D9F24A!important}
+.hnav a.on{box-shadow:0 2px 0 #D9F24A}
+.mpanel a.on{color:#D9F24A}
+.hbody{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding-block:40px 64px;width:100%;box-sizing:border-box}
+.hh{font-size:clamp(52px,9vw,116px);margin:14px 0 16px}
+.hh .l2{color:#D9F24A;display:block}
+.hh .l1{display:block}
+.lede{max-width:520px;font-size:18px;color:#E3ECE2;margin:0 0 26px}
+.hbtn{min-height:52px;font-size:16px;padding:0 26px;max-width:100%;text-align:center}
+.hill{position:absolute;right:max(16px,3vw);bottom:16px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:2}
+.hill .tag{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(6,20,13,.72);color:#F1F4EA}
+.segs{display:flex;gap:2px}
+.segs button{width:44px;height:44px;display:grid;place-items:center;border:0;background:none;cursor:pointer;padding:0}
+.segs button i{display:block;width:26px;height:4px;border-radius:2px;background:rgba(241,244,234,.4)}
+.segs button.on i{background:#D9F24A}
+.hm-sec{scroll-margin-top:76px}
+.hm-intro{max-width:620px;color:var(--mut);margin:12px 0 0;font-size:17px}
+.hm-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:16px}
+.hm-card{padding:22px;display:flex;flex-direction:column;gap:10px}
+.hm-card b{font-size:20px}
+.hm-card p{margin:0;color:var(--mut);font-size:15px}
+.hm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}
+.hm-stat{padding:20px}
+.hm-stat .n{font-size:clamp(44px,7vw,64px);color:#D9F24A;display:block}
+.hm-stat span{color:var(--mut);font-size:14px}
+.hm-ph{position:relative;overflow:hidden;border-radius:18px;min-height:240px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;color:#F1F4EA;background-size:cover;background-position:center;isolation:isolate}
+.hm-ph::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.05) 30%,rgba(6,20,13,.88))}
+.hm-ph .tag{position:absolute;top:12px;right:12px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:rgba(6,20,13,.72)}
+.hm-ph.a{background-image:url(/_blob/p-tv)}.hm-ph.b{background-image:url(/_blob/p-result)}.hm-ph.c{background-image:url(/_blob/p-club)}
+.hm-note{font-size:13px;color:var(--mut)}
+@media(max-width:760px){.hbody{padding-bottom:84px}}
+@media (prefers-reduced-motion:reduce){.rq *{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ===== Home 20/10 (final prototype), real data only; sections hide when there is nothing to show ===== */
+.hbody{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,480px);gap:40px;align-items:end;justify-content:initial!important;padding-block:40px 120px}
+@media(max-width:900px){.hbody{grid-template-columns:minmax(0,1fr)!important;padding-block:28px 150px}}
+.hchip{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:6px 14px;border-radius:16px;font-size:13px;font-weight:600;line-height:1.3;max-width:100%;background:rgba(19,48,34,.62);box-shadow:inset 0 0 0 1px rgba(241,244,234,.14);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#F1F4EA}
+.hchip .pdot{width:8px;height:8px;flex:none;border-radius:50%;background:var(--ball,#D9F24A)!important;box-shadow:none!important;animation:rqbreathe 1.8s ease-in-out infinite}
+.hchip.next .pdot{background:#F1F4EA!important;animation:none}
+@keyframes rqbreathe{50%{opacity:.3}}
+.mc{display:flex;flex-direction:column;gap:12px;padding:18px 18px 14px;border-radius:22px;text-decoration:none;color:#F1F4EA;background:rgba(6,20,13,.78);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:inset 0 0 0 1px rgba(241,244,234,.16),0 40px 80px -30px rgba(0,0,0,.7);min-width:0}
+.mc .mch{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#BFD0C4;min-width:0}
+.mc .mch i{width:9px;height:9px;flex:none;border-radius:50%;background:var(--ball,#D9F24A);animation:rqbreathe 1.8s ease-in-out infinite}
+.mc .mch span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mc .mrow{position:relative;display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:rgba(19,48,34,.62)}
+.mc .mrow::before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:4px;border-radius:0 4px 4px 0;background:var(--sea)}
+.mc .mrow.b::before{background:var(--tide)}
+.mc .mrow.srv{box-shadow:inset 0 0 0 2px var(--ball)}
+.mc .mrow .dot{width:10px;height:10px;border-radius:50%;background:transparent}
+.mc .mrow.srv .dot{background:var(--ball)}
+.mc .mrow b{font-size:19px;line-height:1.15;overflow-wrap:anywhere}
+.mc .mrow .p{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:58px;line-height:.9;font-variant-numeric:tabular-nums;color:#F1F4EA}
+.mc .mcq{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:14px;background:rgba(241,244,234,.05);box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)}
+.mc .mcq .lq{width:64px;flex:none}
+.mc .mcq b{display:block;font-size:14px}.mc .mcq small{display:block;color:#9FB4A6;font-size:12px}
+.mc .mcq .qgo{margin-left:auto;font-size:12px;font-weight:800;white-space:nowrap}
+.mc .mft{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:#9FB4A6}.mc .mft b{color:#F1F4EA}
+.ticker{position:absolute;left:0;right:0;bottom:0;z-index:5;border-top:1px solid rgba(241,244,234,.1);background:rgba(6,20,13,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden;padding-block:12px}
+.rq.day .ticker{background:rgba(6,24,15,.45)}
+.ticker .tr{display:flex;gap:44px;white-space:nowrap;width:max-content;animation:rqtick 70s linear infinite;padding-left:24px;color:#9FB4A6;font-size:14px}
+.ticker .tr b{color:#F1F4EA}
+@keyframes rqtick{to{transform:translateX(-50%)}}
+.hero .hill{bottom:56px}
+.sech{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.toc{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.toc>div{padding:16px;border-radius:16px;background:var(--c1);box-shadow:var(--edge,inset 0 0 0 1px rgba(241,244,234,.12));display:flex;flex-direction:column;gap:4px;min-width:0}
+.toc .t{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.toc .c{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:6px}
+.toc .mm{font-weight:700;font-size:14px;overflow-wrap:anywhere}
+.toc .s{font-size:12px;color:var(--mut)}
+.toc .now{box-shadow:inset 0 0 0 2px var(--ball)}
+.toc .now .c{color:var(--ink)}
+.toc .now .c::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ball)}
+.toc .done{opacity:.62}
+.trio{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+.ev{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:300px;border-radius:22px;padding:18px;color:#F1F4EA!important;text-decoration:none;background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(241,244,234,.14)}
+.ev::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,13,.25) 10%,rgba(6,20,13,.94))}
+.ev .disp{font-size:30px;margin:8px 0 6px}
+.ev p{font-size:14px;color:#BFD0C4;margin:0}
+.ev .tile{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:10px;background:#F1F4EA;color:#0B2418;font-size:11px;font-weight:800;overflow:hidden}
+.ev .tile img{width:100%;height:100%;object-fit:cover}
+.ev.p0{background-image:url(/_blob/p-club)}.ev.p1{background-image:url(/_blob/p-floods-m)}.ev.p2{background-image:url(/_blob/p-aerial-m)}
+.lcg{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.lc{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:18px;background:var(--c1);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);text-decoration:none;color:var(--ink)!important}
+.lc .r{position:relative;display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px 8px 14px;border-radius:12px;background:var(--c2)}
+.lc .r::before{content:"";position:absolute;left:0;top:18%;bottom:18%;width:3px;border-radius:0 3px 3px 0;background:var(--sea)}
+.lc .r.b::before{background:var(--tide)}
+.lc .r.srv{box-shadow:inset 0 0 0 2px var(--ball)}
+.lc .r i{width:8px;height:8px;border-radius:50%}.lc .r.srv i{background:var(--ball)}
+.lc .r span{font-weight:700;font-size:15px;overflow-wrap:anywhere}
+.lc .r b{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.lc .r.lose span,.lc .r.lose b{color:var(--mut)}
+.cover20{position:relative;isolation:isolate;overflow:hidden;border-radius:26px;min-height:min(620px,80vh);display:flex;align-items:flex-end;padding:clamp(20px,4vw,44px);background:url(/_blob/p-tracker-m) center 25%/cover;box-shadow:inset 0 0 0 1px rgba(241,244,234,.14)}
+@media(min-width:761px){.cover20{background-image:url(/_blob/p-tracker-d)}}
+.cover20::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,20,13,.92) 0%,rgba(6,20,13,.55) 55%,rgba(6,20,13,.1) 100%),linear-gradient(0deg,rgba(6,20,13,.9),transparent 55%)}
+.cover20 .in{display:flex;flex-direction:column;gap:14px;max-width:620px;color:#F1F4EA}
+.cover20 .stat{display:flex;gap:10px;flex-wrap:wrap}
+.cover20 .stat div{padding:12px 14px;border-radius:14px;background:rgba(6,20,13,.72);box-shadow:inset 0 0 0 1px rgba(241,244,234,.18);min-width:110px}
+.cover20 .stat b{display:block;font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:34px;line-height:1}
+.cover20 .stat small{font-size:12px;color:#BFD0C4}
+.cover20 .tag{align-self:flex-start;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:6px 10px;border-radius:999px;background:rgba(6,20,13,.7)}
+.proof{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;align-items:center}
+@media(max-width:860px){.proof{grid-template-columns:minmax(0,1fr)}}
+.proof .nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.proof .nums div{padding:16px;border-radius:16px;background:var(--c1);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);min-width:0}
+.proof .nums b{display:block;font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:clamp(34px,5vw,56px);line-height:1;font-variant-numeric:tabular-nums}
+.proof .nums small{color:var(--mut);font-size:12px}
+.club3 a{padding:22px;text-decoration:none;color:var(--ink)!important;display:flex;flex-direction:column;gap:8px}
+.club3 .disp{font-size:26px;margin:6px 0 2px}
+.club3 svg{width:26px;height:26px;color:var(--ball)}
+.finale{margin-top:72px;padding:clamp(24px,5vw,56px);border-radius:28px;background:radial-gradient(80% 120% at 0% 0%,rgba(217,242,74,.12),transparent 60%),var(--c1);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);display:flex;flex-direction:column;gap:18px}
+.finale .disp{font-size:clamp(44px,8vw,110px)}
+@media (prefers-reduced-motion:reduce){.ticker .tr{animation:none}}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
+<div class="{{rqCls}}">
+
+<section class="hero" aria-label="RallyQ">
+<div class="slides" aria-hidden="true"><div class="{{c0}}"></div><div class="{{c1}}"></div><div class="{{c2}}"></div></div>
+<div class="over" aria-hidden="true"></div>
+
+<header class="hdr" style="position:relative;z-index:20"><div class="wrap">
+<a class="brand" href="Main.dc.html"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#F1F4EA;--a:#D9F24A"><use href="#fq"></use></svg><span class="word" style="color:#F1F4EA">RallyQ</span></a>
+<nav class="nav hnav" aria-label="Main"><a class="{{navWhat}}" data-nav="what" href="#what">On court today</a><a class="{{navComing}}" data-nav="coming" href="#coming">On the calendar</a><a class="{{navFirst}}" data-nav="first" href="#first">Player Studio</a><a class="{{navClubs}}" data-nav="clubs" href="#clubs">For clubs</a></nav>
+<div class="right"><a class="tlink" href="Overview.dc.html" style="color:#F1F4EA!important">Sign in</a><button class="mode" aria-label="{{modeLabel}}" onClick="{{flipMode}}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{modeIcon}}"></path></svg></span></button><button class="menu" aria-label="Menu" onClick="{{toggleMenu}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></div>
+</div></header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu" style="position:relative;z-index:20"><a class="{{navWhat}}" href="#what">On court today</a><a class="{{navComing}}" href="#coming">On the calendar</a><a class="{{navFirst}}" href="#first">Player Studio</a><a class="{{navClubs}}" href="#clubs">For clubs</a><a href="Live.dc.html">Live scores</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">Sign in</a></nav></sc-if>
+
+<div class="wrap hbody">
+<div style="min-width:0">
+<sc-if value="{{chip}}" hint-placeholder-val="{{ false }}"><span class="{{chipCls}}"><span class="pdot" aria-hidden="true"></span>{{chip}}</span></sc-if>
+<h1 class="disp hh"><span class="l1">Your court.</span> <span class="l2">The main event.</span></h1>
+<p class="lede">Enter club tournaments, follow every point live, and keep every result that matters. Built for Hyderabad’s pickleball clubs.</p>
+<div class="cta"><a class="btn hbtn" href="HeroCta.dc.html">{{heroCta}} <span aria-hidden="true">→</span></a></div>
+</div>
+{{matchCentre}}
+</div>
+<div class="hill"><div class="segs" role="group" aria-label="Hero photos"><sc-for list="{{segs}}" as="g" hint-placeholder-count="3"><button class="{{g.cls}}" aria-label="{{g.label}}" onClick="{{g.pick}}"><i></i></button></sc-for></div><span class="tag">Illustration</span></div>
+{{ticker}}
+</section>
+
+<sc-if value="{{hasToday}}" hint-placeholder-val="{{ false }}"><section class="sec hm-sec" id="what" data-section="what"><div class="wrap">
+<div class="sech"><div><span class="cap">{{todayCap}}</span><h2 class="disp h2" style="margin-top:10px">On court today.</h2></div><a class="btn ghost sm" href="Live.dc.html">All courts</a></div>
+<div class="toc" role="list"><sc-for list="{{today}}" as="r" hint-placeholder-count="4"><div role="listitem" class="{{r.cls}}"><span class="t">{{r.t}}</span><span class="c">{{r.c}}</span><span class="mm">{{r.m}}</span><span class="s">{{r.s}}</span></div></sc-for></div>
+</div></section></sc-if>
+
+<section class="sec alt hm-sec" id="coming" data-section="coming"><div class="wrap">
+<div class="sech"><div><span class="cap">This month in Hyderabad</span><h2 class="disp h2" style="margin-top:10px">On the calendar.</h2></div><a class="btn ghost sm" href="Event.dc.html">All events</a></div>
+<div class="trio"><sc-for list="{{events}}" as="e" hint-placeholder-count="3"><a class="{{e.cls}}" href="{{e.href}}"><div class="between"><span class="{{e.chipCls}}">{{e.tag}}</span><span class="tile"><sc-if value="{{e.logoUrl}}" hint-placeholder-val="{{ false }}"><img src="{{e.logoUrl}}" alt=""></sc-if><sc-if value="{{e.noLogo}}" hint-placeholder-val="{{ true }}">{{e.mark}}</sc-if></span></div><div><span class="cap" style="color:#BFD0C4">{{e.date}} · {{e.area}}</span><div class="disp">{{e.name}}</div><p>Hosted by {{e.club}} · {{e.detail}}</p></div></a></sc-for></div>
+</div></section>
+
+<sc-if value="{{hasCourts}}" hint-placeholder-val="{{ false }}"><section class="sec hm-sec"><div class="wrap">
+<div class="sech"><div><span class="cap">Live now</span><h2 class="disp h2" style="margin-top:10px">Every point matters.</h2></div><a class="btn ghost sm" href="Live.dc.html">Open the arena</a></div>
+<div class="lcg"><sc-for list="{{courts}}" as="c" hint-placeholder-count="2"><a class="lc" href="Live.dc.html"><div class="between"><span class="cap">{{c.court}}</span><span class="cap">{{c.stage}}</span></div><div class="{{c.ra}}"><i aria-hidden="true"></i><span>{{c.a}}</span><b>{{c.sa}}</b></div><div class="{{c.rb}}"><i aria-hidden="true"></i><span>{{c.b}}</span><b>{{c.sb}}</b></div></a></sc-for></div>
+</div></section></sc-if>
+
+<section class="sec hm-sec" id="first" data-section="first"><div class="wrap">
+<div class="cover20"><div class="in">
+<span class="tag">Sample player</span>
+<span class="cap" style="color:#BFD0C4">Player Studio</span>
+<h2 class="disp h2" style="color:#F1F4EA">You played it.<br><span class="acc">Now you own the story.</span></h2>
+<p style="color:#BFD0C4;margin:0;max-width:460px">Every referee-scored match adds another chapter: the comeback, the run, the point you stole. Drawn from your real rallies, never guessed.</p>
+<div class="stat"><div><b>12–10</b><small>won from 4–9 down</small></div><div><b>7</b><small>points in a row</small></div><div><b>24–14</b><small>season</small></div></div>
+<div><a class="btn" href="Studio.dc.html">Open my Player Studio</a></div>
+</div></div>
+</div></section>
+
+<section class="sec hm-sec"><div class="wrap"><div class="proof">
+<div style="display:flex;flex-direction:column;gap:14px"><span class="cap">Built on a real match day</span><h2 class="disp h2">Scored live,<br>point by point.</h2><p class="mut" style="margin:0">{{pilotName}}: every point scored on a referee’s phone. These are the real totals.</p></div>
+<div style="display:flex;flex-direction:column;gap:14px"><div class="nums"><sc-for list="{{pilot3}}" as="s" hint-placeholder-count="3"><div><b>{{s.n}}</b><small>{{s.l}}</small></div></sc-for></div><a class="tlink" href="{{pilotHref}}">See the event →</a></div>
+</div></div></section>
+
+<section class="sec alt hm-sec" id="clubs" data-section="clubs"><div class="wrap">
+<div class="sech"><div><span class="cap">For clubs</span><h2 class="disp h2" style="margin-top:10px">Give players a reason<br>to choose <span class="acc">your court.</span></h2></div></div>
+<div class="trio club3">
+<a class="card" href="Overview.dc.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg><div class="disp">Run match day from one desk</div><p class="mut" style="font-size:14px;margin:0">Courts drawn as courts. The one that needs you lights up. You confirm every move.</p></a>
+<a class="card" href="Overview.dc.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8"></path></svg><div class="disp">Your club, on TV</div><p class="mut" style="font-size:14px;margin:0">The venue screen shows every court, with your logo first.</p></a>
+<a class="card" href="Overview.dc.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><div class="disp">Score every point from your phone</div><p class="mut" style="font-size:14px;margin:0">Big taps, clear Undo, works offline. Nothing celebrates before the referee confirms.</p></a>
+</div>
+<div class="finale"><span class="cap">RallyQ · Hyderabad first</span><div class="disp">Your court.<br><span class="acc">The main event.</span></div><div class="row" style="flex-wrap:wrap;gap:10px"><a class="btn" href="HeroCta.dc.html">{{heroCta}}</a><a class="btn ghost" href="Overview.dc.html">Bring RallyQ to your club</a></div></div>
+</div></section>
+
+<footer class="foot"><div class="wrap between" style="flex-wrap:wrap;gap:12px">
+<div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true" style="--c:#9FB4A6;--a:#D9F24A;width:22px;height:22px"><use href="#fq"></use></svg><span class="word" style="font-size:18px">RallyQ</span><span style="margin-left:8px">Your court. The main event.</span></div>
+<div class="row" style="gap:18px;flex-wrap:wrap"><a href="Event.dc.html">Events</a><a href="Live.dc.html">Live scores</a><a href="Studio.dc.html">Player Studio</a><span>Hyderabad · rallyq.in</span></div>
+</div></footer>
+</div>
+</x-dc>
+</body>
+</html>

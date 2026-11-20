@@ -65,8 +65,13 @@ export const SAMPLE:Venue[]=[
   {court:'Court 1',stage:'Mixed QF',a:'Kavya / Arjun',b:'Nisha / Rahul',sa:3,sb:1,game:1,games:[],status:'Live',run:2,next:'QF 3 · Priya / Om vs Zoya / Sam',pts:'ABAA'}]}
 ].map(venue=>({...venue,courts:venue.courts.map(c=>({...c,rallies:ralliesOf({points:c.pts,a:c.sa,b:c.sb},true)}))}));
 function longestRun(pts:string){let best=0,cur=0,prev='';for(const p of pts){cur=p===prev?cur+1:1;prev=p;best=Math.max(best,cur);}return best;}
-export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?:number})=>void){
- const venue=venues[v]??venues[0];const courts=venue?.courts??[];const ci=Math.min(c,Math.max(0,courts.length-1));
+/** One line under the call: what the last rally did, in words. A side-out is a rally, never a point. */
+export function lastRallyLine(r:readonly Rally[],a:string,b:string){const x=r.at(-1);if(!x)return '';const who=(t:'A'|'B')=>(t==='A'?a:b).split(' / ').join(' & ');
+ return x.outcome==='point'?`Point ${who(x.winner)}. A long stroke on the Q.`:x.outcome==='side_out'?`Side-out to ${who(x.winner)}. A short stroke on the Q.`:`Second server for ${who(x.serverTeam??x.winner)}. A short stroke on the Q.`;}
+/** One partner per line on the Q board tiles, so long names never break mid-word on a phone. */
+const names=(side:string)=><>{side.split(' / ').map((n,i)=><span key={i} className="nmp">{n}</span>)}</>;
+export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?:number})=>void,find=''){
+ const venue=venues[v]??venues[0];const q=find.trim().toLowerCase();const all=venue?.courts??[];const courts=q?all.filter(x=>(x.a+' '+x.b).toLowerCase().includes(q)):all;const ci=Math.min(c,Math.max(0,courts.length-1));
  // Sample boards say Sample, never Live (20/10 build notes).
  const sample=venues===SAMPLE;
  const mk=(x:Court)=>({...x,win:x.status==='Live'?x.win??NO_WIN_BAR:NO_WIN_BAR,chip:x.status==='Live'&&!sample?'chip live':'chip',label:sample&&x.status==='Live'?'Sample':x.status,gameLabel:gameLabel(x.game,x.bestOf,x.pointsTo)});
@@ -77,14 +82,21 @@ export function liveValues(venues:Venue[],v:number,c:number,set:(p:{v?:number;c?
  const first=(n:string)=>n.split(' / ')[0];
  return {venue:venue?.name??'',clubName:venue?.club??'',clubMark:venue?.mark??'',
   venues:venues.map((x,i)=>({name:x.name,cls:i===v?'tab on':'tab',pick:()=>set({v:i,c:0})})),
+  find,findNone:!!q&&!courts.length,
   courts:courts.map((x,i)=>({...mk(x),ring:i===ci?'box-shadow:inset 0 0 0 2px #D9F24A':'box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)',pick:()=>set({c:i})})),
   sel:{...s,pts:[...s.pts.slice(-6)].map(ch=>({who:ch==='A'?first(s.a):first(s.b),cls:ch==='A'?'chip rq-team-a':'chip rq-team-b'})),run:s.run||longestRun(s.pts),
    q:r.length>0?<LivingQ rallies={r} confirmed={s.status==='Final'}/>:undefined,dna:r.length>0?<Dna rallies={r}/>:undefined,rallyCount:r.length,
-   servingA:serving?.team==='A'?'on':'',servingB:serving?.team==='B'?'on':'',serverNo:serving?.call.split('-').length===3?serving.no:'',call:serving?.call??'',tagA:tag('A'),tagB:tag('B')}};
+   servingA:serving?.team==='A'?'on':'',servingB:serving?.team==='B'?'on':'',serverNo:serving?.call.split('-').length===3?serving.no:'',call:serving?.call??'',tagA:tag('A'),tagB:tag('B'),
+   // 20/10 Q board: two score tiles (A left, B right); the serving tile gets a lime ring and says who serves.
+   nmA:names(s.a),nmB:names(s.b),
+   tileA:'qt'+(serving?.team==='A'?' srv':''),tileB:'qt'+(serving?.team==='B'?' srv':''),
+   srvA:serving?.team==='A'?(serving.call.split('-').length===3?'Server '+serving.no:'Serving'):'',srvB:serving?.team==='B'?(serving.call.split('-').length===3?'Server '+serving.no:'Serving'):'',
+   callLine:lastRallyLine(r,s.a,s.b),hasPts:s.pts.length>0,qLabel:`The Q keeps score: ${r.length} ${r.length===1?'rally':'rallies'} so far. ${s.a} ${s.sa}, ${s.b} ${s.sb}.`}};
 }
 /** Live scores in the exact prototype layout, fed by the public scores of live events in the launch city. */
 export function RallyLive({go,slug}:{go:Go;slug?:string}){
  const[chosen,setPick]=useState<{v:number|null;c:number}>({v:null,c:0});
+ const[find,setFind]=useState('');
  const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents()).filter(e=>inLaunchCity(e.city)&&e.status==='live'&&e.results):[]},[]);
  const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};// A link to one event never shows another event's scores (QA-11).
  const ev=slug&&want<0?undefined:events[pick.v];const scores=usePublicScores(ev?.slug??'');
@@ -104,6 +116,6 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
  const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=!isSample&&connectionLost(scores.failures,scores.updatedAt,now,finished);
- const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p}))),today,isSample,topChip:isSample||lost||finished?'chip':'chip live',updated:updatedLabel(scores.updatedAt,now,lost||!!scores.error,isSample),updStyle:lost||scores.error?'color:var(--coral)':'',topLabel:liveChipLabel({lost,sample:isSample,directoryError:!!directory.error,today,finished})};
+ const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p})),find),setFind:(e:{target:{value:string}})=>{setFind(e.target.value);setPick(s=>({...s,c:0}));},today,isSample,topChip:isSample||lost||finished?'chip':'chip live',updated:updatedLabel(scores.updatedAt,now,lost||!!scores.error,isSample),updStyle:lost||scores.error?'color:var(--coral)':'',topLabel:liveChipLabel({lost,sample:isSample,directoryError:!!directory.error,today,finished})};
  return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }

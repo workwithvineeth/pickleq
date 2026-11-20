@@ -31,6 +31,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
 <div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:10px">
+<label class="findp"><span class="sr-only">Find a player</span><input type="search" placeholder="Find a player" aria-label="Find a player" value="{{find}}" onChange="{{setFind}}"></label><sc-if value="{{findNone}}" hint-placeholder-val="{{ false }}"><p class="mut" style="margin:0;font-size:14px">No player on court matches “{{find}}”.</p></sc-if>
 <div class="cap">Courts · tap to follow</div>
 <sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
 <button onClick="{{c.pick}}" class="card" style="{{c.ring}};text-align:left;border:0;cursor:pointer;font:inherit;color:inherit;padding:16px;display:flex;flex-direction:column;gap:10px">
@@ -43,18 +44,22 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
 <div class="photo ph-live" style="border-radius:24px;padding:28px;min-height:420px;display:flex;flex-direction:column;justify-content:space-between;gap:20px">
 <div class="between"><div class="row"><span class="{{sel.chip}}">{{sel.label}}</span><span class="cap" style="color:#DDE7DC">{{sel.court}} · {{venue}} · {{sel.stage}}</span></div><span class="cap" style="color:#DDE7DC">Game {{sel.game}} of 3 · to 11</span></div>
-<div class="sbg arena-board"><div class="rows">
-<div class="tr2" data-t="0"><span class="srv {{sel.servingA}}" aria-hidden="true"></span><div class="nm"><b class="disp" style="font-size:clamp(26px,3.2vw,44px)">{{sel.a}}</b><span class="tagl"><i class="sno {{sel.servingA}}">{{sel.serverNo}}</i><span class="tagt">{{sel.tagA}}</span></span></div><div class="n pts">{{sel.sa}}</div></div>
-<div class="tr2" data-t="1"><span class="srv {{sel.servingB}}" aria-hidden="true"></span><div class="nm"><b class="disp" style="font-size:clamp(26px,3.2vw,44px)">{{sel.b}}</b><span class="tagl"><i class="sno {{sel.servingB}}">{{sel.serverNo}}</i><span class="tagt">{{sel.tagB}}</span></span></div><div class="n pts">{{sel.sb}}</div></div>
-</div><sc-if value="{{sel.q}}" hint-placeholder-val="{{ false }}"><div class="lq" aria-label="The Q keeps score: one stroke per rally">{{sel.q}}<div class="lqn"><b>{{sel.rallyCount}}</b><span>rallies</span></div></div></sc-if></div>
-<sc-if value="{{sel.dna}}" hint-placeholder-val="{{ false }}"><div class="arena-dna"><div class="between"><span class="cap" style="color:#DDE7DC">Match DNA · one mark per rally</span><span class="cap" style="color:#DDE7DC">{{sel.call}}</span></div>{{sel.dna}}</div></sc-if>
+<div class="qboard20">
+<sc-if value="{{sel.q}}" hint-placeholder-val="{{ false }}"><div class="qz" role="img" aria-label="{{sel.qLabel}}"><div class="lq">{{sel.q}}<div class="lqn"><b>{{sel.rallyCount}}</b><span>rallies</span></div></div></div></sc-if>
+<div class="qtiles">
+<div class="{{sel.tileA}}" data-t="0"><span class="srv" aria-hidden="true"></span><b class="nm" aria-label="{{sel.a}}">{{sel.nmA}}</b><span class="n pts">{{sel.sa}}</span><span class="qs"><span class="tagt">{{sel.tagA}}</span><span class="sv">{{sel.srvA}}</span></span></div>
+<div class="{{sel.tileB}}" data-t="1"><span class="srv" aria-hidden="true"></span><b class="nm" aria-label="{{sel.b}}">{{sel.nmB}}</b><span class="n pts">{{sel.sb}}</span><span class="qs"><span class="tagt">{{sel.tagB}}</span><span class="sv">{{sel.srvB}}</span></span></div>
+</div>
+<sc-if value="{{sel.call}}" hint-placeholder-val="{{ false }}"><p class="qcall"><b class="n">{{sel.call}}</b> <span>{{sel.callLine}}</span></p></sc-if>
+<sc-if value="{{sel.q}}" hint-placeholder-val="{{ false }}"><p class="qhow"><b>How to read the Q:</b> each stroke is one rally. Long = point, short = side-out. Sea strokes point out for {{sel.a}}, Tide strokes point in for {{sel.b}}. The numbers are the score.</p></sc-if>
+</div>
 </div>
 <div class="between"><div class="row" style="gap:8px"><span class="cap" style="color:#DDE7DC">Games</span><sc-for list="{{sel.games}}" as="g" hint-placeholder-count="2"><span class="chip">{{g}}</span></sc-for></div><span class="mut" style="font-size:13px">Updated 4 s ago · scored by court referee</span></div>
 </div>
 
 <div class="grid g3">
-<div class="card" style="padding:18px"><div class="cap">Last 6 points</div><div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap"><sc-for list="{{sel.pts}}" as="p" hint-placeholder-count="6"><span class="{{p.cls}}">{{p.who}}</span></sc-for></div></div>
-<div class="card" style="padding:18px"><div class="cap">Longest run</div><div class="n acc" style="font-size:40px;margin-top:8px">{{sel.run}}</div><div class="mut" style="font-size:13px">points in a row</div></div>
+<sc-if value="{{sel.hasPts}}" hint-placeholder-val="{{ true }}"><div class="card" style="padding:18px"><div class="cap">Last 6 points</div><div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap"><sc-for list="{{sel.pts}}" as="p" hint-placeholder-count="6"><span class="{{p.cls}}">{{p.who}}</span></sc-for></div></div>
+<div class="card" style="padding:18px"><div class="cap">Longest run</div><div class="n acc" style="font-size:40px;margin-top:8px">{{sel.run}}</div><div class="mut" style="font-size:13px">points in a row</div></div></sc-if>
 <div class="card" style="padding:18px;display:flex;gap:14px;align-items:center"><div style="width:52px;height:52px;border-radius:14px;background:#D9F24A;color:#0B2418;display:grid;place-items:center;font-weight:800;flex:none">{{clubMark}}</div><div style="min-width:0"><div class="cap">Hosted by</div><div style="font-weight:700">{{clubName}}</div><a href="Event.dc.html" style="font-size:13px">Event page →</a></div></div>
 </div>
 

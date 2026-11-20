@@ -131,3 +131,33 @@
 .rq .mini span:has(> .rqm-srv.on){border-radius:10px;box-shadow:0 0 0 2px var(--ball);outline:4px solid transparent}
 /* Player Studio cover: a player photo from the site (sample) until the player adds their own */
 .rq .ph-studio{background-color:#0B2418;background-image:linear-gradient(180deg,rgba(6,20,13,.15) 0%,rgba(6,20,13,.35) 45%,rgba(6,20,13,.9) 100%),url(./photos/mobile/player-tracker.jpg)!important;background-size:cover;background-position:center 25%}
+/* ===== Live 20/10: the Q board (Q big above two score tiles), find a player ===== */
+.rq .qboard20{display:flex;flex-direction:column;gap:14px}
+.rq .qboard20 .qz{display:flex;justify-content:center}
+.rq .qboard20 .qz .lq{position:relative;width:min(220px,56vw)}
+.rq .qboard20 .qz .lqn b{font-size:clamp(34px,5vw,48px)}
+.rq .qtiles{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.rq .qt{--tc:var(--sea);position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:6px;padding:14px 14px 12px 18px;border-radius:18px;background:rgba(6,20,13,.62);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur);min-width:0;box-shadow:inset 0 0 0 1px rgba(241,244,234,.12)}
+.rq .qt[data-t="1"]{--tc:var(--tide);text-align:right;align-items:flex-end;padding:14px 18px 12px 14px}
+.rq .qt::before{content:"";position:absolute;left:0;top:14%;bottom:14%;width:4px;border-radius:0 4px 4px 0;background:var(--tc)}
+.rq .qt[data-t="1"]::before{left:auto;right:0;border-radius:4px 0 0 4px}
+.rq .qt.srv{box-shadow:inset 0 0 0 2px var(--ball)}
+.rq .qt .srv{position:absolute;top:12px;width:12px;height:12px;border-radius:50%;background:var(--ball);opacity:0}
+.rq .qt[data-t="0"] .srv{right:12px}.rq .qt[data-t="1"] .srv{left:12px}
+.rq .qt.srv .srv{opacity:1;animation:rqpulse2 420ms var(--rq-ease,cubic-bezier(.23,1,.32,1))}
+.rq .qt .nm{font-size:clamp(14px,2.2vw,22px);line-height:1.2;overflow-wrap:anywhere;hyphens:auto;padding-top:14px;flex:1;min-width:0;max-width:100%}.rq .qt .nmp{display:block}
+.rq .qt[data-t="1"] .nm{padding-inline:14px 0}
+.rq .qt .pts{font-size:clamp(72px,12vw,140px);line-height:.88;color:#F1F4EA}
+.rq .qt .qs{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700;color:var(--soft);min-height:18px}
+.rq .qt .qs .sv:not(:empty){padding:1px 8px;border-radius:999px;background:var(--ink);color:#06140D}
+.rq .qcall{margin:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;color:var(--soft);font-size:14px}
+.rq .qcall b{font-size:30px;color:#F1F4EA;font-variant-numeric:tabular-nums}
+.rq .qhow{margin:0;font-size:13px;color:var(--soft);line-height:1.45}
+.rq .findp input{width:100%;min-height:48px;padding:0 16px;border-radius:999px;border:0;font:inherit;font-size:16px;color:var(--ink);background:var(--c1);box-shadow:inset 0 0 0 1px rgba(241,244,234,.2)}
+.rq .findp input::placeholder{color:var(--mut)}
+@media(max-width:760px){
+  .rq .ph-live{padding:16px!important;min-height:0!important}
+  .rq div:has(> .findp){order:2}
+}
+@media(max-width:360px){.rq .qt{padding:12px 10px 12px 14px}.rq .qt[data-t="1"]{padding:12px 14px 12px 10px}.rq .qt .nm{font-size:13px}}
+.rq .qt .nmp+.nmp{margin-top:6px}
