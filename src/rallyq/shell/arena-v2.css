@@ -161,3 +161,6 @@
 }
 @media(max-width:360px){.rq .qt{padding:12px 10px 12px 14px}.rq .qt[data-t="1"]{padding:12px 14px 12px 10px}.rq .qt .nm{font-size:13px}}
 .rq .qt .nmp+.nmp{margin-top:6px}
+/* Venue TV opened on a phone: one court per row, natural height, nothing clipped. */
+@media(max-width:760px){.rq div:has(> .chip.live){flex-wrap:wrap}.rq div[style*="repeat(2"]:has(> .mini){grid-template-columns:minmax(0,1fr)!important;flex:none!important}.rq .mini{min-height:0!important;height:auto!important;overflow:visible!important}.rq:has(.mini),.rq:has(.mini) > *{height:auto!important;max-height:none!important;overflow:visible!important}}
+.rq div[style*="width: 64px"][style*="height: 64px"],.rq div[style*="width:64px"][style*="height:64px"]{flex:none}

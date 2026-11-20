@@ -1,3 +1,5 @@
+import { LivingQ } from '../arena/LivingQ';
+import { ralliesOf } from '../arena/rallies';
 import { friendlyDate } from '../../club/dates';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Go } from '../../navigation';
@@ -210,6 +212,7 @@ function CourtCard({ court, now, next, nextUp, d, pmap, at, selected, link, onPi
         <span className="between" style={{ width: '100%' }}><b className="disp" style={{ fontSize: 26 }}>Court {court}</b>{now ? <span key="live" className="st live rqd-pill">Live</span> : <span key="free" className="st ok rqd-pill">Free</span>}</span>
         <span className="mut rqd-sum">{summary}</span>
         <span className="mut rqd-more" style={{ fontSize: 12 }}>{m ? [matchLabel(m, d), now ? `Game ${Math.max(1, now.games.length)}` : 'Booked next', formatRule(m.format)].join(' · ') : 'Ready for the next match'}</span>
+        {now && (() => { const r = ralliesOf(last, now.sideA.length > 1); return r.length > 0 && <span className="rqd-q" role="img" aria-label={`The Q: ${r.length} ${r.length === 1 ? 'rally' : 'rallies'} so far`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span aria-hidden="true" style={{ width: 36, height: 36, flex: 'none' }}><LivingQ rallies={r} /></span><span className="mut" style={{ fontSize: 12 }}>{r.length} {r.length === 1 ? 'rally' : 'rallies'}</span></span>; })()}
         {now && <>
           <span className="rqd-more" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: '4px 12px', alignItems: 'center', width: '100%', marginTop: 'auto' }}>
             <b className="ell" style={{ fontSize: 15 }}>{names(now.sideA, pmap)}</b><span className="n" style={{ fontSize: 46, color: 'var(--ball)' }}>{last?.a ?? 0}</span>
