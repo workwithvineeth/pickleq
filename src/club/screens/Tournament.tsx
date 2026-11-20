@@ -1,3 +1,4 @@
+import { matchesForPlayer } from './findPlayer';
 import { LiveCourts } from './LiveCourts';
 import { usePublicScores } from './usePublicScores';
 import { TournamentEntrySummary } from './MatchdayHeader';
@@ -839,6 +840,7 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
   const [div, setDiv] = useState<string | null>(null);
   const [view, setView] = useState<View>('pools');
   const [msg, setMsg] = useState<string | null>(null);
+  const [playerQuery, setPlayerQuery] = useState('');
   // The club's own logo, where it has uploaded one (the shell header shows its initials).
   const logo = useLoad(async () => {
     for (const src of await publicSourcesFor(publicSlug)) {
@@ -847,6 +849,9 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
     return null;
   }, [publicSlug]);
   const d = state.data;
+  const playerNames = new Map(d?.entries.map((entry) => [entry.id, entry.names.join(' / ')]));
+  const foundMatches = matchesForPlayer(d?.matches ?? [], playerQuery, (id) => playerNames.get(id) ?? '');
+  const searching = playerQuery.trim().length > 0;
   const division = d?.divisions.find((x) => x.id === div) ?? d?.divisions[0];
   const champion = useMemo(() => (d && division ? publicChampion(d, division.id) : null), [d, division]);
   const link = appLink(`#/results/${publicSlug}`);
@@ -865,9 +870,10 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
   } : null;
   return (
     <PublicShell go={go} host={d ? { marks: [clubMark(d.club)], name: d.club } : undefined} footNote={d?.status === 'live' ? 'Scores update every 20 seconds.' : undefined}>
+      <div className="res20">
       <PublicScoreAnnouncement slug={publicSlug} data={d} />
       <PageHead
-        cap={d ? <span className={d.status === 'done' ? 'acc' : undefined}>{d.status === 'done' ? `Final results · ${d.club}` : d.status === 'live' ? `Results so far · ${d.club}` : `Draw and schedule · ${d.club}`}</span> : undefined}
+        cap={d ? <span className={d.status === 'done' ? 'res20-confirmed' : undefined}>{d.status === 'done' ? `Final results · ${d.club}` : d.status === 'live' ? `Results so far · ${d.club}` : `Draw and schedule · ${d.club}`}</span> : undefined}
         title={d?.name ?? 'Results'}
         sub={d ? <span className="row" style={{ flexWrap: 'wrap', gap: 8 }}>{logo.data?.logoUrl && <ClubLogo src={logo.data.logoUrl} club={d.club} size={32} />}{d.status === 'live' && <span className="chip live">Live</span>}<span>{[friendlyDate(d.startDate), d.club, `${teams} ${teams === 1 ? 'entry' : 'entries'}`, `${d.divisions.length} ${d.divisions.length === 1 ? 'category' : 'categories'}`, d.status === 'live' ? 'updates every 20 seconds' : d.status === 'done' ? 'Finished' : ''].filter(Boolean).join(' · ')}</span></span> : undefined}
         actions={<><a className="tlink" href="#/events" onClick={(e) => { e.preventDefault(); go('events'); }}>All events</a>{d && <button type="button" className="btn" onClick={async () => setMsg(await shareLink(`${d.name} results`, link))}>Share results</button>}</>}
@@ -891,11 +897,13 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
           )}
           {champion && d.status === 'done' && <ResultsPosters c={champion} event={d.name} club={d.club} date={friendlyDate(d.startDate)} link={link} />}
           <MyMatches d={d} go={go} />
+          <label className="res20-find"><span className="cap">Find a player</span><input type="search" aria-label="Find a player" placeholder="Find a player" value={playerQuery} onChange={(event) => setPlayerQuery(event.target.value)} /></label>
           <Tabs<View> label="Results view" value={view} options={[{ value: 'pools', label: 'Pools' }, { value: 'knockouts', label: 'Knockouts' }, { value: 'schedule', label: 'Matches' }]} onChange={setView} />
-          {view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody d={body} divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')} />}
+          {searching ? <div className="res20-found" aria-live="polite">{foundMatches.some((match) => match.divisionId === division.id && match.status !== 'void') ? <GroupedMatches d={{ ...d, matches: foundMatches }} divisionId={division.id} /> : <p className="card res20-empty">No match for “{playerQuery.trim()}”.</p>}</div> : view === 'schedule' ? <GroupedMatches d={d} divisionId={division.id} /> : <DivisionBody d={body} divisionId={division.id} view={view} label={(e) => (e ? e.playerIds.map(displayPlayerName).join(' / ') : 'To be decided')} />}
           <p className="mut" style={{ margin: 0, fontSize: 13 }}>Live scores by <a aria-label={d.status === 'live' ? 'RallyQ: live scores. Run your club’s tournament at rallyq.in' : undefined} href="https://rallyq.in/" className="acc" style={{ fontWeight: 700 }}>RallyQ</a> · run your club’s tournament at rallyq.in</p>
         </>
       )}
+      </div>
     </PublicShell>
   );
 }
@@ -912,13 +920,13 @@ function GroupedMatches({ d, divisionId }: { d: PublicTournament; divisionId: st
     const score = m.games.map((g) => `${g.a}–${g.b}`).join(', ');
     const w = m.status === 'done' ? m.winner : undefined;
     return (
-      <div key={m.id}>
+      <div key={m.id} className="res20-fixture" data-status={m.status}>
         <span className="grow">
-          <span className={w === 'A' ? 'acc' : undefined} style={{ display: 'block', fontWeight: w === 'A' ? 700 : 500 }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
-          <span className={w === 'B' ? 'acc' : undefined} style={{ display: 'block', fontWeight: w === 'B' ? 700 : 500 }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
+          <span className={w === 'A' ? 'res20-team res20-a res20-winner' : 'res20-team res20-a'} style={{ display: 'block', fontWeight: w === 'A' ? 700 : 500 }}>{names.get(m.entryA ?? '') ?? 'To be decided'}</span>
+          <span className={w === 'B' ? 'res20-team res20-b res20-winner' : 'res20-team res20-b'} style={{ display: 'block', fontWeight: w === 'B' ? 700 : 500 }}>{names.get(m.entryB ?? '') ?? 'To be decided'}</span>
           {m.court ? <span className="mut" style={{ fontSize: 13 }}>Court {m.court}</span> : null}
         </span>
-        {m.status === 'live' ? <span className="row" style={{ gap: 8 }}><span className="st live">Live</span><span className="n" style={{ fontSize: 18 }}>{score}</span></span> : m.status === 'done' ? (score ? <span className="n" style={{ fontSize: 18 }}>{score}</span> : <span className="st off">Walkover</span>) : <span className="st wait">To play</span>}
+        {m.status === 'live' ? <span className="row" style={{ gap: 8 }}><span className="chip live">Live</span><span className="n" style={{ fontSize: 18 }}>{score}</span></span> : m.status === 'done' ? (score ? <span className="n" style={{ fontSize: 18 }}>{score}</span> : <span className="st off">Walkover</span>) : <span className="st wait">To play</span>}
       </div>
     );
   };

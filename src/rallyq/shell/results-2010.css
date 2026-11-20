@@ -1,0 +1,76 @@
+/* Results 20/10: glass, chalk scores, Sea and Tide team rails. */
+.rq .res20{--gold:#E8C35A;--mut:#BFD0C4;display:flex;flex-direction:column;gap:22px;min-width:0;max-width:100%;color:#F1F4EA}
+.rq .res20 *{box-sizing:border-box;min-width:0;overflow-wrap:break-word;word-break:normal;hyphens:none}
+.rq .res20 [style*="overflow-wrap"]{overflow-wrap:break-word!important}
+.rq .res20 .pg-h{gap:14px;padding-block:10px 8px}
+.rq .res20 .pg-h h1{font-family:var(--display,'Archivo','Arial Narrow',sans-serif);font-size:clamp(44px,7vw,88px);line-height:.96;letter-spacing:-.045em;max-width:960px}
+.rq .res20 .card,
+.rq .res20 .m{background:rgba(6,20,13,.62);border-radius:22px;box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.rq .res20 .row,
+.rq .res20 .between{flex-wrap:wrap}
+.rq .res20 .between,
+.rq .res20 .list>div{gap:12px}
+.rq .res20 .mut,
+.rq .res20 .cap{color:#BFD0C4}
+.rq .res20 .n,
+.rq .res20 .acc{color:#F1F4EA}
+.rq .res20 a.acc{color:var(--ball)}
+.rq .res20 .res20-confirmed{color:#E8C35A}
+.rq .res20 button,
+.rq .res20 a,
+.rq .res20 input{touch-action:manipulation}
+.rq .res20 button,
+.rq .res20 .btn,
+.rq .res20 .tlink,
+.rq .res20 a.tlink{min-height:44px;max-width:100%;white-space:normal}
+.rq .res20 .btn:not(.ghost){background:#F1F4EA;color:#06140D}
+.rq .res20 .tabs{display:flex;flex-wrap:wrap;width:fit-content;max-width:100%;border-radius:24px;gap:4px}
+.rq .res20 .tab{flex:1 1 auto;min-height:44px;padding-inline:16px}
+.rq .res20 .scroll{width:100%;max-width:100%;min-width:0;overflow-x:auto;overscroll-behavior-inline:contain;border-radius:18px}
+.rq .res20 .scroll>.tbl{min-width:680px}
+.rq .res20 .tbl td:nth-child(2){max-width:300px;white-space:normal}
+.rq .res20 .tbl th,
+.rq .res20 .tbl td{padding:14px 12px}
+.rq .res20 .res20-find{display:flex;flex-direction:column;gap:10px;max-width:560px;width:100%}
+.rq .res20 .res20-find input{width:100%;min-height:48px;font-size:16px;padding:12px 18px;border-radius:24px;border:1px solid rgba(241,244,234,.3);background:rgba(6,20,13,.74);color:#F1F4EA;outline-offset:4px}
+.rq .res20 .res20-find input::placeholder{color:#BFD0C4;opacity:1}
+.rq .res20 :focus-visible{outline:2px solid var(--ball);outline-offset:3px}
+.rq .res20 .res20-found{display:flex;flex-direction:column;gap:16px}
+.rq .res20 .res20-empty{margin:0;padding:22px}
+.rq .res20 .res20-fixture{display:flex;flex-direction:column;align-items:stretch;padding:16px 18px;gap:12px}
+.rq .res20 .res20-fixture>.grow{display:flex;flex-direction:column;gap:8px}
+.rq .res20 .res20-team{position:relative;padding:8px 12px 8px 16px;border-radius:12px;background:rgba(241,244,234,.04);color:#F1F4EA}
+.rq .res20 .res20-team::before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:3px;border-radius:0 3px 3px 0;background:var(--sea)}
+.rq .res20 .res20-b::before{background:var(--tide)}
+.rq .res20 [data-status="done"] .res20-winner{color:#E8C35A}
+.rq .res20 .res20-fixture>.n{font-size:26px!important;white-space:normal}
+.rq .res20 .m>div:has(>.n){position:relative;padding-left:20px}
+.rq .res20 .m>div:has(>.n)::before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:3px;background:var(--sea);border-radius:0 3px 3px 0}
+.rq .res20 .m>div:has(>.n)+div:has(>.n)::before{background:var(--tide)}
+.rq .res20 .m:not(.champ){box-shadow:inset 0 0 0 1px rgba(241,244,234,.12)!important}
+.rq .res20 .m .w{color:#F1F4EA}
+.rq .res20 .st.wait{background:transparent;color:#F1F4EA;box-shadow:inset 0 0 0 1px rgba(241,244,234,.3)}
+.rq .res20 section.champ{border-radius:26px;background:radial-gradient(ellipse at 50% 0%,rgba(232,195,90,.1),transparent 65%),rgba(6,20,13,.62)}
+.rq .res20 section.champ .n{font-size:clamp(32px,5.5vw,80px)!important;white-space:normal}
+.rq .res20 .chip.gold{background:#E8C35A;color:#2A1D00;white-space:normal;min-height:28px;padding-block:6px}
+.rq .res20 .grid.g2,
+.rq .res20 .grid.g3,
+.rq .res20 .grid.g4{grid-template-columns:minmax(0,1fr)}
+.rq.day .res20{--mut:#D5E3D8}
+.rq.day .res20 .mut,
+.rq.day .res20 .cap{color:#D5E3D8}
+.rq.day .res20 .card,
+.rq.day .res20 .m{background:rgba(6,20,13,.7);box-shadow:inset 0 0 0 1px rgba(241,244,234,.2)}
+@media(max-width:700px){
+  .rq .res20 .bracket{min-width:0!important;grid-auto-flow:row;grid-template-columns:minmax(0,1fr);grid-auto-columns:auto;gap:24px}
+  .rq .res20 .bracket .col{height:auto;gap:12px}
+  .rq .res20 .champ>.between{align-items:flex-start}
+  .rq .res20 .poster{max-height:none!important}
+}
+@media(min-width:700px){
+  .rq .res20 .grid.g2,
+  .rq .res20 .grid.g3,
+  .rq .res20 .grid.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rq .res20 .res20-fixture{flex-direction:row;align-items:center}
+}
+@media(min-width:1100px){.rq .res20 .grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}}

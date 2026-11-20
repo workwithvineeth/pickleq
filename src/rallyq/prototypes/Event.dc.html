@@ -13,6 +13,69 @@
 <style>
 body{margin:0;background:#06140D}
 a{color:#D9F24A}a:hover{color:#F1F4EA}
+/* Event 20/10: the existing event, entries and actions in floodlit glass. */
+.rq .evt20{color:#F1F4EA;--mut:#BFD0C4;--gold:#E8C35A;min-width:0;max-width:100%}
+.rq .evt20 *{box-sizing:border-box;min-width:0;overflow-wrap:break-word;word-break:normal;hyphens:none}
+.rq .evt20 .ev20-hero{position:relative;isolation:isolate;min-height:480px!important;background-image:url(/_blob/p-floods-m)!important;background-size:cover;background-position:center 38%;color:#F1F4EA}
+.rq .evt20 .ev20-hero::after{background:linear-gradient(180deg,rgba(6,20,13,.1),rgba(6,20,13,.78) 45%,#06140D 100%)}
+.rq .evt20 .ev20-hero-content{display:flex!important;flex-direction:column;align-items:stretch!important;justify-content:flex-end!important;gap:20px!important;padding-block:110px 30px!important}
+.rq .evt20 .ev20-host{align-self:flex-start;max-width:560px;background:rgba(6,20,13,.72)!important;border-radius:18px!important}
+.rq .evt20 .ev20-host>div:first-child{flex:0 0 52px;width:52px!important;height:52px!important;border-radius:14px!important}
+.rq .evt20 .ev20-host>div:last-child{flex:1}
+.rq .evt20 .ev20-host .mut{color:#BFD0C4}
+.rq .evt20 h1.disp{font-family:var(--display,'Archivo','Arial Narrow',sans-serif);font-size:clamp(48px,8vw,104px)!important;line-height:.95;letter-spacing:-.045em;max-width:960px}
+.rq .evt20 .row,
+.rq .evt20 .between{flex-wrap:wrap;gap:10px}
+.rq .evt20 .card,
+.rq .evt20 .tabs{background:rgba(6,20,13,.62);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);border-radius:22px;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.rq .evt20 .mut,
+.rq .evt20 .cap{color:#BFD0C4}
+.rq .evt20 .chip:not(.live){max-width:100%;white-space:normal;min-height:28px;padding-block:6px;background:rgba(6,20,13,.72);box-shadow:inset 0 0 0 1px rgba(241,244,234,.2);color:#F1F4EA;line-height:1.4}
+.rq .evt20 .cta{width:100%;max-width:360px}
+.rq .evt20 .btn,
+.rq .evt20 button,
+.rq .evt20 a.tlink{min-height:44px;max-width:100%;white-space:normal;touch-action:manipulation}
+.rq .evt20 .btn{padding-block:12px}
+.rq .evt20 .btn.ghost{color:#F1F4EA;background:transparent;box-shadow:inset 0 0 0 1px rgba(241,244,234,.35)}
+.rq .evt20 .tabs{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border-radius:24px}
+.rq .evt20 .tab{min-height:44px;padding:10px 12px;white-space:normal;color:#D5E3D8}
+.rq .evt20 .tab.on{background:#F1F4EA;color:#06140D}
+.rq .evt20 .ev20-body>.between{align-items:flex-start}
+.rq .evt20 .ev20-body>.between>a{display:inline-flex;align-items:center}
+.rq .evt20 .ev20-summary{flex-basis:100%!important;max-width:100%}
+.rq .evt20 .scroll{overflow-x:auto;max-width:100%;min-width:0;overscroll-behavior-inline:contain}
+.rq .evt20 .scroll>.tbl{min-width:580px}
+.rq .evt20 .tbl td{white-space:normal;max-width:300px;padding-block:16px}
+.rq .evt20 .tbl td,
+.rq .evt20 .tbl th{color:#F1F4EA}
+.rq .evt20 .tbl th{color:#BFD0C4}
+.rq .evt20 .tbl td[style]{color:#F1F4EA!important}
+.rq .evt20 .n{color:#F1F4EA}
+.rq .evt20 .bar{background:rgba(241,244,234,.12)}
+.rq .evt20 .bar i{background:#F1F4EA}
+.rq .evt20 .grid.g2,
+.rq .evt20 .grid.g3{grid-template-columns:minmax(0,1fr)}
+.rq .evt20 .ev20-bracket{min-width:0!important;grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important}
+.rq .evt20 .ev20-bracket>div{gap:14px!important}
+.rq .evt20 .score{grid-template-columns:minmax(0,1fr) auto;gap:8px 14px}
+.rq .evt20 .score .t{position:relative;white-space:normal;overflow:visible;text-overflow:clip;padding:8px 0 8px 12px;color:#F1F4EA!important}
+.rq .evt20 .score .t::before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:3px;border-radius:0 3px 3px 0;background:var(--sea)}
+.rq .evt20 .score .t:nth-of-type(3)::before{background:var(--tide)}
+.rq .evt20 :focus-visible{outline:2px solid var(--ball);outline-offset:3px}
+.rq.day .evt20 .ev20-hero::after{background:linear-gradient(180deg,rgba(6,20,13,.12),rgba(6,20,13,.78) 45%,rgba(24,68,45,.98) 100%)}
+.rq.day .evt20 .card,
+.rq.day .evt20 .tabs{background:rgba(6,20,13,.7);box-shadow:inset 0 0 0 1px rgba(241,244,234,.2)}
+.rq.day .evt20 .mut,
+.rq.day .evt20 .cap{color:#D5E3D8}
+@media(min-width:700px){
+ .rq .evt20 .ev20-hero-content{padding-block:130px 44px!important}
+ .rq .evt20 .tabs{display:flex;width:fit-content;border-radius:999px}
+ .rq .evt20 .ev20-summary{flex-basis:280px!important}
+ .rq .evt20 .grid.g2,
+ .rq .evt20 .grid.g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .rq .evt20 .ev20-bracket{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(min-width:1100px){.rq .evt20 .grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </helmet>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fq" viewBox="0 0 100 100"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" style="stroke:var(--c)" stroke-width="10" stroke-linecap="butt"></path><line x1="28" y1="50" x2="72" y2="50" style="stroke:var(--a)" stroke-width="3"></line><circle cx="83" cy="83" r="11" style="fill:var(--a)"></circle></symbol></svg>
@@ -25,24 +88,25 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </div></header>
 <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}"><nav class="mpanel" aria-label="Menu"><a href="Live.dc.html">Live scores</a><a href="Event.dc.html">Events</a><a href="Studio.dc.html">Player Studio</a><a href="Overview.dc.html">For clubs</a><a href="Overview.dc.html">Sign in</a></nav></sc-if>
 
-<section class="photo ph-crowd" style="min-height:400px;display:flex;align-items:flex-end">
-<div class="wrap" style="width:100%;padding-block:48px;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between">
+<main class="evt20">
+<section class="photo ph-crowd ev20-hero" style="min-height:400px;display:flex;align-items:flex-end">
+<div class="wrap ev20-hero-content" style="width:100%;padding-block:48px;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between">
+<div class="card ev20-host" style="padding:16px 18px;display:flex;gap:14px;align-items:center;background:rgba(13,34,24,.85)">
+<div style="width:64px;height:64px;border-radius:16px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:18px">CC</div>
+<div><div class="cap">Hosted by</div><div style="font-weight:800;font-size:20px">Cedar at Maple Courts</div><div class="mut" style="font-size:13px">Run on RallyQ</div></div>
+</div>
 <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
 <div class="row"><span class="chip ball">Entries open</span><span class="cap" style="color:#DDE7DC">Sun 15 Nov · 5:00 pm · Maple Courts</span></div>
 <h1 class="disp" style="font-size:clamp(48px,7vw,96px)">Cedar Open</h1>
 <div class="row" style="flex-wrap:wrap;gap:8px"><span class="chip">Men’s doubles</span><span class="chip">Women’s doubles</span><span class="chip">Mixed</span><span class="chip">4 courts</span></div>
 </div>
 <div class="cta" style="display:flex;flex-direction:column;gap:12px;min-width:0">
-<div class="card" style="padding:16px 18px;display:flex;gap:14px;align-items:center;background:rgba(13,34,24,.85)">
-<div style="width:64px;height:64px;border-radius:16px;background:#F1F4EA;color:#0B2418;display:grid;place-items:center;font-weight:800;font-size:18px">CC</div>
-<div><div class="cap">Hosted by</div><div style="font-weight:800;font-size:20px">Cedar at Maple Courts</div><div class="mut" style="font-size:13px">Run on RallyQ</div></div>
-</div>
 <button class="btn" onClick="{{join}}">{{joinLabel}}</button>
 </div>
 </div>
 </section>
 
-<div class="wrap" style="padding-block:28px 64px;display:flex;flex-direction:column;gap:22px">
+<div class="wrap ev20-body" style="padding-block:28px 64px;display:flex;flex-direction:column;gap:22px">
 <div class="between">
 <div class="tabs" role="tablist" aria-label="Event sections"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button role="tab" class="{{t.cls}}" onClick="{{t.pick}}">{{t.name}}</button></sc-for></div>
 <a class="tlink" href="Live.dc.html">See live scores →</a>
@@ -54,7 +118,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <table class="tbl"><thead><tr><th>#</th><th>Team</th><th>Category</th><th>DUPR avg</th><th>Status</th></tr></thead>
 <tbody><sc-for list="{{entries}}" as="e" hint-placeholder-count="8"><tr><td class="n mut" style="font-size:18px">{{e.no}}</td><td style="font-weight:600">{{e.team}}</td><td class="mut">{{e.cat}}</td><td class="n" style="font-size:18px">{{e.dupr}}</td><td><span class="{{e.cls}}">{{e.st}}</span></td></tr></sc-for></tbody></table>
 </div>
-<div style="flex:1 1 280px;display:flex;flex-direction:column;gap:12px">
+<div class="ev20-summary" style="flex:1 1 280px;display:flex;flex-direction:column;gap:12px">
 <div class="card" style="padding:20px"><div class="cap">Spots filled</div><div class="row" style="align-items:baseline;margin-top:6px"><span class="n acc" style="font-size:56px">{{filled}}</span><span class="mut">of 32 teams</span></div><div class="bar" style="margin-top:12px"><i style="width:{{pct}}"></i></div></div>
 <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:6px"><div class="cap">Entry</div><div style="font-weight:700">[YOUR PRICE] per team</div><div class="mut" style="font-size:13px">Pay the club directly at the venue desk. Entries close Friday, 13 November at 9 pm.</div></div>
 </div>
@@ -65,18 +129,18 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 <div class="grid g2">
 <sc-for list="{{pools}}" as="p" hint-placeholder-count="2">
 <div class="card" style="padding:18px"><div class="between"><div class="disp" style="font-size:28px">{{p.name}}</div><span class="cap">Court {{p.court}}</span></div>
-<table class="tbl" style="margin-top:8px"><thead><tr><th>Team</th><th>W</th><th>L</th><th>Pts diff</th></tr></thead><tbody>
+<div class="scroll"><table class="tbl" style="margin-top:8px"><thead><tr><th>Team</th><th>W</th><th>L</th><th>Pts diff</th></tr></thead><tbody>
 <sc-for list="{{p.rows}}" as="r" hint-placeholder-count="4"><tr><td style="{{r.style}}">{{r.t}}</td><td class="n" style="font-size:18px">{{r.w}}</td><td class="n mut" style="font-size:18px">{{r.l}}</td><td class="n" style="font-size:18px">{{r.d}}</td></tr></sc-for>
-</tbody></table></div>
+</tbody></table></div></div>
 </sc-for>
 </div>
 </sc-if>
 
 <sc-if value="{{isKo}}" hint-placeholder-val="{{ false }}">
-<div class="scroll"><div style="display:grid;grid-template-columns:repeat(3,minmax(240px,1fr));gap:20px;min-width:780px;align-items:center">
+<div class="scroll"><div class="ev20-bracket" style="display:grid;grid-template-columns:repeat(3,minmax(240px,1fr));gap:20px;min-width:780px;align-items:center">
 <div style="display:flex;flex-direction:column;gap:14px"><div class="cap">Quarter-finals</div><sc-for list="{{qf}}" as="m" hint-placeholder-count="4"><div class="card" style="padding:12px 14px"><div class="score"><span class="t" style="{{m.as}}">{{m.a}}</span><span class="n" style="font-size:20px">{{m.sa}}</span><span class="t" style="{{m.bs}}">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for></div>
 <div style="display:flex;flex-direction:column;gap:60px"><div class="cap">Semi-finals</div><sc-for list="{{sf}}" as="m" hint-placeholder-count="2"><div class="card" style="padding:12px 14px"><div class="between"><span class="chip live">Live</span><span class="cap">{{m.court}}</span></div><div class="score" style="margin-top:8px"><span class="t">{{m.a}}</span><span class="n acc" style="font-size:20px">{{m.sa}}</span><span class="t">{{m.b}}</span><span class="n" style="font-size:20px">{{m.sb}}</span></div></div></sc-for></div>
-<div style="display:flex;flex-direction:column;gap:14px"><div class="cap gold">Final · 8:15 pm</div><div class="card" style="padding:20px;box-shadow:inset 0 0 0 2px #E8C35A"><div class="disp gold" style="font-size:30px">Champions crowned here</div><div class="mut" style="font-size:13px;margin-top:6px">Winners get a champion card and the results post goes out automatically.</div><a class="tlink" href="Social.dc.html" style="margin-top:6px">Preview champion card →</a></div></div>
+<div style="display:flex;flex-direction:column;gap:14px"><div class="cap">Final · 8:15 pm</div><div class="card" style="padding:20px"><div class="disp" style="font-size:30px">Champions crowned here</div><div class="mut" style="font-size:13px;margin-top:6px">Winners get a champion card and the results post goes out automatically.</div><a class="tlink" href="Social.dc.html" style="margin-top:6px">Preview champion card →</a></div></div>
 </div></div>
 </sc-if>
 
@@ -88,6 +152,7 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 </div>
 </sc-if>
 </div>
+</main>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
