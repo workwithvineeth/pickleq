@@ -605,7 +605,8 @@ export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
             const active = x.status === 'pending' || x.status === 'accepted' || x.status === 'waitlist';
             const st = entryStatus(x);
             const where = [x.venue, x.city].filter(Boolean).join(', ');
-            const payUpi = active && x.fee && x.payment !== 'paid' && x.upiId;
+            // Once the player has sent a UPI reference ('claimed') there is nothing more to pay: no second Pay button.
+            const payUpi = active && x.fee && x.payment !== 'paid' && x.payment !== 'claimed' && x.upiId;
             return (
               <div key={x.id} role="region" aria-label={`${x.tournament}: ${x.division}`} style={{ flexWrap: 'wrap', opacity: active ? undefined : 0.75 }}>
                 <a className="row grow" style={{ gap: 14, minHeight: 44, color: 'inherit', textDecoration: 'none' }} {...linkTo(go, 'event', x.slug)}>
@@ -624,6 +625,7 @@ export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
                     <div className="row" style={{ flexWrap: 'wrap', gap: '8px 16px' }}>
                       {payUpi ? <a className="btn ghost sm" style={{ minHeight: 44 }} href={upiLink(x.upiId!, x.club, x.fee!, `${x.tournament}: ${x.division}`)}>Pay ₹{x.fee} by UPI</a> : null}
                       {x.results && <button type="button" className="btn ghost sm" style={{ minHeight: 44 }} onClick={() => go('results', x.slug)}>Results</button>}
+                      {x.results && x.status === 'accepted' && <button type="button" className="btn ghost sm" style={{ minHeight: 44 }} onClick={() => go('club-player-studio')}>Claim in my Studio</button>}
                       {active && !x.drawn && (confirm === x.id
                         ? <><button type="button" className="btn alt sm" style={{ minHeight: 44 }} onClick={() => withdraw(x)}>Yes, withdraw</button><button type="button" className="btn ghost sm" style={{ minHeight: 44 }} onClick={() => setConfirm(null)}>Keep my entry</button></>
                         : <button type="button" className="tlink mut" onClick={() => setConfirm(x.id)}>Withdraw…</button>)}
@@ -635,7 +637,7 @@ export function MyEntries({ go, onBack }: { go: Go; onBack: () => void }) {
           })}
         </div>
       )}
-      {entries.some((x) => x.status === 'pending' && x.fee && x.payment !== 'paid') && <div className="note">Waiting for payment? Show your UPI reference at the desk and they’ll confirm you on the spot.</div>}
+      {entries.some((x) => (x.status === 'pending' || x.status === 'accepted') && x.fee && x.payment === 'claimed') && <div className="note">You’ve sent your UPI reference: please don’t pay again. The club checks it and marks you paid. At the venue, show the reference at the desk.</div>}
       <div><button type="button" className="tlink mut" onClick={onBack}><span aria-hidden="true">←</span> Back</button></div>
     </PublicShell>
   );

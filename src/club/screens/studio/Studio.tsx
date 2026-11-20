@@ -42,6 +42,7 @@ export function PlayerStudio({ section, go }: { section: string; go: Go }) {
           <h2 className="cap" style={{ margin: 0 }}>Player Studio</h2>
           <h1 id="studio-title" className="disp" style={{ fontSize: 'clamp(40px,7vw,72px)', lineHeight: .95, margin: 0 }}>Your game, in one place.</h1>
           <p className="mut" style={{ margin: 0, fontSize: 16, maxWidth: 520 }}>See your referee-scored tournament results, and keep a private diary of practice and casual games. Your DUPR rating shows beside your results, or Unrated until your club adds it.</p>
+          <p style={{ margin: 0, fontSize: 15, maxWidth: 520 }}><b>Claim my Studio:</b> played a RallyQ tournament? Sign in with the email you entered with and your matches are waiting to claim. No email on your entry? Ask the organiser for your claim link.</p>
           <div className="row" style={{ flexWrap: 'wrap', gap: 10 }}>
             <button type="button" className="btn" onClick={() => { rememberReturn('#/club-player-studio'); go('club-signin'); }}>Sign in to Player Studio</button>
             <button type="button" className="btn ghost" onClick={() => go('events')}>See events</button>

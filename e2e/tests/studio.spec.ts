@@ -49,3 +49,11 @@ test.describe('Player Studio privacy (no account)', () => {
     expect(r.status).toBeGreaterThanOrEqual(400);
   });
 });
+
+test.describe('Claim my Studio', () => {
+  test('a visitor sees how to claim their tournament matches', async ({ page }) => {
+    await page.goto('#/club-player-studio');
+    await expect(page.getByText('Claim my Studio:')).toBeVisible();
+    await expect(page.getByText('Sign in with the email you entered with')).toBeVisible();
+  });
+});

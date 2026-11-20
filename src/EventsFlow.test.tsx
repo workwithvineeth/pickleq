@@ -160,6 +160,9 @@ describe('Entering a tournament', () => {
     const entry = await screen.findByRole('region', { name: 'PQ Demo Night: Men’s Doubles 3.5' });
     expect(within(entry).getByText('Waiting for the organiser')).toBeInTheDocument();
     expect(within(entry).getByText('Paid by UPI · not checked yet')).toBeInTheDocument();
+    // After sending a UPI reference there is no second Pay button, and a note says not to pay again.
+    expect(within(entry).queryByRole('link', { name: /^Pay ₹600 by UPI/ })).toBeNull();
+    expect(screen.getByText(/please don’t pay again/)).toBeInTheDocument();
     await user.click(within(entry).getByRole('button', { name: 'Withdraw…' }));
     await user.click(within(entry).getByRole('button', { name: 'Yes, withdraw' }));
     expect(await screen.findByText('Withdrawn from Men’s Doubles 3.5')).toBeInTheDocument();

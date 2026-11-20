@@ -10,6 +10,7 @@ import {RallyStudioStore,PRIVATE_SHARING,type SharingOptions} from '../private/b
 import {INITIAL_UI,studioValues,type StudioUI} from './studioValues';
 import {EMPTY_LOG,buildPractice} from './logSession';
 import {MyTournaments} from './MyTournaments';
+import {ClaimStudio} from './ClaimStudio';
 import {CoverEditor} from './CoverEditor';
 export const COVER_UPLOAD=true;
 import {signOutTo} from '../shell/Shell';
@@ -67,7 +68,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
   try{await store.savePractice(built.input);set({...EMPTY_LOG,saved:true,error:''});state.reload();}
   catch(e){set({error:e instanceof Error?e.message:'Could not save.',saved:false});}};
  const toggle=async(k:keyof SharingOptions)=>{const next={...share,[k]:!share[k]};setSharing(next);try{await store.saveSharing(next);}catch{setSharing(share);}};
- const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Ask your club for your player invite link to see your matches here',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
+ const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Your tournament matches show here once you claim them',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
  const g0=data.goals[0];
  const addGoal=async()=>{try{await store.saveGoal({title:goal.title,target:Number(goal.target),progress:0});setGoal({title:'',target:'',msg:'Goal added.'});state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not save the goal.'});}};
  const goalStep=async()=>{if(!g0)return;try{await store.saveGoal({title:g0.title,target:g0.target,progress:Math.min(g0.target,g0.progress+1),due:g0.due},g0.id);state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not update the goal.'});}};
@@ -76,7 +77,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  // Private player-photos storage is on the server (migration 20261120060000, checked 20 Nov).
  const photo=COVER_UPLOAD?data.photo??null:null;
  Object.assign(values,{coverChip:photo?'Your photo':'Sample photo',coverStyle:photo?`background-image:linear-gradient(180deg,rgba(6,20,13,.1) 0%,rgba(6,20,13,.3) 45%,rgba(6,20,13,.9) 100%),url("${photo}")!important;background-size:cover;background-position:center`:'',coverEdit:COVER_UPLOAD&&<CoverEditor store={store} hasPhoto={!!photo} onSaved={state.reload}/>});
- Object.assign(values,{shareProfile:()=>{void shareProfile();},shareProfileLabel:shared||'Share my profile',hasProfile:!!me,myTournaments:<MyTournaments go={go}/>,signOut:()=>{void signOutTo(go);}});
+ Object.assign(values,{shareProfile:()=>{void shareProfile();},shareProfileLabel:shared||'Share my profile',hasProfile:!!me,myTournaments:<div style={{display:'grid',gap:14}}><ClaimStudio go={go} claimed={data.official.players.length}/><MyTournaments go={go}/></div>,signOut:()=>{void signOutTo(go);}});
  // Motion board: the Studio numbers count up once when the page opens.
  const counted={...values,practiceCount:<CountUp text={String(values.practiceCount)}/>,hours:<CountUp text={String(values.hours)}/>,serve:<CountUp text={String(values.serve)}/>};
  return <PrototypeScreen name="MyStudio" go={go} source={source} values={counted} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
