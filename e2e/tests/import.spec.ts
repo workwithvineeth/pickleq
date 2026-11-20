@@ -13,8 +13,8 @@ test.describe('PaddleQ app', () => {
     // Signed out, rallyq.in opens on the public home page; Sign in leads to the sign-in page.
     await page.goto('./');
     await expect(page.getByRole('heading', { level: 1, name: 'Your court. The main event.' })).toBeVisible();
-    // Nothing live: the hero button counts down to the next event instead of linking to sample scores.
-    await expect(page.getByRole('link', { name: /See live scores|Next: / }).first()).toBeVisible();
+    // The hero button follows the event: details, live scores or results.
+    await expect(page.getByRole('link', { name: /See live scores|See event details|See events|See results/ }).first()).toBeVisible();
     const menu = page.getByRole('button', { name: 'Menu' });
     if (await menu.isVisible()) await menu.click();
     await page.getByRole('link', { name: 'Sign in' }).locator('visible=true').first().click();
