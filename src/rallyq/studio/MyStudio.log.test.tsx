@@ -14,23 +14,28 @@ it('Log a session shows real shot tags, opponent fields and no "How did it feel?
  for(const n of ['Backhand drive','Forehand drive','Serve'])expect(screen.getByRole('button',{name:n})).toBeInTheDocument();
  expect(screen.getByRole('button',{name:'Drill or training'})).toBeInTheDocument();
  expect(screen.queryByRole('button',{name:'Drill'})).toBeNull();expect(screen.queryByRole('button',{name:'Training'})).toBeNull();
- expect(screen.getByLabelText('Opponent name')).toBeInTheDocument();expect(screen.getByRole('button',{name:'Stronger than me'})).toBeInTheDocument();expect(screen.getByLabelText('Opponent DUPR rating')).toBeInTheDocument();
+ expect(screen.getByLabelText('Opponent name')).toBeInTheDocument();for(const n of ['Singles','Doubles','Opponent level 3.0','Opponent level 3.5','Opponent level 4.2','Opponent level 4.2+'])expect(screen.getByRole('button',{name:n})).toBeInTheDocument();
+ expect(screen.queryByText(/How strong/)).toBeNull();expect(screen.queryByLabelText('Opponent DUPR rating')).toBeNull();expect(screen.queryByRole('button',{name:'Stronger than me'})).toBeNull();
  expect(screen.getByText(/never change your DUPR rating/)).toBeInTheDocument();
 });
 it('saves a match typed game by game and tapped point by point, with tags and opponent',async()=>{
  await open();
  fireEvent.change(screen.getByLabelText('Opponent name'),{target:{value:'Ravi'}});
- fireEvent.click(screen.getByRole('button',{name:'Stronger than me'}));
- expect(screen.getByRole('button',{name:'Stronger than me'})).toHaveAttribute('aria-pressed','true');
+ fireEvent.click(screen.getByRole('button',{name:'Doubles'}));
+ fireEvent.click(screen.getByRole('button',{name:'Opponent level 4.2+'}));
+ expect(screen.getByRole('button',{name:'Opponent level 4.2+'})).toHaveAttribute('aria-pressed','true');
  fireEvent.change(screen.getByLabelText('Game 1: your points'),{target:{value:'11'}});
  fireEvent.change(screen.getByLabelText('Game 1: opponent points'),{target:{value:'7'}});
  fireEvent.click(screen.getByRole('button',{name:'Add another game'}));
  for(let i=0;i<9;i++)fireEvent.click(screen.getByRole('button',{name:'Add a point for you in game 2'}));
  for(let i=0;i<11;i++)fireEvent.click(screen.getByRole('button',{name:'Add a point for the opponent in game 2'}));
  fireEvent.click(screen.getByRole('button',{name:'Backhand drive'}));
+ fireEvent.click(screen.getByRole('button',{name:'Serve'}));
+ fireEvent.click(screen.getByRole('button',{name:'Serve, went well'}));
+ expect(screen.getByRole('button',{name:'Serve, needs work'})).toHaveTextContent('Serve · work on');
  fireEvent.click(screen.getByRole('button',{name:'Save to diary'}));
  await waitFor(()=>expect(saved).toHaveLength(1));
- expect(saved[0]).toMatchObject({kind:'practice_match',scoreText:'11–7, 9–11',focusTags:['Backhand drive'],opponents:'Ravi (stronger)'});
+ expect(saved[0]).toMatchObject({kind:'practice_match',scoreText:'11–7, 9–11',focusTags:['Backhand drive · went well','Serve · needs work'],opponents:'Ravi (Doubles · 4.2+)'});
  expect(saved[0]).not.toHaveProperty('feel');
  expect(await screen.findByRole('button',{name:'Saved to diary ✓'})).toBeInTheDocument();
 });
@@ -50,7 +55,7 @@ it('Drill or training is one choice that asks for minutes',async()=>{
  fireEvent.change(screen.getByLabelText('Minutes'),{target:{value:'45'}});
  fireEvent.click(screen.getByRole('button',{name:'Third-shot drop'}));
  fireEvent.click(screen.getByRole('button',{name:'Save to diary'}));
- await waitFor(()=>expect(saved).toHaveLength(1));expect(saved[0]).toMatchObject({kind:'training',minutes:45,focusTags:['Third-shot drop']});
+ await waitFor(()=>expect(saved).toHaveLength(1));expect(saved[0]).toMatchObject({kind:'training',minutes:45,focusTags:['Third-shot drop · went well']});
 });
 it('the player photo panel uses the portrait, not the tracker image',async()=>{
  const{container}=await open();

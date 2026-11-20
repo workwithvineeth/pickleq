@@ -1,6 +1,6 @@
 import type {OfficialMatch} from '../../club/playerStudio';
 import type {PracticeSession,PlayerGoal,SharingOptions} from '../private/backend';
-import {EMPTY_LOG,LEVELS,MAX_GAMES,SESSION_TAGS,cleanDupr,cleanScore,opponentLine,practiceOutcome,toggleTag,type LogDraft} from './logSession';
+import {EMPTY_LOG,FORMATS,LEVELS,MAX_GAMES,SESSION_TAGS,cleanScore,cycleTag,opponentLine,parseOpponent,practiceOutcome,tagMark,type LogDraft} from './logSession';
 
 export type Feature='Overview'|'Log'|'Compare'|'Diary'|'Goals'|'Sharing';
 export type Scope='All'|'Tournament'|'Practice';
@@ -47,7 +47,7 @@ export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)
  const bar=(v:number,c:string)=>`display:block;height:100%;width:${v}%;background:${c};border-radius:99px`;
  const recent=off.slice(-12);const bv=recent.map(o=>{const g=o.games.map(x=>mine(o,x));return pct(sum(g,0),sum(g,0)+sum(g,1));});
  const diaryRows=[...off.map(o=>({d:o.playedOn,kind:'Tournament',what:o.tournament+(o.stage!=='pool'?' · '+STAGE_LABEL[o.stage]:''),score:o.games.map(g=>mine(o,g).join('–')).join(' · '),ref:true})),
-  ...d.practice.map(p=>({d:p.playedAt,kind:p.kind==='practice_match'?'Practice':'Drill or training',what:p.opponents?'vs '+opponentLine(p.opponents):(p.focusTags[0]??(p.kind==='practice_match'?'Practice':'Training session')),score:p.kind==='practice_match'?p.scoreText:(p.minutes??0)+' min',ref:false}))]
+  ...d.practice.map(p=>({d:p.playedAt,kind:p.kind==='practice_match'?'Practice':'Drill or training',what:p.opponents?(parseOpponent(p.opponents).name&&parseOpponent(p.opponents).name!=='Opponent'?'vs ':'')+opponentLine(p.opponents):(p.focusTags[0]??(p.kind==='practice_match'?'Practice':'Training session')),score:p.kind==='practice_match'?p.scoreText:(p.minutes??0)+' min',ref:false}))]
   .filter(r=>tourn?r.ref:practice?!r.ref:true).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,8);
  const minutes=d.practice.filter(p=>p.playedAt.slice(0,7)===new Date().toISOString().slice(0,7)).reduce((s,p)=>s+(p.minutes??0),0);
  const goal=d.goals[0];
@@ -86,6 +86,7 @@ export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)
 }
 
 const chip=(on:boolean)=>on?'background:#2B6E4B;color:#FFFFFF;min-height:44px;box-shadow:inset 0 0 0 2px #0B2418':'background:#FFFFFF;color:#0B2418;min-height:44px;box-shadow:inset 0 0 0 1px rgba(11,36,24,.3)';
+const tagChip=(m:'went-well'|'needs-work'|undefined)=>m==='went-well'?chip(true):m==='needs-work'?'background:#FFE7E4;color:#7A1F17;min-height:44px;box-shadow:inset 0 0 0 2px #C2453B':chip(false);
 /** Everything the Log a session form shows: chips, game rows (typed or tapped point by point) and the quick result. */
 function logValues(ui:StudioUI,set:(p:Partial<StudioUI>)=>void){
  const clear={saved:false,error:''};
@@ -96,8 +97,8 @@ function logValues(ui:StudioUI,set:(p:Partial<StudioUI>)=>void){
   types:(['Practice match','Drill or training'] as const).map(n=>({name:(ui.type===n?'✓ ':'')+n,label:n,on:ui.type===n,style:chip(ui.type===n),pick:()=>set({type:n,...clear})})),
   entries:([['games','Game by game'],['quick','Quick result']] as const).map(([k,n])=>({name:(ui.entry===k?'✓ ':'')+n,label:n,on:ui.entry===k,style:chip(ui.entry===k),pick:()=>set({entry:k,...clear})})),
   oppName:ui.oppName,setOppName:(e:{target:{value:string}})=>set({oppName:e.target.value.slice(0,80),...clear}),
-  oppDupr:ui.oppDupr,setOppDupr:(e:{target:{value:string}})=>set({oppDupr:cleanDupr(e.target.value),...clear}),
-  levels:LEVELS.map(([k,n])=>({name:(ui.oppLevel===k?'✓ ':'')+n,label:n,on:ui.oppLevel===k,style:chip(ui.oppLevel===k),pick:()=>set({oppLevel:ui.oppLevel===k?'':k,...clear})})),
+  formats:FORMATS.map(n=>({name:(ui.format===n?'✓ ':'')+n,label:n,on:ui.format===n,style:chip(ui.format===n),pick:()=>set({format:ui.format===n?'':n,...clear})})),
+  levels:LEVELS.map(n=>({name:(ui.oppLevel===n?'✓ ':'')+n,label:'Opponent level '+n,on:ui.oppLevel===n,style:chip(ui.oppLevel===n),pick:()=>set({oppLevel:ui.oppLevel===n?'':n,...clear})})),
   gameRows:ui.games.map((g,i)=>({title:'Game '+(i+1),me:g.me,them:g.them,meLabel:`Game ${i+1}: your points`,themLabel:`Game ${i+1}: opponent points`,plusMeLabel:`Add a point for you in game ${i+1}`,plusThemLabel:`Add a point for the opponent in game ${i+1}`,
    setMe:(e:{target:{value:string}})=>setGame(i,{me:cleanScore(e.target.value)}),setThem:(e:{target:{value:string}})=>setGame(i,{them:cleanScore(e.target.value)}),
    plusMe:()=>setGame(i,{me:String(Math.min(99,(Number(g.me)||0)+1))}),plusThem:()=>setGame(i,{them:String(Math.min(99,(Number(g.them)||0)+1))})})),
@@ -106,7 +107,7 @@ function logValues(ui:StudioUI,set:(p:Partial<StudioUI>)=>void){
   results:(['Won','Lost'] as const).map(n=>({name:(ui.quick===n?'✓ ':'')+n,label:n,on:ui.quick===n,style:chip(ui.quick===n),pick:()=>set({quick:ui.quick===n?'':n,...clear})})),
   quickScore:ui.quickScore,setQuickScore:(e:{target:{value:string}})=>set({quickScore:e.target.value.slice(0,60),...clear}),
   minutes:ui.minutes,setMinutes:(e:{target:{value:string}})=>set({minutes:e.target.value.replace(/\D/g,'').slice(0,3),...clear}),
-  tags:SESSION_TAGS.map(n=>({name:(ui.tags.includes(n)?'✓ ':'')+n,label:n,on:ui.tags.includes(n),style:chip(ui.tags.includes(n)),pick:()=>{const r=toggleTag(ui.tags,n);set({tags:r.tags,saved:false,error:r.problem});}})),
-  tagCount:ui.tags.length+' chosen',
+  tags:SESSION_TAGS.map(n=>{const m=tagMark(ui,n);return{name:m==='went-well'?'✓ '+n:m==='needs-work'?n+' · work on':n,label:n+(m==='went-well'?', went well':m==='needs-work'?', needs work':''),on:!!m,style:tagChip(m),pick:()=>{const r=cycleTag(ui.tags,ui.work,n);set({tags:r.tags,work:r.work,saved:false,error:r.problem});}};}),
+  tagCount:`${ui.tags.length-ui.work.length} went well · ${ui.work.length} need work`,
  };
 }

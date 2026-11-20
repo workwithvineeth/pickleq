@@ -17,7 +17,7 @@ it('Log a session: one Drill or training type, the real tags, game rows you can 
  v.addGame();v=make();expect(ui.games).toHaveLength(2);v.removeGame();expect(ui.games).toHaveLength(1);
  v=make();v.entries[1].pick();expect(ui.entry).toBe('quick');v=make();expect(v.isQuick).toBe(true);v.results[0].pick();expect(ui.quick).toBe('Won');
  v=make();v.tags.find((t:{label:string})=>t.label==='Backhand drive').pick();expect(ui.tags).toEqual(['Backhand drive']);
- v=make();expect(v.tags.find((t:{label:string})=>t.label==='Backhand drive').on).toBe(true);
+ v=make();expect(v.tags.find((t:{label:string})=>t.label==='Backhand drive, went well').on).toBe(true);
  v.types[1].pick();v=make();expect(v.isDrill).toBe(true);
 });
 it('a quick Won/Lost practice counts toward matches won; drills show as Drill or training',()=>{
