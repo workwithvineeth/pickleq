@@ -28,3 +28,19 @@ describe('organiser results exports', () => {
     expect(scoreText({ ...m, status: 'void' })).toBe('Cancelled');
   });
 });
+
+describe('Promote results card', () => {
+  it('starts with the confirmed champions of the shown category', async () => {
+    const { promoPodium } = await import('./screens/Tournament');
+    const b = new DemoBackend(null); const club = await b.start('Fixture');
+    const cb = await b.clubBundle(club);
+    const d = await b.resultsBundle(cb.tournaments.find((t) => t.name === 'PQ Demo Open')!.id);
+    const div = d.divisions[0];
+    const m = d.matches.find((m) => m.divisionId === div.id)!;
+    d.matches = d.matches.filter((m) => m.divisionId !== div.id || m.stage !== 'final');
+    d.matches.push({ ...m, id: 'promo-final', stage: 'final', status: 'done', winner: 'A', games: [{ a: 11, b: 4, points: '' }] });
+    const p = promoPodium(d, div.id)!;
+    expect(p.score).toBe('11–4');
+    expect(p.champions).toBe(resultsChampions(d).find((c) => c.division === div.name)!.winner);
+  });
+});

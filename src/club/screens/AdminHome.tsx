@@ -5,6 +5,7 @@ import { trend, weekLabel } from '../adminStats';
 import { friendlyDate, friendlyTime } from '../dates';
 import { Status, useLoad } from './common';
 import { Bars, Intro, Kpi, MiniBtn, Panel, Row } from './Dash';
+import { count } from '../count';
 
 export function AdminCommandCentre({ go }: { go: Go }) {
   const b = eventsBackend();
@@ -41,7 +42,7 @@ export function AdminCommandCentre({ go }: { go: Go }) {
           </Panel>
           <Panel title="Match-day pulse" action={<MiniBtn onClick={() => go('admin', 'desk')}>Open operations</MiniBtn>}>
             {live.length === 0 && <p className="small muted" style={{ margin: 0 }}>No tournament is live right now.</p>}
-            {live.slice(0, 4).map((t) => <Row key={t.id} title={t.name} sub={`${t.club} · ${t.matchesDone} of ${t.matches} matches scored`} tag="Live" tagKind="live" onClick={() => go('admin', 'tournaments')} />)}
+            {live.slice(0, 4).map((t) => <Row key={t.id} title={t.name} sub={`${t.club} · ${t.matchesDone} of ${count(t.matches, 'match', 'matches')} scored`} tag="Live" tagKind="live" onClick={() => go('admin', 'tournaments')} />)}
             {upcoming.slice(0, Math.max(0, 4 - live.length)).map((t) => <Row key={t.id} title={t.name} sub={`${t.club} · ${friendlyDate(t.startDate)} · ${friendlyTime(t.startTime)}`} tag="Next" tagKind="ready" onClick={() => go('admin', 'tournaments')} />)}
             <div className="pq-note">Live courts update as referees score. Open a tournament from Tournaments to help as support (every change is logged).</div>
           </Panel>

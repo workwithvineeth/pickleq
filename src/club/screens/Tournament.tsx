@@ -3,7 +3,7 @@ import { MatchDna } from '../../rallyq/arena/MatchDna';
 import { usePublicScores } from './usePublicScores';
 import { TournamentEntrySummary } from './MatchdayHeader';
 import { PublicScoreAnnouncement } from './PublicScoreAnnouncement';
-import { isBronzeMatch } from '../resultsReport';
+import { isBronzeMatch, resultsChampions } from '../resultsReport';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Chips, Field, Segmented } from '../../components/Controls';
 import { newId } from '../../db/ids';
@@ -27,10 +27,22 @@ import { WalkIn } from './Organiser';
 import { displayPlayerName, appLink, DemoNote, errorText, fmtRating, names, shareLink, Status, useLoad } from './common';
 import { friendlyDate, friendlyTime } from '../dates';
 import { preflight, type PreflightItem } from '../preflight';
+import { count } from '../count';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 interface DivDraft { name: string; kind: DivisionKind; fmt: FormatDraft; picked: string[]; teams: string[][]; gender: DivisionGender; maxDupr: string; duprCap: 'each' | 'average'; minAge: string; cap: string; fee: string }
+/** Switching Singles/Doubles renames a default name ("Open Singles" ⇄ "Open Doubles", "Men's Singles 35+" ⇄ "Men's Doubles 35+"); a custom name stays. */
+/** The Promote → Results card starts with this event's champions (the shown category first), once a final is confirmed. */
+export function promoPodium(d: Parameters<typeof resultsChampions>[0], divisionId?: string) {
+  const all = resultsChampions(d);
+  const pick = all.find((c) => c.division === d.divisions.find((x) => x.id === divisionId)?.name) ?? all[0];
+  return pick ? { champions: pick.winner, runnersUp: pick.opponent, score: pick.score } : undefined;
+}
+export const renameForKind = (name: string, kind: DivisionKind): string => {
+  const from = kind === 'doubles' ? /\bSingles\b/ : /\bDoubles\b/;
+  return name.replace(from, kind === 'doubles' ? 'Doubles' : 'Singles');
+};
 const newDraft = (kind: DivisionKind): DivDraft => ({ name: kind === 'singles' ? 'Open Singles' : 'Open Doubles', kind, fmt: defaultFormatDraft(), picked: [], teams: [], gender: 'open', maxDupr: '', duprCap: 'each', minAge: '', cap: '', fee: '' });
 /** What the organiser is posting: run on RallyQ with players picked now, run on RallyQ with players registering, or a board listing only. */
 type PostKind = 'roster' | 'registration' | 'listed';
@@ -169,7 +181,7 @@ export function TournamentNew({ clubId, go, onBack }: { clubId: string; go: Go; 
       {divs.map((d, i) => (
         <section key={i} className="card section" aria-label={`Event ${i + 1}`}>
           <input id={`tnew-event${i}`} className="input" aria-label={`Event ${i + 1} name`} value={d.name} onChange={(e) => update(i, { name: e.target.value })} {...errProps(`event${i}`)} />{errBelow(`event${i}`)}
-          <Segmented label={`Event ${i + 1} type`} value={d.kind} options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} onChange={(k) => update(i, { kind: k, picked: [], teams: [] })} />
+          <Segmented label={`Event ${i + 1} type`} value={d.kind} options={[{ value: 'singles', label: 'Singles' }, { value: 'doubles', label: 'Doubles' }]} onChange={(k) => update(i, { kind: k, picked: [], teams: [], name: renameForKind(d.name, k) })} />
           {post !== 'roster' && <DivisionRulesFields d={d} label={`Event ${i + 1}`} onChange={(patch) => update(i, patch)} />}
           {post === 'registration' && <ScoringDefaultsFields label={`Event ${i + 1}`} value={d.fmt} onChange={(fmt) => update(i, { fmt })} />}
           {post === 'registration' && <p className="small muted" style={{ margin: 0 }}>You choose the shape (round robin, pools and knockouts, or knockout only) when you make the draw, once you know how many entered.</p>}
@@ -237,7 +249,7 @@ function EntryPicker({ d, players, pmap, onChange, label }: { d: DivDraft; playe
   }
   return (
     <div className="section">
-      <div className="label">{d.kind === 'singles' ? `${d.picked.length} players entered` : `${d.teams.length} teams · ${d.picked.length} players chosen`}</div>
+      <div className="label">{d.kind === 'singles' ? `${count(d.picked.length, 'player')} entered` : `${count(d.teams.length, 'team')} · ${count(d.picked.length, 'player')} chosen`}</div>
       {d.kind === 'doubles' && d.teams.map((t, i) => (
         <div key={i} className="row"><span>{t.map((id) => pmap.get(id)?.name).join(' / ')}</span><button type="button" className="link-btn" aria-label={`Split team ${i + 1}`} onClick={() => onChange({ teams: d.teams.filter((_, j) => j !== i) })}>Split</button></div>
       ))}
@@ -321,7 +333,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
   // One ball-yellow button: the next step for this tournament.
   const next: 'entries' | 'start' | 'desk' | 'results' | 'share' | null = !staff ? (t.isPublic && approved ? 'share' : null) : !approved ? 'entries' : t.status === 'draft' ? 'start' : t.status === 'done' ? 'results' : 'desk';
   const cls = (k: typeof next) => (k === next ? 'btn' : 'btn ghost');
-  const status = t.cancelledAt ? <span className="st no">Cancelled</span> : t.status === 'live' ? <span className="chip live">Live</span> : t.status === 'done' ? <span className="st off">Finished</span> : t.registrationOpen ? <span className="st ok">Entries open</span> : <span className="st off">Entries closed</span>;
+  const status = t.cancelledAt ? <span className="st no">Cancelled</span> : t.status === 'live' ? <span className="chip live">Live</span> : t.status === 'done' ? <span className="st off">Finished</span> : t.registrationOpen ? <span className="st ok">Entries open</span> : !t.drawnAt ? <span className="st off">Entries not open yet</span> : <span className="st off">Entries closed</span>;
   const teams = division ? d.entries.filter((e) => e.divisionId === division.id && e.status !== 'withdrawn').length : 0;
   return (
     <OrgShell go={go} active="draw" clubName={d.club.name} clubId={d.club.id} tournament={{ id: t.id, name: t.name, slug: t.publicSlug }}>
@@ -388,7 +400,7 @@ export function TournamentView({ id, go, onBack }: { id: string; go: Go; onBack:
         {staff && !t.cancelledAt && (
           <details className="card section">
             <summary><b>Promote this tournament</b> <span className="small muted">· posts, story, results card, A4 poster with QR</span></summary>
-            <PromoStudio events={[{ id: t.id, name: t.name, club: d.club.name, startDate: t.startDate, startTime: t.startTime, courts: t.courts, slug: t.publicSlug }]} />
+            <PromoStudio events={[{ id: t.id, name: t.name, club: d.club.name, startDate: t.startDate, startTime: t.startTime, courts: t.courts, slug: t.publicSlug, podium: promoPodium(d, division?.id) }]} />
           </details>
         )}
         <TournamentEntrySummary d={d} b={b} go={go} />
@@ -857,7 +869,7 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
   const link = appLink(`#/results/${publicSlug}`);
   const played = d?.matches.filter((m) => m.status === 'done' && m.games.length > 0) ?? [];
   const points = played.reduce((n, m) => n + m.games.reduce((s, g) => s + g.a + g.b, 0), 0);
-  const teams = d?.entries.length ?? 0;
+  const teams = d?.entries.filter((e) => (e as { status?: string }).status !== 'withdrawn').length ?? 0;
   const body: BodyData | null = d && division ? {
     divisions: d.divisions.map((x) => ({ ...x, tournamentId: '', clubId: '', sort: 0 })),
     entries: d.entries.map((e) => ({ ...e, clubId: '', playerIds: e.names })),

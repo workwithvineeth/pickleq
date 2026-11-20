@@ -1,5 +1,6 @@
 import type { ClubMatch, Division } from '../types';
 import { knockoutBlockers } from '../plan';
+import { count } from '../count';
 
 /** "Knockouts are waiting on these N matches": the unfinished pool matches holding up each event's knockout draw. */
 export function KnockoutsWaiting({ divisions, matches, who, onOpen, openLabel = 'Fix' }: {
@@ -11,7 +12,7 @@ export function KnockoutsWaiting({ divisions, matches, who, onOpen, openLabel = 
     <section className="card" aria-label="Knockouts waiting" style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {blockers.map(({ division, waiting }) => (
         <div key={division.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <h2 className="cap" style={{ margin: 0 }}>{divisions.length > 1 ? `${division.name}: ` : ''}Knockouts are waiting on {waiting.length === 1 ? 'this match' : `these ${waiting.length} matches`}</h2>
+          <h2 className="cap" style={{ margin: 0 }}>{divisions.length > 1 ? `${division.name}: ` : ''}Knockouts are waiting on {waiting.length === 1 ? 'this match' : `these ${count(waiting.length, 'match', 'matches')}`}</h2>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 6 }}>
             {waiting.map((m) => (
               <li key={m.id} className="between" style={{ gap: 8 }}>

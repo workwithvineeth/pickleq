@@ -13,6 +13,7 @@ import { ClaimLinks } from './studio/Claim';
 import { clubMark, OrgShell, PageHead, PublicShell } from '../../rallyq/shell/Shell';
 import { Legacy } from './InboxLegacy';
 import { RefTabs } from './DeskFrame';
+import { count } from '../count';
 
 export const resultsDuprLink = (id: string) => appLink(`#/club-results-dupr/${id}`);
 type Edit = { singles?: string; doubles?: string; id?: string };
@@ -127,7 +128,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
   }
   const body = <div className="pq-results-page" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
     <div className="pq-results-heading"><h2 style={{ margin: 0 }}>{data.tournament.name}</h2>
-      <p className="small muted">{[data.club.name, data.tournament.venue, data.tournament.city, friendlyDate(data.tournament.startDate), data.tournament.status === 'done' ? 'Finished' : data.tournament.status === 'live' ? 'Live' : 'Not started', `${data.matches.filter((m) => m.status !== 'void').length} matches on ${data.tournament.courts} courts`].filter(Boolean).join(' · ')}</p>
+      <p className="small muted">{[data.club.name, data.tournament.venue, data.tournament.city, friendlyDate(data.tournament.startDate), data.tournament.status === 'done' ? 'Finished' : data.tournament.status === 'live' ? 'Live' : 'Not started', `${data.matches.filter((m) => m.status !== 'void').length} matches on ${count(data.tournament.courts, 'court')}`].filter(Boolean).join(' · ')}</p>
     </div>
     <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}><span className={missing.size ? 'st wait' : 'st ok'}>{missing.size ? `${missing.size} DUPR ratings missing` : 'All player ratings entered'}</span>
       {staff && <button className="btn sm" disabled={dirty || busy || !dupr.ready.length} onClick={duprFile}>Download DUPR file ({dupr.ready.length})</button>}

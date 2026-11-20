@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { downloadBlob, promoPng, type PromoInput } from '../promoArt';
 import { QMark, clubMark } from '../../rallyq/shell/Shell';
 import { errorText } from './common';
+import { count } from '../count';
 
 /** A confirmed champion of one category: built only from a finished final with a recorded winner. */
 export interface ChampionInfo {
@@ -36,7 +37,7 @@ export function ChampionHero({ c, club }: { c: ChampionInfo; club: string }) {
         </div>
         <div>
           <h2 className="disp" style={{ fontSize: 'clamp(40px,6.4vw,104px)', overflowWrap: 'anywhere' }}>{c.winners.map((n, i) => <span key={i} style={{ display: 'block' }}>{i > 0 ? '& ' : ''}{n}</span>)}</h2>
-          <div className="mut" style={{ marginTop: 10 }}>{[c.winnersDupr, c.played > 0 ? (c.won === c.played ? `won all ${c.played} matches` : `won ${c.won} of ${c.played} matches`) : ''].filter(Boolean).join(' · ')}</div>
+          <div className="mut" style={{ marginTop: 10 }}>{[c.winnersDupr, c.played > 0 ? (c.won === c.played ? `won all ${count(c.played, 'match', 'matches')}` : `won ${c.won} of ${count(c.played, 'match', 'matches')}`) : ''].filter(Boolean).join(' · ')}</div>
         </div>
         <div className="row" style={{ gap: '12px 24px', flexWrap: 'wrap', alignItems: 'baseline' }}>
           <span className="n acc" style={{ fontSize: 'clamp(44px,7vw,112px)' }}>{c.score || 'Walkover'}</span>

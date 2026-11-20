@@ -558,7 +558,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
         <div className="list" style={{ marginInline: -20 }}>
           <div><span className="grow mut">Category</span><b style={{ textAlign: 'right' }}>{chosen?.name ?? 'Not picked yet'}</b></div>
           {doubles && <div><span className="grow mut">Partner</span><b style={{ textAlign: 'right', overflowWrap: 'anywhere' }}>{partner.name.trim() || 'Not added yet'}</b></div>}
-          <div><span className="grow mut">Pay</span><b style={{ textAlign: 'right' }}>{(chosen?.rules?.fee ?? 0) > 0 ? `₹${chosen!.rules.fee}${chosen!.kind === 'doubles' ? ' a team' : ''} · ${step >= 3 ? payName : 'choose how at Pay'}` : 'No entry fee'}</b></div>
+          <div><span className="grow mut">Pay</span><b style={{ textAlign: 'right' }}>{(chosen?.rules?.fee ?? 0) > 0 ? `₹${chosen!.rules.fee}${chosen!.kind === 'doubles' ? ' a team' : ' a player'} · ${step >= 3 ? payName : 'choose how at Pay'}` : 'No entry fee'}</b></div>
         </div>
         {e.entriesClose && <div className="mut" style={{ fontSize: 12 }}>Entries close {dayLabel(e.entriesClose)}.</div>}
       </aside>

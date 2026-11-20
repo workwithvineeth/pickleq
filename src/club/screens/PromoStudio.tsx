@@ -3,8 +3,9 @@ import { useMemo, useState } from 'react';
 import { downloadBlob, promoPng, promoSvg, promoSvgWithFonts, PROMO_TEMPLATES, type PromoTemplate } from '../promoArt';
 import { friendlyDate, friendlyTime } from '../dates';
 import { appLink, errorText } from './common';
+import { count } from '../count';
 
-export interface PromoEvent { id: string; name: string; club: string; startDate: string; startTime: string; courts?: number; slug: string; fee?: string }
+export interface PromoEvent { id: string; name: string; club: string; startDate: string; startTime: string; courts?: number; slug: string; fee?: string; podium?: { champions?: string; runnersUp?: string; score?: string } }
 
 /** Promotion studio (Phase 3): pick a format and an event; the artwork fills itself in; edit the words; download PNG or SVG. */
 export function PromoStudio({ events, initialId }: { events: PromoEvent[]; initialId?: string }) {
@@ -18,11 +19,11 @@ export function PromoStudio({ events, initialId }: { events: PromoEvent[]; initi
   const [msg, setMsg] = useState<string | null>(null);
   const input = useMemo(() => ev && ({
     template: tpl, club: ev.club, headline: e.headline ?? ev.name,
-    subline: e.subline ?? `${friendlyDate(ev.startDate)} · ${friendlyTime(ev.startTime)}${ev.courts ? ` · ${ev.courts} courts` : ''}`,
+    subline: e.subline ?? `${friendlyDate(ev.startDate)} · ${friendlyTime(ev.startTime)}${ev.courts ? ` · ${count(ev.courts, 'court')}` : ''}`,
     cta: e.cta ?? (tpl === 'results' ? 'See every match' : 'Register on RallyQ'),
     url: appLink(tpl === 'results' ? `#/results/${ev.slug}` : `#/event/${ev.slug}`),
     date: friendlyDate(ev.startDate), time: friendlyTime(ev.startTime), courts: ev.courts, fee: ev.fee,
-    podium: { champions: e.champions, runnersUp: e.runnersUp, bronze: e.bronze, score: e.score },
+    podium: { champions: e.champions ?? ev.podium?.champions, runnersUp: e.runnersUp ?? ev.podium?.runnersUp, bronze: e.bronze, score: e.score ?? ev.podium?.score },
   }), [ev, tpl, e]);
   if (!ev || !input) return <p className="small muted">Create a tournament first; its artwork appears here.</p>;
   const meta = PROMO_TEMPLATES.find((x) => x.id === tpl)!;

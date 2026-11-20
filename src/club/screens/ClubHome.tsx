@@ -6,6 +6,7 @@ import { friendlyDate, friendlyTime } from '../dates';
 import { isStaff, STAGE_LABEL } from '../types';
 import { names, useLoad } from './common';
 import { Intro, Kpi, MiniBtn, Panel, Row } from './Dash';
+import { count } from '../count';
 
 const initials = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 3).map((w) => w[0]).join('').toUpperCase();
 const hello = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
@@ -74,7 +75,7 @@ export function ClubHome({ d, go }: { d: ClubBundle; go: Go }) {
     </div>
     <div className="pq-overview-bottom">
       <Panel title="Your tournaments" action={staff && <div className="pq-overview-actions">{focus && <><button className="btn btn-outline" type="button" onClick={() => go('club-inbox',focus.id)}>Entries inbox</button><button className="btn btn-outline" type="button" onClick={() => go('club-desk',focus.id)}>Open the desk</button></>}<button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new',d.club.id)}>Create tournament</button></div>}>
-        {[...live,...upcoming,...pastDrafts,...finished].map(t => <Row key={t.id} title={t.name} sub={friendlyDate(t.startDate)+' · '+friendlyTime(t.startTime)+' · '+t.courts+' courts'} tag={t.status==='live'?'Live':t.status==='done'?'Finished':t.startDate<today?'Draft':'Upcoming'} tagKind={t.status==='live'?'live':t.status==='done'?'plain':'ready'} onClick={() => go('club-tournament',t.id)} />)}
+        {[...live,...upcoming,...pastDrafts,...finished].map(t => <Row key={t.id} title={t.name} sub={friendlyDate(t.startDate)+' · '+friendlyTime(t.startTime)+' · '+count(t.courts, 'court')} tag={t.status==='live'?'Live':t.status==='done'?'Finished':t.startDate<today?'Draft':'Upcoming'} tagKind={t.status==='live'?'live':t.status==='done'?'plain':'ready'} onClick={() => go('club-tournament',t.id)} />)}
         {open.length === 0 && <p className="small muted">No tournaments yet. Create your first one.</p>}
       </Panel>
 

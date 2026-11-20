@@ -160,7 +160,7 @@ export function EntriesInbox({ id, go, onBack }: { id: string; go: Go; onBack: (
               </tr>
               {panel && <tr className="expand"><td colSpan={6}>
                 {panel === 'pay' && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 28px', alignItems: 'center', padding: '6px 2px' }}>
-                  <span><span className="cap" style={{ display: 'block' }}>Entry fee</span><b>₹{fee}{div.kind === 'doubles' ? ' a team' : ''}</b></span>
+                  <span><span className="cap" style={{ display: 'block' }}>Entry fee</span><b>₹{fee}{div.kind === 'doubles' ? ' a team' : ' a player'}</b></span>
                   <span><span className="cap" style={{ display: 'block' }}>UPI reference</span><span className="n" style={{ fontSize: 26, letterSpacing: '.06em' }}>{r.paymentRef ?? 'None given'}</span></span>
                   <button type="button" className={ticked === r.id ? 'check on' : 'check'} aria-pressed={ticked === r.id} onClick={() => setTicked(ticked === r.id ? null : r.id)}><span className="bx" aria-hidden="true">{ticked === r.id ? '✓' : ''}</span>It matches a payment in my bank app</button>
                   <span className="row" style={{ marginLeft: 'auto', gap: 10 }}>

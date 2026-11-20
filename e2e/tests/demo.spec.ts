@@ -20,6 +20,20 @@ async function openDemoEvent(page: Page) {
 }
 
 test.describe('Organiser screens (demo club)', () => {
+  test('new tournament: the event name follows Singles/Doubles; a custom name stays', async ({ page }) => {
+    await page.goto('#/demo');
+    await page.getByLabel('Your name in the demo').fill('Robot');
+    await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
+    await page.getByRole('region', { name: 'Your tournaments' }).getByRole('button', { name: 'Create tournament', exact: true }).click();
+    const name = page.getByLabel('Event 1 name');
+    await expect(name).toHaveValue('Open Singles');
+    await page.getByRole('group', { name: 'Event 1 type' }).getByRole('button', { name: 'Doubles' }).click();
+    await expect(name).toHaveValue('Open Doubles');
+    await name.fill('Company Cup');
+    await page.getByRole('group', { name: 'Event 1 type' }).getByRole('button', { name: 'Singles' }).click();
+    await expect(name).toHaveValue('Company Cup');
+  });
+
   test('tournament page: ready-for-the-day check first, Mark as finished last, friendly dates, fits 320 px', async ({ page }) => {
     await openDemoEvent(page);
     const check = page.getByRole('region', { name: 'Ready for the day?' });
