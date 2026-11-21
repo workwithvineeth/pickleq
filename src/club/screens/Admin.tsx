@@ -178,7 +178,7 @@ export function AdminClubView({ id, go, onBack }: { id: string; go: Go; onBack: 
             <div className="pq-club-meta" style={{ justifyContent: 'center' }}>{[c.city, c.isTest ? 'Robot test club' : c.verified ? 'Verified' : 'Not verified yet'].filter(Boolean).join(' · ')}</div>
           </section>
           <div className="meta">
-            <button type="button" className="btn btn-primary" onClick={() => go('club-tournament-new', c.id)}>+ Create Tournament</button>
+            <SupportOpenButton b={b} clubId={c.id} newTournament reason={`Admin club page: create a tournament for ${c.name}`} go={go} label="+ Create tournament" primary />
             <SupportOpenButton b={b} clubId={c.id} reason={`Admin club page: ${c.name}`} go={go} label="Open club as support" />
           </div>
           <AdminPeople clubId={c.id} />

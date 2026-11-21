@@ -36,6 +36,8 @@ export function personalise(html:string,h:Home):string{
  let s=html.replace(/(<a [^>]*?)href="Overview\.dc\.html"([^>]*>)Sign in</g,'$1href="Account.dc.html"$2'+acct.label+'<');
  if(!h.signedIn)return s;
  s=s.replace(/<a ([^>]*?)href="(?:Overview\.dc\.html|#clubs)"([^>]*)>For clubs<\/a>/g,'<a $1href="MyEntries.dc.html"$2>My entries</a>');
+ // Signed-in organisers and admins: the RallyQ logo goes back to their dashboard (My clubs), not the public Home.
+ if(h.staff)s=s.replace(/(<a class="brand" )href="Main\.dc\.html"/g,'$1href="#/club"');
  if(!h.staff)s=s.replace(/(<nav class="mpanel"[^>]*>[\s\S]*?)<a [^>]*href="Account\.dc\.html"[^>]*>My Studio<\/a>/,'$1');
  return s;
 }

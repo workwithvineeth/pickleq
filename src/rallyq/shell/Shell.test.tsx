@@ -35,10 +35,10 @@ describe('v1.2 shells',()=>{
   fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(location.hash).toBe('#/home');
   expect(screen.queryByRole('link',{name:'My club'})).toBeNull();
  });
- it('public shell: someone who runs a club gets My clubs, and the logo always opens Home',async()=>{
+ it('public shell: someone who runs a club gets My clubs, and the logo takes them back to My clubs',async()=>{
   user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
   fireEvent.click(screen.getByRole('link',{name:'My clubs'}));expect(go).toHaveBeenLastCalledWith('club');
-  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(location.hash).toBe('#/home');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ: my clubs'}));expect(go).toHaveBeenLastCalledWith('club');
  });
  it('public shell: signed in, the menu offers My entries, never "For clubs", and nothing twice',async()=>{
   user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
@@ -58,7 +58,7 @@ describe('v1.2 shells',()=>{
   localStorage.setItem('rq-landing-choice','club-player-studio');
   user.mockResolvedValue({email:'a@example.test'});clubs.mockResolvedValue([{id:'c1',name:'TPC',role:'owner'}]);const go=vi.fn();render(<PublicShell go={go}><p>x</p></PublicShell>);await act(async()=>{});
   fireEvent.click(screen.getByRole('link',{name:'My clubs'}));expect(go).toHaveBeenLastCalledWith('club');
-  fireEvent.click(screen.getByRole('link',{name:'RallyQ home'}));expect(location.hash).toBe('#/home');
+  fireEvent.click(screen.getByRole('link',{name:'RallyQ: my clubs'}));expect(go).toHaveBeenLastCalledWith('club');
  });
  it('mode button toggles Night/Day and remembers it',async()=>{
   render(<PublicShell go={vi.fn()}><p>x</p></PublicShell>);await act(async()=>{});

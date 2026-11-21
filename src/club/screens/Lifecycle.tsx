@@ -70,7 +70,7 @@ export function LifecycleCard({ b, d, go, onChanged }: { b: ClubBackend; d: Tour
  * RallyQ admins open any club's tournament through a logged, 4-hour support session: they get the club's own
  * admin screens (create, entries, draw, desk, results, cancel) with normal club permissions, never ownership.
  */
-export function SupportOpenButton({ b, clubId, tournamentId, reason, go, label = 'Open tournament', primary = false }: { b: Pick<ClubBackend, 'startSupport'>; clubId: string; tournamentId?: string; reason: string; go: Go; label?: string; primary?: boolean }) {
+export function SupportOpenButton({ b, clubId, tournamentId, newTournament = false, reason, go, label = 'Open tournament', primary = false }: { b: Pick<ClubBackend, 'startSupport'>; clubId: string; tournamentId?: string; newTournament?: boolean; reason: string; go: Go; label?: string; primary?: boolean }) {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   async function open() {
@@ -78,7 +78,7 @@ export function SupportOpenButton({ b, clubId, tournamentId, reason, go, label =
     try {
       await b.startSupport(clubId, reason);
       window.dispatchEvent(new Event('pq-support-changed'));
-      if (tournamentId) go('club-tournament', tournamentId); else go('club-view', clubId);
+      if (newTournament) go('club-tournament-new', clubId); else if (tournamentId) go('club-tournament', tournamentId); else go('club-view', clubId);
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }
   return (

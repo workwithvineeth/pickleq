@@ -22,4 +22,10 @@ describe('prototype page header follows who is signed in',()=>{
     expect(s.match(/My Studio/g)).toHaveLength(1);
     expect(s).toContain('>My entries</a>');
   });
+  it('sends the logo to My clubs for a signed-in organiser, and to Home for everyone else', () => {
+    const page = '<a class="brand" href="Main.dc.html"><span>RallyQ</span></a>';
+    expect(personalise(page, { signedIn: true, route: 'club', staff: true })).toContain('href="#/club"');
+    expect(personalise(page, { signedIn: true, route: 'club-player-studio', staff: false })).toContain('href="Main.dc.html"');
+    expect(personalise(page, { signedIn: false, route: 'club-signin', staff: false } as never)).toContain('href="Main.dc.html"');
+  });
 });
