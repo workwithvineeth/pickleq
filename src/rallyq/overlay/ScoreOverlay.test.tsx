@@ -25,7 +25,7 @@ function scores(matches: PublicMatch[] | null) {
     entries: [{ id: 'a', divisionId: 'doubles', names: ['Alex', 'Sam'] }, { id: 'b', divisionId: 'doubles', names: ['Robin', 'Taylor'] }],
     matches,
   };
-  vi.mocked(usePublicScores).mockReturnValue({ data, loading: false, error: null, updatedAt: null, failures: 0 });
+  vi.mocked(usePublicScores).mockReturnValue({ data, loading: false, error: null, updatedAt: null, failures: 0, live: true });
 }
 
 const page = <ScoreOverlay courtPath="sample-open/1" />;
