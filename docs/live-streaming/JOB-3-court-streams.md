@@ -1,6 +1,6 @@
 # Job 3 — YouTube links per court (organiser) + video on the Live page
 
-Base branch: `stream-base` after Jobs 1–2 are merged. Read `CLAUDE.md`. Mockups: `docs/live-streaming/mockups/`
+Base branch: `stream-base`. Jobs 1 (instant scores, `usePublicScores.ts`) and 2 (overlay route `#/overlay/<slug>/<court>`) run in parallel on other branches: don't edit `usePublicScores.ts` or build the overlay page; only build the overlay *link*. Keep edits to shared files (`navigation.ts`, `ClubApp.tsx`, `backend.ts`, `demo.ts`, `server.ts`) small and additive. Read `CLAUDE.md`. Mockups: `docs/live-streaming/mockups/`
 `organiser.html` ("Organiser · live streams"), `watch-desktop.html`, `watch-phone.html`. Match them (Arena v2 Night tokens:
 Night #06140D, Ball #D9F24A, Chalk #F1F4EA, Sea #76E0D0 team A, Tide #7EAEF2 team B, Coral #FF655C live only; never
 maroon/cream, never "Powered by").

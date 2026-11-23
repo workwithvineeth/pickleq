@@ -1,6 +1,6 @@
 # Job 2 — Score overlay page for OBS
 
-Base branch: `stream-base` after Job 1 is merged (instant scores: `usePublicScores` already returns `live`). Read `CLAUDE.md`.
+Base branch: `stream-base`. Job 1 (instant scores inside `usePublicScores`) runs in parallel in another branch; just use `usePublicScores(slug)` as it is today — it will become instant when Job 1 merges. Don't edit `usePublicScores.ts`. Read `CLAUDE.md`.
 Do only this job. Small, readable diff.
 
 ## Goal

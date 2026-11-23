@@ -10,6 +10,9 @@ Base branch: `stream-base` after Jobs 1–3. Read `CLAUDE.md`. Small diff.
   lay the 16:9 board at the top (full width, 16:9) and below it a band with a QR code (`qrcode-generator`, already a
   dependency) to `<origin><base>#/live/<slug>` and the words "Watch live on rallyq.in". Night background.
   Without `fit=square` the TV is unchanged.
+- Desk instant refresh: the organiser desk (`src/rallyq/desk/RallyDesk.tsx` via `useTournament` in
+  `src/club/screens/Organiser.tsx`, which polls) should also subscribe to the same `live:<slug>` stream when the tournament
+  is public and refetch (debounced ~1 s) on a message; keep its poll as the fallback.
 - Tests: unit test that the TV re-renders a new score from a live message without waiting for a poll (fake stream), and
   that `fit=square` shows the QR band with an accessible label ("QR code: watch live on rallyq.in") while the default
   doesn't. Robot: extend the existing TV spec (find it in `e2e/tests`) with `fit=square`.
