@@ -58,6 +58,30 @@ test('live scores say when they are only a sample; TV board has no desk link', a
   await expect(page.getByRole('link', { name: '← Desk' })).toHaveCount(0);
 });
 
+test('venue TV square fit places the live QR below the full-width board', async ({ page }) => {
+  await page.route('https://*.supabase.co/**', (r) => r.fulfill({ json: [] }));
+  await page.setViewportSize({ width: 1080, height: 1080 });
+  const tv = '#/club-tv/pq-demo-central-s8';
+  const qr = page.getByRole('img', { name: 'QR code: watch live on rallyq.in' });
+  await page.goto(tv);
+  await expect(page.getByText('Cedar Club Season 8', { exact: true })).toBeVisible();
+  await expect(qr).toHaveCount(0);
+
+  await page.goto(`${tv}?fit=square`);
+  await expect(qr).toBeVisible();
+  await expect(page.getByText('Watch live on rallyq.in', { exact: true })).toBeVisible();
+  await expect(page.getByText('Cedar Club Season 8', { exact: true })).toBeVisible();
+  expect(await qr.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+  for (const width of [1080, 320]) {
+    await page.setViewportSize({ width, height: width });
+    const board = (await page.locator('.rallyq-screen-tv > .rq').boundingBox())!;
+    expect(board.width).toBe(width);
+    expect(board.height).toBeCloseTo(width * 9 / 16, 0);
+    expect((await qr.boundingBox())!.y).toBeGreaterThan(board.y + board.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+});
+
 test('organiser menu has My Player Studio and Sign out', async ({ page }) => {
   await page.goto('#/demo'); await page.getByLabel('Your name in the demo').fill('Robot Organiser');
   await page.getByRole('button', { name: 'Open PQ Demo Club' }).click();
