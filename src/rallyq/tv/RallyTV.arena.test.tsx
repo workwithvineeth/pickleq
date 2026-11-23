@@ -19,7 +19,7 @@ it('gives TV courts Living Q and DNA only when the current game has stored histo
   {id:'history',divisionId:'open',stage:'pool',court:1,status:'live',games:[game]},
   {id:'empty',divisionId:'open',stage:'pool',court:2,status:'live',games:[{a:0,b:0,points:''}]},
  ]};
- const scores={data,error:null,loading:false,updatedAt:Date.now(),failures:0};
+ const scores={data,error:null,loading:false,updatedAt:Date.now(),failures:0,live:true};
  vi.mocked(usePublicScores).mockReturnValue(scores);
  const go=vi.fn();
  const {rerender}=render(<RallyTV slug="cedar-open" go={go}/>);

@@ -5,6 +5,7 @@ import {COUNT_STEP_MS,HOLD_MS,MOTION_CSS,STALE_FAILURES,STALE_MS,finishedHandOff
 import {useReducedMotion} from '../useReducedMotion';
 import type {Go} from '../../navigation';
 import {usePublicScores} from '../../club/screens/usePublicScores';
+import {LIVE_SCORE_STALE_MS} from '../../club/live/scoreStream';
 import {courtMatches,matchView} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/TV.dc.html?raw';
@@ -51,7 +52,7 @@ export function RallyTV({slug,go}:{slug:string;go:Go}){
  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),15000);return()=>clearInterval(t)},[]);
  const d=scores.data;const reduced=useReducedMotion();
  // Polling stops once the event is final, so only a running event can go stale.
- const stale=!!d&&d.status!=='done'&&(scores.failures>=STALE_FAILURES||(scores.updatedAt!=null&&now.getTime()-scores.updatedAt>STALE_MS));
+ const stale=!!d&&d.status!=='done'&&(scores.failures>=STALE_FAILURES||(scores.updatedAt!=null&&now.getTime()-scores.updatedAt>(scores.live?LIVE_SCORE_STALE_MS:STALE_MS)));
  // Match end hold: when a court moves on from a finished match, that match stays up for HOLD_MS with its winners.
  const lastOnCourt=useRef<Record<number,string>>({});
  const[held,setHeld]=useState<Record<number,string>>({});
