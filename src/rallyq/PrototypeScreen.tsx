@@ -52,10 +52,11 @@ function nodeView(node:Node,scope:PrototypeValues,key:string,ctx:RenderContext):
  if(wm&&ctx.name==='Main'&&cls.includes('over')&&el.parentElement?.classList.contains('hero'))return createElement(Fragment,{key},createElement(tag,props,...children),createElement(Watermark,{key:'wm',style:{zIndex:-1}}));
  return createElement(tag,props,...children);
 }
-export interface PrototypeScreenProps{name:PrototypeName;values?:PrototypeValues;go:Go;source?:string;hrefs?:Record<string,string>;children?:ReactNode;className?:string;keepTitle?:boolean}
-export function PrototypeScreen({name,values={},go,source,hrefs,children,className='',keepTitle=false}:PrototypeScreenProps){
- const[day,setDay]=useState(currentTheme()==='light'),[menu,setMenu]=useState(false),[scrolled,setScrolled]=useState(false),home=useHome();
- useEffect(()=>subscribeTheme(()=>setDay(currentTheme()==='light')),[]);useEffect(()=>{const f=()=>setScrolled(scrollY>32);f();addEventListener('scroll',f,{passive:true});return()=>removeEventListener('scroll',f)},[]);
+export interface PrototypeScreenProps{name:PrototypeName;values?:PrototypeValues;go:Go;source?:string;hrefs?:Record<string,string>;children?:ReactNode;className?:string;keepTitle?:boolean;forceNight?:boolean}
+export function PrototypeScreen({name,values={},go,source,hrefs,children,className='',keepTitle=false,forceNight=false}:PrototypeScreenProps){
+ const[light,setLight]=useState(currentTheme()==='light'),[menu,setMenu]=useState(false),[scrolled,setScrolled]=useState(false),home=useHome();
+ const day=light&&!forceNight;
+ useEffect(()=>subscribeTheme(()=>setLight(currentTheme()==='light')),[]);useEffect(()=>{const f=()=>setScrolled(scrollY>32);f();addEventListener('scroll',f,{passive:true});return()=>removeEventListener('scroll',f)},[]);
  useEffect(()=>{if(keepTitle)return;const previous=document.title;document.title=name==='Main'?'RallyQ · Your court. The main event.':'RallyQ · '+(name==='MyStudio'?'My Player Studio':name);return()=>{document.title=previous}},[name,keepTitle]);
  const parsed=useMemo(()=>{const raw=prototypeAssets(personalise(source??files['./prototypes/'+name+'.dc.html']??'',home));const html=raw.match(/<x-dc>([\s\S]*?)<\/x-dc>/)?.[1]??raw;const styles=Array.from(html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)).map(m=>m[1]).join('\n');const prepared=html.replace(/<sc-(for|if)\b/g,'<template data-sc-kind="$1"').replace(/<\/sc-(?:for|if)>/g,'</template>');return{doc:new DOMParser().parseFromString(prepared,'text/html'),css:scopedCSS(shared+'\n'+styles)};},[name,source,home.signedIn,home.staff]);
  const scope={...values,rqCls:day?'rq day':'rq',day,flipMode:()=>chooseTheme(day?'dark':'light'),modeLabel:day?'Switch to night mode':'Switch to day mode',modeIcon:day?'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4':'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',menuOpen:menu,toggleMenu:()=>setMenu(!menu)};

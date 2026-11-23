@@ -12,7 +12,7 @@ import { poolLetter, slotTime } from '../domain/engine';
 import { duprCheck, duprCsv } from '../dupr';
 import { publicSources } from '../index';
 import { enteredPlayers, knockoutMatchesToAdd, planLateEntry, planReplacePlayer, planWithdraw } from '../plan';
-import { isStaff, STAGE_LABEL, type ClubPlayer, type Entry, type EntryPerson, type ScorerLink, type ScorerView } from '../types';
+import { isApproved, isStaff, STAGE_LABEL, type ClubPlayer, type Entry, type EntryPerson, type ScorerLink, type ScorerView } from '../types';
 import { appLink, copyLink, DemoNote, errorText, fmtRating, Header, names, Status, useLoad } from './common';
 import { formatRule, ScorePad } from './ScorePad';
 import { AccessCards } from './Access';
@@ -26,7 +26,6 @@ import { AddPanel } from './AddPanel';
 /** Loads a tournament for an organiser screen, drawing any knockout round that's ready. */
 export function useTournament(id: string, poll?: number) {
   const b = useClubBackend();
-  const [tick, setTick] = useState(0);
   const state = useLoad(async () => {
     if (!b) throw new Error('Open Club mode first');
     const t = await b.tournamentBundle(id);
@@ -34,12 +33,24 @@ export function useTournament(id: string, poll?: number) {
     const add = knockoutMatchesToAdd(t.tournament, t.divisions, t.entries, t.matches, newId);
     if (add.length) { await b.addMatches(add); return b.tournamentBundle(id); }
     return t;
-  }, [b, id, tick]);
+  }, [b, id]);
+  const { reload } = state;
+  const t = state.data?.tournament;
+  const liveSlug = poll && t?.id === id && t.isPublic && isApproved(t) && t.status !== 'done' ? t.publicSlug : undefined;
   useEffect(() => {
     if (!poll) return;
-    const h = window.setInterval(() => { if (document.visibilityState !== 'hidden') setTick((x) => x + 1); }, poll);
+    const h = window.setInterval(() => { if (document.visibilityState !== 'hidden') reload(); }, poll);
     return () => window.clearInterval(h);
-  }, [poll]);
+  }, [poll, reload]);
+  useEffect(() => {
+    if (!liveSlug) return;
+    let refresh: number | undefined;
+    const unsubscribe = b?.liveScores?.()?.subscribe(liveSlug, () => {
+      window.clearTimeout(refresh);
+      refresh = window.setTimeout(reload, 1000);
+    }, () => undefined);
+    return () => { window.clearTimeout(refresh); unsubscribe?.(); };
+  }, [b, liveSlug, reload]);
   return { b, state };
 }
 
