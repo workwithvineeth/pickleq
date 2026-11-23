@@ -5,6 +5,7 @@ import {serverBackend} from '../../club';
 import {inLaunchCity} from '../../club/config';
 import {useLoad} from '../../club/screens/common';
 import {usePublicScores} from '../../club/screens/usePublicScores';
+import {LIVE_SCORE_STALE_MS} from '../../club/live/scoreStream';
 import {courtMatches,matchView,scoredPoints} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
 import {liveWinBar,NO_WIN_BAR,winBarFrom,winBarHtml,type WinBar} from '../../club/winBar';
@@ -39,8 +40,8 @@ export function updatedLabel(at:number|null,now:number,error:boolean,sample:bool
  const s=Math.max(0,Math.round((now-at)/1000));
  return s<60?'Updated '+s+'s ago':'Updated '+new Date(at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
 }
-/** Two failed refreshes in a row (about 40 s), or a minute with no good refresh: the board may be behind. */
-export function connectionLost(failures:number,at:number|null,now:number,finished=false){return !finished&&(failures>=2||(at!==null&&now-at>60_000));}
+/** Two failed refreshes or a missed refresh window mean the board may be behind. */
+export function connectionLost(failures:number,at:number|null,now:number,finished=false,live=false){return !finished&&(failures>=2||(at!==null&&now-at>(live?LIVE_SCORE_STALE_MS:60_000)));}
 export function liveChipLabel(o:{lost:boolean;sample:boolean;directoryError:boolean;today:string;finished?:boolean}){
  if(o.finished)return 'Final results · '+o.today;
  if(o.lost)return 'Connection lost · scores may be behind';
@@ -126,7 +127,7 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
     return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:courtStatus(match.status),run:0,next:'',pts:match.status==='scheduled'?'':ok,win:liveWinBar(d,match),bestOf:view.format.bestOf,pointsTo:view.format.pointsTo,rallies:ralliesOf(cur,doubles),serving:match.status==='live'?servingNow(cur,doubles):null};}):[];
    return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
  }
- const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=!isSample&&connectionLost(scores.failures,scores.updatedAt,now,finished);
+ const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=!isSample&&connectionLost(scores.failures,scores.updatedAt,now,finished,scores.live);
  const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p})),find),setFind:(e:{target:{value:string}})=>{setFind(e.target.value);setPick(s=>({...s,c:0}));},today,isSample,topChip:isSample||lost||finished?'chip':'chip live',updated:updatedLabel(scores.updatedAt,now,lost||!!scores.error,isSample),updStyle:lost||scores.error?'color:var(--coral)':'',topLabel:liveChipLabel({lost,sample:isSample,directoryError:!!directory.error,today,finished})};
  return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }

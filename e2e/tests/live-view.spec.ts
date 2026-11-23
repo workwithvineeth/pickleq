@@ -1,8 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type WebSocketRoute } from '@playwright/test';
 
 // Public spectator data only. No server secrets, accounts, production reads or writes.
 test('spectator courts: sample data, score refresh, court selection, themes and widths', async ({ page }) => {
   let points = 9;
+  let realtimeUp = false;
+  let stream: { socket: WebSocketRoute; topic: string; join: string } | undefined;
+  await page.routeWebSocket(/\/realtime\/v1\/websocket\?/, socket => {
+    socket.onMessage(message => {
+      if (typeof message !== 'string') return;
+      const [join, ref, topic, event] = JSON.parse(message) as [string, string, string, string];
+      if (event !== 'phx_join' && event !== 'heartbeat') return;
+      const ok = event === 'heartbeat' || realtimeUp;
+      socket.send(JSON.stringify([join, ref, topic, 'phx_reply', { status: ok ? 'ok' : 'error', response: {} }]));
+      if (event === 'phx_join' && ok) stream = { socket, topic, join };
+    });
+  });
   const format = { bestOf: 1, pointsTo: 11, scoring: 'rally' };
   await page.route('https://*.supabase.co/**', route => {
     const path = new URL(route.request().url()).pathname;
@@ -20,6 +32,7 @@ test('spectator courts: sample data, score refresh, court selection, themes and 
   await expect(stage).toContainText('9'); await expect(stage).not.toContainText('No video linked');
   await page.getByRole('button',{name:'Live scores',exact:true}).click();
   await expect(page.getByRole('region', { name: 'On court now' }).getByRole('article')).toHaveCount(6);
+  await expect(page.getByText('Scores refresh every 20 seconds.')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Point by point' })).toHaveCount(0);
   await expect(page.getByRole('region',{name:'Momentum'})).toHaveCount(0);
   await expect(page.getByRole('region',{name:'Head to head'})).toHaveCount(0);
@@ -32,6 +45,17 @@ test('spectator courts: sample data, score refresh, court selection, themes and 
   // Resume from a hidden tab to exercise the real visibility refresh path without waiting 20 s.
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(stage.locator('.pq-flash-score').first()).toHaveText('10');
+
+  realtimeUp = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.getByText('Scores update live.')).toBeAttached();
+  expect(stream?.topic).toBe('realtime:live:sample-live-view');
+  // The RPC still returns 10, so only a broadcast can show the corrected score immediately.
+  stream!.socket.send(JSON.stringify([stream!.join, null, stream!.topic, 'broadcast', { type: 'broadcast', event: 'score', payload: {
+    id: 'm1', court: 1, entryA: 'e0', entryB: 'e1', status: 'live', games: [{ a: 8, b: 7 }], at: Date.now(),
+  } }]));
+  await expect(stage.locator('.pq-flash-score').first()).toHaveText('8', { timeout: 2000 });
+  points = 8;
   for (const colorScheme of ['light', 'dark'] as const) for (const width of [320, 390, 870, 1440]) {
     await page.setViewportSize({ width, height: 900 }); await page.emulateMedia({ colorScheme });
     await page.evaluate(() => document.fonts.ready);

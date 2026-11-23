@@ -1,59 +1,171 @@
 import { useEffect, useState } from 'react';
 import type { ClubBackend, PublicTournament } from '../backend';
 import { publicSourcesFor } from '../index';
+import { applyLiveMessage, LIVE_SCORE_POLL_MS, type LiveScoreMessage, type LiveScoreStream } from '../live/scoreStream';
 
-/** Full download at least every 6th poll (2 minutes), even if the version says nothing changed. */
+/** Keep the revision check, with a full download at least every sixth poll. */
 const FULL_EVERY = 6;
+const RETRY_MS = [1000, 2000, 5000, 10_000, 30_000];
+const CONFIRM_MS = 1500;
 
-/**
- * What the hook returns. `updatedAt` is when a poll last succeeded (ms since epoch, null before the first one) and
- * `failures` counts failed polls in a row, so a screen can tell a quiet board from one that stopped updating.
- */
-export interface PublicScores { data: PublicTournament | null; error: string | null; loading: boolean; updatedAt: number | null; failures: number }
+/** `updatedAt` is the last successful read or score message. `failures` counts failed refreshes in a row. */
+export interface PublicScores { data: PublicTournament | null; error: string | null; loading: boolean; updatedAt: number | null; failures: number; live: boolean }
 
-/** One polling timer; retain the last good score/video tree on refresh errors. */
+const empty = (slug: string) => ({ slug, data: null, error: null, loading: !!slug, updatedAt: null, failures: 0, live: false });
+
 export function usePublicScores(slug: string): PublicScores {
-  const [state, setState] = useState<PublicScores & { slug: string }>({ slug, data: null, error: null, loading: true, updatedAt: null, failures: 0 });
+  const [state, setState] = useState<PublicScores & { slug: string }>(() => empty(slug));
   useEffect(() => {
-    if(!slug){setState({slug,data:null,error:null,loading:false,updatedAt:null,failures:0});return;}
-    let alive = true, busy = false;
-    let status: PublicTournament['status'] | undefined;
-    // Ask the source that answered last time for its short version first; download the whole tournament only when it
-    // changed (or every FULL_EVERY polls as a safety net). An older server without the version check just gets full fetches.
+    if (!slug) { setState(empty(slug)); return; }
+    let alive = true, busy = false, fullPending = false, live = false;
+    let snapshot: PublicTournament | null = null;
     let last: { source: ClubBackend; rev: string | null } | null = null, polls = 0;
-    // Optional call: test doubles and older sources may not have the version check.
-    const revOf = (source: ClubBackend) => (source.publicTournamentRev?.(slug) ?? Promise.resolve(null)).catch(() => null);
-    async function unchanged(): Promise<boolean> {
-      if (!last?.rev || ++polls % FULL_EVERY === 0) return false;
-      return (await revOf(last.source)) === last.rev;
+    let stream: LiveScoreStream | undefined, disconnect: (() => void) | undefined;
+    let poll: number | undefined, confirm: number | undefined, retry: number | undefined;
+    let attempt = 0, generation = 0;
+    const receivedAt = new Map<string, number>();
+    const duringFetch = new Map<string, LiveScoreMessage>();
+
+    function pollAgain() {
+      window.clearInterval(poll);
+      poll = window.setInterval(() => void load(), live ? LIVE_SCORE_POLL_MS : 20_000);
     }
-    async function load() {
-      if (busy || document.hidden || status === 'done') return;
+
+    function setLive(value: boolean) {
+      if (live === value) return;
+      live = value;
+      setState(s => ({ ...s, live: value }));
+      pollAgain();
+    }
+
+    function closeStream() {
+      generation++;
+      window.clearTimeout(retry);
+      disconnect?.();
+      disconnect = undefined;
+    }
+
+    function onMessage(m: LiveScoreMessage) {
+      if (!snapshot || m.at < (receivedAt.get(m.id) ?? 0) || m.at < (duringFetch.get(m.id)?.at ?? 0)) return;
+      const next = applyLiveMessage(snapshot, m);
+      if (next !== snapshot) receivedAt.set(m.id, m.at);
+      if (busy) duringFetch.set(m.id, m);
+      snapshot = next;
+      setState(s => ({ ...s, data: next, error: null, updatedAt: Date.now(), failures: 0 }));
+      window.clearTimeout(confirm);
+      confirm = window.setTimeout(() => void load(true), CONFIRM_MS);
+    }
+
+    function connect() {
+      closeStream();
+      if (!stream) return;
+      const connection = generation;
+      const unsubscribe = stream.subscribe(slug, m => {
+        if (alive && connection === generation) onMessage(m);
+      }, status => {
+        if (!alive || connection !== generation) return;
+        if (status === 'live' && !live) {
+          attempt = 0;
+          setLive(true);
+          // The first snapshot and any reconnect may have missed writes before the channel joined.
+          void load(true);
+        } else if (status === 'down') {
+          setLive(false);
+          closeStream();
+          retry = window.setTimeout(() => {
+            if (document.hidden) return;
+            connect();
+            if (!live) void load(true);
+          }, RETRY_MS[Math.min(attempt++, RETRY_MS.length - 1)]);
+        }
+      });
+      if (connection === generation) disconnect = unsubscribe;
+      else unsubscribe();
+    }
+
+    const revOf = (source: ClubBackend) => (source.publicTournamentRev?.(slug) ?? Promise.resolve(null)).catch(() => null);
+
+    async function load(full = false) {
+      if (!alive || document.hidden) return;
+      if (busy) { fullPending ||= full; return; }
       busy = true;
       try {
-        if (await unchanged()) { if (alive) setState(s => ({ ...s, error: null, updatedAt: Date.now(), failures: 0 })); return; }
+        if (!full && last?.rev && ++polls % FULL_EVERY !== 0 && (await revOf(last.source)) === last.rev) {
+          if (alive) setState(s => ({ ...s, error: null, updatedAt: Date.now(), failures: 0 }));
+          return;
+        }
+        if (!alive) return;
         let data: PublicTournament | null = null, lastError: unknown;
+        let found: typeof last = null;
         for (const source of await publicSourcesFor(slug)) {
+          if (!alive) return;
           try {
-            // Fetch the version before the data, so a change in between is caught on the next poll, not missed.
+            // Read the revision first so a write between these reads is caught on the next poll.
             const rev = await revOf(source);
+            if (!alive) return;
+            duringFetch.clear();
             data = await source.publicTournament(slug);
-            if (data) { last = { source, rev }; break; }
+            if (data) { found = { source, rev }; break; }
           } catch (e) { lastError = e; }
         }
+        if (!alive) return;
         if (!data && lastError) throw lastError;
-        if (alive) { status = data?.status; setState({ slug, data, error: null, loading: false, updatedAt: Date.now(), failures: 0 }); }
+        const changedSource = found?.source !== last?.source;
+        last = found;
+        if (changedSource) receivedAt.clear();
+        else if (data && data.status !== 'done') {
+          // An older response fetched while a message arrived should not take the score backwards.
+          for (const m of duringFetch.values()) {
+            const next = applyLiveMessage(data, m);
+            if (next !== data) receivedAt.set(m.id, m.at);
+            data = next;
+          }
+        }
+        snapshot = data;
+        const done = data?.status === 'done';
+        setState({ slug, data, error: null, loading: false, updatedAt: Date.now(), failures: 0, live: live && !done });
+        if (done) stop();
+        else if (changedSource) {
+          setLive(false);
+          attempt = 0;
+          window.clearTimeout(confirm);
+          stream = found?.source.liveScores?.();
+          connect();
+        }
       } catch (e) {
-        if (alive) setState(s => {
-          const same = s.slug === slug;
-          return { slug, data: same ? s.data : null, error: e instanceof Error ? e.message : 'Scores could not refresh. Trying again shortly.', loading: false, updatedAt: same ? s.updatedAt : null, failures: same ? s.failures + 1 : 1 };
-        });
-      } finally { busy = false; }
+        if (alive) setState(s => ({ slug, data: snapshot, error: e instanceof Error ? e.message : 'Scores could not refresh. Trying again shortly.',
+          loading: false, updatedAt: s.slug === slug ? s.updatedAt : null, failures: s.slug === slug ? s.failures + 1 : 1, live }));
+      } finally {
+        busy = false;
+        duringFetch.clear();
+        if (fullPending) { fullPending = false; void load(true); }
+      }
     }
+
+    function resume() {
+      if (document.hidden) return;
+      if (stream) {
+        setLive(false);
+        connect();
+        if (live) return;
+      }
+      void load(!!stream);
+    }
+
+    function stop() {
+      alive = false;
+      closeStream();
+      window.clearTimeout(confirm);
+      window.clearInterval(poll);
+      window.removeEventListener('online', resume);
+      document.removeEventListener('visibilitychange', resume);
+    }
+
+    window.addEventListener('online', resume);
+    document.addEventListener('visibilitychange', resume);
+    pollAgain();
     void load();
-    const timer = window.setInterval(() => void load(), 20_000);
-    document.addEventListener('visibilitychange', load);
-    return () => { alive = false; window.clearInterval(timer); document.removeEventListener('visibilitychange', load); };
+    return stop;
   }, [slug]);
-  return state.slug === slug ? state : { data: null, error: null, loading: true, updatedAt: null, failures: 0 };
+  return state.slug === slug ? state : empty(slug);
 }

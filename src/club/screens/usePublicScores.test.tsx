@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PublicTournament } from '../backend';
+import type { LiveScoreMessage, LiveScoreStream } from '../live/scoreStream';
 import { usePublicScores } from './usePublicScores';
 const { read, sources } = vi.hoisted(() => ({ read: vi.fn(), sources: vi.fn() }));
 vi.mock('../index', () => ({ publicSourcesFor: sources }));
@@ -46,6 +47,126 @@ describe('public score refresh lifecycle', () => {
     rev.mockResolvedValue('v2');
     await act(async () => { await vi.advanceTimersByTimeAsync(20000); }); expect(read).toHaveBeenCalledTimes(2); // a point was scored
     await act(async () => { await vi.advanceTimersByTimeAsync(20000 * 6); }); expect(read).toHaveBeenCalledTimes(3); // safety-net full refresh
+    unmount();
+  });
+});
+
+const match = { id: 'm', court: 1, stage: 'pool', status: 'live', games: [{ a: 0, b: 0, points: '' }] } as const;
+const event: PublicTournament = { ...score, matches: [{ ...match, games: [...match.games] }] };
+
+function fakeStream() {
+  vi.useFakeTimers();
+  vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+  const connections: { receive: Parameters<LiveScoreStream['subscribe']>[1]; status: Parameters<LiveScoreStream['subscribe']>[2]; stop: ReturnType<typeof vi.fn> }[] = [];
+  const subscribe = vi.fn<LiveScoreStream['subscribe']>((_slug, receive, status) => {
+    const stop = vi.fn();
+    connections.push({ receive, status, stop });
+    status('connecting');
+    return stop;
+  });
+  const stream = vi.fn(() => ({ subscribe }));
+  sources.mockResolvedValue([{ publicTournament: vi.fn().mockResolvedValue(null) }, { publicTournament: read, liveScores: stream }]);
+  read.mockResolvedValue(event);
+  return { subscribe, connections };
+}
+
+const elapsed = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+const point = (a: number, at: number): LiveScoreMessage => ({ id: 'm', status: 'live', court: 1, games: [{ a, b: 0, points: '' }], at });
+const withPoint = (a: number): PublicTournament => ({ ...event, matches: [{ ...event.matches[0], games: point(a, 1).games }] });
+
+describe('public score stream', () => {
+  it('applies the latest point immediately and confirms a burst with one full fetch', async () => {
+    const { subscribe, connections } = fakeStream();
+    const { result, unmount } = renderHook(() => usePublicScores('sample'));
+    await elapsed(0);
+    expect(subscribe).toHaveBeenCalledWith('sample', expect.any(Function), expect.any(Function));
+    await act(async () => connections[0].status('live'));
+    expect(result.current.live).toBe(true);
+    read.mockClear().mockResolvedValue(withPoint(3));
+    act(() => connections[0].receive(point(2, 200)));
+    expect(result.current.data?.matches[0].games[0].a).toBe(2);
+    await elapsed(700);
+    act(() => connections[0].receive(point(3, 300)));
+    act(() => connections[0].receive(point(1, 100)));
+    expect(result.current.data?.matches[0].games[0].a).toBe(3);
+    expect(result.current.updatedAt).toBe(Date.now());
+    await elapsed(1499);
+    expect(read).not.toHaveBeenCalled();
+    await elapsed(1);
+    expect(read).toHaveBeenCalledOnce();
+    unmount();
+  });
+
+  it('polls at 60 seconds while live and 20 while down, and fetches as it reconnects', async () => {
+    const { subscribe, connections } = fakeStream();
+    const { result, unmount } = renderHook(() => usePublicScores('sample'));
+    await elapsed(0);
+    await act(async () => connections[0].status('live'));
+    expect(read).toHaveBeenCalledTimes(2);
+    await elapsed(59_999); expect(read).toHaveBeenCalledTimes(2);
+    await elapsed(1); expect(read).toHaveBeenCalledTimes(3);
+    act(() => connections[0].status('down'));
+    expect(result.current.live).toBe(false);
+    expect(connections[0].stop).toHaveBeenCalledOnce();
+    await elapsed(999); expect(subscribe).toHaveBeenCalledOnce();
+    await elapsed(1); expect(subscribe).toHaveBeenCalledTimes(2); expect(read).toHaveBeenCalledTimes(4);
+    await elapsed(18_999); expect(read).toHaveBeenCalledTimes(4);
+    await elapsed(1); expect(read).toHaveBeenCalledTimes(5);
+    await act(async () => connections[1].status('live'));
+    expect(result.current.live).toBe(true);
+    expect(read).toHaveBeenCalledTimes(6);
+    unmount();
+  });
+
+  it('keeps a newer message while an older full response is on its way', async () => {
+    const { connections } = fakeStream();
+    const { result, unmount } = renderHook(() => usePublicScores('sample'));
+    await elapsed(0);
+    let finish!: (data: PublicTournament) => void;
+    read.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    await act(async () => connections[0].status('live'));
+    act(() => connections[0].receive(point(2, 200)));
+    await act(async () => finish(event));
+    expect(result.current.data?.matches[0].games[0].a).toBe(2);
+    read.mockResolvedValue(withPoint(2));
+    await elapsed(1500);
+    expect(result.current.data?.matches[0].games[0].a).toBe(2);
+    unmount();
+  });
+
+  it('reconnects on online or visible and stops poll, stream and retries on unmount', async () => {
+    const { subscribe, connections } = fakeStream();
+    const { unmount } = renderHook(() => usePublicScores('sample'));
+    await elapsed(0);
+    act(() => connections[0].status('down'));
+    await act(async () => window.dispatchEvent(new Event('online')));
+    expect(subscribe).toHaveBeenCalledTimes(2);
+    act(() => connections[1].status('down'));
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    expect(subscribe).toHaveBeenCalledTimes(3);
+    act(() => connections[2].receive(point(1, 100)));
+    act(() => connections[2].status('down'));
+    const calls = read.mock.calls.length;
+    unmount();
+    window.dispatchEvent(new Event('online'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await elapsed(120_000);
+    expect(read).toHaveBeenCalledTimes(calls);
+    expect(subscribe).toHaveBeenCalledTimes(3);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('disconnects when the confirming fetch finds a finished tournament', async () => {
+    const { connections } = fakeStream();
+    const { result, unmount } = renderHook(() => usePublicScores('sample'));
+    await elapsed(0);
+    await act(async () => connections[0].status('live'));
+    read.mockResolvedValue({ ...withPoint(1), status: 'done' });
+    act(() => connections[0].receive(point(1, 100)));
+    await elapsed(1500);
+    expect(result.current).toMatchObject({ data: { status: 'done' }, live: false });
+    expect(connections[0].stop).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
     unmount();
   });
 });

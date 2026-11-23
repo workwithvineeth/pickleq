@@ -19,7 +19,7 @@ import {useRef,useState} from 'react';
    <div className="pq-watch-note">{!show&&video&&<span>Scores continue</span>}{video&&valid&&<a href={'https://www.youtube.com/watch?v='+video.videoId} target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>}{show&&<button type="button" onClick={()=>setFailed(video.videoId)}>Video not playing?</button>}</div>
   </section>;
  }
- export function LiveCourts({d,videos={},serves={},initialCourt}:{d:PublicTournament;videos?:Record<number,CourtVideo>;serves?:Record<number,ServeCall>;initialCourt?:number}){
+ export function LiveCourts({d,videos={},serves={},initialCourt,live=false}:{d:PublicTournament;videos?:Record<number,CourtVideo>;serves?:Record<number,ServeCall>;initialCourt?:number;live?:boolean}){
   const courts=courtMatches(d),[court,setCourt]=useState(initialCourt),[mode,setMode]=useState<'watch'|'courts'>('watch'),heading=useRef<HTMLHeadingElement>(null);
   const selected=courts.find(c=>c.court===court)??courts.find(c=>c.match.status==='live')??courts[0];
   if(!selected)return <section className="lg card"><h2>Live scores</h2><p>Courts appear when matches are assigned.</p></section>;
@@ -34,7 +34,7 @@ import {useRef,useState} from 'react';
      {points.length>0&&<section className="lg card pq-live-panel" aria-label="Point by point"><div className="ch"><h2>Point by point</h2><span className="cap">Latest first</span></div><ol className="feed pq-point-feed">{points.slice(-12).reverse().map(p=><li key={p.index}><b className="n">{p.a} – {p.b}</b><span>{p.side==='A'?score.a:score.b}</span><small>Point {p.index}</small></li>)}</ol></section>}</div>}
     <button className="btn btn-outline pq-all-courts" type="button" onClick={()=>setMode('courts')}>All courts →</button>
    </div>
-   <section hidden={mode!=='courts'} aria-label="On court now" className="pq-live-courts-view"><div className="pq-live-court-grid">{courts.map(({court:c,match:m})=>{const v=matchView(d,m);return <LiveCourtCard key={c} data={{court:c,teamA:v.a,teamB:v.b,pointsA:v.pointsA,pointsB:v.pointsB,category:(v.division?.name??d.name)+' · '+STAGE_LABEL[m.stage],status:m.status==='done'?'done':m.status==='live'?'live':'scheduled',chance:null,matchPoint:isMatchPoint(d,m)}} onWatch={()=>watch(c)}/>;})}</div><p className="small muted">Scores refresh every 20 seconds.</p></section>
+   <section hidden={mode!=='courts'} aria-label="On court now" className="pq-live-courts-view"><div className="pq-live-court-grid">{courts.map(({court:c,match:m})=>{const v=matchView(d,m);return <LiveCourtCard key={c} data={{court:c,teamA:v.a,teamB:v.b,pointsA:v.pointsA,pointsB:v.pointsB,category:(v.division?.name??d.name)+' · '+STAGE_LABEL[m.stage],status:m.status==='done'?'done':m.status==='live'?'live':'scheduled',chance:null,matchPoint:isMatchPoint(d,m)}} onWatch={()=>watch(c)}/>;})}</div><p className="small muted">{live?'Scores update live.':'Scores refresh every 20 seconds.'}</p></section>
   </section>;
  }
  
