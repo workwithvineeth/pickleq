@@ -8,6 +8,8 @@ import { broadcastDemoScore, demoScoreStream } from './live/demoScoreStream';
 import { publicScoreGame } from './live/scoreStream';
 import { pinProblem, randomPin as randomPinOf } from './pins';
 import { blobToDataUrl } from './poster';
+import type { CourtStream, PublicCourtStream } from './backend';
+import { isYouTubeVideoId } from './live/youtubeLink';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { cleanEmail, digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
 import { hasContactDetails, TESTIMONIAL_MAX, type Testimonial, type TestimonialStatus, isAdmin, isApproved, isStaff, NOT_APPROVED, PICK_NEEDS_TRUST, type Approval, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
@@ -22,6 +24,7 @@ interface DemoState {
   divisions: Division[];
   entries: Entry[];
   matches: ClubMatch[];
+  courtStreams?: Record<string, CourtStream[]>;
   summaries: (SharedSummary & { clubId: string })[];
   scorerLinks?: (ScorerLink & { failed: number; lockedUntil?: number })[];
   /** One referee PIN per tournament for every court link. */
@@ -87,6 +90,7 @@ export class DemoBackend implements ClubBackend {
     this.s.divisions = this.s.divisions.filter((d) => !oldD.has(d.id));
     this.s.entries = this.s.entries.filter((e) => !oldD.has(e.divisionId));
     this.s.matches = this.s.matches.filter((m) => !m.tournamentId || !oldT.has(m.tournamentId));
+    if (this.s.courtStreams) for (const id of oldT) delete this.s.courtStreams[id];
     this.s.registrations = (this.s.registrations ?? []).filter((r) => !oldT.has(r.tournamentId));
     const ev = buildSampleEvents(clubId, newId, this.s.players.filter((p) => p.clubId === clubId && p.sample));
     this.s.clubs.push(...ev.clubs);
@@ -840,6 +844,56 @@ export class DemoBackend implements ClubBackend {
     this.save();
   }
 
+  private async organiserStreams(tournamentId: string): Promise<CourtStream[]> {
+    const t = this.tournament(tournamentId);
+    if (!isAdmin(this.role(t.clubId)) && !(await this.isPlatformAdmin())) {
+      throw new ClubError('Only the club’s owner and admins can manage live streams');
+    }
+    const streams = this.s.courtStreams ??= {};
+    return streams[tournamentId] ??= [];
+  }
+
+  async courtStreams(tournamentId: string): Promise<CourtStream[]> {
+    return (await this.organiserStreams(tournamentId)).map(s => ({ ...s })).sort((a, b) => a.court - b.court);
+  }
+
+  async setCourtStream(tournamentId: string, court: number, videoId: string): Promise<CourtStream> {
+    const streams = await this.organiserStreams(tournamentId);
+    if (!Number.isInteger(court) || court < 1 || court > 64) throw new ClubError('Court must be between 1 and 64');
+    if (!isYouTubeVideoId(videoId)) throw new ClubError('Enter a valid YouTube video ID');
+    const index = streams.findIndex(s => s.court === court);
+    const old = streams[index];
+    const stream: CourtStream = old?.videoId === videoId
+      ? old
+      : { court, videoId, visible: old?.visible ?? false, status: 'unknown' };
+    if (index < 0) streams.push(stream);
+    else streams[index] = stream;
+    this.save();
+    return { ...stream };
+  }
+
+  async setCourtStreamVisible(tournamentId: string, court: number, visible: boolean): Promise<CourtStream> {
+    const stream = (await this.organiserStreams(tournamentId)).find(s => s.court === court);
+    if (!stream) throw new ClubError('Save a YouTube link for this court first');
+    stream.visible = visible;
+    this.save();
+    return { ...stream };
+  }
+
+  async clearCourtStream(tournamentId: string, court: number): Promise<void> {
+    const streams = await this.organiserStreams(tournamentId);
+    const index = streams.findIndex(s => s.court === court);
+    if (index >= 0) { streams.splice(index, 1); this.save(); }
+  }
+
+  async publicCourtStreams(slug: string): Promise<PublicCourtStream[]> {
+    const t = this.s.tournaments.find(x => x.publicSlug === slug && x.isPublic && isApproved(x));
+    if (!t) return [];
+    return (this.s.courtStreams?.[t.id] ?? []).filter(s => s.visible)
+      .map(({ court, videoId, status, embeddable, checkedAt }) => ({ court, videoId, status, embeddable, checkedAt }))
+      .sort((a, b) => a.court - b.court);
+  }
+
   async publicTournamentRev(slug: string): Promise<string | null> {
     const t = await this.publicTournament(slug);
     return t ? JSON.stringify(t) : null;
@@ -1087,6 +1141,7 @@ export class DemoBackend implements ClubBackend {
     if (confirmName.trim() !== t.name.trim()) throw new ClubError('Type the tournament name exactly to confirm');
     this.s.divisions = this.s.divisions.filter((d) => d.tournamentId !== id);
     this.s.tournaments = this.s.tournaments.filter((x) => x.id !== id);
+    if (this.s.courtStreams) delete this.s.courtStreams[id];
     this.audit.unshift({ at: new Date().toISOString(), action: 'tournament_delete', detail: t.name, clubId: t.clubId, tournamentId: id });
     this.save();
   }

@@ -5,8 +5,9 @@ import {serverBackend} from '../../club';
 import {inLaunchCity} from '../../club/config';
 import {useLoad} from '../../club/screens/common';
 import {usePublicScores} from '../../club/screens/usePublicScores';
+import {gameOver} from '../../club/domain/momentum';
 import {LIVE_SCORE_STALE_MS} from '../../club/live/scoreStream';
-import {courtMatches,matchView,scoredPoints} from '../../club/liveView';
+import {courtMatches,isMatchPoint,matchView,scoredPoints} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
 import {liveWinBar,NO_WIN_BAR,winBarFrom,winBarHtml,type WinBar} from '../../club/winBar';
 import {winEstimate} from '../../club/winPredictor';
@@ -16,6 +17,8 @@ import {currentRun,level,ralliesOf,servingNow,type Rally} from '../arena/rallies
 import {LivingQ} from '../arena/LivingQ';
 import {Dna} from '../arena/Dna';
 import {flip,moment,type Seen} from '../motion/motion';
+import {CourtWatch} from './CourtWatch';
+import {canEmbedStream,useCourtStreams,useDelayedScores,useVideoSync} from './useStreams';
 const SEEN:Seen=new Map();
 /** The Live board with the win chance under the big score. */
 const LIVE_SOURCE=liveRaw.replace('scored by court referee</span></div>','scored by court referee</span></div>'+winBarHtml('sel.win'))
@@ -51,7 +54,7 @@ export function liveChipLabel(o:{lost:boolean;sample:boolean;directoryError:bool
 /** Sample win chance for the labelled sample (made-up ratings), so the sample shows what the bar looks like. */
 const sampleWin=(a:string,b:string,sa:number,sb:number,gA:number,gB:number,rA:number[],rB:number[])=>winBarFrom(winEstimate({ratingsA:rA,ratingsB:rB,ralliesA:sa+gA*11,ralliesB:sb+gB*11,gamesA:gA,gamesB:gB,pointsA:sa,pointsB:sb,pointsTo:11,bestOf:3}),a,b);
 
-interface Court {court:string;stage:string;a:string;b:string;sa:number;sb:number;game:number;games:string[];status:string;run:number;next:string;pts:string;win?:WinBar;bestOf?:number;pointsTo?:number;rallies?:Rally[];serving?:{team:'A'|'B';no:1|2;call:string}|null}
+interface Court {court:string;stage:string;a:string;b:string;sa:number;sb:number;game:number;games:string[];status:string;run:number;next:string;pts:string;win?:WinBar;bestOf?:number;pointsTo?:number;point?:string;rallies?:Rally[];serving?:{team:'A'|'B';no:1|2;call:string}|null}
 interface Venue {name:string;club:string;mark:string;courts:Court[];slug?:string}
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 /** Prototype sample, shown (and labelled) only when no event is live. */
@@ -111,23 +114,57 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
  const[find,setFind]=useState('');
  const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents()).filter(e=>inLaunchCity(e.city)&&e.status==='live'&&e.results):[]},[]);
  const events=directory.data??[];const want=slug?events.findIndex(e=>e.slug===slug):-1;const pick={v:chosen.v??Math.max(0,want),c:chosen.c};// A link to one event never shows another event's scores (QA-11).
- const ev=slug&&want<0?undefined:events[pick.v];const scores=usePublicScores(ev?.slug??'');
+ const ev=slug&&want<0?undefined:events[pick.v];
+ const watchSlug=ev?.slug??slug??'';
+ const {streams,loading:streamsLoading}=useCourtStreams(watchSlug);
+ const scores=usePublicScores(ev?.slug??(streams.length?watchSlug:''));
+ const [videoChoice,setVideoChoice]=useState<{ slug:string; court:number }>();
+ const chosenCourt=videoChoice?.slug===watchSlug?videoChoice.court:undefined;
+ const firstCourt=streams[0]?.court;
+ const watchCourt=chosenCourt!==undefined&&(streams.some(s=>s.court===chosenCourt)
+  ||scores.data?.matches.some(m=>m.court===chosenCourt&&m.status!=='void'))?chosenCourt:firstCourt;
+ const {settings,setSettings}=useVideoSync();
+ const synced=settings.enabled&&canEmbedStream(streams.find(s=>s.court===watchCourt));
+ const delayed=useDelayedScores(watchSlug,scores.data,synced?settings.seconds:0);
  const[now,setNow]=useState(()=>Date.now());
  useEffect(()=>{const t=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(t);},[]);
- // A link to one event that isn't live right now opens that event's results page, never the sample courts (audit 19 Nov).
- const notLive=!!slug&&!!directory.data&&want<0;
+ // Open results for a deep-linked event outside the live directory once we know it has no stream.
+ const notLive=!!slug&&!!directory.data&&want<0&&!streamsLoading&&!streams.length;
  useEffect(()=>{if(notLive&&slug)go('results',slug,{replace:true});},[notLive,slug,go]);
  if(notLive)return <ShellState name="Live" source={LOADING} go={go} loading/>;
  // Real scores are on their way: show the skeleton, never the sample.
- if((directory.loading&&!directory.data)||(ev&&scores.loading&&!scores.data))return <ShellState name="Live" source={LOADING} go={go} loading/>;
- let venues:Venue[]=SAMPLE;
- if(events.length){
-  venues=events.map((e,i)=>{const d=i===pick.v?scores.data:undefined;
-   const courts:Court[]=d?courtMatches(d).map(({court,match})=>{const view=matchView(d,match);const cur=match.games.at(-1);const doubles=view.division?.kind!=='singles';const ok=cur?scoredPoints(cur,doubles):'';
-    return {court:'Court '+court,stage:view.division?.name??d.name,a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:view.pointsA,sb:view.pointsB,game:view.game,games:match.games.filter((_g,k)=>k<view.game-1).map(g=>g.a+'–'+g.b),status:courtStatus(match.status),run:0,next:'',pts:match.status==='scheduled'?'':ok,win:liveWinBar(d,match),bestOf:view.format.bestOf,pointsTo:view.format.pointsTo,rallies:ralliesOf(cur,doubles),serving:match.status==='live'?servingNow(cur,doubles):null};}):[];
-   return {name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts,slug:e.slug};});
+ if(!streams.length&&((directory.loading&&!directory.data)||(ev&&scores.loading&&!scores.data)||(slug&&want<0&&streamsLoading)))return <ShellState name="Live" source={LOADING} go={go} loading/>;
+ const d=delayed;
+ const courts:Court[]=d?courtMatches(d).map(({court,match})=>{
+  const view=matchView(d,match),cur=match.games.at(-1),doubles=view.division?.kind!=='singles';
+  const ok=cur?scoredPoints(cur,doubles):'';
+  const {pointsA:a,pointsB:b,format}=view;
+  const gamePoint=streams.length&&match.status==='live'&&!gameOver(a,b,format.pointsTo,format.golden)
+    &&(gameOver(a+1,b,format.pointsTo,format.golden)||gameOver(b+1,a,format.pointsTo,format.golden));
+  return {
+   court:'Court '+court,stage:view.division?.name??d.name,
+   a:teamWithDupr(d,match.entryA)??view.a,b:teamWithDupr(d,match.entryB)??view.b,sa:a,sb:b,
+   game:view.game,games:match.games.slice(0,view.game-1).map(g=>g.a+'–'+g.b),
+   status:courtStatus(match.status),run:0,next:'',pts:match.status==='scheduled'?'':ok,
+   win:streams.length?undefined:liveWinBar(d,match),bestOf:format.bestOf,pointsTo:format.pointsTo,
+   rallies:ralliesOf(cur,doubles),serving:match.status==='live'?servingNow(cur,doubles):null,
+   point:gamePoint?(isMatchPoint(d,match)?'Match point':'Game point'):undefined,
+  };
+ }):[];
+ const venues:Venue[]=events.length?events.map((e,i)=>({
+  name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts:i===pick.v?courts:[],slug:e.slug,
+ })):SAMPLE;
+ const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=(!isSample||streams.length>0)&&connectionLost(scores.failures,scores.updatedAt,now,finished,scores.live);
+ if(watchCourt!==undefined&&streams.length){
+  const options=events.map(event=>({label:event.name,slug:event.slug}));
+  const name=ev?.name??scores.data?.name??'Live streams';
+  if(!ev)options.unshift({label:name,slug:watchSlug});
+  return <CourtWatch key={watchSlug} go={go} slug={watchSlug} name={name} club={ev?.club??scores.data?.club??''}
+   venue={ev?.venue??undefined} streams={streams} scores={courts} venues={options}
+   court={watchCourt} chooseCourt={court=>setVideoChoice({slug:watchSlug,court})}
+   chooseVenue={next=>{setPick({v:null,c:0});go('live',next);}}
+   updated={updatedLabel(scores.updatedAt,now,lost||!!scores.error,false)} settings={settings} setSettings={setSettings}/>;
  }
- const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=!isSample&&connectionLost(scores.failures,scores.updatedAt,now,finished,scores.live);
  const values={...liveValues(venues,pick.v,pick.c,p=>setPick(s=>({...s,...p})),find),setFind:(e:{target:{value:string}})=>{setFind(e.target.value);setPick(s=>({...s,c:0}));},today,isSample,topChip:isSample||lost||finished?'chip':'chip live',updated:updatedLabel(scores.updatedAt,now,lost||!!scores.error,isSample),updStyle:lost||scores.error?'color:var(--coral)':'',topLabel:liveChipLabel({lost,sample:isSample,directoryError:!!directory.error,today,finished})};
  return <PrototypeScreen name="Live" source={LIVE_SOURCE} go={go} values={values}/>;
 }

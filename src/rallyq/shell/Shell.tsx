@@ -55,7 +55,7 @@ export function PublicShell({go,active=null,host,right,children,footNote}:{go:Go
   <main className="wrap" style={{paddingBlock:'28px 40px',display:'flex',flexDirection:'column',gap:28}}>{children}</main>
   <div className="wrap pfoot"><span>{footNote??''}</span><Signoff/></div></Frame>;
 }
-export type OrgTab='home'|'tournaments'|'results'|'club'|'social'|'entries'|'draw'|'desk'|'referees'|'tv'|'studio';
+export type OrgTab='home'|'tournaments'|'results'|'club'|'social'|'entries'|'draw'|'desk'|'referees'|'tv'|'streams'|'studio';
 /** Organiser pages: host club on top of the side menu, event steps below, RallyQ sign-off last. */
 export function OrgShell({go,active,clubName='Your club',clubId,tournament,children}:{go:Go;active:OrgTab;clubName?:string;clubId?:string;tournament?:{id:string;name:string;slug?:string|null};children:ReactNode}){
  // Each menu link carries its real address, so copy-link / open-in-new-tab land on that page (UX-06).
@@ -66,7 +66,7 @@ export function OrgShell({go,active,clubName='Your club',clubId,tournament,child
  const slot=useMemo(()=>({reg,hasMode:n.mode>0}),[reg,n.mode]);
  return <Frame><div className="shell"><aside className="side" aria-label="Organiser menu"><HostBlock host={{marks:[clubMark(clubName)],name:clubName}} onClick={()=>go('club')}/>
   <span className="cap grp">{clubShort(clubName)}</span>{item('home','Home','club')}{item('tournaments','Tournaments','club-tournaments')}{item('results','Results & DUPR','club-results')}{clubId&&item('club','Club & team','club-view',clubId)}{t?.slug&&item('social','Social studio','club-social',t.slug!)}{item('studio','My Player Studio','club-player-studio')}<a href="#/" onClick={e=>{e.preventDefault();void signOutTo(go)}}>Sign out</a>
-  {t&&<><span className="cap grp">{t.name}</span>{item('entries','Entries & UPI','club-inbox',t.id)}{item('draw','Pools & knockouts','club-tournament',t.id)}{item('desk','Desk','club-desk',t.id)}{item('referees','Referees & results','club-scorers',t.id)}{t.slug&&item('tv','TV board','club-tv',t.slug!)}</>}
+  {t&&<><span className="cap grp">{t.name}</span>{item('entries','Entries & UPI','club-inbox',t.id)}{item('draw','Pools & knockouts','club-tournament',t.id)}{item('desk','Desk','club-desk',t.id)}{item('referees','Referees & results','club-scorers',t.id)}{t.slug&&item('tv','TV board','club-tv',t.slug!)}{item('streams','Live streams','club-streams',t.id)}</>}
   <Signoff text="Run on" onClick={()=>go('club')}/></aside>
   <main className="main" style={{display:'flex',flexDirection:'column',gap:22}}><OrgSlot.Provider value={slot}>{n.mode===0&&n.head===0&&<div className="row" style={{justifyContent:'flex-end'}}><ModeButton auto/></div>}{children}</OrgSlot.Provider></main></div></Frame>;
 }

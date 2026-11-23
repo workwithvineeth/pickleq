@@ -1,5 +1,6 @@
 import type { NewMatchRow, NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
+import type { CourtVideo } from './liveView';
 import type { LiveScoreStream } from './live/scoreStream';
 import type { Approval, Club, ClubMatch, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
@@ -38,6 +39,8 @@ export interface TournamentBundle {
 
 /** The two PINs of a tournament and its desk link. Organisers and RallyQ admins only. */
 export interface TournamentAccess { refereePin: string; deskPin: string; deskToken: string }
+export type PublicCourtStream = CourtVideo & { court: number };
+export type CourtStream = PublicCourtStream & { visible: boolean };
 /** What the desk sign-in page shows before the PIN: names only. */
 export interface DeskLabel { club: string; logoUrl?: string; tournament: string }
 
@@ -159,6 +162,11 @@ export interface ClubBackend extends EventsBackend {
   scorerSave(token: string, pin: string, matchId: string, patch: ScorePatch): Promise<void>;
   setMySharing(playerId: string, share: Share): Promise<void>;
   shareMySummary(playerId: string, data: SummaryData): Promise<void>;
+  courtStreams(tournamentId: string): Promise<CourtStream[]>;
+  setCourtStream(tournamentId: string, court: number, videoId: string): Promise<CourtStream>;
+  setCourtStreamVisible(tournamentId: string, court: number, visible: boolean): Promise<CourtStream>;
+  clearCourtStream(tournamentId: string, court: number): Promise<void>;
+  publicCourtStreams(slug: string): Promise<PublicCourtStream[]>;
   publicTournament(slug: string): Promise<PublicTournament | null>;
   liveScores?(): LiveScoreStream;
   /** A short fingerprint that changes whenever the public tournament does, so live pages fetch it only when needed. */

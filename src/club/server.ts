@@ -9,6 +9,7 @@ import { cleanEmail, type DrawPlan } from './registration';
 import type { Approval, Club, ClubMatch, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 import { isApproved, NOT_APPROVED, PICK_NEEDS_TRUST } from './types';
 import { teamNames } from './teamName';
+import type { CourtStream, PublicCourtStream } from './backend';
 import { publicRallyKeys as rallyKeys, publicScoreGame, readLiveScoreMessage, type LiveScoreMessage, type LiveScoreStream, type StreamStatus } from './live/scoreStream';
 
 /* Row shapes as stored on the server (snake_case). */
@@ -17,6 +18,11 @@ type Row = Record<string, unknown>;
 const PLAYER_COLS = 'id,club_id,name,dupr_singles,dupr_doubles,dupr_id,user_id,share,sample,created_at,claimed_at';
 const s = (v: unknown) => (v === null || v === undefined ? undefined : String(v));
 const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
+const toPublicCourtStream = (r: Row): PublicCourtStream => ({
+  court: Number(r.court), videoId: String(r.video_id), status: r.status as PublicCourtStream['status'],
+  embeddable: typeof r.embeddable === 'boolean' ? r.embeddable : undefined, checkedAt: s(r.checked_at),
+});
+const toCourtStream = (r: Row): CourtStream => ({ ...toPublicCourtStream(r), visible: r.visible === true });
 
 const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {}, logoUrl: s(r.logo_url),
   hosting: (s(r.hosting) as Club['hosting']) ?? undefined, hostingReason: s(r.hosting_reason), hostingPhone: s(r.hosting_phone), trusted: !!r.trusted });
@@ -779,6 +785,30 @@ export class ServerBackend implements ClubBackend {
 
   async setMySharing(playerId: string, share: Share) { check(await this.sb.rpc('set_my_sharing', { pid: playerId, choice: share })); }
   async shareMySummary(playerId: string, data: SummaryData) { check(await this.sb.rpc('share_my_summary', { pid: playerId, summary: data })); }
+
+  async courtStreams(tournamentId: string): Promise<CourtStream[]> {
+    const rows = check(await this.sb.rpc('court_streams_for', { p_tournament: tournamentId })) as Row[];
+    return rows.map(toCourtStream);
+  }
+
+  async setCourtStream(tournamentId: string, court: number, videoId: string): Promise<CourtStream> {
+    const row = check(await this.sb.rpc('set_court_stream', { p_tournament: tournamentId, p_court: court, p_video_id: videoId }).single()) as Row;
+    return toCourtStream(row);
+  }
+
+  async setCourtStreamVisible(tournamentId: string, court: number, visible: boolean): Promise<CourtStream> {
+    const row = check(await this.sb.rpc('set_court_stream_visible', { p_tournament: tournamentId, p_court: court, p_visible: visible }).single()) as Row;
+    return toCourtStream(row);
+  }
+
+  async clearCourtStream(tournamentId: string, court: number): Promise<void> {
+    check(await this.sb.rpc('clear_court_stream', { p_tournament: tournamentId, p_court: court }));
+  }
+
+  async publicCourtStreams(slug: string): Promise<PublicCourtStream[]> {
+    const rows = check(await this.sb.rpc('public_court_streams', { slug })) as Row[];
+    return rows.map(toPublicCourtStream);
+  }
 
   async publicTournamentRev(slug: string): Promise<string | null> {
     const r = check(await this.sb.rpc('public_tournament_rev', { slug }));
