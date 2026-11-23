@@ -1,6 +1,7 @@
 import type { NewMatchRow, NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
 import type { CourtVideo } from './liveView';
+import type { LiveScoreStream } from './live/scoreStream';
 import type { Approval, Club, ClubMatch, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 
 /** A late-entry player: the entry form's details plus the new roster id they get. */
@@ -167,6 +168,7 @@ export interface ClubBackend extends EventsBackend {
   clearCourtStream(tournamentId: string, court: number): Promise<void>;
   publicCourtStreams(slug: string): Promise<PublicCourtStream[]>;
   publicTournament(slug: string): Promise<PublicTournament | null>;
+  liveScores?(): LiveScoreStream;
   /** A short fingerprint that changes whenever the public tournament does, so live pages fetch it only when needed. */
   publicTournamentRev(slug: string): Promise<string | null>;
   myClubMatches(): Promise<MyClubMatches[]>;

@@ -6,6 +6,7 @@ import {inLaunchCity} from '../../club/config';
 import {useLoad} from '../../club/screens/common';
 import {usePublicScores} from '../../club/screens/usePublicScores';
 import {gameOver} from '../../club/domain/momentum';
+import {LIVE_SCORE_STALE_MS} from '../../club/live/scoreStream';
 import {courtMatches,isMatchPoint,matchView,scoredPoints} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
 import {liveWinBar,NO_WIN_BAR,winBarFrom,winBarHtml,type WinBar} from '../../club/winBar';
@@ -42,8 +43,8 @@ export function updatedLabel(at:number|null,now:number,error:boolean,sample:bool
  const s=Math.max(0,Math.round((now-at)/1000));
  return s<60?'Updated '+s+'s ago':'Updated '+new Date(at).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
 }
-/** Two failed refreshes in a row (about 40 s), or a minute with no good refresh: the board may be behind. */
-export function connectionLost(failures:number,at:number|null,now:number,finished=false){return !finished&&(failures>=2||(at!==null&&now-at>60_000));}
+/** Two failed refreshes or a missed refresh window mean the board may be behind. */
+export function connectionLost(failures:number,at:number|null,now:number,finished=false,live=false){return !finished&&(failures>=2||(at!==null&&now-at>(live?LIVE_SCORE_STALE_MS:60_000)));}
 export function liveChipLabel(o:{lost:boolean;sample:boolean;directoryError:boolean;today:string;finished?:boolean}){
  if(o.finished)return 'Final results · '+o.today;
  if(o.lost)return 'Connection lost · scores may be behind';
@@ -153,7 +154,7 @@ export function RallyLive({go,slug}:{go:Go;slug?:string}){
  const venues:Venue[]=events.length?events.map((e,i)=>({
   name:e.club,club:e.venue?e.club+' · '+e.venue:e.club,mark:mark(e.club),courts:i===pick.v?courts:[],slug:e.slug,
  })):SAMPLE;
- const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=(!isSample||streams.length>0)&&connectionLost(scores.failures,scores.updatedAt,now,finished);
+ const today=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});const isSample=venues===SAMPLE;const finished=scores.data?.status==='done';const lost=(!isSample||streams.length>0)&&connectionLost(scores.failures,scores.updatedAt,now,finished,scores.live);
  if(watchCourt!==undefined&&streams.length){
   const options=events.map(event=>({label:event.name,slug:event.slug}));
   const name=ev?.name??scores.data?.name??'Live streams';

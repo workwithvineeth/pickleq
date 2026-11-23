@@ -32,7 +32,7 @@ const fixture = (a: number): PublicTournament => ({
 
 beforeEach(() => {
   localStorage.clear();
-  mocks.scores = { data: fixture(2), error: null, loading: false, updatedAt: Date.now(), failures: 0 };
+  mocks.scores = { data: fixture(2), error: null, loading: false, updatedAt: Date.now(), failures: 0, live: true };
   mocks.server.publicCourtStreams.mockReset().mockResolvedValue([
     { court: 1, videoId, status: 'unknown' },
     { court: 2, videoId: secondId, status: 'unknown' },
