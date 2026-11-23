@@ -8,11 +8,12 @@ import ClubRoutes from '../club/screens/ClubRoutes';
 import { BrandMark } from '../club/screens/Brand';
 import { eventsBackend } from '../club/index';
 import type { SupportSession } from '../club/backend';
-import { useRoute, type Go, type RouteName } from '../navigation';
+import { useRoute, type Go, type Route, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import {RallyHome} from '../rallyq/home/RallyHome';
 import {MyStudio} from '../rallyq/studio/MyStudio';
 import {RallyLive} from '../rallyq/live/RallyLive';
+import {ScoreOverlay} from '../rallyq/overlay/ScoreOverlay';
 import {RallyEvent} from '../rallyq/event/RallyEvent';
 import {RallyTV} from '../rallyq/tv/RallyTV';
 import {PublicProfile} from '../rallyq/studio/PublicProfile';
@@ -79,6 +80,11 @@ if (/[?&](code|error_description)=/.test(window.location.search) && !window.loca
 
 export default function ClubApp() {
   const [route, go, back] = useRoute();
+  if (route.name === 'overlay') return <ScoreOverlay key={route.id} courtPath={route.id} />;
+  return <ClubAppWithShell route={route} go={go} back={back} />;
+}
+
+function ClubAppWithShell({ route, go, back }: { route: Route; go: Go; back: () => void }) {
   // RallyQ admins see every club on this tab, so it's called Clubs for them; organisers see their own, My clubs.
   const [admin, setAdmin] = useState(false);
   useEffect(() => { let on = true; eventsBackend().isPlatformAdmin().then((a) => { if (on) setAdmin(a); }, () => undefined); return () => { on = false; }; }, [route.name]);
