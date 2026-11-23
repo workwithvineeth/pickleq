@@ -6,7 +6,14 @@ import { applyLiveMessage, LIVE_SCORE_POLL_MS, type LiveScoreMessage, type LiveS
 /** Keep the revision check, with a full download at least every sixth poll. */
 const FULL_EVERY = 6;
 const RETRY_MS = [1000, 2000, 5000, 10_000, 30_000];
+/**
+ * A message for a match this page doesn't know yet (a knockout was just drawn, a late entry's matches were added) needs
+ * the full tournament. Spread those downloads over a few seconds so thousands of viewers don't all ask at once.
+ * A known match's message is applied as it is: the trigger sends the same public fields public_tournament returns,
+ * so a full download per point would only cost bandwidth (the 60 s version check still catches anything missed).
+ */
 const CONFIRM_MS = 1500;
+const CONFIRM_SPREAD_MS = 3000;
 
 /** `updatedAt` is the last successful read or score message. `failures` counts failed refreshes in a row. */
 export interface PublicScores { data: PublicTournament | null; error: string | null; loading: boolean; updatedAt: number | null; failures: number; live: boolean }
@@ -48,12 +55,15 @@ export function usePublicScores(slug: string): PublicScores {
     function onMessage(m: LiveScoreMessage) {
       if (!snapshot || m.at < (receivedAt.get(m.id) ?? 0) || m.at < (duringFetch.get(m.id)?.at ?? 0)) return;
       const next = applyLiveMessage(snapshot, m);
-      if (next !== snapshot) receivedAt.set(m.id, m.at);
       if (busy) duringFetch.set(m.id, m);
+      if (next === snapshot) {
+        // Unknown match: fetch the whole tournament once, a little later, instead of guessing its place in the draw.
+        if (confirm === undefined) confirm = window.setTimeout(() => { confirm = undefined; void load(true); }, CONFIRM_MS + Math.floor(Math.random() * CONFIRM_SPREAD_MS));
+        return;
+      }
+      receivedAt.set(m.id, m.at);
       snapshot = next;
       setState(s => ({ ...s, data: next, error: null, updatedAt: Date.now(), failures: 0 }));
-      window.clearTimeout(confirm);
-      confirm = window.setTimeout(() => void load(true), CONFIRM_MS);
     }
 
     function connect() {
@@ -128,7 +138,7 @@ export function usePublicScores(slug: string): PublicScores {
         else if (changedSource) {
           setLive(false);
           attempt = 0;
-          window.clearTimeout(confirm);
+          window.clearTimeout(confirm); confirm = undefined;
           stream = found?.source.liveScores?.();
           connect();
         }
@@ -155,7 +165,7 @@ export function usePublicScores(slug: string): PublicScores {
     function stop() {
       alive = false;
       closeStream();
-      window.clearTimeout(confirm);
+      window.clearTimeout(confirm); confirm = undefined;
       window.clearInterval(poll);
       window.removeEventListener('online', resume);
       document.removeEventListener('visibilitychange', resume);
