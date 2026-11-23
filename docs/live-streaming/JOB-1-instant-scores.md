@@ -1,6 +1,6 @@
 # Job 1 — Instant scores (Supabase Realtime broadcast)
 
-Base branch: `live/streaming` (= live commit `63ab94e` + these docs). Read `CLAUDE.md` first and follow its rules.
+Base branch: `stream-base` (= live commit `63ab94e` + these docs). Read `CLAUDE.md` first and follow its rules.
 Do only this job. Small, readable diff. Keep the existing code style.
 
 ## Goal
@@ -76,5 +76,5 @@ Every referee/desk/organiser write ends up as an INSERT/UPDATE on `public.club_m
 
 ## Done when
 `npm run check` prints All OK, `npm run db:test` is green, and the diff touches only what this job needs. Commit on a
-branch `live/job1-instant-scores` with author `Vineeth <349021697+workwithvineeth@users.noreply.github.com>`.
+branch `stream-job1` with author `Vineeth <349021697+workwithvineeth@users.noreply.github.com>`.
 In your final message list: files changed, anything you could not do, and anything you were unsure of.
