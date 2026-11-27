@@ -24,7 +24,7 @@ function LivePlayerMatch({ slug, matchIds }: NonNullable<PublicRallyPlayer['live
   </div>;
 }
 
-export function AthleteCover({ player }: { player: PublicRallyPlayer }) {
+export function AthleteCover({ player, onShare }: { player: PublicRallyPlayer; onShare: () => void }) {
   const record = studioRecord(player.official);
   const tiles = [
     ['Official wins', String(record.wins)],
@@ -41,6 +41,7 @@ export function AthleteCover({ player }: { player: PublicRallyPlayer }) {
       <span>DUPR singles · <b>{rating(player.duprSingles)}</b></span>
       <span>✓ Referee-scored</span>
     </div>
+    <button type="button" className="btn studio-action studio-card-action" onClick={onShare}>Share my card</button>
     {player.liveEvents?.map(event => <LivePlayerMatch key={event.slug} {...event} />)}
     <dl className="athlete-tiles">
       {tiles.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}

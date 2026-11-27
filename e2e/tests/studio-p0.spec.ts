@@ -1,3 +1,4 @@
+import { readFile, writeFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
 const OWNER = '11111111-1111-4111-8111-111111111111';
@@ -60,7 +61,7 @@ async function studioFixture(page: Page, baseURL: string) {
   await page.route(/\/storage\/v1\/object\/(?:public\/player-public-covers|sign\/player-photos)\/sample\/cover\.jpg/, async route => {
     if (route.request().method() === 'POST') return route.fallback();
     const photo = await page.request.get(new URL(mockPhoto, baseURL).href);
-    await route.fulfill({ response: photo });
+    await route.fulfill({ response: photo, headers: { ...photo.headers(), 'access-control-allow-origin': '*' } });
   });
 }
 
@@ -185,4 +186,64 @@ test('the cover shows the player’s live court and watches only a fan-visible s
   await expect(live).toContainText('Cedar Sample');
   await expect(live).toContainText('4–3');
   await expect(live.getByRole('link', { name: 'Watch' })).toHaveAttribute('href', 'https://www.youtube.com/watch?v=bbbbbbbbbbb');
+});
+
+test('both covers share player cards in two PNG sizes and an official match has its own card', async ({ page, baseURL }, info) => {
+  await studioFixture(page, baseURL!);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'canShare', { value: () => false, configurable: true });
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => {} }, configurable: true });
+  });
+  const screenshots = info.project.name === 'android' ? process.env.PQ_STUDIO_SCREENSHOTS : undefined;
+  const dialog = page.getByRole('dialog');
+  async function checkPng(height: number, filename: string) {
+    const png = dialog.getByRole('img', { name: /preview$/ });
+    await expect.poll(() => png.evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight])).toEqual([1080, height]);
+    const [download] = await Promise.all([page.waitForEvent('download'), dialog.getByRole('button', { name: 'Share PNG' }).click()]);
+    expect(download.suggestedFilename()).toBe(filename);
+    const bytes = await readFile((await download.path())!);
+    expect(bytes.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)]).toEqual([1080, height]);
+    if (screenshots) await writeFile(`${screenshots}/${filename}`, bytes);
+  }
+  async function checkButton(coverName: string) {
+    const button = page.getByRole('region', { name: coverName, exact: true }).getByRole('button', { name: 'Share my card', exact: true });
+    await expect(button).toBeVisible();
+    expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await button.click();
+    await expect(dialog).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  }
+
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto(`#/public-player/${PLAYER}`);
+  await checkButton('Athlete cover');
+  await checkPng(1350, 'rallyq-player-4x5.png');
+  await dialog.getByRole('button', { name: '9:16 Status' }).click();
+  await expect(dialog.getByRole('button', { name: '9:16 Status' })).toHaveAttribute('aria-pressed', 'true');
+  await checkPng(1920, 'rallyq-player-9x16.png');
+  await dialog.getByRole('button', { name: 'Copy profile link' }).click();
+  await expect(dialog.getByText('Link copied', { exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Close card' }).click();
+  await page.getByRole('row').filter({ hasText: '11–8' }).getByRole('button', { name: 'Share', exact: true }).click();
+  await expect(dialog).toHaveAccessibleName('Share match result');
+  await expect(dialog.getByRole('group', { name: 'Card size' })).toHaveCount(0);
+  await checkPng(1350, 'rallyq-result-4x5.png');
+  await dialog.getByRole('button', { name: 'Close card' }).click();
+
+  await page.goto('#/club-player-studio');
+  await checkButton('Private Athlete cover');
+  await expect(dialog.getByRole('img', { name: 'Aster Sample player card preview' })).toBeVisible();
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'canShare', { value: (data: ShareData) => data.files?.[0]?.type === 'image/png' });
+    Object.defineProperty(navigator, 'share', { value: async (data: ShareData) => {
+      if (data.files?.[0]?.name !== 'rallyq-player-4x5.png') throw new Error('No PNG attached');
+    }, configurable: true });
+  });
+  await dialog.getByRole('button', { name: 'Share PNG' }).click();
+  await expect(dialog.getByText('Shared', { exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Close card' }).click();
+  await page.getByRole('tab', { name: 'Diary', exact: true }).click();
+  await page.getByRole('button', { name: 'Share', exact: true }).first().click();
+  await expect(dialog.getByRole('img', { name: 'Aster Sample match result preview' })).toBeVisible();
 });

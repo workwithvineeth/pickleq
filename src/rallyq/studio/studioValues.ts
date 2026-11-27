@@ -16,7 +16,7 @@ export const won=(o:OfficialMatch)=>o.winner===o.mySide;
 const names=(o:OfficialMatch,side:'mine'|'them')=>((side==='mine')===(o.mySide==='A')?o.sideA:o.sideB).map(p=>p.name.split(' ')[0]).join(' / ');
 function parseScore(s:string){const games=[...s.matchAll(/(\d+)\s*[–\-:]\s*(\d+)/g)].map(m=>[Number(m[1]),Number(m[2])]);return games;}
 
-export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)=>void,act:{save:()=>void;share:(k:keyof SharingOptions)=>void}){
+export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)=>void,act:{save:()=>void;share:(k:keyof SharingOptions)=>void;shareMatch?:(id:string,playerId:string)=>void}){
  const off=[...d.official].sort((a,b)=>a.playedOn.localeCompare(b.playedOn));
  const practiceMatches=d.practice.filter(p=>p.kind==='practice_match');
  const pr=practiceMatches.map(p=>parseScore(p.scoreText)).filter(g=>g.length);
@@ -44,8 +44,8 @@ export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)
  const gm=sel&&game?mine(sel,game):[0,0];
  const bar=(v:number,c:string)=>`display:block;height:100%;width:${v}%;background:${c};border-radius:99px`;
  const recent=off.slice(-12);const bv=recent.map(o=>{const g=o.games.map(x=>mine(o,x));return pct(sum(g,0),sum(g,0)+sum(g,1));});
- const diaryRows=[...off.map(o=>({d:o.playedOn,kind:'Tournament',what:o.tournament+(o.stage!=='pool'?' · '+STAGE_LABEL[o.stage]:''),score:o.games.map(g=>mine(o,g).join('–')).join(' · '),ref:true})),
-  ...d.practice.map(p=>({d:p.playedAt,kind:p.kind==='practice_match'?'Practice':p.kind==='casual'?'Casual games':'Drill or training',what:p.opponents?'vs '+opponentLine(p.opponents):(p.focusTags[0]??(p.kind==='practice_match'?'Practice':'Training session')),score:p.kind==='practice_match'?[p.scoreText,p.partner?'with '+p.partner:'',p.venue].filter(Boolean).join(' · '):p.kind==='casual'?`${p.wins} wins in ${p.count} games`:(p.minutes??0)+' min',ref:false}))]
+ const diaryRows=[...off.map(o=>({official:o,d:o.playedOn,kind:'Tournament',what:o.tournament+(o.stage!=='pool'?' · '+STAGE_LABEL[o.stage]:''),score:o.games.map(g=>mine(o,g).join('–')).join(' · '),ref:true})),
+  ...d.practice.map(p=>({official:undefined,d:p.playedAt,kind:p.kind==='practice_match'?'Practice':p.kind==='casual'?'Casual games':'Drill or training',what:p.opponents?'vs '+opponentLine(p.opponents):(p.focusTags[0]??(p.kind==='practice_match'?'Practice':'Training session')),score:p.kind==='practice_match'?[p.scoreText,p.partner?'with '+p.partner:'',p.venue].filter(Boolean).join(' · '):p.kind==='casual'?`${p.wins} wins in ${p.count} games`:(p.minutes??0)+' min',ref:false}))]
   .filter(r=>tourn?r.ref:practice?!r.ref:true).sort((a,b)=>b.d.localeCompare(a.d));
  const minutes=d.practice.filter(p=>p.playedAt.slice(0,7)===new Date().toISOString().slice(0,7)).reduce((s,p)=>s+(p.minutes??0),0);
  const goal=d.goals[0];
@@ -74,7 +74,7 @@ export function studioValues(d:StudioInput,ui:StudioUI,set:(p:Partial<StudioUI>)
    return{label,note:hasPractice?(Number(p)>Number(t)?'practice +'+(Number(p)-Number(t)):'tournament +'+(Number(t)-Number(p))):'log practice to compare',t:t+'%',p:hasPractice?p+'%':'–',tBar:bar(Number(t),'#2B6E4B'),pBar:bar(Number(p),'#9FB4A6')};
   }),
   gapLine:prGames.length?`You win ${pPts}% of points in practice and ${tPts}% in tournaments.`:'Log a few practice matches to see your pressure gap.',
-  diary:diaryRows.map(r=>({d:r.d,kind:r.kind,what:r.what,score:r.score,tag:`font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;${r.ref?'background:#0B2418;color:#D9F24A':(r.kind==='Drill or training'?'background:#CFE3D6;color:#0B2418':'background:#DCE5DD;color:#0B2418')}`,src:r.ref?'font-size:12px;color:#2B6E4B;font-weight:700':'font-size:12px;color:#4A5D50',srcLabel:r.ref?'Referee scored · counts to rating':'Self-logged · private'})),
+  diary:diaryRows.map(r=>({share:r.official&&act.shareMatch?()=>act.shareMatch?.(r.official!.id,r.official!.me):undefined,d:r.d,kind:r.kind,what:r.what,score:r.score,tag:`font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;${r.ref?'background:#0B2418;color:#D9F24A':(r.kind==='Drill or training'?'background:#CFE3D6;color:#0B2418':'background:#DCE5DD;color:#0B2418')}`,src:r.ref?'font-size:12px;color:#2B6E4B;font-weight:700':'font-size:12px;color:#4A5D50',srcLabel:r.ref?'Referee scored · counts to rating':'Self-logged · private'})),
   goalTitle:goal?goal.title:'No goal yet',goalDone:goalProgress,goalTarget:goal?goal.target:0,goalBar:bar(goal?pct(goalProgress,goal.target):0,'#2B6E4B'),
   duprGoal:d.dupr?d.dupr.toFixed(2):'–',coachNote:'Your coach’s notes appear here when your club adds them.',
   badgeStreak:streak,badgeVenues:venues,badgeBest:STAGE_LABEL[bestLabel]??'—',

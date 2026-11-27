@@ -1,3 +1,4 @@
+import {PlayerCardDialog,type CardRequest} from './PlayerCardDialog';
 import {useRef} from 'react';
 import {iso} from '../../domain/training';
 import {ratingHistory} from '../../club/playerStudio';
@@ -53,6 +54,7 @@ const source=holes(raw,[
  .replace('<div style="font-size:11px;color:#9FB4A6">Dots = scoring runs by phase of the game. Court position needs the live stream, coming later.</div>', '{{matchNavigation}}')
  .replace('<div class="disp" style="font-size:32px">Log a session</div>', '<h2 id="studio-log-heading" tabindex="-1" class="disp">Log a session</h2>{{sessionDetails}}')
  .replace('Name, for example Ravi', 'Opponent name')
+ .replace('<div style="{{e.src}}">{{e.srcLabel}}</div>', '<div class="studio-diary-source"><span style="{{e.src}}">{{e.srcLabel}}</span>{{e.share}}</div>')
  .replace('<div><div class="cap">{{matchLabel}}</div>', '<div id="studio-match-overview" tabindex="-1"><div class="cap">{{matchLabel}}</div>');
 
 /** Private My Player Studio, exactly as the prototype, on the owner's real matches, practice, goals and sharing. */
@@ -64,6 +66,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  const[sharing,setSharing]=useState<SharingOptions|null>(null);
  const[goal,setGoal]=useState({title:'',target:'',msg:''});
  const[shared,setShared]=useState('');
+ const[card,setCard]=useState<CardRequest>();
  const saving=useRef(false);
  if(!state.data&&!state.loading)return <PlayerStudioOrWelcome section={section??''} go={go}/>;
  if(!state.data)return <div className="rq" style={{minHeight:'60vh',display:'grid',placeItems:'center',color:'#9FB4A6',padding:24,textAlign:'center'}}>{state.loading?'Loading your Player Studio…':<span>{state.error??'Sign in to open My Player Studio.'} <button type="button" className="tlink" onClick={()=>go('club-signin')}>Sign in →</button></span>}</div>;
@@ -83,7 +86,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
   try{await store.savePractice(built.input);set({...EMPTY_LOG,saved:true,error:''});state.reload();}
   catch(e){set({error:e instanceof Error?e.message:'Could not save.',saved:false});}finally{saving.current=false;}};
  const toggle=async(k:keyof SharingOptions)=>{const next={...share,[k]:!share[k]};setSharing(next);try{await store.saveSharing(next);}catch{setSharing(share);}};
- const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Your tournament matches show here once you claim them',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);}});
+ const values=studioValues({name:me?.name??'Your Player Studio',club:me?.club??'Your tournament matches show here once you claim them',dupr:me?.duprDoubles,official:data.official.official,practice:data.practice,goals:data.goals,sharing:share},ui,set,{save:()=>{void save();},share:k=>{void toggle(k);},shareMatch:(matchId,playerId)=>setCard({matchId,playerId})});
  const g0=data.goals[0];
  const addGoal=async()=>{try{await store.saveGoal({title:goal.title,target:Number(goal.target),progress:0});setGoal({title:'',target:'',msg:'Goal added.'});state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not save the goal.'});}};
  const goalStep=async()=>{if(!g0)return;try{await store.saveGoal({title:g0.title,target:g0.target,progress:Math.min(g0.target,g0.progress+1),due:g0.due},g0.id);state.reload();}catch(e){setGoal({...goal,msg:e instanceof Error?e.message:'Could not update the goal.'});}};
@@ -113,6 +116,7 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
      <div><b>{record.rate===undefined?'—':`${record.rate}%`}</b><br/>Official win rate (all formats)</div>
     </div>
     {ui.f!=='Log'&&<button type="button" className="btn studio-action" onClick={onLog}>Log a session</button>}
+    <button type="button" className="btn studio-action studio-card-action" onClick={()=>setCard({playerId:me?.playerId})}>Share my card</button>
     {COVER_UPLOAD&&<CoverEditor store={store} hasPhoto={!!data.photo} onSaved={state.reload} canPublish={!!me}/>}
    </div>
   </section>,
@@ -140,6 +144,8 @@ export function MyStudio({go,section}:{go:Go;section?:string}){
  });
  Object.assign(values,{shareProfile:()=>{void shareProfile();},shareProfileLabel:shared||'Share my profile',hasProfile:!!me,myTournaments:<div style={{display:'grid',gap:14}}><ClaimStudio go={go} claimed={data.official.players.length}/><MyTournaments go={go}/></div>,signOut:()=>{void signOutTo(go);}});
  // Motion board: the Studio numbers count up once when the page opens.
- const counted={...values,practiceCount:<CountUp text={String(values.practiceCount)}/>,hours:<CountUp text={String(values.hours)}/>,serve:<CountUp text={String(values.serve)}/>};
- return <PrototypeScreen name="MyStudio" go={go} source={source} values={counted} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}/>;
+ const counted={...values,diary:values.diary.map(row=>({...row,share:row.share&&<button type="button" className="btn sm studio-action studio-card-action" onClick={row.share}>Share</button>})),practiceCount:<CountUp text={String(values.practiceCount)}/>,hours:<CountUp text={String(values.hours)}/>,serve:<CountUp text={String(values.serve)}/>};
+ return <PrototypeScreen name="MyStudio" go={go} source={source} values={counted} hrefs={me?{Studio:'#/public-player/'+encodeURIComponent(me.playerId)}:undefined}>
+  {card&&<PlayerCardDialog request={card} onClose={()=>setCard(undefined)}/>}
+ </PrototypeScreen>;
 }
