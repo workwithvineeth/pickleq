@@ -5,7 +5,7 @@ test('LED wall: four 16:9 courts fill the screen without scrolling', async ({ pa
   await page.route('https://*.supabase.co/**', route => route.fulfill({ json: [] }));
   await page.route('https://www.youtube-nocookie.com/**', route => route.fulfill({ body: '<title>Embed fixture</title>', contentType: 'text/html' }));
   await page.goto('#/wall?v=VztQ5w9JVlI,yE6r5EObL6c,Bj4iCpYgVPo');
-  for (const [width, height] of [[1920, 1080], [1280, 640], [768, 768], [390, 844]]) {
+  for (const [width, height] of [[1920, 1080], [1280, 640], [800, 617], [768, 768], [390, 844]]) {
     await page.setViewportSize({ width, height });
     for (const court of [1, 2, 3]) await expect(page.getByTitle(`Court ${court} video`)).toHaveAttribute('src', /autoplay=1&mute=1/);
     await expect(page.getByRole('region', { name: 'Court 4' })).toContainText('Court 4 · no stream yet');

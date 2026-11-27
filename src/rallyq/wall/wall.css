@@ -5,7 +5,7 @@ html:has(.led-wall), body:has(.led-wall) { margin: 0; overflow: hidden; backgrou
   background: #000; color: #f1f4ea; font-family: 'DM Sans', system-ui, sans-serif; cursor: none; overflow: hidden;
 }
 .led-cell { display: grid; place-items: center; min-width: 0; min-height: 0; overflow: hidden; container-type: size; }
-.led-box { position: relative; aspect-ratio: 16 / 9; width: min(100cqw, 100cqh * 16 / 9); background: #06140d; overflow: hidden; }
+.led-box { position: relative; aspect-ratio: 16 / 9; width: min(50vw, 50vh * 16 / 9); width: min(100cqw, 100cqh * 16 / 9); background: #06140d; overflow: hidden; }
 .led-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
 .led-empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-size: 3.2cqh; font-weight: 700; color: #b9cbbf; }
 .led-court {
