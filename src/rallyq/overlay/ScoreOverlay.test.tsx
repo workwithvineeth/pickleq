@@ -18,11 +18,12 @@ const semi: PublicMatch = {
 };
 const final: PublicMatch = { ...semi, id: 'final', stage: 'final', status: 'scheduled', games: [] };
 
-function scores(matches: PublicMatch[] | null) {
+function scores(matches: PublicMatch[] | null, duprsA?: (number | undefined)[], duprsB?: (number | undefined)[]) {
   const data: PublicTournament | null = matches && {
     name: 'Sample Night Open', club: 'Cedar Paddle Club', startDate: '2026-11-24', startTime: '18:00', slotMinutes: 20, status: 'live',
     divisions: [{ id: 'doubles', name: 'Doubles', kind: 'doubles', pools: 1, advance: 0, format, koFormat: format }],
-    entries: [{ id: 'a', divisionId: 'doubles', names: ['Alex', 'Sam'] }, { id: 'b', divisionId: 'doubles', names: ['Robin', 'Taylor'] }],
+    entries: [{ id: 'a', divisionId: 'doubles', names: ['Alex', 'Sam'], duprs: duprsA },
+      { id: 'b', divisionId: 'doubles', names: ['Robin', 'Taylor'], duprs: duprsB }],
     matches,
   };
   vi.mocked(usePublicScores).mockReturnValue({ data, loading: false, error: null, updatedAt: null, failures: 0, live: true });
@@ -53,6 +54,46 @@ describe('ScoreOverlay', () => {
     expect(within(overlay).getByText('Semi-final 1 · G2')).toBeVisible();
     expect(within(overlay).getByText('10-7-2')).toBeVisible();
     expect(within(overlay).getByText('Game point')).toBeVisible();
+  });
+
+  it('shows available doubles DUPRs in team order and skips missing or zero ratings', () => {
+    scores([semi], [4.31, 4.05], [0, undefined]);
+    render(page);
+    const teamA = screen.getByRole('group', { name: /^Alex \/ Sam/ });
+    const teamB = screen.getByRole('group', { name: /^Robin \/ Taylor/ });
+    expect(within(teamA).getByRole('img', { name: 'DUPR 4.31 · 4.05' })).toBeVisible();
+    expect(within(teamB).queryByRole('img', { name: /^DUPR/ })).toBeNull();
+  });
+
+  it('shows the estimate and tracks both directions after point changes', () => {
+    const updateScore = (a: number, b: number) => scores([
+      { ...semi, games: [{ a, b, points: '' }] },
+    ], [4.31], [4.05]);
+    updateScore(0, 0);
+    const { rerender } = render(page);
+    expect(screen.getByText('WIN CHANCE · ESTIMATE')).toBeVisible();
+    expect(screen.getAllByText('50%')).toHaveLength(2);
+    expect(screen.queryByText(/^[▲▼]/)).toBeNull();
+
+    updateScore(1, 0);
+    rerender(<ScoreOverlay courtPath="sample-open/1" />);
+    expect(screen.getByText('54%')).toBeVisible();
+    expect(screen.getByText('46%')).toBeVisible();
+    expect(screen.getByText('▲4')).toBeVisible();
+    rerender(<ScoreOverlay courtPath="sample-open/1" />);
+    expect(screen.getByText('▲4')).toBeVisible();
+
+    updateScore(1, 1);
+    rerender(<ScoreOverlay courtPath="sample-open/1" />);
+    expect(screen.getByText('▼4')).toBeVisible();
+    expect(screen.queryByText('▲4')).toBeNull();
+  });
+
+  it('hides the meter when neither entry has a rating', () => {
+    scores([semi]);
+    render(page);
+    expect(screen.queryByText('WIN CHANCE · ESTIMATE')).toBeNull();
+    expect(screen.queryByRole('img', { name: /^DUPR/ })).toBeNull();
   });
 
   it('holds a newly finished score, then shows the next match', () => {

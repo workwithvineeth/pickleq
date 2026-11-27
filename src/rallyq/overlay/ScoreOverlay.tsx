@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { PublicTournament } from '../../club/backend';
 import { gameOver } from '../../club/domain/momentum';
 import { poolLetter } from '../../club/domain/engine';
-import { courtMatches, matchView, type PublicMatch } from '../../club/liveView';
+import { courtMatches, matchView, winChance, type PublicMatch } from '../../club/liveView';
 import { usePublicScores } from '../../club/screens/usePublicScores';
 import { STAGE_LABEL } from '../../club/types';
 import { RallyQMark } from '../Brand';
@@ -33,13 +34,50 @@ function stageLabel(match: PublicMatch) {
   return label;
 }
 
-function ScoreRow({ side, name, points, won, needed, serving, leading }: {
-  side: 'A' | 'B'; name: string; points: number; won: number; needed: number; serving: boolean; leading: boolean;
+function ratingChip(entry: PublicTournament['entries'][number] | undefined) {
+  return entry?.duprs?.flatMap(rating =>
+    typeof rating === 'number' && Number.isFinite(rating) && rating > 0 ? [rating.toFixed(2)] : [],
+  ).join(' · ') ?? '';
+}
+
+function meterName(name: string, singles: boolean) {
+  const firstPlayer = name.split(' / ')[0].trim().split(/\s+/);
+  return singles ? firstPlayer[0] : firstPlayer.at(-1);
+}
+
+function WinMeter({ chance, score, nameA, nameB }: { chance: number; score: string; nameA?: string; nameB?: string }) {
+  const previous = useRef({ chance, score });
+  const [delta, setDelta] = useState(0);
+  useLayoutEffect(() => {
+    if (previous.current.score !== score) setDelta(chance - previous.current.chance);
+    previous.current = { chance, score };
+  }, [chance, score]);
+
+  return (
+    <div className="overlay-meter">
+      <div className="overlay-meter-labels">
+        <span className="overlay-meter-a">
+          <span className="overlay-ellipsis">{nameA}</span> {chance}%
+          {delta !== 0 && <span>{delta > 0 ? '▲' : '▼'}{Math.abs(delta)}</span>}
+        </span>
+        <span>WIN CHANCE · ESTIMATE</span>
+        <span className="overlay-meter-b">{100 - chance}% <span className="overlay-ellipsis">{nameB}</span></span>
+      </div>
+      <div className="overlay-meter-track" aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
+    </div>
+  );
+}
+
+function ScoreRow({ side, name, rating, points, won, needed, serving, leading }: {
+  side: 'A' | 'B'; name: string; rating: string; points: number; won: number; needed: number; serving: boolean; leading: boolean;
 }) {
   return (
     <div className="overlay-team" data-side={side} role="group" aria-label={`${name}, ${points} points`}>
       <span className="overlay-rail" aria-hidden="true" />
-      <span className="overlay-ellipsis">{name}</span>
+      <span className="overlay-team-name">
+        <span className="overlay-ellipsis">{name}</span>
+        {rating && <span className="overlay-dupr" role="img" aria-label={`DUPR ${rating}`}>{rating}</span>}
+      </span>
       {serving ? <span className="overlay-serve" role="img" aria-label="Serving" /> : <span />}
       <span className="overlay-games" role="img" aria-label={`${won} of ${needed} games won`}>
         {Array.from({ length: needed }, (_, i) => <i key={i} data-won={i < won} />)}
@@ -49,7 +87,7 @@ function ScoreRow({ side, name, points, won, needed, serving, leading }: {
   );
 }
 
-function ScoreBar({ match, view }: { match: PublicMatch; view: ReturnType<typeof matchView> }) {
+function ScoreBar({ data, match, view }: { data: PublicTournament; match: PublicMatch; view: ReturnType<typeof matchView> }) {
   const { game, pointsA, pointsB, gamesA, gamesB, format } = view;
   const live = match.status === 'live';
   const reduced = useReducedMotion();
@@ -74,12 +112,18 @@ function ScoreBar({ match, view }: { match: PublicMatch; view: ReturnType<typeof
   const over = gameOver(pointsA, pointsB, format.pointsTo, format.golden);
   const serve = live ? serveOf(view.current, view.division?.kind !== 'singles', over) : null;
   const point = live ? pointLabel(pointsA, pointsB, format.pointsTo, !!format.golden, gamesA, gamesB, needed) : '';
+  const ratingA = ratingChip(data.entries.find(entry => entry.id === match.entryA));
+  const ratingB = ratingChip(data.entries.find(entry => entry.id === match.entryB));
+  const chance = ratingA || ratingB ? winChance(data, match) : null;
+  const singles = view.division?.kind === 'singles';
   return (
     <div className="overlay-bar">
       <span className="overlay-mark"><RallyQMark size={60} /></span>
       <div className="overlay-teams">
-        <ScoreRow side="A" name={view.a} points={a} won={gamesA} needed={needed} serving={serve?.side === 'A'} leading={a > b} />
-        <ScoreRow side="B" name={view.b} points={b} won={gamesB} needed={needed} serving={serve?.side === 'B'} leading={b > a} />
+        <ScoreRow side="A" name={view.a} rating={ratingA} points={a} won={gamesA} needed={needed} serving={serve?.side === 'A'} leading={a > b} />
+        <ScoreRow side="B" name={view.b} rating={ratingB} points={b} won={gamesB} needed={needed} serving={serve?.side === 'B'} leading={b > a} />
+        {chance !== null && <WinMeter chance={chance} score={`${game}:${pointsA}:${pointsB}:${gamesA}:${gamesB}`}
+          nameA={meterName(view.a, singles)} nameB={meterName(view.b, singles)} />}
       </div>
       <div className="overlay-match">
         <span className="overlay-stage-label">{stageLabel(match)} · G{game}</span>
@@ -142,7 +186,7 @@ export function ScoreOverlay({ courtPath }: { courtPath?: string }) {
                     <span className="overlay-ellipsis">Next: {view.a} v {view.b}</span>
                     <span className="overlay-stage-label">{stageLabel(match)}</span>
                   </div>
-                ) : <ScoreBar key={match.id} match={match} view={view} />}
+                ) : <ScoreBar key={match.id} data={data} match={match} view={view} />}
               </div>
               <div className="overlay-promo"><span>EVERY COURT LIVE</span><strong>RALLYQ.IN</strong></div>
             </>
