@@ -35,6 +35,5 @@ it('audit 21 Nov: a real player gets a court picture (never the sample person), 
   load.mockResolvedValue({ ...base, playerId: 'p1', official: [match('pool1', 'pool', true), match('fin', 'final', true), match('pool2', 'pool', false)] });
   const { container } = render(<PublicProfile playerId="p1" go={vi.fn()} />);
   expect(await screen.findByText('Champion · Sample Cup')).toBeInTheDocument();
-  expect(container.querySelector('.ph-competitor')).toBeNull();
-  expect(container.querySelector('.ph-court')).not.toBeNull();
+  expect(container.querySelector('.athlete-photo')).toHaveAttribute('src', expect.stringContaining('club-night.jpg'));
 });

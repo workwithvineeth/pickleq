@@ -52,7 +52,9 @@ it('Drill or training is one choice that asks for minutes',async()=>{
  fireEvent.click(screen.getByRole('button',{name:'Save to diary'}));
  await waitFor(()=>expect(saved).toHaveLength(1));expect(saved[0]).toMatchObject({kind:'training',minutes:45,focusTags:['Third-shot drop']});
 });
-it('the player photo panel uses the portrait, not the tracker image',async()=>{
- const{container}=await open();
- const panel=container.querySelector('section.photo');expect(panel?.classList.contains('ph-studio')).toBe(true);expect(panel?.classList.contains('ph-woman')).toBe(false);expect(panel?.classList.contains('ph-tracker')).toBe(false);expect(panel).toHaveTextContent('Sample photo');
+it('uses the court fallback when a player has no private photo',async()=>{
+ await open();
+ const cover=screen.getByRole('region',{name:'Private Athlete cover'});
+ expect(cover.querySelector('.studio-cover-portrait')).toHaveAttribute('src',expect.stringContaining('club-night.jpg'));
+ expect(cover).toHaveTextContent('My Studio · only you see this');
 });

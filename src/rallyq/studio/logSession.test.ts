@@ -72,3 +72,14 @@ describe('buildPractice',()=>{
   expect(r.input).toEqual({kind:'training',scoreText:'',minutes:45,focusTags:['Third-shot drop'],playedAt:TODAY});
  });
 });
+
+it('saves the practice venue, partner and date, and validates casual wins', () => {
+ const practice = buildPractice(match({
+  entry: 'quick', quick: 'Won', venue: ' Maple Sample Court ', partner: ' Willow Sample ', date: '2026-01-01',
+ }), TODAY);
+ expect(practice.input).toMatchObject({ venue: 'Maple Sample Court', partner: 'Willow Sample', playedAt: '2026-01-01' });
+ expect(buildPractice(match({ type: 'Casual games', count: '3', wins: '4' }), TODAY).problem).toMatch('wins from zero');
+ expect(buildPractice(match({ type: 'Casual games', count: '3', wins: '0' }), TODAY).input).toMatchObject({
+  kind: 'casual', count: 3, wins: 0,
+ });
+});
