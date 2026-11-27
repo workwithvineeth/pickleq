@@ -171,3 +171,9 @@ export function ClaimLinks({ tournamentId, clubId, tournament, players }: { tour
     </section>
   );
 }
+
+/**
+ * Claim links can go out as soon as the draw is made (any match on the schedule), so players can claim during the
+ * event. A claim is by player, so matches played after it still land in the player's profile.
+ */
+export const claimLinksOpen = (matches: { status: string }[]) => matches.some((m) => m.status !== 'void');

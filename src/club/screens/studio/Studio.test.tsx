@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { blankLog, type StudioData } from '../../playerStudio';
 import { PlayerStudio } from './Studio';
-import { Claim, ClaimLinks } from './Claim';
+import { Claim, ClaimLinks, claimLinksOpen } from './Claim';
 
 const fixture = vi.hoisted(() => ({
   kind: 'server',
@@ -246,5 +246,15 @@ describe('Claim', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Undo Linked Player’s claim' }));
     await waitFor(() => expect(fixture.unlinkPlayer).toHaveBeenCalledWith('p2'));
     expect(await screen.findByRole('button', { name: 'Send claim link to Linked Player' })).toBeInTheDocument();
+  });
+});
+
+describe('Claim links during the event', () => {
+  it('open once the draw is made, while matches are live, and after; not before the draw', () => {
+    expect(claimLinksOpen([])).toBe(false);
+    expect(claimLinksOpen([{ status: 'void' }])).toBe(false);
+    expect(claimLinksOpen([{ status: 'scheduled' }])).toBe(true);
+    expect(claimLinksOpen([{ status: 'live' }, { status: 'scheduled' }])).toBe(true);
+    expect(claimLinksOpen([{ status: 'done' }])).toBe(true);
   });
 });

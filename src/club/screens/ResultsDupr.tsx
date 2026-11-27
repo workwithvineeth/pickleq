@@ -9,7 +9,7 @@ import { isBronzeMatch, resultsChampions, resultsCsv, scoreText } from '../resul
 import { duprCheck, duprCsv } from '../dupr';
 import { ManualScores } from './ScorePad';
 import { displayPlayerName, appLink, errorText, Header, Status, useLoad } from './common';
-import { ClaimLinks } from './studio/Claim';
+import { ClaimLinks, claimLinksOpen } from './studio/Claim';
 import { clubMark, OrgShell, PageHead, PublicShell } from '../../rallyq/shell/Shell';
 import { Legacy } from './InboxLegacy';
 import { RefTabs } from './DeskFrame';
@@ -196,7 +196,7 @@ export function ResultsDupr({ id, go, onBack }: { id: string; go: Go; onBack: ()
         {[...new Set(data.entries.filter((e) => e.divisionId === div.id).flatMap((e) => e.playerIds))].map((pid) => player(pid, div, true))}
       </section>}
     </section>)}
-    {staff && b?.kind === 'server' && data.matches.some((m) => m.status === 'done') && <ClaimLinks tournamentId={data.tournament.id} clubId={data.club.id} tournament={data.tournament.name}
+    {staff && b?.kind === 'server' && claimLinksOpen(data.matches) && <ClaimLinks tournamentId={data.tournament.id} clubId={data.club.id} tournament={data.tournament.name}
       players={[...new Set(data.entries.flatMap((e) => e.playerIds))].map((pid) => pmap.get(pid)).filter((x): x is NonNullable<typeof x> => !!x && !x.sample)} />}
     <p className="pq-results-footer">Results from RallyQ · rallyq.in · {tieBreakText(data.divisions[0]?.id)}</p>
   </div>;
