@@ -1,4 +1,5 @@
 import { PublicShell } from '../../../rallyq/shell/Shell';
+import { GRIEVANCE } from '../../privacy';
 import { useState, type FormEvent } from 'react';
 import type { Go } from '../../../navigation';
 import { eventsBackend, rememberReturn, serverBackend } from '../../index';
@@ -212,6 +213,8 @@ function StudioProfile({ data, reload, b }: SectionProps) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState('');
+  const [confirmErase, setConfirmErase] = useState('');
+  const [erased, setErased] = useState<number | null>(null);
   async function run(fn: () => Promise<unknown>, ok: string) {
     setBusy(true);
     try { await fn(); setMsg({ ok: true, text: ok }); reload(); } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
@@ -223,6 +226,7 @@ function StudioProfile({ data, reload, b }: SectionProps) {
     const a = document.createElement('a'); a.href = url; a.download = `paddleq-player-studio-${today()}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  if (erased !== null) return <div role="status" className="msg msg-ok">Done. Your data is deleted and you are signed out.{erased > 0 ? ` ${erased} ${erased === 1 ? 'entry is' : 'entries are'} in a tournament that hasn’t finished; their details go after the event, with your account.` : ' Your account is deleted within a few days.'}</div>;
   return <>
     {msg && <div role={msg.ok ? 'status' : 'alert'} className={`msg ${msg.ok ? 'msg-ok' : 'msg-bad'}`}>{msg.text}</div>}
     <Card title="DUPR rating">
@@ -250,6 +254,13 @@ function StudioProfile({ data, reload, b }: SectionProps) {
       <button type="button" className="btn btn-outline" onClick={download}>Download my data</button>
       <label>To delete your whole diary, type DELETE<input className="input" value={confirmDelete} onChange={(e) => setConfirmDelete(e.target.value)} autoComplete="off" /></label>
       <button type="button" className="btn pq-danger" disabled={busy || confirmDelete !== 'DELETE'} onClick={() => void run(async () => { await b.deleteMyDiary(); setConfirmDelete(''); }, 'Your diary was deleted.')}>Delete my diary</button>
+    </Card>
+    <Card title="Consent and your account">
+      <p className="small muted" style={{ margin: 0 }}>Read the <a href="#/data-privacy">privacy notice</a>. Questions or complaints: <a href={`mailto:${GRIEVANCE.email}`}>{GRIEVANCE.email}</a>.</p>
+      <button type="button" className="btn btn-outline" disabled={busy} onClick={() => { if (window.confirm('Withdraw your consent? RallyQ stops using your details for new entries. Entries you already sent stay until you withdraw them in My entries.')) void run(() => b.withdrawConsent(), 'Consent withdrawn. Tick the box again on your next entry if you enter.'); }}>Withdraw my consent</button>
+      <label>To delete your account and data, type DELETE MY DATA<input className="input" value={confirmErase} onChange={(e) => setConfirmErase(e.target.value)} autoComplete="off" /></label>
+      <p className="small muted" style={{ margin: 0 }}>Your diary, goals and claims go now, and the phone, email and age on finished entries. Entries in tournaments that haven’t finished keep them until the event is over, then RallyQ deletes your account within {GRIEVANCE.actDays} days. Your name stays on matches already played.</p>
+      <button type="button" className="btn pq-danger" disabled={busy || confirmErase !== 'DELETE MY DATA'} onClick={() => void run(async () => { const r = await b.requestDataDeletion(); setConfirmErase(''); setErased(r.openEntries); }, 'Deletion requested.')}>Delete my account and data</button>
     </Card>
   </>;
 }

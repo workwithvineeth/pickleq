@@ -1,3 +1,4 @@
+import { NOTICE_VERSION, type ConsentPurpose } from './privacy';
 import { cleanLog, cleanSession, logProblem, ratingProblem, sessionProblem, type RatingKind, type StudioRatingInput, type ClaimPreview, type FoundPlayer, type MyPlayer, type OfficialMatch, type StudioData, type StudioGoal, type StudioLog, type StudioLogInput, type StudioSession, type StudioSessionInput, type StudioSettings } from './playerStudio';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
@@ -876,6 +877,25 @@ export class ServerBackend implements ClubBackend {
       tournament: String(r.tournament), startDate: String(r.start_date), startTime: String(r.start_time ?? '').slice(0, 5), city: s(r.city), venue: s(r.venue),
       club: String(r.club), upiId: s(r.upi_id), drawn: !!r.drawn, results: !!r.results,
     }));
+  }
+
+  async recordConsent(purpose: ConsentPurpose) {
+    await this.uid();
+    check(await this.sb.rpc('record_consent', { p_purpose: purpose, p_notice_version: NOTICE_VERSION }));
+  }
+
+  /** DPDP: marks every consent you gave as withdrawn. Returns how many were active. */
+  async withdrawConsent(): Promise<number> {
+    await this.uid();
+    return Number(check(await this.sb.rpc('withdraw_consent')) ?? 0);
+  }
+
+  /** DPDP: deletes your diary, claims and finished entries' contact details now; the rest after your open tournaments end. Signs you out. */
+  async requestDataDeletion(): Promise<{ openEntries: number }> {
+    await this.uid();
+    const r = check(await this.sb.rpc('request_data_deletion')) as Row;
+    await this.sb.auth.signOut();
+    return { openEntries: Number(r?.openEntries ?? 0) };
   }
 
   async withdrawMyEntry(id: string) { answer(check(await this.sb.rpc('withdraw_my_entry', { p_id: id }))); }

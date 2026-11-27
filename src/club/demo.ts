@@ -1,3 +1,4 @@
+import { NOTICE_VERSION, type ConsentPurpose } from './privacy';
 import { matchResult } from './domain/engine';
 import { newId } from '../db/ids';
 import { weekStart, weeklyCounts } from './adminStats';
@@ -951,6 +952,13 @@ export class DemoBackend implements ClubBackend {
         upiId: t.upiId, drawn: !!t.drawnAt, results: t.isPublic,
       };
     }).sort((a, b) => a.startDate.localeCompare(b.startDate));
+  }
+
+  /** Same rule as the server: signed in only. The demo keeps consents in memory (nothing leaves the phone). */
+  readonly consents: { userId: string; purpose: ConsentPurpose; version: string; at: string }[] = [];
+  async recordConsent(purpose: ConsentPurpose) {
+    const u = this.me();
+    this.consents.push({ userId: u.id, purpose, version: NOTICE_VERSION, at: new Date().toISOString() });
   }
 
   async withdrawMyEntry(id: string) {

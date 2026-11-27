@@ -8,6 +8,7 @@ import type { ClubBackend, ListingReview, MyEntry, PublicEvent } from '../backen
 import { clubMode, inLaunchCity, LAUNCH_CITY } from '../config';
 import { demoBackend, eventsBackend, publicSourcesFor, rememberReturn, serverBackend } from '../index';
 import { blankPerson, capText, cleanEmail, entryProblem, rulesLine, upiLink } from '../registration';
+import { consentProblem } from '../privacy';
 import { canHost, isAdmin, PAYMENT_LABEL, REG_STATUS_LABEL, type EntryPerson, type PlayerGender, type RegistrationStatus } from '../types';
 import { DemoNote, errorText, Header, shareLink, Skeleton, Status, useLoad } from './common';
 import { OrganiserCard, PosterImage } from './Poster';
@@ -374,6 +375,7 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
   const [me, setMe] = useState<EntryPerson>(savedMe);
   const [partner, setPartner] = useState<EntryPerson>(blankPerson);
   const [partnerOk, setPartnerOk] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   // Your sign-in email is the natural one for your results; you can change it.
   const accountEmail = cleanEmail(state.data?.user?.email);
   useEffect(() => { if (accountEmail) setMe((m) => (m.email?.trim() ? m : { ...m, email: accountEmail })); }, [accountEmail]);
@@ -426,6 +428,8 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
     const problem = entryProblem(d!.kind, d!.rules, players, true);
     if (problem) return setMsg(problem);
     if (d!.kind === 'doubles' && !partnerOk) return setMsg(PARTNER_CONSENT_PROBLEM);
+    const noConsent = consentProblem(agreed);
+    if (noConsent) return setMsg(noConsent);
     setMsg(null); setPayStep(true);
   }
   async function submit() {
@@ -433,8 +437,11 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
     if (problem) return setMsg(problem);
     if (d!.kind === 'doubles' && !partnerOk) return setMsg(PARTNER_CONSENT_PROBLEM);
     if (fee && pay === 'claimed' && ref.trim().length < 4) return setMsg('Add the UPI reference number from your payment');
+    const noConsent = consentProblem(agreed);
+    if (noConsent) return setMsg(noConsent);
     setBusy(true); setMsg(null);
     try {
+      await found!.src.recordConsent('entry');
       const r = await found!.src.registerEntry(d!.id, players, fee ? pay : 'unpaid', fee && pay === 'claimed' ? ref : undefined);
       saveMe(me);
       setDone(r.status);
@@ -501,6 +508,10 @@ export function EnterEvent({ id, go, onBack }: { id: string; go: Go; onBack: () 
               )}
               {d.rules.maxDupr !== undefined && <div className="note">{d.kind === 'doubles' && d.rules.duprCap === 'average' ? `This event is for teams with an average DUPR of ${capText(d.rules.maxDupr)} and under, so both players need a rating.` : `This event is for DUPR ${capText(d.rules.maxDupr)} and under, so every player needs a rating.`}</div>}
               <span className="mut" style={{ fontSize: 13 }}>Only this tournament’s organiser sees your phone numbers, emails and ages. Your names, scores and DUPR ratings show on live scores. Everyone must be 18 or over.</span>
+              <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', minHeight: 44, cursor: 'pointer' }}>
+                <input type="checkbox" checked={agreed} onChange={(ev) => setAgreed(ev.target.checked)} style={{ width: 24, height: 24, marginTop: 2, flex: 'none' }} />
+                <span style={{ fontSize: 14 }}>I agree to RallyQ using these details for this entry, as the <a href={routeHash({ name: 'data-privacy' })} target="_blank" rel="noopener">privacy notice</a> explains. I can withdraw this or delete my data any time from Player Studio.</span>
+              </label>
             </div>
             {msg && <div role="alert" className="note"><b>Check this first.</b> {msg}</div>}
             <div className="between">{back('Back', onBack)}<button type="button" className="btn" onClick={toPay}>Continue</button></div>

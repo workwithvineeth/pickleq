@@ -145,6 +145,11 @@ describe('Entering a tournament', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Tick the box to confirm your partner agrees');
     await user.click(screen.getByRole('checkbox', { name: /My partner agrees/ }));
+    // DPDP: the player's own consent to the privacy notice is needed too.
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tick the box to agree to the privacy notice');
+    expect(screen.getByRole('link', { name: 'privacy notice' })).toHaveAttribute('href', '#/data-privacy');
+    await user.click(screen.getByRole('checkbox', { name: /I agree to RallyQ using these details/ }));
     await user.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByRole('heading', { name: 'Pay the club.' });
     expect(screen.getByText(/RallyQ never holds money/)).toBeInTheDocument();

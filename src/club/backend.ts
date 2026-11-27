@@ -1,3 +1,4 @@
+import type { ConsentPurpose } from './privacy';
 import type { NewMatchRow, NewTournamentInput } from './plan';
 import type { DrawPlan } from './registration';
 import type { Approval, Club, ClubMatch, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionKind, HostingStatus, DivisionRules, Entry, EntryMode, EntryPerson, Listing, ListingStatus, Member, Payment, Registration, RegistrationStatus, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
@@ -260,6 +261,8 @@ export interface EventsBackend {
   registerEntry(divisionId: string, players: EntryPerson[], payment: 'unpaid' | 'venue' | 'claimed', paymentRef?: string): Promise<{ id: string; status: RegistrationStatus }>;
   myEntries(): Promise<MyEntry[]>;
   withdrawMyEntry(id: string): Promise<void>;
+  /** DPDP: store that the signed-in person agreed to the privacy notice (version in privacy.ts) for this purpose. */
+  recordConsent(purpose: ConsentPurpose): Promise<void>;
   /** Every entry for a tournament (coaches and admins). */
   registrations(tournamentId: string): Promise<Registration[]>;
   updateRegistration(id: string, patch: RegistrationPatch): Promise<void>;

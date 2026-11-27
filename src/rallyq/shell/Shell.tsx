@@ -53,7 +53,7 @@ export function PublicShell({go,active=null,host,right,children,footNote}:{go:Go
   <div className="right">{right??<a className="tlink" href="#/" onClick={e=>{e.preventDefault();go(acct.route)}}>{acct.label}</a>}<ModeButton/><button type="button" className="menu" aria-label="Menu" aria-expanded={menu} onClick={()=>setMenu(!menu)}><svg className="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><Signoff/></div></div></header>
   {menu&&<nav className="mpanel" aria-label="Menu"><a href="#/home" onClick={e=>{e.preventDefault();setMenu(false);toHome()}}>Home</a>{nav('')}{!right&&(!signedIn||home.staff)&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);go(acct.route)}}>{acct.label}</a>}{signedIn&&<a href="#/" onClick={e=>{e.preventDefault();setMenu(false);void signOutTo(go)}}>Sign out</a>}</nav>}
   <main className="wrap" style={{paddingBlock:'28px 40px',display:'flex',flexDirection:'column',gap:28}}>{children}</main>
-  <div className="wrap pfoot"><span>{footNote??''}</span><Signoff/></div></Frame>;
+  <div className="wrap pfoot"><span>{footNote??''} <a href="#/data-privacy" onClick={e=>{e.preventDefault();go('data-privacy')}}>Privacy</a></span><Signoff/></div></Frame>;
 }
 export type OrgTab='home'|'tournaments'|'results'|'club'|'social'|'entries'|'draw'|'desk'|'referees'|'tv'|'studio';
 /** Organiser pages: host club on top of the side menu, event steps below, RallyQ sign-off last. */

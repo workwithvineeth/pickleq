@@ -24,6 +24,8 @@ const fixture = vi.hoisted(() => ({
   setPlayerEmail: vi.fn(async () => undefined),
   unlinkPlayer: vi.fn(async () => undefined),
   remember: vi.fn(),
+  withdrawConsent: vi.fn(async () => 1),
+  requestDataDeletion: vi.fn(async () => ({ openEntries: 1 })),
 }));
 vi.mock('../../index', () => ({
   serverBackend: () => fixture,
@@ -49,6 +51,23 @@ beforeEach(() => {
 });
 
 describe('Player Studio', () => {
+  it('withdraws consent and deletes the account only after DELETE MY DATA is typed (DPDP)', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<PlayerStudio section="profile" go={vi.fn()} />);
+    const card = await screen.findByRole('region', { name: 'Consent and your account' });
+    expect(within(card).getByRole('link', { name: 'privacy notice' })).toHaveAttribute('href', '#/data-privacy');
+    fireEvent.click(within(card).getByRole('button', { name: 'Withdraw my consent' }));
+    await waitFor(() => expect(fixture.withdrawConsent).toHaveBeenCalledTimes(1));
+    const del = within(card).getByRole('button', { name: 'Delete my account and data' });
+    expect(del).toBeDisabled();
+    fireEvent.change(within(card).getByLabelText(/type DELETE MY DATA/), { target: { value: 'DELETE' } });
+    expect(del).toBeDisabled();
+    fireEvent.change(within(card).getByLabelText(/type DELETE MY DATA/), { target: { value: 'DELETE MY DATA' } });
+    fireEvent.click(del);
+    expect(await screen.findByRole('status')).toHaveTextContent('Your data is deleted and you are signed out. 1 entry is in a tournament that hasn’t finished');
+    expect(fixture.requestDataDeletion).toHaveBeenCalledTimes(1);
+  });
+
   it('asks a signed-out player to sign in, and comes back here after', async () => {
     fixture.user = null;
     const go = vi.fn();

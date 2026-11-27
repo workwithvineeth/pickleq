@@ -134,6 +134,7 @@ test.describe('Registration to draw (demo club on the phone)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByRole('alert')).toContainText('Tick the box to confirm your partner agrees');
     await page.getByRole('checkbox', { name: /My partner agrees/ }).check();
+    await page.getByRole('checkbox', { name: /I agree to RallyQ using these details/ }).check();
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByRole('heading', { name: 'Pay the club.' })).toBeVisible();
     await page.getByRole('button', { name: 'Send my entry' }).click();
