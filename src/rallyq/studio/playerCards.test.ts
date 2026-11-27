@@ -16,6 +16,7 @@ it('projects only public ratings and official matches, ignoring private fields',
     name: 'Kiran Sample', wins: 1, losses: 0, rate: 100,
     ratings: ['DUPR doubles  4.62'], latest: { event: 'Sample Night Open', detail: 'Won · 11–8 · 11–7' },
   });
+  expect(card.dna).toHaveLength(28);
   expect(card.photoUrl).toBeUndefined();
   expect(JSON.stringify(card)).not.toMatch(/private-photo|Birch Sample|Private coach note/);
   expect(matchCard(profile, 'practice-1')).toBeNull();
