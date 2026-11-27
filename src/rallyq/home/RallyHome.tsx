@@ -6,7 +6,8 @@ import {useLoad} from '../../club/screens/common';
 import {usePublicScores} from '../../club/screens/usePublicScores';
 import {PrototypeScreen} from '../PrototypeScreen';
 import {INITIAL_MAIN,PILOT,SECTIONS,activeSection,mainValues,nextEventLine,type MainState,type SectionId} from './values';
-import {featured,heroChip,heroCta,heroEvent,liveCourts,schedule,tickerLines,type FeaturedMatch} from './home20';
+import {boardUpdated,featured,heroChip,heroCta,heroEvent,liveBoards,liveCourts,schedule,tickerLines,type FeaturedMatch} from './home20';
+import {winBarHtml} from '../../club/winBar';
 import {LivingQ} from '../arena/LivingQ';
 import {flip,type Seen} from '../motion/motion';
 import {CountUp} from '../motion/CountUp';
@@ -14,7 +15,11 @@ import {useReducedMotion} from '../useReducedMotion';
 import {SLIDES,useHeroSlides} from './useHeroSlides';
 const SEEN:Seen=new Map();
 import source from './Main.html?raw';
-import source20 from './Home20.html?raw';
+import raw20 from './Home20.html?raw';
+/** Home with the win chance under the big court scoreboard (same bar as the Live page). */
+const source20=raw20.replace('{{board.winBar}}',winBarHtml('board.win'));
+/** One partner per line on the big scoreboard, so long names never break mid-word on a phone. */
+const partners=(side:string)=><>{side.split(' / ').map((n,i)=><span key={i}>{n}</span>)}</>;
 
 /** Home 20/10 (final prototype). Set to false to fall back to the previous Home in one line. */
 export const HOME20=true;
@@ -47,8 +52,17 @@ export function RallyHome({go}:{go:Go}){
   return()=>{removeEventListener('scroll',f);removeEventListener('resize',f)};
  },[]);
  const values=mainValues(state,patch=>set(s=>({...s,...patch})),{events});
+ const[pick,setPick]=useState<string|null>(null);
+ const[now,setNow]=useState(()=>Date.now());
+ const live20=HOME20&&hero?.state==='during';
+ // Ticks "Updated 9s ago" on the big scoreboard, only while an event is live.
+ useEffect(()=>{if(!live20)return;const t=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(t);},[live20]);
  if(!HOME20)return <PrototypeScreen name="Main" go={go} source={source} hrefs={{HeroCta:live?'#/live':'#/events'}} values={{...values,heroCta:live?'Live now · See live scores':nextEventLine(events)}}/>;
  const d=scores.data,cta=heroCta(hero),f=featured(d),tick=tickerLines(d),today=schedule(d),courts=liveCourts(d);
+ // Big scoreboard: the court picked below, else the Match Centre's court, else the first live court.
+ const boards=liveBoards(d),b=boards.find(x=>x.court===pick)??boards.find(x=>x.court===f?.court)??boards[0];
+ const board=b?{...b,nmA:partners(b.a),nmB:partners(b.b),tA:'t'+(b.servingA?' srv':''),tB:'t b'+(b.servingB?' srv':''),svA:b.servingA?'Serving':'',svB:b.servingB?'Serving':'',
+  fA:flip(SEEN,'hbA'+b.court+b.a,String(b.sa),'rqr'),fB:flip(SEEN,'hbB'+b.court+b.b,String(b.sb),'rqr'),updated:boardUpdated(scores.updatedAt,now,!!scores.error||scores.failures>=2)}:undefined;
  const evs=(values.events as Array<Record<string,unknown>>).map((e,i)=>({...e,cls:'ev p'+(i%3)}));
  const v20={
   chip:heroChip(hero),chipCls:'hchip'+(hero?.state==='during'?'':' next'),heroCta:cta.label,
@@ -56,7 +70,8 @@ export function RallyHome({go}:{go:Go}){
   ticker:tick.length?<div className="ticker" aria-hidden="true"><div className="tr">{[...tick,...tick].map((t,i)=><span key={i}>{t.live?<b>LIVE </b>:null}{t.text}</span>)}</div></div>:undefined,
   hasToday:today.length>0,today,todayCap:hero&&d?`${d.name} · ${d.club}`:'',
   events:evs,
-  hasCourts:courts.length>0,courts:courts.map(c=>({...c,fl:flip(SEEN,'lc'+c.court+c.a,c.sa+'-'+c.sb,'rqf'),ra:'r'+(c.servingA?' srv':'')+(c.leadB?' lose':''),rb:'r b'+(c.servingB?' srv':'')+(c.leadA?' lose':'')})),
+  hasBoard:!!board,board,
+  hasCourts:courts.length>0,courts:courts.map(c=>({...c,on:c.court===b?.court?'on':'',pressed:String(c.court===b?.court),pick:()=>setPick(c.court),fl:flip(SEEN,'lc'+c.court+c.a,c.sa+'-'+c.sb,'rqf'),ra:'r'+(c.servingA?' srv':'')+(c.leadB?' lose':''),rb:'r b'+(c.servingB?' srv':'')+(c.leadA?' lose':'')})),
   pilot3:[{n:<CountUp text={String(PILOT.matches)}/>,l:'matches scored'},{n:<CountUp text={PILOT.points.toLocaleString('en-IN')}/>,l:'points recorded live'},{n:<CountUp text={String(PILOT.players)}/>,l:'players'}],
  };
  return <PrototypeScreen name="Main" go={go} source={source20} hrefs={{HeroCta:cta.href}} values={{...values,...v20}}/>;

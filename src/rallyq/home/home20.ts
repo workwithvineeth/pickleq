@@ -3,6 +3,7 @@
 import type {PublicEvent, PublicTournament} from '../../club/backend';
 import {courtMatches, matchView, type PublicMatch} from '../../club/liveView';
 import {liveWinBar} from '../../club/winBar';
+import {teamWithDupr} from '../../club/duprText';
 import {STAGE_LABEL} from '../../club/types';
 import {ralliesOf, servingNow, type Rally} from '../arena/rallies';
 
@@ -112,4 +113,32 @@ export function liveCourts(d: PublicTournament | null): LiveCourt[] {
     const s = servingNow(v.current, doublesOf(d, match))?.team;
     return {court: 'Court ' + court, stage: stageOf(d, match), a: pair(v.a), b: pair(v.b), sa: v.pointsA, sb: v.pointsB, servingA: s === 'A', servingB: s === 'B', leadA: v.pointsA > v.pointsB, leadB: v.pointsB > v.pointsA};
   });
+}
+
+export interface LiveBoard {
+  court: string; caption: string; gameLabel: string; a: string; b: string; sa: number; sb: number;
+  servingA: boolean; servingB: boolean; win: ReturnType<typeof liveWinBar>;
+}
+/** "Game 2 of 3 · to 11", or "One game · to 15" for best of one (same words as the Live page). */
+export const boardGameLabel = (game: number, bestOf = 3, pointsTo = 11) => (bestOf > 1 ? `Game ${game} of ${bestOf}` : 'One game') + ` · to ${pointsTo}`;
+/** Home's big court scoreboard (the Live page's board): one per live court, names with DUPR, the score and the win chance. */
+export function liveBoards(d: PublicTournament | null): LiveBoard[] {
+  if (!d) return [];
+  return courtMatches(d).filter(x => x.match.status === 'live').map(({court, match}) => {
+    const v = matchView(d, match);
+    const s = servingNow(v.current, doublesOf(d, match))?.team;
+    return {
+      court: 'Court ' + court, caption: ['Court ' + court, d.club, v.division?.name ?? d.name].filter(Boolean).join(' · '),
+      gameLabel: boardGameLabel(v.game, v.format.bestOf, v.format.pointsTo),
+      a: teamWithDupr(d, match.entryA) ?? v.a, b: teamWithDupr(d, match.entryB) ?? v.b, sa: v.pointsA, sb: v.pointsB,
+      servingA: s === 'A', servingB: s === 'B', win: liveWinBar(d, match),
+    };
+  });
+}
+/** "Updated 9s ago" for the first minute, then the clock time of the last good load; says so when the scores can't be reached. */
+export function boardUpdated(at: number | null, now: number, error: boolean): string {
+  if (error) return 'Can’t reach live scores · retrying';
+  if (at === null) return 'Loading scores';
+  const s = Math.max(0, Math.round((now - at) / 1000));
+  return s < 60 ? `Updated ${s}s ago` : 'Updated ' + new Date(at).toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit'});
 }

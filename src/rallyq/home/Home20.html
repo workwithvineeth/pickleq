@@ -116,6 +116,21 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 .lc .r span{font-weight:700;font-size:15px;overflow-wrap:anywhere}
 .lc .r b{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
 .lc .r.lose span,.lc .r.lose b{color:var(--mut)}
+/* Big court scoreboard (the Live page's board) at the top of Live now. */
+.hb{display:flex;flex-direction:column;gap:18px;padding:clamp(16px,3vw,28px);border-radius:24px;background:var(--c1);box-shadow:inset 0 0 0 1px rgba(241,244,234,.12);margin-bottom:14px}
+.hb .hbh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px}
+.hb .hbh .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;min-width:0}
+.hb .hbt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(8px,2vw,16px)}
+.hb .t{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;padding:clamp(12px,2.4vw,22px);border-radius:18px;background:var(--c2);box-shadow:inset 0 0 0 1px rgba(241,244,234,.1)}
+.hb .t::before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:4px;border-radius:0 4px 4px 0;background:var(--sea)}
+.hb .t.b{text-align:right}.hb .t.b::before{left:auto;right:0;border-radius:4px 0 0 4px;background:var(--tide)}
+.hb .t.srv{box-shadow:inset 0 0 0 2px var(--ball)}
+.hb .t .nm{display:flex;flex-direction:column;font-weight:700;font-size:clamp(14px,2.2vw,22px);line-height:1.25;overflow-wrap:anywhere}
+.hb .t .pts{font-family:'Archivo','Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:clamp(64px,13vw,132px);line-height:.95;font-variant-numeric:tabular-nums}
+.hb .t .sv{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ball);min-height:1em}
+.hb .hbf{display:flex;justify-content:flex-end;font-size:13px;color:var(--mut)}
+.lc.pick{font:inherit;text-align:left;border:0;cursor:pointer;min-height:44px}
+.lc.pick.on{box-shadow:inset 0 0 0 2px var(--ball)}
 .cover20{position:relative;isolation:isolate;overflow:hidden;border-radius:26px;min-height:min(620px,80vh);display:flex;align-items:flex-end;padding:clamp(20px,4vw,44px);background:url(/_blob/p-tracker-m) center 25%/cover;box-shadow:inset 0 0 0 1px rgba(241,244,234,.14)}
 @media(min-width:761px){.cover20{background-image:url(/_blob/p-tracker-d)}}
 .cover20::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,20,13,.92) 0%,rgba(6,20,13,.55) 55%,rgba(6,20,13,.1) 100%),linear-gradient(0deg,rgba(6,20,13,.9),transparent 55%)}
@@ -178,7 +193,13 @@ a{color:#D9F24A}a:hover{color:#F1F4EA}
 
 <sc-if value="{{hasCourts}}" hint-placeholder-val="{{ false }}"><section class="sec hm-sec"><div class="wrap">
 <div class="sech"><div><span class="cap">Live now</span><h2 class="disp h2" style="margin-top:10px">Every point matters.</h2></div><a class="btn ghost sm" href="Live.dc.html">Open the arena</a></div>
-<div class="lcg"><sc-for list="{{courts}}" as="c" hint-placeholder-count="2"><a class="lc {{c.fl}}" href="Live.dc.html"><div class="between"><span class="cap">{{c.court}}</span><span class="cap">{{c.stage}}</span></div><div class="{{c.ra}}"><i aria-hidden="true"></i><span>{{c.a}}</span><b>{{c.sa}}</b></div><div class="{{c.rb}}"><i aria-hidden="true"></i><span>{{c.b}}</span><b>{{c.sb}}</b></div></a></sc-for></div>
+<sc-if value="{{hasBoard}}" hint-placeholder-val="{{ false }}"><section class="hb" aria-label="{{board.court}} scoreboard">
+<div class="hbh"><div class="row"><span class="chip live">Live</span><span class="cap">{{board.caption}}</span></div><span class="cap">{{board.gameLabel}}</span></div>
+<div class="hbt"><div class="{{board.tA}}"><b class="nm" aria-label="{{board.a}}">{{board.nmA}}</b><span class="pts" aria-label="{{board.a}} points"><span class="{{board.fA}}">{{board.sa}}</span></span><span class="sv">{{board.svA}}</span></div><div class="{{board.tB}}"><b class="nm" aria-label="{{board.b}}">{{board.nmB}}</b><span class="pts" aria-label="{{board.b}} points"><span class="{{board.fB}}">{{board.sb}}</span></span><span class="sv">{{board.svB}}</span></div></div>
+<div class="hbf"><span>{{board.updated}} · scored by court referee</span></div>
+{{board.winBar}}
+</section></sc-if>
+<div class="lcg"><sc-for list="{{courts}}" as="c" hint-placeholder-count="2"><button type="button" class="lc pick {{c.fl}} {{c.on}}" aria-pressed="{{c.pressed}}" aria-label="Show {{c.court}} on the big scoreboard: {{c.a}} {{c.sa}}, {{c.b}} {{c.sb}}" onClick="{{c.pick}}"><div class="between"><span class="cap">{{c.court}}</span><span class="cap">{{c.stage}}</span></div><div class="{{c.ra}}"><i aria-hidden="true"></i><span>{{c.a}}</span><b>{{c.sa}}</b></div><div class="{{c.rb}}"><i aria-hidden="true"></i><span>{{c.b}}</span><b>{{c.sb}}</b></div></button></sc-for></div>
 </div></section></sc-if>
 
 <section class="sec hm-sec" id="first" data-section="first"><div class="wrap">

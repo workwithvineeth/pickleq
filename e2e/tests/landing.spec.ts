@@ -49,3 +49,32 @@ test('RallyQ logo always leads back to Home from public pages',async({page})=>{
  await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));await page.setViewportSize({width:390,height:844});
  for(const r of ['#/events','#/live','#/club-signin']){await page.goto(r);await page.getByRole('link',{name:/RallyQ/}).locator('visible=true').first().click();await expect(page).toHaveURL(/#\/home$/);await expect(page.getByRole('heading',{level:1,name:'Your court. The main event.'})).toBeVisible();}
 });
+test('RallyQ home: Live now shows the big court scoreboard with DUPR, score, freshness and win chance',async({page})=>{
+ const today=new Date().toISOString().slice(0,10),format={bestOf:1,pointsTo:11,scoring:'rally'};
+ await page.route('https://*.supabase.co/**',route=>{
+  const path=new URL(route.request().url()).pathname;
+  if(path.endsWith('/public_events'))return route.fulfill({json:[{slug:'home-board',name:'Sample Night Open',club:'Cedar Paddle Club',start_date:today,start_time:'15:00',city:'Hyderabad',status:'live',results:true,listing:'listed',divisions:[]}]});
+  if(path.endsWith('/public_tournament'))return route.fulfill({json:{name:'Sample Night Open',club:'Cedar Paddle Club',start_date:today,start_time:'15:00',slot_minutes:20,status:'live',
+   divisions:[{id:'d',name:'Open singles',kind:'singles',pools:1,advance:0,format:{pool:format,ko:format}}],
+   entries:[['Alex Rao',4.52],['Sam Iyer',3.97],['Robin Das',null],['Taylor Jain',null]].map(([n,r],i)=>({id:'e'+i,division_id:'d',pool:1,names:[n],duprs:[r]})),
+   matches:[{id:'m1',division_id:'d',court:1,entry_a:'e0',entry_b:'e1',stage:'pool',pool:1,status:'live',games:[{a:7,b:2}]},{id:'m2',division_id:'d',court:2,entry_a:'e2',entry_b:'e3',stage:'pool',pool:1,status:'live',games:[{a:3,b:5}]}]}});
+  return route.fulfill({json:path.endsWith('/public_club_logo')?null:[]});
+ });
+ await page.emulateMedia({reducedMotion:'reduce'});
+ for(const width of [320,1280]){
+  await page.setViewportSize({width,height:900});await page.goto('#/home');
+  const board=page.getByRole('region',{name:'Court 1 scoreboard'});
+  await expect(board).toContainText('Court 1 · Cedar Paddle Club · Open singles');
+  await expect(board).toContainText('One game · to 11');
+  await expect(board.getByLabel('Alex Rao 4.52 points')).toHaveText('7');
+  await expect(board.getByLabel('Sam Iyer 3.97 points')).toHaveText('2');
+  await expect(board).toContainText(/Updated \d+s ago · scored by court referee/);
+  await expect(board.getByRole('img',{name:/Win chance · estimate: Alex \d+%, Sam \d+%/})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+ // Tap another court: it takes the big board.
+ await page.getByRole('button',{name:/Show Court 2 on the big scoreboard/}).click();
+ const two=page.getByRole('region',{name:'Court 2 scoreboard'});
+ await expect(two.getByLabel('Taylor Jain points')).toHaveText('5');
+ await expect(page.getByRole('button',{name:/Show Court 2 on the big scoreboard/})).toHaveAttribute('aria-pressed','true');
+});

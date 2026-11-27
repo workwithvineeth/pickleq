@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import type {PublicTournament} from '../../club/backend';
-import {featured, heroChip, heroCta, heroEvent, liveCourts, schedule, tickerLines} from './home20';
+import {boardUpdated, featured, heroChip, heroCta, heroEvent, liveBoards, liveCourts, schedule, tickerLines} from './home20';
 
 const fmt = {bestOf: 1, pointsTo: 11, scoring: 'rally'} as const;
 const d = {
@@ -40,5 +40,19 @@ describe('Home 20/10 data', () => {
     expect(rows[1].t).toBe('3:20');
     expect(liveCourts(d)).toEqual([expect.objectContaining({court: 'Court 2', sa: 3, sb: 1, leadA: true})]);
     expect(schedule(null)).toEqual([]);
+  });
+  it('builds the big court scoreboard: court, club and division, names with DUPR, score, format and win chance', () => {
+    const rated = {...d, entries: d.entries.map((e, i) => ({...e, duprs: i === 1 ? [4.52, 4.1] : i === 2 ? [3.97, 3.8] : undefined}))} as unknown as PublicTournament;
+    const [b] = liveBoards(rated);
+    expect(b).toMatchObject({court: 'Court 2', caption: 'Court 2 · Cedar Club · Mixed 3.5', gameLabel: 'One game · to 11', a: 'Meera 4.52 / Divya 4.10', b: 'Kiran 3.97 / Neha 3.80', sa: 3, sb: 1});
+    expect(b.win.show).toBe(true);
+    expect(b.win.label).toBe('Win chance · estimate');
+    expect(liveBoards(null)).toEqual([]);
+    expect(liveBoards({...d, matches: d.matches.filter(m => m.status !== 'live')} as PublicTournament)).toEqual([]);
+  });
+  it('says how fresh the board is', () => {
+    expect(boardUpdated(1_000, 10_000, false)).toBe('Updated 9s ago');
+    expect(boardUpdated(null, 10_000, false)).toBe('Loading scores');
+    expect(boardUpdated(1_000, 10_000, true)).toMatch(/retrying/);
   });
 });
