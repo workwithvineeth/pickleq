@@ -11,18 +11,21 @@ test('the demo court overlay shows both scores on a transparent OBS canvas', asy
 
   for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
-    for (const query of ['', '?bar=top&scale=1.25']) {
+    for (const query of ['', '?scale=1.25', '?bar=top&scale=1.25']) {
       await page.goto(url + query);
       await expect(overlay.getByText('Cedar Club Season 8 · Court 1')).toBeVisible();
       await expect(overlay.getByRole('group', { name: 'Nikhil Pillai, 7 points' }).getByText('7', { exact: true })).toBeVisible();
       await expect(overlay.getByRole('group', { name: 'Meera Bose, 3 points' }).getByText('3', { exact: true })).toBeVisible();
       await expect(overlay.getByText('LIVE', { exact: true })).toBeVisible();
+      await expect(overlay.getByRole('group', { name: 'Nikhil Pillai, 7 points' })
+        .getByRole('img', { name: 'DUPR 4.52' })).toBeVisible();
+      await expect(overlay.getByText('WIN CHANCE · ESTIMATE')).toBeVisible();
       await expect(page.locator('#root > *')).toHaveCount(1);
       for (const element of ['html', 'body', '#root']) {
         await expect(page.locator(element)).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
         await expect(page.locator(element)).toHaveCSS('overflow', 'hidden');
       }
-      await expect(overlay.locator(query ? '.overlay-bar-top' : '.overlay-bar-bottom')).toBeVisible();
+      await expect(overlay.locator(query.includes('bar=top') ? '.overlay-bar-top' : '.overlay-bar-bottom')).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
       const clipped = await overlay.locator('.overlay-panels *').evaluateAll((elements, { width, height }) =>
         elements.filter(el => {

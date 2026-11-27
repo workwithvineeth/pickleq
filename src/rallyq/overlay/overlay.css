@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'Overlay JetBrains Mono';
+  src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
 html.score-overlay-active,
 html.score-overlay-active body,
 html.score-overlay-active #root {
@@ -9,9 +16,13 @@ html.score-overlay-active #root {
   --chalk: #F1F4EA;
   --ball: #D9F24A;
   --muted: #A9BDB0;
+  --night: #06140D;
+  --sea: #76E0D0;
+  --tide: #7EAEF2;
   --panel: rgb(6 20 13 / 94%);
   --tile: #0D2218;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --meter-mono: 'Overlay JetBrains Mono', var(--mono);
   position: fixed;
   inset: 0;
   overflow: hidden;
@@ -58,8 +69,9 @@ html.score-overlay-active #root {
   background: currentColor;
 }
 
-.overlay-bar-position { position: absolute; left: 48px; }
+.overlay-bar-position { position: absolute; left: 48px; max-width: calc(100% - 96px); }
 .overlay-bar-bottom, .overlay-empty { bottom: 48px; }
+.overlay-bar-bottom { max-width: calc(100% - 500px); }
 .overlay-bar-top { top: 105px; }
 
 .overlay-bar {
@@ -72,7 +84,7 @@ html.score-overlay-active #root {
 }
 
 .overlay-mark { display: grid; place-items: center; padding-inline: 24px; background: var(--tile); }
-.overlay-teams { display: grid; padding: 15px 27px 15px 0; }
+.overlay-teams { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; padding: 15px 27px 15px 0; }
 
 .overlay-team {
   display: grid;
@@ -83,8 +95,19 @@ html.score-overlay-active #root {
 }
 
 .overlay-team .overlay-ellipsis { max-width: 390px; }
-.overlay-rail { height: 45px; background: #76E0D0; }
-.overlay-team[data-side='B'] .overlay-rail { background: #7EAEF2; }
+.overlay-team { --team-color: var(--sea); }
+.overlay-team[data-side='B'] { --team-color: var(--tide); }
+.overlay-rail { height: 45px; background: var(--team-color); }
+.overlay-team-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.overlay-dupr {
+  flex: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--night);
+  background: var(--team-color);
+  font: 700 19.5px/1.2 var(--meter-mono);
+  white-space: nowrap;
+}
 .overlay-team[data-side='B'] .overlay-ellipsis { color: #D5E3D8; font-weight: 600; }
 .overlay-serve { width: 16.5px; height: 16.5px; border-radius: 50%; background: var(--ball); }
 .overlay-games { display: flex; gap: 6px; }
@@ -99,6 +122,24 @@ html.score-overlay-active #root {
 }
 
 .overlay-points[data-leading='true'] { color: var(--ball); }
+
+.overlay-meter { min-width: 0; margin: 10px 0 3px 30px; }
+.overlay-meter-labels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font: 700 18px/1.2 var(--meter-mono);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.overlay-meter-a, .overlay-meter-b { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.overlay-meter-a { color: var(--sea); }
+.overlay-meter-b { justify-content: flex-end; color: var(--tide); }
+.overlay-meter-track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--tide); }
+.overlay-meter-track > span { display: block; height: 100%; background: var(--sea); }
 
 .overlay-match {
   display: flex;
@@ -124,7 +165,7 @@ html.score-overlay-active #root {
   padding: 4.5px 12px;
   border-radius: 9px;
   background: var(--ball);
-  color: #06140D;
+  color: var(--night);
 }
 
 .overlay-next { align-items: center; gap: 18px; padding-right: 24px; font-size: 26px; }
