@@ -14,6 +14,7 @@ import {RallyHome} from '../rallyq/home/RallyHome';
 import {MyStudio} from '../rallyq/studio/MyStudio';
 import {RallyLive} from '../rallyq/live/RallyLive';
 import {ScoreOverlay} from '../rallyq/overlay/ScoreOverlay';
+import {LedWall} from '../rallyq/wall/LedWall';
 import {RallyEvent} from '../rallyq/event/RallyEvent';
 import {RallyTV} from '../rallyq/tv/RallyTV';
 import {PublicProfile} from '../rallyq/studio/PublicProfile';
@@ -81,6 +82,7 @@ if (/[?&](code|error_description)=/.test(window.location.search) && !window.loca
 export default function ClubApp() {
   const [route, go, back] = useRoute();
   if (route.name === 'overlay') return <ScoreOverlay key={route.id} courtPath={route.id} />;
+  if (route.name === 'wall') return <LedWall key={route.id} slug={route.id} />;
   return <ClubAppWithShell route={route} go={go} back={back} />;
 }
 

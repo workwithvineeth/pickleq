@@ -17,7 +17,7 @@
   gap: 16px;
   padding: clamp(12px, 2vw, 20px);
   border-radius: 20px;
-  background: var(--stream-night);
+  background: var(--stream-bg, var(--stream-night));
 }
 .stream-settings p, .stream-consent p, .court-watch p {
   margin: 0;
@@ -83,7 +83,7 @@
   padding: 0 10px;
   border: 1px solid var(--stream-line);
   border-radius: 12px;
-  background: var(--stream-night);
+  background: var(--stream-bg, var(--stream-night));
   color: var(--stream-ink);
   font: inherit;
 }
@@ -116,7 +116,7 @@
   color: var(--stream-night);
 }
 :where(.stream-settings, .stream-consent, .court-watch) button:disabled {
-  background: var(--stream-night);
+  background: var(--stream-bg, var(--stream-night));
   color: var(--stream-muted);
   cursor: default;
 }
@@ -206,7 +206,7 @@
   padding: 10px;
   border-inline-start: 4px solid var(--stream-sea);
   border-radius: 8px;
-  background: var(--stream-night);
+  background: var(--stream-bg, var(--stream-night));
 }
 .watch-team[data-team="B"] { border-color: var(--stream-tide); }
 .watch-team-name {
@@ -247,7 +247,7 @@
   align-items: center;
   padding: 2px;
   border-radius: 20px;
-  background: var(--stream-night);
+  background: var(--stream-bg, var(--stream-night));
 }
 .watch-switch::after {
   width: 14px;
@@ -313,3 +313,15 @@
     grid-template-areas: "video score" "controls score";
   }
 }
+
+/* Day (light) mode: the live court page sits in the green day page instead of a night-black card.
+   Text stays white (4.5:1 or better on these greens); video areas stay dark. */
+.rq.day .stream-settings, .rq.day .stream-consent, .rq.day .court-watch {
+  --stream-bg: #245f40;
+  --stream-card: #1f5538;
+  --stream-control: #2b6e4b;
+  --stream-ink: #ffffff;
+  --stream-muted: #ddebdf;
+  --stream-line: rgb(255 255 255 / 22%);
+}
+.rq.day .watch-team { background: #286a47; }

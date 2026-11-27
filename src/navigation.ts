@@ -6,7 +6,7 @@ export type RouteName = Tab | 'log' | 'backfill' | 'settings' | 'trash' | 'backu
   | 'club' | 'club-signin' | 'club-new' | 'club-join' | 'club-view' | 'club-player' | 'club-tournament' | 'club-tournament-new' | 'club-score' | 'club-sharing' | 'results'
   | 'club-desk' | 'club-streams' | 'club-scorers' | 'club-entries' | 'club-dupr' | 'club-results-dupr' | 'court' | 'helper' | 'desk'
   | 'event' | 'event-enter' | 'my-entries' | 'admin-listings' | 'admin-login' | 'demo' | 'admin' | 'admin-club' | 'events-post' | 'club-inbox'
-  | 'club-tournaments' | 'club-results' | 'club-player-studio' | 'club-claim' | 'live' | 'public-player' | 'club-tv' | 'club-social' | 'overlay' | 'data-privacy';
+  | 'club-tournaments' | 'club-results' | 'club-player-studio' | 'club-claim' | 'live' | 'public-player' | 'club-tv' | 'club-social' | 'overlay' | 'wall' | 'data-privacy';
 export interface Route { name: RouteName; id?: string }
 
 const simple: RouteName[] = ['data-privacy', 'admin-login', 'demo', 'club-tournaments', 'club-results', 'my-entries', 'admin-listings', 'events-post', 'club', 'club-signin', 'club-new', 'home', 'train', 'stats', 'coach', 'tournaments', 'tournament-new', 'coach-settings', 'report', 'help', 'privacy', 'backfill', 'settings', 'trash', 'backup', 'ratings', 'goals', 'session-new'];
@@ -21,6 +21,12 @@ export function parseRoute(hash: string): Route {
   if (overlay) {
     try { return overlay[1] ? { name: 'overlay', id: decodeURIComponent(overlay[1]) } : { name: 'overlay' }; }
     catch { return { name: 'overlay' }; }
+  }
+  // LED wall: #/wall, #/wall/<event>, each with an optional ?v=…&scores=on (read by the page itself).
+  const wall = /^wall(?:\/([^?]*))?(?:\?|$)/.exec(path);
+  if (wall) {
+    try { return wall[1] ? { name: 'wall', id: decodeURIComponent(wall[1]) } : { name: 'wall' }; }
+    catch { return { name: 'wall' }; }
   }
   const [name, id] = path.split('/');
   if ((optionalId as string[]).includes(name)) return id ? { name: name as RouteName, id: decodeURIComponent(id) } : { name: name as RouteName };

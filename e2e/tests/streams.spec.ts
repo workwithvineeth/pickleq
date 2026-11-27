@@ -48,6 +48,13 @@ test('an organiser can link, show and hide a YouTube stream', async ({ page }) =
   expect(board!.x).toBeGreaterThan(video!.x + video!.width);
   expect(video!.width / video!.height).toBeCloseTo(16 / 9, 1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1280);
+  // Day mode: the court page follows the green day page, not a night-black card.
+  const night = await page.locator('.court-watch').evaluate(e => getComputedStyle(e).backgroundColor);
+  expect(night).toBe('rgb(6, 20, 13)');
+  await page.getByRole('button', { name: 'Switch to day mode' }).first().click();
+  await expect(page.locator('.court-watch')).toHaveCSS('background-color', 'rgb(36, 95, 64)');
+  await expect(page.locator('.watch-team').first()).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await page.getByRole('button', { name: 'Switch to night mode' }).first().click();
 
   await page.goto(`#/club-streams/${tournamentId}`);
   await court.getByRole('button', { name: 'Showing to fans' }).click();
