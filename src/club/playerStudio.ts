@@ -151,7 +151,7 @@ export interface OfficialMatch {
   stage: Stage;
   playedOn: string;
   format: Partial<Format>;
-  games: { a: number; b: number; points?: string }[];
+  games: (Omit<ClubMatch['games'][number], 'points'> & { points?: string })[];
   winner: 'A' | 'B';
   mySide: 'A' | 'B';
   me: string;

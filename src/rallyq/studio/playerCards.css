@@ -1,0 +1,47 @@
+.player-card-dialog {
+  color-scheme: dark;
+  color: #f1f4ea;
+  background: #06140d;
+  border: 1px solid #365244;
+  box-sizing: border-box;
+  border-radius: 18px;
+  padding: 14px;
+  width: min(430px, calc(100% - 24px));
+  max-width: none;
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  font: 600 15px 'DM Sans', sans-serif;
+}
+.player-card-dialog::backdrop { background: #06140de0; }
+.player-card-dialog header, .player-card-dialog footer, .player-card-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+.player-card-dialog footer { flex-wrap: wrap; justify-content: center; }
+.player-card-dialog h2 { font: 800 1.25rem Archivo, sans-serif; margin: 0; }
+.player-card-dialog button, .player-card-name input {
+  color: #f1f4ea;
+  background: #102c20;
+  border: 1px solid #577564;
+  border-radius: 999px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 6px 12px;
+  font: inherit;
+}
+.player-card-dialog button { cursor: pointer; }
+.player-card-dialog button[aria-pressed=true], .player-card-dialog .player-card-share {
+  background: #d9f24a;
+  color: #06140d;
+}
+.player-card-dialog button:disabled { opacity: .6; cursor: default; }
+.player-card-controls { margin-block: 8px; justify-content: center; }
+.player-card-preview { display: block; width: auto; height: auto; max-width: 100%; max-height: 56vh; margin: 12px auto; border: 1px solid #365244; border-radius: 8px; box-sizing: border-box; }
+.player-card-name { display: grid; gap: 4px; }
+.player-card-name input { font-size: 16px; min-width: 0; }
+.rq .studio-card-action { min-height: 44px; min-width: 44px; white-space: normal; }
+.athlete-cover .studio-card-action { margin-top: 14px; }
+.studio-cover-copy > .studio-card-action { margin: 4px 8px 0 0; }
+.studio-diary-source { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

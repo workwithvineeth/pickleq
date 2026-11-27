@@ -8,13 +8,13 @@ export const SESSION_TAGS:string[]=[...TAGS,...CLIP_SHOTS.filter(s=>s!=='Dink'&&
 export const MAX_TAGS=12;
 export const MAX_GAMES=5;
 
-export type SessionType='Practice match'|'Drill or training';
+export type SessionType='Practice match'|'Drill or training'|'Casual games';
 export type EntryMode='games'|'quick';
 export type Level=''|'stronger'|'equal'|'weaker';
 export const LEVELS:[Exclude<Level,''>,string][]=[['stronger','Stronger than me'],['equal','About equal'],['weaker','Weaker than me']];
 export interface GameDraft {me:string;them:string}
-export interface LogDraft {type:SessionType;entry:EntryMode;games:GameDraft[];quick:''|'Won'|'Lost';quickScore:string;minutes:string;tags:string[];oppName:string;oppLevel:Level;oppDupr:string}
-export const EMPTY_LOG:LogDraft={type:'Practice match',entry:'games',games:[{me:'',them:''}],quick:'',quickScore:'',minutes:'',tags:[],oppName:'',oppLevel:'',oppDupr:''};
+export interface LogDraft {type:SessionType;entry:EntryMode;games:GameDraft[];quick:''|'Won'|'Lost';quickScore:string;minutes:string;tags:string[];oppName:string;oppLevel:Level;oppDupr:string;partner:string;venue:string;date:string;count:string;wins:string}
+export const EMPTY_LOG:LogDraft={type:'Practice match',entry:'games',games:[{me:'',them:''}],quick:'',quickScore:'',minutes:'',tags:[],oppName:'',oppLevel:'',oppDupr:'',partner:'',venue:'',date:'',count:'',wins:''};
 
 const DASH='–';
 const GAME=/(\d+)\s*[–\-:]\s*(\d+)/g;
@@ -57,9 +57,16 @@ export function toggleTag(tags:string[],tag:string):{tags:string[];problem:strin
 /** Turns the form into the saved row. Sessions are always self-logged: nothing here touches a rating. */
 export function buildPractice(d:LogDraft,today:string):{input?:PracticeInput;problem:string}{
  const tags=d.tags.slice(0,MAX_TAGS);
+ const playedAt=d.date||today;
+ if(d.type==='Casual games'){
+  if(!d.count.trim()||!d.wins.trim())return{problem:'Enter how many games you played and won.'};
+  const input:PracticeInput={kind:'casual',scoreText:'',focusTags:tags,playedAt,count:Number(d.count),wins:Number(d.wins)};
+  const problem=practiceProblem(input);
+  return problem?{problem}:{input,problem:''};
+ }
  if(d.type==='Drill or training'){
   const minutes=Number(d.minutes);
-  const input:PracticeInput={kind:'training',scoreText:'',minutes,focusTags:tags,playedAt:today};
+  const input:PracticeInput={kind:'training',scoreText:'',minutes,focusTags:tags,playedAt};
   const problem=!d.minutes.trim()?'Enter the minutes you trained.':practiceProblem(input);
   return problem?{problem}:{input,problem:''};
  }
@@ -89,7 +96,7 @@ export function buildPractice(d:LogDraft,today:string):{input?:PracticeInput;pro
    scoreText=`${d.quick} ${games.map(([a,b])=>`${a}${DASH}${b}`).join(', ')}`;
   }else scoreText=d.quick;
  }
- const input:PracticeInput={kind:'practice_match',scoreText,focusTags:tags,playedAt:today,opponents:formatOpponent(d.oppName,d.oppLevel,dupr)||undefined};
+ const input:PracticeInput={kind:'practice_match',scoreText,focusTags:tags,playedAt,opponents:formatOpponent(d.oppName,d.oppLevel,dupr)||undefined,partner:d.partner.trim()||undefined,venue:d.venue.trim()||undefined};
  const problem=practiceProblem(input);
  return problem?{problem}:{input,problem:''};
 }

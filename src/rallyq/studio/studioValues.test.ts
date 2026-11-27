@@ -9,7 +9,7 @@ it('Log a session: one Drill or training type, the real tags, game rows you can 
  let ui:StudioUI={...INITIAL_UI,f:'Log'};const set=(p:Partial<StudioUI>)=>{ui={...ui,...p};};
  const make=()=>studioValues({name:'Sample',club:'Sample',official:[],practice:[],goals:[],sharing:PRIVATE_SHARING},ui,set,{save:()=>{},share:()=>{}}) as Record<string,any>;
  let v=make();
- expect(v.types.map((t:{label:string})=>t.label)).toEqual(['Practice match','Drill or training']);
+ expect(v.types.map((t:{label:string})=>t.label)).toEqual(['Practice match','Drill or training','Casual games']);
  expect(v.tags.map((t:{label:string})=>t.label)).toEqual(expect.arrayContaining(['Backhand drive','Forehand drive','Serve']));
  expect(JSON.stringify(v)).not.toMatch(/How did it feel/);
  v.gameRows[0].plusMe();v=make();v.gameRows[0].plusMe();v=make();v.gameRows[0].plusThem();v=make();
@@ -20,16 +20,16 @@ it('Log a session: one Drill or training type, the real tags, game rows you can 
  v=make();expect(v.tags.find((t:{label:string})=>t.label==='Backhand drive').on).toBe(true);
  v.types[1].pick();v=make();expect(v.isDrill).toBe(true);
 });
-it('a quick Won/Lost practice counts toward matches won; drills show as Drill or training',()=>{
+it('two practice matches plus a drill do not unlock the win-rate comparison',()=>{
  const v=studioValues({name:'S',club:'S',official:[],practice:[{id:'1',kind:'practice_match',scoreText:'Won',focusTags:[],playedAt:'2026-01-02',opponents:'Ravi (stronger)'},{id:'2',kind:'practice_match',scoreText:'Lost 9–11',focusTags:[],playedAt:'2026-01-03'},{id:'3',kind:'drill',scoreText:'',minutes:30,focusTags:['Serve'],playedAt:'2026-01-04'}],goals:[],sharing:PRIVATE_SHARING},INITIAL_UI,()=>{},{save:()=>{},share:()=>{}}) as Record<string,any>;
- const m=v.compare.find((c:{label:string})=>c.label==='Matches won');expect(m.p).toBe('50%');
+ const m=v.compare.find((c:{label:string})=>c.label==='Matches won');expect(m).toBeUndefined();
  expect(v.diary.map((d:{kind:string})=>d.kind)).toEqual(['Drill or training','Practice','Practice']);
  expect(v.diary.find((d:{what:string})=>d.what.includes('Ravi')).what).toBe('vs Ravi · stronger');
 });
 
 it('quick-only history shows the match win rate without inventing point or game data',()=>{
- const v=studioValues({name:'Sample',club:'Sample',official:[],practice:['Won','Lost'].map((scoreText,i)=>({id:String(i),kind:'practice_match' as const,scoreText,focusTags:[],playedAt:'2026-01-02'})),goals:[],sharing:PRIVATE_SHARING},INITIAL_UI,()=>{},{save:()=>{},share:()=>{}});
- expect(v.compare.find(c=>c.label==='Matches won')?.p).toBe('50%');
+ const v=studioValues({name:'Sample',club:'Sample',official:[],practice:['Won','Lost','Won'].map((scoreText,i)=>({id:String(i),kind:'practice_match' as const,scoreText,focusTags:[],playedAt:'2026-01-02'})),goals:[],sharing:PRIVATE_SHARING},INITIAL_UI,()=>{},{save:()=>{},share:()=>{}});
+ expect(v.compare.find(c=>c.label==='Matches won')?.p).toBe('67%');
  for(const label of ['Points won','Games won']){
   const row=v.compare.find(c=>c.label===label);
   expect(row?.p).toBe('–');expect(row?.note).toBe('log practice to compare');

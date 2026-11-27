@@ -9,10 +9,15 @@ select set_config('request.jwt.claims','{"sub":"90000000-0000-4000-8000-00000000
 set local role authenticated;
 insert into public.practice_sessions(id,kind,score_text,focus_tags,feel,partner,opponents) values('90000000-0000-4000-8000-000000000009','practice_match','11-7',array['Serve'],4,'Private Partner','Private Opponent');
 insert into public.practice_sessions(kind,minutes) values('training',60);
+insert into public.practice_sessions(kind,game_count,game_wins) values('casual',5,3);
+update public.practice_sessions set venue='Practice Sample Court' where kind='practice_match';
+insert into storage.objects(bucket_id,name) values('player-photos','90000000-0000-4000-8000-000000000001/cover.jpg');
+
 insert into public.player_goals(title,target,progress) values('Four practices',4,2);
 insert into public.profile_sharing default values;
 do $$begin
- if (select count(*) from public.practice_sessions)<>2 then raise exception 'FAIL: owner cannot read practices'; end if;
+ if (select count(*) from public.practice_sessions)<>3 then raise exception 'FAIL: owner cannot read practices'; end if;
+ begin insert into public.practice_sessions(kind,game_count,game_wins) values('casual',2,3);raise exception 'FAIL: invalid game count';exception when check_violation then null;end;
  if exists(select 1 from public.profile_sharing where practice_results or practice_vs_tournament or training_hours or coach_notes or goals_badges) then raise exception 'FAIL: sharing defaults are not private';end if;
  begin insert into public.practice_sessions(player,kind,score_text)values('90000000-0000-4000-8000-000000000002','practice_match','11-9');raise exception 'FAIL: impersonated insert allowed';exception when insufficient_privilege then null;end;
  begin update public.practice_sessions set player='90000000-0000-4000-8000-000000000002';raise exception 'FAIL: reassigned practice owner';exception when insufficient_privilege then null;end;
@@ -34,23 +39,39 @@ do $$declare p jsonb;begin
  begin perform 1 from public.practice_sessions;raise exception 'FAIL: anon raw practice read';exception when insufficient_privilege then null;end;
  p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');
  if jsonb_array_length(p->'official')<>1 then raise exception 'FAIL: profile includes untracked final-score matches';end if;
+ if p->>'cover_path' is not null then raise exception 'FAIL: private cover exposed';end if;
  if p->'shared'<>'{}'::jsonb then raise exception 'FAIL: private by default projection';end if;
  if p::text like '%rallyq-owner@example%' or p::text like '%Private Partner%' then raise exception 'FAIL: profile leaked contact or private identity';end if;
 end $$;
 reset role;
 select set_config('request.jwt.claims','{"sub":"90000000-0000-4000-8000-000000000001","role":"authenticated"}',true);set local role authenticated;
-update public.profile_sharing set practice_results=true,training_hours=true,goals_badges=true;
+update public.profile_sharing set practice_results=true,practice_vs_tournament=true,training_hours=true,goals_badges=true;
+insert into storage.objects(bucket_id,name) values('player-public-covers','90000000-0000-4000-8000-000000000001/cover.jpg');
 reset role;set local role anon;
 do $$declare p jsonb;begin
  p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');
- if jsonb_array_length(p->'shared'->'practice_results')<>2 or (p->'shared'->>'training_hours')::numeric<>1 then raise exception 'FAIL: opted-in practice/training missing';end if;
+ if p->'shared' ? 'practice_results' or (p->'shared'->>'training_hours')::numeric<>1 then raise exception 'FAIL: wrong opt-in data exposed';end if;
+ if p->>'cover_path' is distinct from '90000000-0000-4000-8000-000000000001/cover.jpg' then raise exception 'FAIL: opted-in cover missing';end if;
  if p->'shared' ? 'coach_notes' or p->'shared' ? 'practice_vs_tournament' then raise exception 'FAIL: unrelated sharing flags exposed';end if;
  if p::text like '%Private Partner%' or p::text like '%Private Opponent%' then raise exception 'FAIL: public practice leaked other people';end if;
 end $$;
 reset role;
 update public.club_players set user_id='90000000-0000-4000-8000-000000000002' where id='90000000-0000-4000-8000-000000000004';
 set local role anon;
-do $$declare p jsonb;begin p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');if p->'shared'<>'{}'::jsonb then raise exception 'FAIL: new claimant inherited private data/consent';end if;end $$;
+do $$declare p jsonb;begin p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');if p->'shared'<>'{}'::jsonb or p->>'cover_path' is not null then raise exception 'FAIL: new claimant inherited private data/consent';end if;end $$;
+reset role;
+update public.tournaments set status='live', public_slug='studio-sample-live' where id='90000000-0000-4000-8000-000000000006';
+insert into public.club_matches(id,club_id,tournament_id,stage,side_a,side_b,format,games,status)
+select '90000000-0000-4000-8000-000000000010',club_id,tournament_id,stage,side_a,side_b,format,'[]','live'
+from public.club_matches where id='90000000-0000-4000-8000-000000000008';
+set local role anon;
+do $$declare p jsonb;begin
+ p:=public.rallyq_public_player('90000000-0000-4000-8000-000000000004');
+ if p->'live_events'->0->>'slug' is distinct from 'studio-sample-live'
+   or p->'live_events'->0->'match_ids'->>0 is distinct from '90000000-0000-4000-8000-000000000010'
+ then raise exception 'FAIL: public live tournament or match missing';end if;
+ if jsonb_array_length(p->'official')<>1 then raise exception 'FAIL: live match counted in official records';end if;
+end $$;
 reset role;
 update public.tournaments set is_public=false where id='90000000-0000-4000-8000-000000000006';
 set local role anon;
