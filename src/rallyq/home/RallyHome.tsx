@@ -10,6 +10,8 @@ import {featured,heroChip,heroCta,heroEvent,liveCourts,schedule,tickerLines,type
 import {LivingQ} from '../arena/LivingQ';
 import {flip,type Seen} from '../motion/motion';
 import {CountUp} from '../motion/CountUp';
+import {useReducedMotion} from '../useReducedMotion';
+import {SLIDES,useHeroSlides} from './useHeroSlides';
 const SEEN:Seen=new Map();
 import source from './Main.html?raw';
 import source20 from './Home20.html?raw';
@@ -30,6 +32,9 @@ function MatchCentre({f}:{f:FeaturedMatch}){
 /** Home: hero that follows the event (before, during, after), the live Match Centre, today's courts, the calendar and the clubs. No made-up scores: live parts come from the real event and hide when nothing is on. */
 export function RallyHome({go}:{go:Go}){
  const[state,set]=useState<MainState>(INITIAL_MAIN);
+ const reduced=useReducedMotion();
+ // Hero photos change by themselves every 6.5 s (restored 27 Nov; lost in the 15 Nov release). Off with reduced motion.
+ useHeroSlides(state.slide,()=>set(s=>({...s,slide:(s.slide+1)%SLIDES})),reduced);
  const directory=useLoad(async()=>{const server=serverBackend();return server?(await server.publicEvents().catch(()=>[])).filter(e=>inLaunchCity(e.city)):[]},[]);
  const events=directory.data??[],live=events.some(e=>e.status==='live'&&e.results);
  const hero=heroEvent(events);

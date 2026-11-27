@@ -31,13 +31,19 @@ test('RallyQ home: top menu scrolls to each section, clears the header and highl
  await expect(nav.locator('a.on')).toHaveCount(1);
  await page.evaluate(()=>scrollTo(0,0));await expect(nav.locator('a.on')).toHaveCount(0);
 });
-test('RallyQ home: the phone hero shows the player, with photo buttons and no autoplay',async({page})=>{
+test('RallyQ home: the phone hero shows the player, with photo buttons, and the photos change by themselves',async({page})=>{
  await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));await page.setViewportSize({width:390,height:844});await page.goto('#/home');
  const on=page.locator('.hero .slides .on');await expect(on).toHaveCount(1);
  expect(await on.evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('photos/mobile/hero-night-rally.jpg');
- await page.waitForTimeout(7500);expect(await on.evaluate(e=>e.className)).toContain('s0');
+ // Every 6.5 s the next photo fades in.
+ await expect(page.locator('.hero .slides .s1.on')).toHaveCount(1,{timeout:9000});
  await page.getByRole('button',{name:'Show photo 2 of 3'}).click();
  expect(await page.locator('.hero .slides .on').evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('photos/mobile/social-champions.jpg');
+});
+test('RallyQ home: with reduced motion the hero photos stay put',async({page})=>{
+ await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));await page.emulateMedia({reducedMotion:'reduce'});await page.setViewportSize({width:390,height:844});await page.goto('#/home');
+ await expect(page.locator('.hero .slides .s0.on')).toHaveCount(1);
+ await page.waitForTimeout(7500);await expect(page.locator('.hero .slides .s0.on')).toHaveCount(1);
 });
 test('RallyQ logo always leads back to Home from public pages',async({page})=>{
  await page.route('https://*.supabase.co/**',r=>r.fulfill({json:[]}));await page.setViewportSize({width:390,height:844});
