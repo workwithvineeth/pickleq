@@ -27,7 +27,7 @@ function LivePlayerMatch({ slug, matchIds }: NonNullable<PublicRallyPlayer['live
 export function AthleteCover({ player }: { player: PublicRallyPlayer }) {
   const record = studioRecord(player.official);
   const tiles = [
-    ['Best run', record.bestRun ? `${record.bestRun} rallies` : '—'],
+    ['Official wins', String(record.wins)],
     ['Biggest comeback', record.comeback ? `${record.comeback.from} → ${record.comeback.to}` : '—'],
     ['Game points won', record.gamePoints ? `${record.closed} of ${record.gamePoints}` : '—'],
     ['Best finish', record.finish === 'Champion' ? 'Champion · ' + player.official.find(m => m.stage === 'final' && matchWon(m))?.tournament : record.finish || '—'],
@@ -60,7 +60,7 @@ export function PlayerRecord({ player }: { player: PublicRallyPlayer }) {
     </div>
     <dl className="athlete-tiles">
       <div><dt>Matches</dt><dd>{record.played}</dd></div>
-      <div><dt>Win rate</dt><dd>{record.rate === undefined ? '—' : `${record.rate}%`}</dd></div>
+      <div><dt>{kind === 'doubles' ? 'Doubles' : 'Singles'} win rate</dt><dd>{record.rate === undefined ? '—' : `${record.rate}%`}</dd></div>
       <div><dt>Best run</dt><dd>{record.bestRun || '—'}</dd></div>
       <div><dt>DUPR</dt><dd>{rating(kind === 'doubles' ? player.duprDoubles : player.duprSingles)}</dd></div>
     </dl>

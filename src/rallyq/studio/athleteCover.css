@@ -123,3 +123,26 @@
   color: #f1f4ea;
 }
 @media (min-width: 640px) { .studio-cover-portrait { min-height: 320px; } }
+
+.studio-account-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 2vw, 18px);
+  min-width: 0;
+}
+.rallyq-prototype.rallyq-prototype .rq .studio-account-links .tlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: clamp(.75rem, 3.35vw, .9375rem);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+}

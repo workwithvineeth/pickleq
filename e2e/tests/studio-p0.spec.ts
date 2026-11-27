@@ -74,11 +74,14 @@ test('Studio covers, latest official event and a private practice match', async 
   await expect(cover).toContainText('1 of 1');
   await expect(cover).toContainText('Champion');
   const record = page.getByRole('region', { name: 'Record', exact: true });
-  await expect(record).toContainText('100%');
+  await expect(cover.getByText('Official wins', { exact: true })).toBeVisible();
+  await expect(page.getByText('Best run', { exact: true })).toHaveCount(1);
+  await expect(record.getByText('Best run', { exact: true })).toBeVisible();
+  await expect(record.getByText('Doubles win rate', { exact: true }).locator('..')).toContainText('100%');
   await expect(record).toContainText('Last 1');
   await record.getByRole('button', { name: 'Singles', exact: true }).click();
   await expect(record).toContainText('4.18');
-  await expect(record).toContainText('0%');
+  await expect(record.getByText('Singles win rate', { exact: true }).locator('..')).toContainText('0%');
   await record.getByRole('button', { name: 'Doubles', exact: true }).click();
 
   if (screenshots && info.project.name === 'android') {
@@ -95,6 +98,27 @@ test('Studio covers, latest official event and a private practice match', async 
   const privateCover = page.getByRole('region', { name: 'Private Athlete cover', exact: true });
   const story = page.getByRole('region', { name: 'Your latest event', exact: true });
   await expect(privateCover).toContainText('+0.21 since first rating');
+  await expect(privateCover.getByText(/Official win rate \(all formats\)/)).toContainText('50%');
+  const account = page.getByRole('navigation', { name: 'Studio account' });
+  await expect(account.getByRole('link', { name: 'My clubs', exact: true })).toBeVisible();
+  await expect(account.getByRole('link', { name: 'View my public profile', exact: true })).toBeVisible();
+  await expect(account.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 800 });
+    const targets = await account.locator('a, button').evaluateAll(items => items.map(item => {
+      const target = item.getBoundingClientRect();
+      const text = document.createRange();
+      text.selectNodeContents(item);
+      return { height: target.height, width: target.width, textTop: text.getBoundingClientRect().top };
+    }));
+    for (const target of targets) {
+      expect(target.height).toBeGreaterThanOrEqual(44);
+      expect(target.width).toBeGreaterThanOrEqual(44);
+      expect(target.textTop).toBeCloseTo(targets[0].textTop, 0);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+  await page.setViewportSize({ width: 320, height: 800 });
   await expect(story).toContainText('Cedar Night Open');
   await expect(story).toContainText('1 win · 1 loss');
   await expect(story.getByLabel('Best match DNA')).toBeVisible();
