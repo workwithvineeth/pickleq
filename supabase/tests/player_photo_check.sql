@@ -25,6 +25,6 @@ do $$ begin
   insert into out select 7, case when count(*) = 0 then 'visitor sees no photos' else 'FAIL visitor sees photos' end from storage.objects where bucket_id = 'player-photos';
 end $$;
 reset role;
-select case when public from storage.buckets where id = 'player-photos' then 'FAIL bucket is public' else 'bucket is private' end;
+select case when b.public then 'FAIL bucket is public' else 'bucket is private' end from storage.buckets b where b.id = 'player-photos';
 select step, result from out order by step;
 rollback;

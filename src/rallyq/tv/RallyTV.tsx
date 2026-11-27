@@ -1,10 +1,12 @@
 import {liveWinBar,winBarHtml} from '../../club/winBar';
 import {useEffect,useMemo,useRef,useState} from 'react';
+import qrcode from 'qrcode-generator';
 import {gameOver} from '../../club/domain/momentum';
 import {COUNT_STEP_MS,HOLD_MS,MOTION_CSS,STALE_FAILURES,STALE_MS,finishedHandOffs,flipOnChange,leadAccent,pointLabel,serveOf,settled,stepAll,type Scores} from './motion';
 import {useReducedMotion} from '../useReducedMotion';
-import type {Go} from '../../navigation';
+import {routeHash,type Go} from '../../navigation';
 import {usePublicScores} from '../../club/screens/usePublicScores';
+import {LIVE_SCORE_STALE_MS} from '../../club/live/scoreStream';
 import {courtMatches,matchView} from '../../club/liveView';
 import {PrototypeScreen} from '../PrototypeScreen';
 import raw from '../prototypes/TV.dc.html?raw';
@@ -14,9 +16,11 @@ import {useClubLogo,logoTile} from '../useClubLogo';
 import {ralliesOf} from '../arena/rallies';
 import {LivingQ} from '../arena/LivingQ';
 import {Dna} from '../arena/Dna';
+import SQUARE_CSS from './square.css?raw';
 // TV sizes are in vh, read from across the room: scores, names, chips and the Up next line grow with the screen.
+const BOARD_SIZE='width:100vw;height:100vh;min-height:560px';
 const source=holes(raw,[
- ['width:1280px;height:720px','width:100vw;height:100vh;min-height:560px'],
+ ['width:1280px;height:720px',BOARD_SIZE],
  ['font-size:18px">CC</div>','font-size:18px;overflow:hidden">'+logoTile('{{clubMark}}')+'</div>'],
  ['Hosted by Cedar at Maple Courts','Hosted by {{clubName}}'],
  ['<div class="disp" style="font-size:44px">Cedar Open</div>','<div class="disp {{titleCls}}" style="font-size:44px">{{eventName}}</div>'],
@@ -40,18 +44,30 @@ const source=holes(raw,[
  ['text-overflow:ellipsis">{{c.b}}</span>','text-overflow:ellipsis"><span class="rqm-srv {{c.svb}}" aria-hidden="true"></span><span class="rqm-win">{{c.wb}}</span>{{c.b}}</span>'],
  ['<span class="n acc" style="font-size:72px">{{c.sa}}</span>','<span class="n {{c.aca}}" style="font-size:{{c.fs}}"><span class="{{c.ka}}">{{c.sa}}</span></span>'],
  ['<span class="n" style="font-size:72px">{{c.sb}}</span>','<span class="n {{c.acb}}" style="font-size:{{c.fs}}"><span class="{{c.kb}}">{{c.sb}}</span></span>']]).replace(/(\{\{c\.sb\}\}<\/span>(?:<\/span>)?\s*<\/div>)/,'$1'+winBarHtml('c.win'));
+// In square fit, size the original 1280×720 board against its own width so the band doesn't squeeze the courts.
+const squareUnits=(css:string)=>css.replace(/([\d.]+)(px|vh)\b/g,(_,size:string,unit:string)=>`${Number((Number(size)*(unit==='px'?100/1280:9/16)).toFixed(4))}cqw`);
+const squareSource=squareUnits(source.replace(BOARD_SIZE,'width:100%;aspect-ratio:16/9;min-height:0'));
 const mark=(club:string)=>club.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
 /** Static placeholder courts while the first scores load (no shimmer: TV browsers repaint slowly). */
 const BLANK=' '.repeat(14);
 const SKELETON=Array.from({length:4},()=>({chip:'chip',status:'',name:' '.repeat(8),stage:'',a:BLANK,b:BLANK,sa:'  ',sb:'  ',fs:'clamp(72px,11vh,160px)',aca:'',acb:'',ka:'',kb:'',pk:'',point:'',wa:'',wb:'',sva:'',svb:'',cls:'rqm-skel',win:'',q:undefined,dna:undefined,rallyCount:0,tap:()=>undefined}));
 const hm=(t:Date|number)=>new Date(t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
 /** Venue TV board: every court of one event, live from the public scores. Open it full screen on the venue TV. */
-export function RallyTV({slug,go}:{slug:string;go:Go}){
+export function RallyTV({slug:venue,go}:{slug:string;go:Go}){
+ const [slug,query]=venue.split('?');
+ const square=new URLSearchParams(query).get('fit')==='square';
+ const qr=useMemo(()=>{
+  if(!square)return null;
+  const code=qrcode(0,'M');
+  code.addData(window.location.origin+import.meta.env.BASE_URL+routeHash({name:'live',id:slug}));
+  code.make();
+  return code.createDataURL(8);
+ },[slug,square]);
  const scores=usePublicScores(slug);const logoUrl=useClubLogo(slug);const[now,setNow]=useState(new Date());
  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),15000);return()=>clearInterval(t)},[]);
  const d=scores.data;const reduced=useReducedMotion();
  // Polling stops once the event is final, so only a running event can go stale.
- const stale=!!d&&d.status!=='done'&&(scores.failures>=STALE_FAILURES||(scores.updatedAt!=null&&now.getTime()-scores.updatedAt>STALE_MS));
+ const stale=!!d&&d.status!=='done'&&(scores.failures>=STALE_FAILURES||(scores.updatedAt!=null&&now.getTime()-scores.updatedAt>(scores.live?LIVE_SCORE_STALE_MS:STALE_MS)));
  // Match end hold: when a court moves on from a finished match, that match stays up for HOLD_MS with its winners.
  const lastOnCourt=useRef<Record<number,string>>({});
  const[held,setHeld]=useState<Record<number,string>>({});
@@ -62,18 +78,20 @@ export function RallyTV({slug,go}:{slug:string;go:Go}){
   setHeld(h=>({...h,...fresh}));
   // No cleanup: a newer poll inside the hold must not cancel this release.
   setTimeout(()=>setHeld(h=>Object.fromEntries(Object.entries(h).filter(([c,id])=>fresh[Number(c)]!==id))),HOLD_MS);},[d]);
- // Motion "count": when several points arrive in one update, the shown score steps up to the real one.
+ // Count through missed points after a poll. The live feed shows each new value immediately and animates it in CSS.
  const targets=useMemo(()=>{const t:Record<string,{a:number;b:number}>={};if(d)for(const{match}of courtMatches(d)){const v=matchView(d,match);t[match.id]={a:v.pointsA,b:v.pointsB};}return t;},[d]);
  const[shown,setShown]=useState<Scores>({});
- useEffect(()=>{if(settled(shown,targets))return;const fresh=Object.keys(targets).some(id=>!shown[id]);
-  const h=setTimeout(()=>setShown(prev=>stepAll(prev,targets,reduced)),fresh||reduced?0:COUNT_STEP_MS);return()=>clearTimeout(h);},[shown,targets,reduced]);
+ useEffect(()=>{if(settled(shown,targets))return;
+  if(scores.live){setShown(targets);return;}
+  const fresh=Object.keys(targets).some(id=>!shown[id]);
+  const h=setTimeout(()=>setShown(prev=>stepAll(prev,targets,reduced)),fresh||reduced?0:COUNT_STEP_MS);return()=>clearTimeout(h);},[shown,targets,reduced,scores.live]);
  // Motion classes remember each court's last value, so only a change animates (the 15 s clock tick never re-animates).
  const[seen]=useState(()=>new Map<string,{value:string;cls:string}>());
  const courts=useMemo(()=>d?courtMatches(d).map(({court,match:onCourt},_,all)=>{
   const match=(held[court]&&d.matches.find(m=>m.id===held[court]))||onCourt;const hold=match!==onCourt;
   const v=matchView(d,match);const live=match.status==='live';
   const r=ralliesOf(v.current,v.division?.kind!=='singles');
-  const show=shown[match.id]??{a:v.pointsA,b:v.pointsB};
+  const show=(!scores.live&&shown[match.id])||{a:v.pointsA,b:v.pointsB};
   const sa=match.status==='scheduled'?'':show.a,sb=match.status==='scheduled'?'':show.b;
   const over=!v.current||gameOver(v.pointsA,v.pointsB,v.format.pointsTo,!!v.format.golden);
   const serve=live?serveOf(v.current,v.division?.kind!=='singles',over):null;
@@ -88,12 +106,14 @@ export function RallyTV({slug,go}:{slug:string;go:Go}){
    pk:(point==='Golden point'?'gold ':'')+flipOnChange(seen,id+':p',point,['rqm-p0','rqm-p1']),
    wa:hold&&match.winner==='A'?'Winners':'',wb:hold&&match.winner==='B'?'Winners':'',cls:(hold?'rqm-hold ':'')+fade,
    sva:serve?.side==='A'?'on':'',svb:serve?.side==='B'?'on':'',point,win:liveWinBar(d,match),
-   q:r.length?<LivingQ rallies={r} confirmed={match.status==='done'}/>:undefined,dna:r.length?<Dna rallies={r}/>:undefined,rallyCount:r.length,tap:()=>undefined};}):[],[d,shown,seen,held,stale]);
+   q:r.length?<LivingQ rallies={r} confirmed={match.status==='done'}/>:undefined,dna:r.length?<Dna rallies={r}/>:undefined,rallyCount:r.length,tap:()=>undefined};}):[],[d,shown,seen,held,stale,scores.live]);
  const next=d?d.matches.filter(m=>m.status==='scheduled').sort((a,b)=>(a.slot??0)-(b.slot??0)).slice(0,3).map(m=>{const v=matchView(d,m);return v.a+' vs '+v.b;}).join(' · '):'';
  const loading=!d&&scores.loading;const board=loading?SKELETON:courts;
- return <PrototypeScreen name="TV" go={go} source={source} values={{logoUrl:logoUrl??'',noLogo:!logoUrl,courts:board,gridCols:'grid-template-columns:repeat('+(board.length<=4?2:board.length<=6?3:4)+',minmax(0,1fr))',clubName:d?.club??'',clubMark:d?mark(d.club):'',
+ return <PrototypeScreen name="TV" go={go} source={square?squareSource:source} className={square?'rallyq-tv-square':undefined} forceNight={square} values={{logoUrl:logoUrl??'',noLogo:!logoUrl,courts:square?board.map(c=>({...c,fs:squareUnits(c.fs)})):board,gridCols:'grid-template-columns:repeat('+(board.length<=4?2:board.length<=6?3:4)+',minmax(0,1fr))',clubName:d?.club??'',clubMark:d?mark(d.club):'',
   eventName:d?.name??(loading?' '.repeat(16):'The board opens when the draw is made'),titleCls:loading?'rqm-skel':'',
   statusChip:d?.status==='live'?'chip live':'chip',statusLabel:!d||stale?'':d.status==='live'?'Live':d.status==='done'?'Final results':'Starts '+friendlyDate(d.startDate),
-  syncChip:stale?'chip rqm-stale':'chip rqm-muted',syncLabel:!d?'':stale?'Reconnecting · scores may be behind':scores.updatedAt?'Updated '+hm(scores.updatedAt):'',
-  clock:hm(now),upNext:loading?'Loading the board…':next||'Next matches appear here when the desk calls them.'}}/>;
+  syncChip:stale?'chip rqm-stale':scores.live?'chip live':'chip rqm-muted',syncLabel:!d?'':stale?'Reconnecting · scores may be behind':scores.live?'Scores update live':scores.updatedAt?'Updated '+hm(scores.updatedAt):'',
+  clock:hm(now),upNext:loading?'Loading the board…':next||'Next matches appear here when the desk calls them.'}}>
+  {qr&&<><style>{SQUARE_CSS}</style><div className="rq-tv-qr"><img src={qr} alt="QR code: watch live on rallyq.in"/><span>Watch live on rallyq.in</span></div></>}
+ </PrototypeScreen>;
 }

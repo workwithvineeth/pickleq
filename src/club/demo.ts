@@ -5,8 +5,12 @@ import { weekStart, weeklyCounts } from './adminStats';
 import { ClubError, type AuditRow, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type LatePerson, type LatePayment, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type ClubUser, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type DeskLabel, type TournamentAccess, type TournamentBundle, type TournamentDetails } from './backend';
 import { buildSampleClub, SAMPLE_CLUB_NAME, SAMPLE_TOURNAMENT_NAME } from './domain/sample';
 import { buildSampleEvents, SAMPLE_EVENTS_VERSION } from './domain/sampleEvents';
+import { broadcastDemoScore, demoScoreStream } from './live/demoScoreStream';
+import { publicScoreGame } from './live/scoreStream';
 import { pinProblem, randomPin as randomPinOf } from './pins';
 import { blobToDataUrl } from './poster';
+import type { CourtStream, PublicCourtStream } from './backend';
+import { isYouTubeVideoId } from './live/youtubeLink';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { cleanEmail, digits, entryProblem, isActive, personKey, type DrawPlan } from './registration';
 import { hasContactDetails, TESTIMONIAL_MAX, type Testimonial, type TestimonialStatus, isAdmin, isApproved, isStaff, NOT_APPROVED, PICK_NEEDS_TRUST, type Approval, type Club, type ClubMatch, type ClubPlayer, type ClubTournament, type Division, type Entry, type EntryPerson, type Listing, type ListingStatus, type Member, type Registration, type Role, type ScorerLink, type ScorerView, type Share, type SharedSummary, type SummaryData } from './types';
@@ -21,6 +25,7 @@ interface DemoState {
   divisions: Division[];
   entries: Entry[];
   matches: ClubMatch[];
+  courtStreams?: Record<string, CourtStream[]>;
   summaries: (SharedSummary & { clubId: string })[];
   scorerLinks?: (ScorerLink & { failed: number; lockedUntil?: number })[];
   /** One referee PIN per tournament for every court link. */
@@ -62,6 +67,7 @@ export class DemoBackend implements ClubBackend {
   readonly kind = 'demo' as const;
   private s: DemoState;
   private storage: Storage | null;
+  private storedState: string | null = null;
 
   constructor(storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null) {
     this.storage = storage;
@@ -85,6 +91,7 @@ export class DemoBackend implements ClubBackend {
     this.s.divisions = this.s.divisions.filter((d) => !oldD.has(d.id));
     this.s.entries = this.s.entries.filter((e) => !oldD.has(e.divisionId));
     this.s.matches = this.s.matches.filter((m) => !m.tournamentId || !oldT.has(m.tournamentId));
+    if (this.s.courtStreams) for (const id of oldT) delete this.s.courtStreams[id];
     this.s.registrations = (this.s.registrations ?? []).filter((r) => !oldT.has(r.tournamentId));
     const ev = buildSampleEvents(clubId, newId, this.s.players.filter((p) => p.clubId === clubId && p.sample));
     this.s.clubs.push(...ev.clubs);
@@ -100,14 +107,49 @@ export class DemoBackend implements ClubBackend {
     this.s.eventsSeeded = SAMPLE_EVENTS_VERSION;
   }
 
-  private load(): DemoState {
+  private load(fallback = empty()): DemoState {
     try {
       const raw = this.storage?.getItem(KEY);
-      if (raw) { const v = JSON.parse(raw) as DemoState; if (v.v === 1) return renameLegacyDemo({ ...v, scorerLinks: v.scorerLinks ?? [] }); }
-    } catch { /* start fresh */ }
-    return empty();
+      if (raw && raw !== this.storedState) {
+        const v = JSON.parse(raw) as DemoState;
+        if (v.v === 1) {
+          this.storedState = raw;
+          return renameLegacyDemo({ ...v, scorerLinks: v.scorerLinks ?? [] });
+        }
+      }
+    } catch { /* Keep the in-memory demo. */ }
+    return fallback;
   }
-  private save() { try { this.storage?.setItem(KEY, JSON.stringify(this.s)); } catch { /* storage full or blocked: keep in memory */ } }
+  private save() {
+    try {
+      if (!this.storage) return;
+      const raw = JSON.stringify(this.s);
+      this.storage.setItem(KEY, raw);
+      this.storedState = raw;
+    } catch { /* storage full or blocked: keep in memory */ }
+  }
+
+  liveScores() { return demoScoreStream; }
+
+  private broadcastScore(m: ClubMatch) {
+    const t = this.s.tournaments.find(t => t.id === m.tournamentId);
+    if (!t?.isPublic || !t.publicSlug || !isApproved(t)) return;
+    const { id, court, slot, status, winner, entryA, entryB } = m;
+    broadcastDemoScore(t.publicSlug, { id, court, slot, status, winner, entryA, entryB, games: m.games.map(g => publicScoreGame({ ...g })), at: Date.now() });
+  }
+
+  private saveMatches(changes: { match: ClubMatch; patch: Partial<ClubMatch> }[]) {
+    const updated = new Set<ClubMatch>();
+    for (const { match, patch } of changes) {
+      const { games, court, slot, status, winner, entryA, entryB } = match;
+      Object.assign(match, patch);
+      if (court !== match.court || slot !== match.slot || status !== match.status || winner !== match.winner
+        || entryA !== match.entryA || entryB !== match.entryB
+        || (games !== match.games && JSON.stringify(games) !== JSON.stringify(match.games))) updated.add(match);
+    }
+    this.save();
+    updated.forEach(m => this.broadcastScore(m));
+  }
 
   /** Signs in as you and creates PQ Demo Club with its sample tournament (only the first time). */
   async start(name: string): Promise<string> {
@@ -365,8 +407,10 @@ export class DemoBackend implements ClubBackend {
     const { winner } = matchResult({ games, format: current.format });
     if (!winner) throw new ClubError('Enter enough games to decide the match');
     if (!['pool', 'friendly'].includes(current.stage) && winner !== current.winner) throw new ClubError('A knockout winner cannot change through score correction');
-    this.s.matches = this.s.matches.map((m) => m.id === current.id ? { ...m, games, winner, updatedAt: new Date().toISOString() } : m);
+    const next = { ...current, games, winner, updatedAt: new Date().toISOString() };
+    this.s.matches = this.s.matches.map((m) => m.id === current.id ? next : m);
     this.save();
+    this.broadcastScore(next);
   }
 
   async saveScore(matchId: string, patch: ScorePatch) {
@@ -374,8 +418,7 @@ export class DemoBackend implements ClubBackend {
     if (!m) throw new ClubError('Match not found');
     this.need(m.clubId, isStaff, 'Only coaches and admins can score matches');
     this.mustBeApproved(m.tournamentId);
-    Object.assign(m, patch, { winner: patch.winner, updatedAt: new Date().toISOString() });
-    this.save();
+    this.saveMatches([{ match: m, patch: { ...patch, winner: patch.winner, updatedAt: new Date().toISOString() } }]);
   }
 
   async patchMatches(changes: { id: string; patch: MatchPatch }[]) {
@@ -386,13 +429,11 @@ export class DemoBackend implements ClubBackend {
       this.need(m.clubId, isStaff, 'Only coaches and admins can change matches');
     }
     const now = new Date().toISOString();
-    for (const { id, patch } of changes) {
-      const m = this.s.matches.find((x) => x.id === id) as ClubMatch;
+    this.saveMatches(changes.map(({ id, patch }) => {
+      const match = this.s.matches.find((x) => x.id === id) as ClubMatch;
       const { winner, ...rest } = patch;
-      Object.assign(m, rest, { updatedAt: now });
-      if (winner !== undefined) m.winner = winner ?? undefined;
-    }
-    this.save();
+      return { match, patch: { ...rest, ...(winner !== undefined ? { winner: winner ?? undefined } : {}), updatedAt: now } };
+    }));
   }
 
   async addLatePoolEntry(entry: Entry, matches: NewMatchRow[]) {
@@ -627,8 +668,7 @@ export class DemoBackend implements ClubBackend {
     if (patch.status !== 'live' && patch.status !== 'done') throw new ClubError('Unknown match status');
     if (patch.status === 'done' && patch.winner !== 'A' && patch.winner !== 'B') throw new ClubError('A finished match needs a winner');
     if (badGames(patch.games)) throw new ClubError('Scores aren’t in the right shape');
-    Object.assign(m, { games: patch.games, status: patch.status, winner: patch.status === 'done' ? patch.winner : undefined, playedOn: patch.playedOn ?? m.playedOn, updatedAt: new Date().toISOString() });
-    this.save();
+    this.saveMatches([{ match: m, patch: { games: patch.games, status: patch.status, winner: patch.status === 'done' ? patch.winner : undefined, playedOn: patch.playedOn ?? m.playedOn, updatedAt: new Date().toISOString() } }]);
   }
 
   async deskPatchMatches(token: string, pin: string, changes: { id: string; patch: MatchPatch }[]) {
@@ -647,13 +687,11 @@ export class DemoBackend implements ClubBackend {
       if (sa.some((p) => sb.includes(p))) throw new ClubError('A player can’t be on both sides');
     }
     const now = new Date().toISOString();
-    for (const { id, patch } of changes) {
-      const m = this.deskMatch(t, id);
+    this.saveMatches(changes.map(({ id, patch }) => {
+      const match = this.deskMatch(t, id);
       const { winner, ...rest } = patch;
-      Object.assign(m, rest, { updatedAt: now });
-      if (winner !== undefined) m.winner = winner ?? undefined;
-    }
-    this.save();
+      return { match, patch: { ...rest, ...(winner !== undefined ? { winner: winner ?? undefined } : {}), updatedAt: now } };
+    }));
   }
 
   async deskAddLateTeam(token: string, pin: string, people: LatePerson[], payment: LatePayment, entry: Entry, matches: NewMatchRow[]) {
@@ -786,8 +824,7 @@ export class DemoBackend implements ClubBackend {
     if (badGames(patch.games)) {
       throw new ClubError('Scores aren’t in the right shape');
     }
-    Object.assign(m, { games: patch.games, status: patch.status, winner: patch.status === 'done' ? patch.winner : undefined, playedOn: patch.playedOn ?? m.playedOn, updatedAt: new Date().toISOString() });
-    this.save();
+    this.saveMatches([{ match: m, patch: { games: patch.games, status: patch.status, winner: patch.status === 'done' ? patch.winner : undefined, playedOn: patch.playedOn ?? m.playedOn, updatedAt: new Date().toISOString() } }]);
   }
 
   async setMySharing(playerId: string, share: Share) {
@@ -808,12 +845,64 @@ export class DemoBackend implements ClubBackend {
     this.save();
   }
 
+  private async organiserStreams(tournamentId: string): Promise<CourtStream[]> {
+    const t = this.tournament(tournamentId);
+    if (!isAdmin(this.role(t.clubId)) && !(await this.isPlatformAdmin())) {
+      throw new ClubError('Only the club’s owner and admins can manage live streams');
+    }
+    const streams = this.s.courtStreams ??= {};
+    return streams[tournamentId] ??= [];
+  }
+
+  async courtStreams(tournamentId: string): Promise<CourtStream[]> {
+    return (await this.organiserStreams(tournamentId)).map(s => ({ ...s })).sort((a, b) => a.court - b.court);
+  }
+
+  async setCourtStream(tournamentId: string, court: number, videoId: string): Promise<CourtStream> {
+    const streams = await this.organiserStreams(tournamentId);
+    if (!Number.isInteger(court) || court < 1 || court > 64) throw new ClubError('Court must be between 1 and 64');
+    if (!isYouTubeVideoId(videoId)) throw new ClubError('Enter a valid YouTube video ID');
+    const index = streams.findIndex(s => s.court === court);
+    const old = streams[index];
+    const stream: CourtStream = old?.videoId === videoId
+      ? old
+      : { court, videoId, visible: old?.visible ?? false, status: 'unknown' };
+    if (index < 0) streams.push(stream);
+    else streams[index] = stream;
+    this.save();
+    return { ...stream };
+  }
+
+  async setCourtStreamVisible(tournamentId: string, court: number, visible: boolean): Promise<CourtStream> {
+    const stream = (await this.organiserStreams(tournamentId)).find(s => s.court === court);
+    if (!stream) throw new ClubError('Save a YouTube link for this court first');
+    stream.visible = visible;
+    this.save();
+    return { ...stream };
+  }
+
+  async clearCourtStream(tournamentId: string, court: number): Promise<void> {
+    const streams = await this.organiserStreams(tournamentId);
+    const index = streams.findIndex(s => s.court === court);
+    if (index >= 0) { streams.splice(index, 1); this.save(); }
+  }
+
+  async publicCourtStreams(slug: string): Promise<PublicCourtStream[]> {
+    const t = this.s.tournaments.find(x => x.publicSlug === slug && x.isPublic && isApproved(x));
+    if (!t) return [];
+    return (this.s.courtStreams?.[t.id] ?? []).filter(s => s.visible)
+      .map(({ court, videoId, status, embeddable, checkedAt }) => ({ court, videoId, status, embeddable, checkedAt }))
+      .sort((a, b) => a.court - b.court);
+  }
+
   async publicTournamentRev(slug: string): Promise<string | null> {
     const t = await this.publicTournament(slug);
     return t ? JSON.stringify(t) : null;
   }
 
   async publicTournament(slug: string): Promise<PublicTournament | null> {
+    // The confirming read can follow a score saved in another demo tab.
+    this.s = this.load(this.s);
     const t = this.s.tournaments.find((x) => x.publicSlug === slug && x.isPublic && isApproved(x));
     if (!t) return null;
     const names = new Map(this.s.players.map((p) => [p.id, p.name]));
@@ -826,7 +915,7 @@ export class DemoBackend implements ClubBackend {
       entries: this.s.entries.filter((e) => divs.some((d) => d.id === e.divisionId)).map((e) => ({ id: e.id, divisionId: e.divisionId, seed: e.seed, pool: e.pool, ...(e.status === 'withdrawn' ? { status: 'withdrawn' as const } : {}), names: e.playerIds.map((p) => names.get(p) ?? ''), duprs: e.playerIds.map((p) => (kindOf.get(e.divisionId) === 'singles' ? byId.get(p)?.duprSingles : byId.get(p)?.duprDoubles)) })),
       matches: this.s.matches.filter((m) => m.tournamentId === t.id).map((m) => ({
         id: m.id, divisionId: m.divisionId, stage: m.stage, pool: m.pool, round: m.round, bracketPos: m.bracketPos, slot: m.slot, court: m.court,
-        entryA: m.entryA, entryB: m.entryB, games: m.games.map((g) => ({ points: '', a: g.a, b: g.b, ...(g.rallies ? { rallies: g.rallies } : {}), ...(g.mode ? { mode: g.mode } : {}), ...(g.serve ? { serve: g.serve } : {}) })), status: m.status, winner: m.winner,
+        entryA: m.entryA, entryB: m.entryB, games: m.games.map(g => publicScoreGame({ ...g })), status: m.status, winner: m.winner,
       })),
     };
   }
@@ -1060,6 +1149,7 @@ export class DemoBackend implements ClubBackend {
     if (confirmName.trim() !== t.name.trim()) throw new ClubError('Type the tournament name exactly to confirm');
     this.s.divisions = this.s.divisions.filter((d) => d.tournamentId !== id);
     this.s.tournaments = this.s.tournaments.filter((x) => x.id !== id);
+    if (this.s.courtStreams) delete this.s.courtStreams[id];
     this.audit.unshift({ at: new Date().toISOString(), action: 'tournament_delete', detail: t.name, clubId: t.clubId, tournamentId: id });
     this.save();
   }
@@ -1378,9 +1468,11 @@ export class DemoBackend implements ClubBackend {
     const { winner } = matchResult({ games, format: current.format });
     if (!winner) throw new ClubError('Enter enough games to decide the match');
     if (!['pool', 'friendly'].includes(current.stage) && winner !== current.winner) throw new ClubError('A knockout winner cannot change here, because the bracket depends on it');
-    this.s.matches = this.s.matches.map((m) => m.id === current.id ? { ...m, games, winner, updatedAt: new Date().toISOString() } : m);
+    const next = { ...current, games, winner, updatedAt: new Date().toISOString() };
+    this.s.matches = this.s.matches.map((m) => m.id === current.id ? next : m);
     this.audit.unshift({ at: new Date().toISOString(), action: 'admin_result_edit', detail: `match ${current.id}: ${reason.trim()}`, clubId: current.clubId, tournamentId: current.tournamentId });
     this.save();
+    this.broadcastScore(next);
   }
   async adminClubMembers(clubId: string): Promise<AdminMember[]> {
     const u = this.me(); this.club(clubId);

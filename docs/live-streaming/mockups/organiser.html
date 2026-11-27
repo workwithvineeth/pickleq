@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ · Organiser live streams</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(19,48,34,.9);color:#F1F4EA;white-space:nowrap}
+.chip.live{background:#D9F24A;color:#0B2418}
+.chip.coral{background:#FF655C;color:#1A0603}
+.chip.line{background:transparent;box-shadow:inset 0 0 0 1px rgba(241,244,234,.22);color:#B9CBBF}
+.cap{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#A9BDB0}
+.card{background:rgba(13,34,24,.82);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(241,244,234,.12)}
+.mono{font-family:'JetBrains Mono',monospace;font-weight:500}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border-radius:12px;border:0;font:700 14px 'DM Sans',sans-serif;cursor:pointer;background:rgba(19,48,34,.9);color:#F1F4EA;box-shadow:inset 0 0 0 1px rgba(241,244,234,.16)}
+.btn.on{background:#D9F24A;color:#0B2418;box-shadow:none}
+.inp{min-height:44px;box-sizing:border-box;width:100%;padding:0 12px;border-radius:12px;border:0;background:rgba(6,20,13,.9);color:#F1F4EA;box-shadow:inset 0 0 0 1px rgba(241,244,234,.2);font:500 14px 'JetBrains Mono',monospace}
+</style>
+</helmet>
+<div style="min-height: 900px; font-family: 'DM Sans', sans-serif; color: #F1F4EA; background: #06140D">
+<div style="max-width: 1200px; margin: 0 auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px">
+<div><div class="cap">Organiser · Pickleball Central Open</div><h1 style="margin: 4px 0 0; font-family: 'Archivo', sans-serif; font-weight: 800; letter-spacing: -.03em; font-size: 34px">Live streams</h1></div>
+<span class="chip line" style="margin-left: auto">Sample data</span>
+</div>
+<p style="margin: 0; color: #D5E3D8; max-width: 760px">Paste each court's YouTube live link once. Fans see the video with the live score on rallyq.in. The overlay link goes into OBS on the court's laptop, so the score is burned into the stream.</p>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 22px">{{c.name}}</span><span class="{{c.chip}}">{{c.status}}</span><span style="margin-left: auto; font-size: 13px; color: #A9BDB0">{{c.match}}</span></div>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 700">YouTube live link</span><input class="inp" value="{{c.link}}" placeholder="youtube.com/live/…"></label>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<button class="{{c.showCls}}" onClick="{{c.toggle}}" aria-pressed="{{c.shown}}">{{c.showLabel}}</button>
+<button class="btn">Check now</button>
+<button class="btn" style="margin-left: auto">Copy overlay link</button>
+</div>
+<div class="mono" style="font-size: 12px; color: #A9BDB0">{{c.note}}</div>
+</div>
+</sc-for>
+</div>
+
+<div class="card" style="padding: 16px 18px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 220px"><span class="cap">Score speed</span><span style="font-weight: 700">Instant · about 1 s from the referee's tap</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 220px"><span class="cap">Fans' board</span><span style="font-weight: 700">Synced to video by default (3 s)</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 220px"><span class="cap">Filming consent</span><span style="font-weight: 700">Players and venue agreed · minors need a guardian</span></div>
+</div>
+<p style="margin: 0; font-size: 13px; color: #A9BDB0">Hiding a stream removes it from RallyQ only. The YouTube broadcast keeps running; stop it in YouTube or OBS.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { shown: { 1: true, 2: true, 3: false, 4: false } }; }
+renderVals() {
+  const s = this.state.shown;
+  const data = [
+    { n: 1, status: 'Live', chip: 'chip live', match: 'Semi-final 1 · 9–7', link: 'youtube.com/live/Ct1RallyQ01', note: 'YouTube says LIVE · checked 20 s ago · overlay connected' },
+    { n: 2, status: 'Live', chip: 'chip live', match: 'Mixed SF · 4–6', link: 'youtube.com/live/Ct2RallyQ02', note: 'YouTube says LIVE · checked 20 s ago · overlay connected' },
+    { n: 3, status: 'Starting soon', chip: 'chip', match: 'Pool A · final', link: 'youtube.com/live/Ct3RallyQ03', note: 'Scheduled on YouTube · not shown to fans yet' },
+    { n: 4, status: 'No link', chip: 'chip coral', match: 'Next: Women’s QF', link: '', note: 'Paste the link before the match starts' }
+  ];
+  return { courts: data.map((c) => ({ ...c, name: 'Court ' + c.n, shown: String(!!s[c.n]), showCls: s[c.n] ? 'btn on' : 'btn', showLabel: s[c.n] ? 'Showing to fans' : 'Show to fans',
+    toggle: () => this.setState({ shown: { ...s, [c.n]: !s[c.n] } }) })) };
+}
+}
+</script>
+</body>
+</html>

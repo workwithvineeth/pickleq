@@ -11,6 +11,7 @@ const NOT_FOR_DESK = 'Only the organiser can do that, from their own account.';
 export function deskBackend(src: ClubBackend, token: string, pin: string): ClubBackend {
   const desk: Partial<ClubBackend> = {
     kind: src.kind,
+    liveScores: src.liveScores?.bind(src),
     tournamentBundle: (): Promise<TournamentBundle> => src.deskOpen(token, pin),
     matchBundle: async (matchId: string): Promise<MatchBundle> => {
       const t = await src.deskOpen(token, pin);

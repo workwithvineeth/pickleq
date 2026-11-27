@@ -895,7 +895,7 @@ export function Results({ slug, go = hashGo }: { slug: string; go?: Go }) {
       {!state.loading && !d && !state.error && <p className="mut" style={{ margin: 0 }}>These results aren’t available. Ask the club for a new link, or <a className="acc" href="#/events" onClick={(e) => { e.preventDefault(); go('events'); }}>see all events</a>.</p>}
       {d && division && body && (
         <>
-          {d.status === 'live' && <div className="pq-matchday pq-proto pq-live-results"><LiveCourts key={publicSlug + ':' + (requestedCourt ?? 'default')} d={d} initialCourt={requestedCourt} /></div>}
+          {d.status === 'live' && <div className="pq-matchday pq-proto pq-live-results"><LiveCourts key={publicSlug + ':' + (requestedCourt ?? 'default')} d={d} initialCourt={requestedCourt} live={state.live} /></div>}
           {d.divisions.length > 1 && <Tabs label="Event" value={division.id} options={d.divisions.map((x) => ({ value: x.id, label: x.name }))} onChange={setDiv} />}
           {champion && <ChampionHero c={champion} club={d.club} />}
           {champion && played.length > 0 && (

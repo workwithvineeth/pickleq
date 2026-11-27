@@ -19,6 +19,8 @@ it('calls the connection lost after two failed refreshes in a row, or a minute o
   expect(connectionLost(1,at,at+25_000)).toBe(false);
   expect(connectionLost(2,at,at+45_000)).toBe(true);
   expect(connectionLost(0,at,at+61_000)).toBe(true);
+  expect(connectionLost(0,at,at+61_000,false,true)).toBe(false);
+  expect(connectionLost(0,at,at+76_000,false,true)).toBe(true);
   // Before the first load there is nothing to be stale yet; the page shows its skeleton.
   expect(connectionLost(0,null,at)).toBe(false);
 });

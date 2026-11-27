@@ -1,24 +1,29 @@
 import { NOTICE_VERSION, type ConsentPurpose } from './privacy';
 import { cleanLog, cleanSession, logProblem, ratingProblem, sessionProblem, type RatingKind, type StudioRatingInput, type ClaimPreview, type FoundPlayer, type MyPlayer, type OfficialMatch, type StudioData, type StudioGoal, type StudioLog, type StudioLogInput, type StudioSession, type StudioSessionInput, type StudioSettings } from './playerStudio';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js';
 import { newId } from '../db/ids';
 import type { Format } from '../domain/types';
 import { ClubError, type ClaimEmailOutcome, type ClaimEmailStatus, type ClaimStatus, type SupportSession, type AdminClub, type AdminClubDetail, type AdminMember, type AdminOverview, type AdminTournament, type ClubBackend, type EntryPatch, type ListingReview, type ApprovalRequest, type NewTestimonial, type MatchPatch, type ClubBundle, type MatchBundle, type MyClub, type MyClubMatches, type MyEntry, type ImportEntryRow, type ImportResult, type OfflineEntry, type PinSignIn, type PublicEvent, type PublicTournament, type RegistrationPatch, type ScorePatch, type TournamentAccess, type DeskLabel, type LatePerson, type LatePayment, type TournamentBundle, type TournamentDetails } from './backend';
 import { authMessage, LEAKED_PASSWORD, passwordLeaked, passwordProblem } from './authText';
 import { buildTournamentRows, checkDivisionSetup, type NewMatchRow, type NewTournamentInput } from './plan';
 import { cleanEmail, type DrawPlan } from './registration';
-import type { Approval, Club, ClubMatch, ScoringMode, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
+import type { Approval, Club, ClubMatch, HostingStatus, Testimonial, TestimonialStatus, ClubPlayer, ClubTournament, Division, DivisionRules, Entry, EntryPerson, Listing, ListingStatus, Member, Registration, Role, ScorerLink, ScorerView, Share, SharedSummary, SummaryData } from './types';
 import { isApproved, NOT_APPROVED, PICK_NEEDS_TRUST } from './types';
 import { teamNames } from './teamName';
+import type { CourtStream, PublicCourtStream } from './backend';
+import { publicRallyKeys as rallyKeys, publicScoreGame, readLiveScoreMessage, type LiveScoreMessage, type LiveScoreStream, type StreamStatus } from './live/scoreStream';
 
 /* Row shapes as stored on the server (snake_case). */
 type Row = Record<string, unknown>;
 /** Roster columns the app may read (claim_code is server-only since Module 4). */
-/** The optional side-out keys of a stored game (rallies, scoring mode, first server), when present. */
-const rallyKeys = (g: Row) => ({ ...(typeof g.rallies === 'string' && g.rallies ? { rallies: g.rallies } : {}), ...(g.mode === 'sideout' || g.mode === 'rally' ? { mode: g.mode as ScoringMode } : {}), ...(g.serve === 'A' || g.serve === 'B' ? { serve: g.serve as 'A' | 'B' } : {}) });
 const PLAYER_COLS = 'id,club_id,name,dupr_singles,dupr_doubles,dupr_id,user_id,share,sample,created_at,claimed_at';
 const s = (v: unknown) => (v === null || v === undefined ? undefined : String(v));
 const n = (v: unknown) => (v === null || v === undefined ? undefined : Number(v));
+const toPublicCourtStream = (r: Row): PublicCourtStream => ({
+  court: Number(r.court), videoId: String(r.video_id), status: r.status as PublicCourtStream['status'],
+  embeddable: typeof r.embeddable === 'boolean' ? r.embeddable : undefined, checkedAt: s(r.checked_at),
+});
+const toCourtStream = (r: Row): CourtStream => ({ ...toPublicCourtStream(r), visible: r.visible === true });
 
 const toClub = (r: Row): Club => ({ id: String(r.id), name: String(r.name), city: s(r.city), inviteCode: String(r.invite_code), settings: (r.settings as Club['settings']) ?? {}, logoUrl: s(r.logo_url),
   hosting: (s(r.hosting) as Club['hosting']) ?? undefined, hostingReason: s(r.hosting_reason), hostingPhone: s(r.hosting_phone), trusted: !!r.trusted });
@@ -144,9 +149,14 @@ function auth<R extends { data: unknown; error: { message: string } | null }>(re
   return res.data;
 }
 
+type ScoreListener = { message: (m: LiveScoreMessage) => void; status: (s: StreamStatus) => void };
+type ScoreChannel = { channel?: RealtimeChannel; listeners: Set<ScoreListener>; status: StreamStatus };
+
 export class ServerBackend implements ClubBackend {
   readonly kind = 'server' as const;
   private sb: SupabaseClient;
+  private scoreChannels = new Map<string, ScoreChannel>();
+  private closingScoreChannels = new Map<string, Promise<unknown>>();
 
   constructor(url: string, key: string) {
     // PKCE: the email's sign-in link comes back with ?code=… which is swapped for a session on this browser.
@@ -777,9 +787,76 @@ export class ServerBackend implements ClubBackend {
   async setMySharing(playerId: string, share: Share) { check(await this.sb.rpc('set_my_sharing', { pid: playerId, choice: share })); }
   async shareMySummary(playerId: string, data: SummaryData) { check(await this.sb.rpc('share_my_summary', { pid: playerId, summary: data })); }
 
+  async courtStreams(tournamentId: string): Promise<CourtStream[]> {
+    const rows = check(await this.sb.rpc('court_streams_for', { p_tournament: tournamentId })) as Row[];
+    return rows.map(toCourtStream);
+  }
+
+  async setCourtStream(tournamentId: string, court: number, videoId: string): Promise<CourtStream> {
+    const row = check(await this.sb.rpc('set_court_stream', { p_tournament: tournamentId, p_court: court, p_video_id: videoId }).single()) as Row;
+    return toCourtStream(row);
+  }
+
+  async setCourtStreamVisible(tournamentId: string, court: number, visible: boolean): Promise<CourtStream> {
+    const row = check(await this.sb.rpc('set_court_stream_visible', { p_tournament: tournamentId, p_court: court, p_visible: visible }).single()) as Row;
+    return toCourtStream(row);
+  }
+
+  async clearCourtStream(tournamentId: string, court: number): Promise<void> {
+    check(await this.sb.rpc('clear_court_stream', { p_tournament: tournamentId, p_court: court }));
+  }
+
+  async publicCourtStreams(slug: string): Promise<PublicCourtStream[]> {
+    const rows = check(await this.sb.rpc('public_court_streams', { slug })) as Row[];
+    return rows.map(toPublicCourtStream);
+  }
+
   async publicTournamentRev(slug: string): Promise<string | null> {
     const r = check(await this.sb.rpc('public_tournament_rev', { slug }));
     return typeof r === 'string' ? r : null;
+  }
+
+  liveScores(): LiveScoreStream {
+    return { subscribe: (slug, message, status) => {
+      const listener = { message, status };
+      const existing = this.scoreChannels.get(slug);
+      const room: ScoreChannel = existing ?? { listeners: new Set(), status: 'connecting' };
+      room.listeners.add(listener);
+      status(room.status);
+      if (!existing) {
+        this.scoreChannels.set(slug, room);
+        const start = () => {
+          if (this.scoreChannels.get(slug) !== room) return;
+          const setStatus = (next: StreamStatus) => {
+            room.status = next;
+            room.listeners.forEach(subscriber => subscriber.status(next));
+          };
+          try {
+            room.channel = this.sb.channel('live:' + slug, { config: { broadcast: { self: false } } });
+            room.channel.on('broadcast', { event: 'score' }, ({ payload }) => {
+              const score = readLiveScoreMessage(payload);
+              if (score) room.listeners.forEach(subscriber => subscriber.message(score));
+            }).subscribe(next => {
+              if (next === 'SUBSCRIBED') setStatus('live');
+              else if (next === 'CHANNEL_ERROR' || next === 'TIMED_OUT' || next === 'CLOSED') setStatus('down');
+            });
+          } catch { setStatus('down'); }
+        };
+        const closing = this.closingScoreChannels.get(slug);
+        if (closing) void closing.then(start);
+        else start();
+      }
+      return () => {
+        room.listeners.delete(listener);
+        if (room.listeners.size || this.scoreChannels.get(slug) !== room) return;
+        this.scoreChannels.delete(slug);
+        if (room.channel) {
+          const closing = this.sb.removeChannel(room.channel).catch(() => undefined);
+          this.closingScoreChannels.set(slug, closing);
+          void closing.then(() => this.closingScoreChannels.delete(slug));
+        }
+      };
+    } };
   }
 
   async publicTournament(slug: string): Promise<PublicTournament | null> {
@@ -791,7 +868,7 @@ export class ServerBackend implements ClubBackend {
       entries: (r.entries as Row[]).map((e) => ({ id: String(e.id), divisionId: String(e.division_id), seed: n(e.seed), pool: n(e.pool), ...(e.status === 'withdrawn' ? { status: 'withdrawn' as const } : {}), names: teamNames((e.names as string[]) ?? []), duprs: ((e.duprs as (number | string | null)[] | null) ?? []).map((x) => (x === null || x === undefined || x === '' ? undefined : Number(x))) })),
       matches: (r.matches as Row[]).map((m) => ({
         id: String(m.id), divisionId: s(m.division_id), stage: m.stage as ClubMatch['stage'], pool: n(m.pool), round: n(m.round), bracketPos: n(m.bracket_pos),
-        slot: n(m.slot), court: n(m.court), entryA: s(m.entry_a), entryB: s(m.entry_b), games: ((m.games as Row[]) ?? []).map((g) => ({ points: '', a: Number(g.a), b: Number(g.b), ...rallyKeys(g) })),
+        slot: n(m.slot), court: n(m.court), entryA: s(m.entry_a), entryB: s(m.entry_b), games: ((m.games as Row[]) ?? []).map(publicScoreGame),
         status: m.status as ClubMatch['status'], winner: (m.winner as ClubMatch['winner']) ?? undefined,
       })),
     };

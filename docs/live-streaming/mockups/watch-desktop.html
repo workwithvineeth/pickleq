@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyQ · Watch live, desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Fraunces:opsz,wght@9..144,600&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#06140D}
+a{color:#D9F24A}a:hover{color:#F1F4EA}
+.rqw{font-family:'DM Sans',system-ui,sans-serif;color:#F1F4EA}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(19,48,34,.9);color:#F1F4EA;white-space:nowrap}
+.chip.live{background:#D9F24A;color:#0B2418}
+.chip.line{background:transparent;box-shadow:inset 0 0 0 1px rgba(241,244,234,.22);color:#B9CBBF}
+.chip.coral{background:#FF655C;color:#1A0603}
+.dot{width:7px;height:7px;border-radius:50%;background:#0B2418;display:inline-block}
+.cap{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#A9BDB0}
+.card{background:rgba(13,34,24,.82);border-radius:20px;box-shadow:inset 0 0 0 1px rgba(241,244,234,.12)}
+.n{font-family:'Archivo',sans-serif;font-stretch:62%;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.disp{font-family:'Archivo',sans-serif;font-weight:800;letter-spacing:-.03em;line-height:1}
+.word{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.02em}
+.mono{font-family:'JetBrains Mono',monospace;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;border:0;font:700 14px 'DM Sans',sans-serif;cursor:pointer;background:rgba(19,48,34,.9);color:#F1F4EA;box-shadow:inset 0 0 0 1px rgba(241,244,234,.16)}
+.btn.on{background:#D9F24A;color:#0B2418;box-shadow:none}
+.btn:focus-visible{outline:2px solid #D9F24A;outline-offset:2px}
+</style>
+</helmet>
+<div class="rqw" style="min-height: 1620px; background: radial-gradient(70% 40% at 75% 0%, rgba(217,242,74,.07), transparent 60%), #06140D">
+<header style="border-bottom: 1px solid rgba(241,244,234,.10)">
+<div style="max-width: 1280px; margin: 0 auto; padding: 16px 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px">
+<a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #F1F4EA"><svg viewBox="0 0 100 100" width="34" height="34" aria-hidden="true"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" stroke="#F1F4EA" stroke-width="10"></path><line x1="28" y1="50" x2="72" y2="50" stroke="#D9F24A" stroke-width="3"></line><circle cx="83" cy="83" r="11" fill="#D9F24A"></circle></svg><span class="word" style="font-size: 26px">RallyQ</span></a>
+<nav aria-label="Main" style="display: flex; flex-wrap: wrap; gap: 4px">
+<a href="#" style="padding: 10px 14px; border-radius: 999px; color: #D5E3D8; text-decoration: none; font-weight: 600">Events</a>
+<a href="#" aria-current="page" style="padding: 10px 14px; border-radius: 999px; color: #F1F4EA; background: rgba(19,48,34,.9); text-decoration: none; font-weight: 600">Live</a>
+<a href="#" style="padding: 10px 14px; border-radius: 999px; color: #D5E3D8; text-decoration: none; font-weight: 600">Results</a>
+<a href="#" style="padding: 10px 14px; border-radius: 999px; color: #D5E3D8; text-decoration: none; font-weight: 600">Player Studio</a>
+<a href="#" style="padding: 10px 14px; border-radius: 999px; color: #D5E3D8; text-decoration: none; font-weight: 600">For clubs</a>
+</nav>
+<div style="margin-left: auto; display: flex; gap: 10px; align-items: center"><span class="chip line">Sample data</span><span class="chip live"><i class="dot"></i>Live</span></div>
+</div>
+</header>
+
+<main style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 48px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
+<div style="width: 44px; height: 44px; border-radius: 12px; background: #F1F4EA; color: #0B2418; display: grid; place-items: center; font-weight: 800; font-size: 14px">PC</div>
+<div><div class="cap">Pickleball Central Open · Peerzadiguda</div><div style="font-size: 18px; font-weight: 700; margin-top: 2px">Live · 4 courts · every point from the referee</div></div>
+</div>
+
+<div role="tablist" aria-label="Courts" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{courts}}" as="c" hint-placeholder-count="4">
+<button role="tab" aria-selected="{{c.sel}}" onClick="{{c.pick}}" class="{{c.cls}}" style="min-width: 150px"><span style="display: inline-flex; align-items: center; gap: 8px"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"></path></svg>{{c.name}}</span><span class="n" style="font-size: 18px; margin-left: 6px">{{c.score}}</span></button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section aria-label="Court 1 video" style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<div style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; background: #0B2418; box-shadow: inset 0 0 0 1px rgba(241,244,234,.14)">
+<sc-if value="{{showMain}}" hint-placeholder-val="{{ true }}"><img src="/_blob/8a6862adc7b678d68c9a269a6b57ff8b" alt="Court 1 from the main camera behind the baseline" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover"></sc-if>
+<sc-if value="{{showSideFull}}" hint-placeholder-val="{{ false }}"><img src="/_blob/fc5807bc56339ac943789270e49ea86d" alt="Court 1 from the side camera at the net" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover"></sc-if>
+<sc-if value="{{showPip}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; right: 16px; top: 16px; width: 28%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 2px #F1F4EA, 0 10px 30px rgba(0,0,0,.4)"><img src="/_blob/fc5807bc56339ac943789270e49ea86d" alt="Side camera" style="width: 100%; height: 100%; object-fit: cover"></div></sc-if>
+<div style="position: absolute; left: 16px; top: 16px; display: flex; gap: 8px"><span class="chip coral"><i class="dot" style="background: #1A0603"></i>Live</span><span class="chip">Court 1 · {{angleLabel}}</span></div>
+<div style="position: absolute; left: 16px; bottom: 16px; display: flex; align-items: stretch; border-radius: 12px; overflow: hidden; background: rgba(6,20,13,.92); box-shadow: 0 8px 24px rgba(0,0,0,.35)">
+<div style="padding: 8px 10px; display: grid; place-items: center; background: #0D2218"><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" stroke="#F1F4EA" stroke-width="10"></path><circle cx="83" cy="83" r="11" fill="#D9F24A"></circle></svg></div>
+<div style="display: grid; grid-template-columns: 4px auto 12px 40px; grid-auto-rows: 26px; align-items: center; column-gap: 10px; padding: 6px 12px 6px 0">
+<span style="height: 20px; background: #76E0D0"></span><span style="font-weight: 700; font-size: 15px">Farhan &amp; Tejas</span><span style="width: 8px; height: 8px; border-radius: 50%; background: #D9F24A"></span><span class="n" style="font-size: 24px; color: #D9F24A; text-align: right">9</span>
+<span style="height: 20px; background: #7EAEF2"></span><span style="font-weight: 600; font-size: 15px; color: #D5E3D8">Priya &amp; Varun</span><span></span><span class="n" style="font-size: 24px; text-align: right">7</span>
+</div>
+<div style="padding: 0 12px; display: flex; flex-direction: column; justify-content: center; background: #0D2218"><span class="mono" style="font-size: 11px; color: #A9BDB0">G2 · 9-7-2</span><span class="mono" style="font-size: 11px; color: #D9F24A">GAME POINT</span></div>
+</div>
+<div style="position: absolute; right: 16px; bottom: 16px" class="mono"><span style="font-size: 11px; color: #F1F4EA; background: rgba(6,20,13,.75); padding: 4px 8px; border-radius: 6px">RALLYQ.IN</span></div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<div role="group" aria-label="Camera" style="display: flex; gap: 6px">
+<button class="{{mainCls}}" onClick="{{toMain}}" aria-pressed="{{isMain}}">Main camera</button>
+<button class="{{sideCls}}" onClick="{{toSide}}" aria-pressed="{{isSide}}">Side camera</button>
+<button class="{{bothCls}}" onClick="{{toBoth}}" aria-pressed="{{isBoth}}">Both</button>
+</div>
+<button class="{{syncCls}}" onClick="{{toggleSync}}" aria-pressed="{{sync}}" style="margin-left: auto"><span style="width: 34px; height: 20px; border-radius: 999px; background: {{trackBg}}; display: inline-flex; align-items: center; padding: 2px; box-sizing: border-box; justify-content: {{knobPos}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: #F1F4EA"></span></span>{{syncLabel}}</button>
+<a href="#" class="btn" style="text-decoration: none">Watch on YouTube<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2"></path></svg></a>
+</div>
+<p style="margin: 0; font-size: 13px; color: #A9BDB0">The score bar is burned into the stream at the venue, so it never runs ahead of the video. The board on the right is RallyQ's own; "Synced to video" holds it back to match the stream.</p>
+</section>
+
+<aside aria-label="Court 1 scoreboard" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 8px"><span class="chip live"><i class="dot"></i>Live</span><span style="font-weight: 600; color: #D5E3D8">Court 1 · Game 2 · Semi-final 1</span></div>
+<div style="display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; column-gap: 14px; align-items: center; padding: 14px 14px 14px 0; border-radius: 14px; background: rgba(8,30,19,.7)">
+<span style="align-self: stretch; background: #76E0D0; border-radius: 2px"></span>
+<div><div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 50%; background: #D9F24A" aria-label="Serving"></span><span class="disp" style="font-size: 26px">Farhan &amp; Tejas</span></div><div style="font-size: 13px; color: #A9BDB0; margin-top: 4px">ElitePicklers · Server 2</div>
+<div style="display: flex; align-items: center; gap: 8px; margin-top: 8px"><span style="display: flex; gap: 3px"><i style="width: 16px; height: 4px; border-radius: 2px; background: #7EAEF2"></i><i style="width: 16px; height: 4px; border-radius: 2px; background: #7EAEF2"></i><i style="width: 16px; height: 4px; border-radius: 2px; background: #7EAEF2"></i><i style="width: 16px; height: 4px; border-radius: 2px; background: rgba(241,244,234,.16)"></i></span><span class="cap" style="color: #F1F4EA">3 in a row</span></div></div>
+<span class="n" style="font-size: 88px; color: #D9F24A">9</span>
+</div>
+<div style="display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; column-gap: 14px; align-items: center; padding: 14px 14px 14px 0; border-radius: 14px; background: rgba(8,30,19,.7)">
+<span style="align-self: stretch; background: #7EAEF2; border-radius: 2px"></span>
+<div><span class="disp" style="font-size: 26px">Priya &amp; Varun</span><div style="font-size: 13px; color: #A9BDB0; margin-top: 4px">The Pickle Yard · won game 1</div></div>
+<span class="n" style="font-size: 88px">7</span>
+</div>
+<div style="display: flex; align-items: center; gap: 14px; margin-top: 4px">
+<div style="position: relative; width: 84px; height: 84px; flex: none">
+<svg viewBox="0 0 100 100" width="84" height="84" role="img" aria-label="Living Q, 16 rallies this game"><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" stroke="rgba(241,244,234,.14)" stroke-width="10"></path><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" stroke="#76E0D0" stroke-width="4" stroke-dasharray="9 5 4 6 9 5 9 12" transform="translate(-3 -3) scale(1.06)"></path><path d="M62 86H32A18 18 0 0 1 14 68V32A18 18 0 0 1 32 14H68A18 18 0 0 1 86 32V62" fill="none" stroke="#7EAEF2" stroke-width="4" stroke-dasharray="0 14 9 5 4 18 9 8" transform="translate(3 3) scale(.94)"></path><circle cx="83" cy="83" r="9" fill="#D9F24A"></circle></svg>
+<div style="position: absolute; inset: 0; display: grid; place-items: center; text-align: center"><div><div class="n" style="font-size: 24px">16</div><div class="cap" style="font-size: 8px; letter-spacing: .12em">rallies</div></div></div>
+</div>
+<div style="flex: 1; min-width: 0"><div class="cap">Referee call</div><div class="n" style="font-size: 40px; margin-top: 4px">9–7–2</div></div>
+<span class="chip live">Game point</span>
+</div>
+</div>
+
+<div class="card" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap"><span class="cap">Match DNA · this game</span><span style="font-size: 12px; color: #A9BDB0">Tall = point · short = side-out · lime = the run</span></div>
+<div aria-label="Match DNA strip, 16 rallies" role="img" style="height: 56px; display: flex; align-items: center; gap: 4px">
+<sc-for list="{{dna}}" as="d" hint-placeholder-count="16"><span style="{{d.style}}"></span></sc-for>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px"><span style="font-weight: 700">Farhan &amp; Tejas</span><span style="font-size: 13px; color: #A9BDB0">Win chance, an estimate <b class="n" style="font-size: 22px; color: #F1F4EA; margin-left: 6px">68%</b></span></div>
+<div style="height: 6px; border-radius: 999px; background: rgba(241,244,234,.12)"><div style="width: 68%; height: 6px; border-radius: 999px; background: #D9F24A"></div></div>
+</div>
+</aside>
+</div>
+
+<section aria-label="Other courts" style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px">
+<div class="cap">Other courts · tap to watch</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{others}}" as="o" hint-placeholder-count="3">
+<a href="#" class="card" style="display: flex; gap: 14px; padding: 12px; text-decoration: none; color: #F1F4EA; align-items: center; min-width: 0">
+<div style="position: relative; width: 128px; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; flex: none; background: #0B2418"><img src="{{o.img}}" alt="" style="width: 100%; height: 100%; object-fit: cover; opacity: .85"><span style="position: absolute; inset: 0; display: grid; place-items: center"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="rgba(6,20,13,.7)"></circle><path d="M10 8v8l6-4z" fill="#F1F4EA"></path></svg></span></div>
+<div style="min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; gap: 6px; align-items: center"><span class="{{o.chip}}">{{o.status}}</span><span style="font-size: 13px; color: #A9BDB0">{{o.name}}</span></div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: center">
+<span style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{o.a}}</span><span class="n" style="font-size: 24px; color: #D9F24A">{{o.sa}}</span>
+<span style="font-weight: 600; font-size: 14px; color: #D5E3D8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{o.b}}</span><span class="n" style="font-size: 24px">{{o.sb}}</span>
+</div>
+</div>
+</a>
+</sc-for>
+</div>
+<div class="card" style="padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; border-radius: 14px"><span class="chip live">Up next</span><span style="font-weight: 600">Court 4 · Kiran &amp; Neha v Rohan &amp; Sameer · Quarter-final 4 · about 12 min</span><span style="margin-left: auto; color: #A9BDB0; font-size: 13px">Following · 128</span></div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1620}}'>
+class Component extends DCLogic {
+constructor(p){ super(p); this.state = { angle: 'main', sync: true, court: 1 }; }
+renderVals() {
+  const s = this.state;
+  const btn = (on) => on ? 'btn on' : 'btn';
+  const pattern = 'AABABBAAABABAAAA'.split('');
+  const short = [0,0,1,0,1,0,1,0,0,0,1,0,1,0,0,0];
+  const run = [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1];
+  const dna = pattern.map((t, i) => {
+    const h = short[i] ? 14 : 26;
+    const col = run[i] ? '#D9F24A' : (t === 'A' ? '#76E0D0' : '#7EAEF2');
+    const shift = t === 'A' ? -h / 2 : h / 2;
+    return { style: 'width:12px;height:' + h + 'px;border-radius:3px;background:' + col + ';transform:translateY(' + shift + 'px)' + (i === 15 ? ';box-shadow:0 0 0 2px #F1F4EA' : '') };
+  });
+  const scores = { 1: '9–7', 2: '4–6', 3: '11–8', 4: 'Next' };
+  const courts = [1, 2, 3, 4].map((n) => ({ name: 'Court ' + n, score: scores[n], sel: s.court === n ? 'true' : 'false', cls: s.court === n ? 'btn on' : 'btn', pick: () => this.setState({ court: n }) }));
+  const main = '/_blob/8a6862adc7b678d68c9a269a6b57ff8b', side = '/_blob/fc5807bc56339ac943789270e49ea86d';
+  return {
+    courts, dna,
+    showMain: s.angle !== 'side', showSideFull: s.angle === 'side', showPip: s.angle === 'both',
+    angleLabel: s.angle === 'main' ? 'Main camera' : s.angle === 'side' ? 'Side camera' : 'Main + side',
+    mainCls: btn(s.angle === 'main'), sideCls: btn(s.angle === 'side'), bothCls: btn(s.angle === 'both'),
+    isMain: String(s.angle === 'main'), isSide: String(s.angle === 'side'), isBoth: String(s.angle === 'both'),
+    toMain: () => this.setState({ angle: 'main' }), toSide: () => this.setState({ angle: 'side' }), toBoth: () => this.setState({ angle: 'both' }),
+    sync: String(s.sync), syncCls: 'btn', trackBg: s.sync ? '#D9F24A' : 'rgba(241,244,234,.2)', knobPos: s.sync ? 'flex-end' : 'flex-start',
+    syncLabel: s.sync ? 'Synced to video · 3 s' : 'Instant scores',
+    toggleSync: () => this.setState({ sync: !s.sync }),
+    others: [
+      { name: 'Court 2 · Mixed SF', status: 'Live', chip: 'chip live', a: 'Sana & Nikhil', b: 'Das & Pillai', sa: 4, sb: 6, img: side },
+      { name: 'Court 3 · Pool A', status: 'Final', chip: 'chip line', a: 'Kabir & Omar', b: 'Dev & Yash', sa: 11, sb: 8, img: main },
+      { name: 'Court 4 · Women’s QF', status: 'Next', chip: 'chip line', a: 'Kiran & Neha', b: 'Rohan & Sameer', sa: '', sb: '', img: side }
+    ]
+  };
+}
+}
+</script>
+</body>
+</html>

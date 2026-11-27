@@ -8,11 +8,12 @@ import ClubRoutes from '../club/screens/ClubRoutes';
 import { BrandMark } from '../club/screens/Brand';
 import { eventsBackend } from '../club/index';
 import type { SupportSession } from '../club/backend';
-import { useRoute, type Go, type RouteName } from '../navigation';
+import { useRoute, type Go, type Route, type RouteName } from '../navigation';
 import { appVersion, buildId } from '../config';
 import {RallyHome} from '../rallyq/home/RallyHome';
 import {MyStudio} from '../rallyq/studio/MyStudio';
 import {RallyLive} from '../rallyq/live/RallyLive';
+import {ScoreOverlay} from '../rallyq/overlay/ScoreOverlay';
 import {RallyEvent} from '../rallyq/event/RallyEvent';
 import {RallyTV} from '../rallyq/tv/RallyTV';
 import {PublicProfile} from '../rallyq/studio/PublicProfile';
@@ -29,7 +30,7 @@ const TABS: { id: ClubTab; label: string; icon: IconName }[] = [
 
 /** Screens without an account (referee court, desk PIN, public results and event pages): no account strip there. */
 /** v1.2 screens bring their own shell (PublicShell / OrgShell): the frame adds nothing around them. */
-const BARE: RouteName[] = ['data-privacy', 'club', 'club-tournaments', 'club-results', 'club-claim', 'club-join', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-scorers', 'club-results-dupr', 'club-dupr', 'demo', 'events-post', 'club-player', 'club-score'];
+const BARE: RouteName[] = ['data-privacy', 'club', 'club-tournaments', 'club-results', 'club-claim', 'club-join', 'club-view', 'club-new', 'club-tournament-new', 'admin', 'admin-club', 'admin-listings', 'club-signin', 'events', 'event-enter', 'my-entries', 'results', 'club-inbox', 'club-entries', 'club-tournament', 'club-desk', 'club-streams', 'club-scorers', 'club-results-dupr', 'club-dupr', 'demo', 'events-post', 'club-player', 'club-score'];
 const NO_ACCOUNT: RouteName[] = ['court', 'desk', 'helper', 'results', 'event', 'club-signin', 'admin-login', 'demo'];
 
 /** "Signed in as … · Sign out" on every signed-in screen, so sign-out is never more than one tap away. */
@@ -79,6 +80,11 @@ if (/[?&](code|error_description)=/.test(window.location.search) && !window.loca
 
 export default function ClubApp() {
   const [route, go, back] = useRoute();
+  if (route.name === 'overlay') return <ScoreOverlay key={route.id} courtPath={route.id} />;
+  return <ClubAppWithShell route={route} go={go} back={back} />;
+}
+
+function ClubAppWithShell({ route, go, back }: { route: Route; go: Go; back: () => void }) {
   // RallyQ admins see every club on this tab, so it's called Clubs for them; organisers see their own, My clubs.
   const [admin, setAdmin] = useState(false);
   useEffect(() => { let on = true; eventsBackend().isPlatformAdmin().then((a) => { if (on) setAdmin(a); }, () => undefined); return () => { on = false; }; }, [route.name]);
