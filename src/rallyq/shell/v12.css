@@ -75,6 +75,8 @@ background:var(--pg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif
 .bar{height:8px;border-radius:99px;background:var(--c2);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--ball);border-radius:99px}
 .foot{border-top:1px solid var(--line);padding-block:40px;color:var(--mut);font-size:13px}
+/* Footer links are real tap targets (44 px tall), however short their text. */
+.foot a,.pfoot a{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
 /* v3: Day mode + switch + court lines */
 .rq.day{--pg:#2B6E4B;--alt:#286A47;--c1:#245F40;--c2:#1F5538;--ink:#FFFFFF;--mut:#DDEBDF;--ball:#E4F75A;--gold:#FFE18A;--line:rgba(255,255,255,.2)}
 .rq.day .card{box-shadow:none}

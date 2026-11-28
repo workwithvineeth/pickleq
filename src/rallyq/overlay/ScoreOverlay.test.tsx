@@ -4,6 +4,7 @@ import type { PublicTournament } from '../../club/backend';
 import type { PublicMatch } from '../../club/liveView';
 import { usePublicScores } from '../../club/screens/usePublicScores';
 import { COUNT_STEP_MS, HOLD_MS } from '../tv/motion';
+import { liveWinEstimate } from '../../club/winBar';
 import { ScoreOverlay } from './ScoreOverlay';
 
 vi.mock('../../club/screens/usePublicScores');
@@ -27,6 +28,7 @@ function scores(matches: PublicMatch[] | null, duprsA?: (number | undefined)[], 
     matches,
   };
   vi.mocked(usePublicScores).mockReturnValue({ data, loading: false, error: null, updatedAt: null, failures: 0, live: true });
+  return data;
 }
 
 const page = <ScoreOverlay courtPath="sample-open/1" />;
@@ -65,35 +67,40 @@ describe('ScoreOverlay', () => {
     expect(within(teamB).queryByRole('img', { name: /^DUPR/ })).toBeNull();
   });
 
-  it('shows the estimate and tracks both directions after point changes', () => {
-    const updateScore = (a: number, b: number) => scores([
-      { ...semi, games: [{ a, b, points: '' }] },
-    ], [4.31], [4.05]);
-    updateScore(0, 0);
+  it('shows the same estimate as the TV board and tracks both directions after point changes', () => {
+    const updateScore = (a: number, b: number) => {
+      const data = scores([{ ...semi, games: [{ a, b, points: '' }] }], [4.31], [4.05])!;
+      return liveWinEstimate(data, data.matches[0])!;
+    };
+    const start = updateScore(0, 0);
     const { rerender } = render(page);
     expect(screen.getByText('WIN CHANCE · ESTIMATE')).toBeVisible();
-    expect(screen.getAllByText('50%')).toHaveLength(2);
+    // DUPR 4.31 v 4.05 puts A ahead before a point is played, exactly as the TV board says.
+    expect(start.a).toBeGreaterThan(50);
+    expect(screen.getByText(`${start.a}%`)).toBeVisible();
+    expect(screen.getByText(`${start.b}%`)).toBeVisible();
     expect(screen.queryByText(/^[▲▼]/)).toBeNull();
 
-    updateScore(1, 0);
+    const up = updateScore(1, 0);
     rerender(<ScoreOverlay courtPath="sample-open/1" />);
-    expect(screen.getByText('54%')).toBeVisible();
-    expect(screen.getByText('46%')).toBeVisible();
-    expect(screen.getByText('▲4')).toBeVisible();
-    rerender(<ScoreOverlay courtPath="sample-open/1" />);
-    expect(screen.getByText('▲4')).toBeVisible();
+    expect(up.a).toBeGreaterThan(start.a);
+    expect(screen.getByText(`${up.a}%`)).toBeVisible();
+    expect(screen.getByText(`▲${up.a - start.a}`)).toBeVisible();
 
-    updateScore(1, 1);
+    const down = updateScore(1, 1);
     rerender(<ScoreOverlay courtPath="sample-open/1" />);
-    expect(screen.getByText('▼4')).toBeVisible();
-    expect(screen.queryByText('▲4')).toBeNull();
+    expect(down.a).toBeLessThan(up.a);
+    expect(screen.getByText(`▼${up.a - down.a}`)).toBeVisible();
   });
 
-  it('hides the meter when neither entry has a rating', () => {
-    scores([semi]);
-    render(page);
+  it('hides the meter for unrated teams until 10 rallies, like the TV board', () => {
+    scores([{ ...semi, games: [{ a: 3, b: 2, points: '' }] }]);
+    const { rerender } = render(page);
     expect(screen.queryByText('WIN CHANCE · ESTIMATE')).toBeNull();
     expect(screen.queryByRole('img', { name: /^DUPR/ })).toBeNull();
+    scores([semi]);
+    rerender(<ScoreOverlay courtPath="sample-open/1" />);
+    expect(screen.getByText('WIN CHANCE · ESTIMATE')).toBeVisible();
   });
 
   it('holds a newly finished score, then shows the next match', () => {

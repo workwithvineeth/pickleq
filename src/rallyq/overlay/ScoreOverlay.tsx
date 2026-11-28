@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { PublicTournament } from '../../club/backend';
 import { gameOver } from '../../club/domain/momentum';
 import { poolLetter } from '../../club/domain/engine';
-import { courtMatches, matchView, winChance, type PublicMatch } from '../../club/liveView';
+import { courtMatches, matchView, type PublicMatch } from '../../club/liveView';
+import { liveWinEstimate } from '../../club/winBar';
 import { usePublicScores } from '../../club/screens/usePublicScores';
 import { STAGE_LABEL } from '../../club/types';
 import { RallyQMark } from '../Brand';
@@ -114,7 +115,8 @@ function ScoreBar({ data, match, view }: { data: PublicTournament; match: Public
   const point = live ? pointLabel(pointsA, pointsB, format.pointsTo, !!format.golden, gamesA, gamesB, needed) : '';
   const ratingA = ratingChip(data.entries.find(entry => entry.id === match.entryA));
   const ratingB = ratingChip(data.entries.find(entry => entry.id === match.entryB));
-  const chance = ratingA || ratingB ? winChance(data, match) : null;
+  // Same estimate as the TV board and the live pages (DUPR + score so far), so every screen shows one number.
+  const chance = liveWinEstimate(data, match)?.a ?? null;
   const singles = view.division?.kind === 'singles';
   return (
     <div className="overlay-bar">

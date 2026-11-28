@@ -36,7 +36,17 @@ export function winBarFrom(e: WinEstimate | null, nameA: string, nameB: string):
  */
 export function liveWinBar(d: PublicTournament, m: PublicMatch): WinBar {
   try {
-    if (m.status !== 'live' || !m.entryA || !m.entryB) return NO_WIN_BAR;
+    const e = liveWinEstimate(d, m);
+    if (!e) return NO_WIN_BAR;
+    const v = matchView(d, m);
+    return winBarFrom(e, v.a, v.b);
+  } catch { return NO_WIN_BAR; }
+}
+
+/** The same estimate as the bar, as numbers (the OBS overlay uses it so TV, pages and stream always agree). Null = hide. */
+export function liveWinEstimate(d: PublicTournament, m: PublicMatch): WinEstimate | null {
+  try {
+    if (m.status !== 'live' || !m.entryA || !m.entryB) return null;
     const v = matchView(d, m);
     const entry = (id: string) => d.entries.find((x) => x.id === id) as (PublicTournament['entries'][number] & { duprs?: (number | null | undefined)[] }) | undefined;
     const ratings = (id: string) => { const e = entry(id); return (e?.duprs?.length ? e.duprs : e?.names.map(() => undefined) ?? [undefined]).map((x) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)); };
@@ -48,8 +58,8 @@ export function liveWinBar(d: PublicTournament, m: PublicMatch): WinBar {
       gamesA: v.gamesA, gamesB: v.gamesB, pointsA: v.pointsA, pointsB: v.pointsB,
       pointsTo: v.format.pointsTo, bestOf: v.format.bestOf, golden: v.format.golden, doubles: v.division?.kind !== 'singles',
     });
-    return winBarFrom(e, v.a, v.b);
-  } catch { return NO_WIN_BAR; }
+    return e;
+  } catch { return null; }
 }
 
 /** The bar's markup for the prototype pages (holes are filled by PrototypeScreen). `p` is the value path, e.g. "sel.win". */
