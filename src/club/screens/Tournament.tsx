@@ -12,7 +12,7 @@ import { clubMark, ModeButton, OrgShell, PageHead, PublicShell } from '../../ral
 import { Legacy } from './InboxLegacy';
 import { ChampionHero, ResultsPosters, type ChampionInfo } from './ResultsPosters';
 import type { ClubBackend, PublicTournament, TournamentBundle } from '../backend';
-import { entryRating, formatFor, matchResult, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, tieBreakText, type StandingRow } from '../domain/engine';
+import { crossoverPairs, entryRating, formatFor, matchResult, nextStage, stageForSize, playerRating, poolLetter, RUNNERS_UP_TEXT, slotTime, standings, tieBreakText, type StandingRow } from '../domain/engine';
 import { backend, publicSourcesFor, rememberReturn } from '../index';
 import { KnockoutsWaiting } from './KnockoutsWaiting';
 import { checkDivisionSetup, knockoutMatchesToAdd, poolQualifiers, poolsComplete, type NewDivisionInput } from '../plan';
@@ -606,6 +606,7 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyD
     <section className="card" aria-label="Knockouts" style={cardPad}>
       {division.advance === 0 && division.shape !== 'ko' && ko.length === 0 && <p className="mut" style={{ margin: 0 }}>This event has no knockouts.</p>}
       {division.advance > 0 && ko.length === 0 && <p className="mut" style={{ margin: 0 }}>Knockouts are drawn once every pool match is finished.</p>}
+      {division.advance > 0 && division.shape !== 'ko' && ko.length === 0 && <KnockoutPlan division={division} pools={[...new Set(entries.map((e) => e.pool ?? 1))].sort((x, y) => x - y)} />}
       {division.shape === 'ko' && ko.length === 0 && <p className="mut" style={{ margin: 0 }}>The knockout draw appears here once it is made.</p>}
       {rounds.length > 0 && (
         <div className="scroll">
@@ -618,7 +619,7 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyD
                 <div key={r} className="col">
                   <div>
                     <h3 className="cap" style={{ margin: 0 }}>{ROUND_LABEL[stage] ?? STAGE_LABEL[stage]}</h3>
-                    <span className="mut" style={{ fontSize: 12 }}>{f.bestOf === 3 ? 'Best of 3 games' : 'One game'} to {f.pointsTo}{f.golden ? ', golden point' : ''}</span>
+                    <span className="mut" style={{ fontSize: 12 }}>{formatWords(f)}</span>
                   </div>
                   {ms.map((m) => box(m, stage === 'final'))}
                 </div>
@@ -633,6 +634,57 @@ export function DivisionBody({ d, divisionId, view, onScore, label }: { d: BodyD
           {bronze.map((m) => <MatchBox key={m.id} m={m} a={name(m.entryA)} b={name(m.entryB)} da={dupr(m.entryA)} db={dupr(m.entryB)} meta="" />)}
         </section>
       )}
+    </section>
+  );
+}
+
+/** "One game to 11, win by 2" / "Best of 3 games to 15, golden point". */
+export const formatWords = (f: { bestOf?: number; pointsTo: number; golden?: boolean }) => `${f.bestOf === 3 ? 'Best of 3 games' : 'One game'} to ${f.pointsTo}${f.golden ? ', golden point' : ', win by 2'}`;
+
+/**
+ * The planned knockout bracket, shown before the groups finish so players know the path: which pool places meet in the
+ * first round (the same crossover the draw will use), who the winners play next, and each round's game format.
+ */
+export function KnockoutPlan({ division, pools }: { division: Division; pools: number[] }) {
+  const qualifiers = pools.flatMap((pool) => Array.from({ length: division.advance }, (_, i) => ({ entryId: `${pool}-${i + 1}`, pool, place: i + 1 })));
+  const pairs = crossoverPairs(qualifiers);
+  if (!pairs) return null;
+  const tag = (q: { pool: number; place: number }) => `${poolLetter(q.pool)}${q.place}`;
+  const rounds: { stage: KnockoutStage; games: string[] }[] = [];
+  let stage: KnockoutStage | null = stageForSize(pairs.length * 2);
+  const short: Record<KnockoutStage, string> = { r32: 'R32', r16: 'R16', qf: 'QF', sf: 'SF', final: 'F' };
+  rounds.push({ stage, games: pairs.map(([a, b]) => `${tag(a)} v ${tag(b)}`) });
+  let prev = rounds[0];
+  while ((stage = nextStage(stage)) && prev.games.length > 1) {
+    const p = prev;
+    const games = Array.from({ length: p.games.length / 2 }, (_, i) => `Winner ${short[p.stage]}${i * 2 + 1} v Winner ${short[p.stage]}${i * 2 + 2}`);
+    prev = { stage, games };
+    rounds.push(prev);
+  }
+  return (
+    <section aria-label="Knockout plan" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <p style={{ margin: 0 }}><b>How the knockouts work.</b> Top {division.advance} from each pool go through. Pool matches: {formatWords(division.format).toLowerCase()}.</p>
+      <div className="scroll">
+        <div className="bracket" style={{ minWidth: rounds.length * 238 - 18, alignItems: 'stretch' }}>
+          {rounds.map((r) => {
+            const f = formatFor(division, r.stage);
+            return (
+              <div key={r.stage} className="col">
+                <div>
+                  <h3 className="cap" style={{ margin: 0 }}>{ROUND_LABEL[r.stage]}</h3>
+                  <span className="mut" style={{ fontSize: 12 }}>{formatWords(f)}</span>
+                </div>
+                {r.games.map((g, i) => (
+                  <div key={g} className="card" style={{ padding: '10px 12px', fontSize: 14 }}>
+                    <span className="mut" style={{ fontSize: 12 }}>{r.stage === 'final' ? 'Final' : `${short[r.stage]}${i + 1}`}</span>
+                    <div><b>{g}</b></div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
