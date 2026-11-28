@@ -13,14 +13,16 @@ const div = (pools: number, advance: number): Division => ({
 describe('KnockoutPlan', () => {
   it('shows the 4-pool crossover, later rounds and each round format before the groups finish', () => {
     render(<KnockoutPlan division={div(4, 2)} pools={[1, 2, 3, 4]} />);
-    for (const g of ['A1 v D2', 'B1 v C2', 'C1 v B2', 'D1 v A2', 'Winner QF1 v Winner QF2', 'Winner SF1 v Winner SF2']) expect(screen.getByText(g)).toBeInTheDocument();
+    for (const g of ['A1 v D2', 'B1 v C2', 'C1 v B2', 'D1 v A2', 'Winner QF1 v Winner QF4', 'Winner QF2 v Winner QF3', 'Winner SF1 v Winner SF2']) expect(screen.getByText(g)).toBeInTheDocument();
     expect(screen.getAllByText('One game to 11, win by 2')).toHaveLength(1);
     expect(screen.getAllByText('One game to 15, win by 2')).toHaveLength(2);
     expect(screen.getByText(/Top 2 from each pool go through/)).toBeInTheDocument();
   });
   it('shows the 2-pool top-4 chart', () => {
     render(<KnockoutPlan division={div(2, 4)} pools={[1, 2]} />);
-    for (const g of ['A1 v B4', 'A4 v B1', 'A2 v B3', 'A3 v B2']) expect(screen.getByText(g)).toBeInTheDocument();
+    for (const g of ['A1 v B4', 'A4 v B1', 'A2 v B3', 'A3 v B2', 'Winner QF1 v Winner QF4', 'Winner QF2 v Winner QF3']) expect(screen.getByText(g)).toBeInTheDocument();
+    // Printed chart order: QF1 A1 v B4, QF2 A2 v B3, QF3 A3 v B2, QF4 A4 v B1.
+    expect(screen.getAllByText(/^A\d v B\d$/).map((x) => x.textContent)).toEqual(['A1 v B4', 'A2 v B3', 'A3 v B2', 'A4 v B1']);
   });
   it('words the format', () => {
     expect(formatWords({ bestOf: 1, pointsTo: 11, golden: true })).toBe('One game to 11, golden point');

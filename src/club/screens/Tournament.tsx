@@ -653,11 +653,17 @@ export function KnockoutPlan({ division, pools }: { division: Division; pools: n
   const rounds: { stage: KnockoutStage; games: string[] }[] = [];
   let stage: KnockoutStage | null = stageForSize(pairs.length * 2);
   const short: Record<KnockoutStage, string> = { r32: 'R32', r16: 'R16', qf: 'QF', sf: 'SF', final: 'F' };
-  rounds.push({ stage, games: pairs.map(([a, b]) => `${tag(a)} v ${tag(b)}`) });
+  // Bracket positions 0-1 and 2-3 meet next. With four quarter-finals they are numbered like a printed chart:
+  // QF1 (pos 0) v QF4 (pos 1) and QF2 (pos 2) v QF3 (pos 3), so the semi-finals read "Winner QF1 v Winner QF4".
+  const chart = pairs.length === 4 ? [1, 4, 2, 3] : pairs.map((_, i) => i + 1);
+  const first = pairs.map(([a, b], i) => ({ n: chart[i], g: `${tag(a)} v ${tag(b)}` })).sort((x, y) => x.n - y.n);
+  rounds.push({ stage, games: first.map((x) => x.g) });
   let prev = rounds[0];
+  let feeders = pairs.map((_, i) => chart[i]);
   while ((stage = nextStage(stage)) && prev.games.length > 1) {
     const p = prev;
-    const games = Array.from({ length: p.games.length / 2 }, (_, i) => `Winner ${short[p.stage]}${i * 2 + 1} v Winner ${short[p.stage]}${i * 2 + 2}`);
+    const games = Array.from({ length: feeders.length / 2 }, (_, i) => `Winner ${short[p.stage]}${feeders[i * 2]} v Winner ${short[p.stage]}${feeders[i * 2 + 1]}`);
+    feeders = games.map((_, i) => i + 1);
     prev = { stage, games };
     rounds.push(prev);
   }
